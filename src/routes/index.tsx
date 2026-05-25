@@ -11,6 +11,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
+import ogImage from "@/assets/og-image.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -28,8 +29,12 @@ export const Route = createFileRoute("/")({
           "The vetted marketplace where B2B event organisers, sponsors, and referral partners actually close deals.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: ogImage },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: ogImage },
     ],
   }),
+
   component: Landing,
 });
 
