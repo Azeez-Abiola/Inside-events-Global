@@ -11,6 +11,8 @@ import {
 import appCss from "../styles.css?url";
 import { AuthProvider } from "@/lib/auth-context";
 import { Toaster } from "@/components/ui/sonner";
+import { CookieBanner } from "@/components/cookie-banner";
+
 
 function NotFoundComponent() {
   return (
@@ -74,15 +76,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Inside Global Events — Sponsorship marketplace for Africa & the diaspora" },
+      { name: "description", content: "Close sponsorship deals in weeks, not months. IGE connects vetted event organisers with sponsors and rewards referral partners on every closed deal." },
+      { name: "author", content: "AlexBoyo World" },
+      { name: "theme-color", content: "#6B3FA0" },
+      { property: "og:title", content: "Inside Global Events" },
+      { property: "og:description", content: "Vetted sponsorship marketplace for African & diaspora events." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { property: "og:site_name", content: "Inside Global Events" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
+
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/manifest.webmanifest" },
@@ -116,7 +120,9 @@ function RootComponent() {
       <AuthProvider>
         <Outlet />
         <Toaster richColors position="top-right" />
+        <CookieBanner />
       </AuthProvider>
     </QueryClientProvider>
   );
 }
+
