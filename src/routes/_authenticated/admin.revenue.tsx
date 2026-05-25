@@ -168,7 +168,7 @@ function AdminRevenue() {
         <RatesDialog
           current={ratesData?.rates}
           onClose={() => setRatesOpen(false)}
-          onSubmit={async (v) => {
+          onSubmit={async (v: { ngn_rate: number; gbp_rate: number; eur_rate: number }) => {
             await updateRates({ data: v });
             qc.invalidateQueries({ queryKey: ["fx-rates"] });
             qc.invalidateQueries({ queryKey: ["admin-revenue"] });
