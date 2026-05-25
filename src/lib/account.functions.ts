@@ -18,13 +18,12 @@ export const deleteMyAccount = createServerFn({ method: "POST" })
       .update({
         email: anonEmail,
         email_domain: "deleted.ige",
-        full_name: "Deleted user",
-        phone: null,
         linkedin_url: null,
-        company_name: null,
-        avatar_url: null,
-      })
+        linkedin_employer: null,
+        is_active: false,
+      } as never)
       .eq("id", userId);
+
 
     // Revoke auth account
     const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
