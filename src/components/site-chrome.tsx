@@ -74,10 +74,11 @@ export function SiteFooter() {
             Company
           </div>
           <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-            <li><a href="#" className="hover:text-foreground">About ABW</a></li>
+            <li><a href="mailto:partner@alexboyoworld.com" className="hover:text-foreground">About ABW</a></li>
             <li><a href="#" className="hover:text-foreground">Trust &amp; vetting</a></li>
-            <li><a href="#" className="hover:text-foreground">Privacy</a></li>
-            <li><a href="#" className="hover:text-foreground">Terms</a></li>
+            <li><Link to="/privacy" className="hover:text-foreground">Privacy</Link></li>
+            <li><Link to="/terms" className="hover:text-foreground">Terms</Link></li>
+
           </ul>
         </div>
       </div>
