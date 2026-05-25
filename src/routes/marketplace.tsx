@@ -193,6 +193,8 @@ function MultiSelect({ options, value, onChange }: { options: readonly string[];
 }
 
 function EventCard({ event }: { event: any }) {
+  const fetchRates = useServerFn(getCurrentRates);
+  const { data: ratesData } = useQuery({ queryKey: ["fx-rates"], queryFn: () => fetchRates() });
   return (
     <Link
       to="/events/$slug"
@@ -230,7 +232,7 @@ function EventCard({ event }: { event: any }) {
         {event.starting && (
           <div className="mt-3 border-t border-border pt-2 text-sm">
             <span className="text-muted-foreground">From </span>
-            <span className="font-display font-bold">{event.starting.currency} {Number(event.starting.price).toLocaleString()}</span>
+            <span className="font-display font-bold">{fmtDual(event.starting.currency, Number(event.starting.price), ratesData?.rates)}</span>
           </div>
         )}
       </div>
