@@ -390,6 +390,7 @@ export type Database = {
           attendance_size: number | null
           audience_seniority: string | null
           banner_image_url: string | null
+          cal_booking_url: string | null
           city: string | null
           consent_given: boolean
           consent_given_at: string | null
@@ -447,6 +448,7 @@ export type Database = {
           attendance_size?: number | null
           audience_seniority?: string | null
           banner_image_url?: string | null
+          cal_booking_url?: string | null
           city?: string | null
           consent_given?: boolean
           consent_given_at?: string | null
@@ -504,6 +506,7 @@ export type Database = {
           attendance_size?: number | null
           audience_seniority?: string | null
           banner_image_url?: string | null
+          cal_booking_url?: string | null
           city?: string | null
           consent_given?: boolean
           consent_given_at?: string | null
