@@ -325,12 +325,13 @@ function ThreeSides() {
             </ul>
 
             <Link
-              to="/"
+              to={s.to}
               className="mt-8 inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition-colors group-hover:text-primary-deep"
             >
               {s.cta}
               <ArrowRight className="h-4 w-4" />
             </Link>
+
           </article>
         ))}
       </div>
