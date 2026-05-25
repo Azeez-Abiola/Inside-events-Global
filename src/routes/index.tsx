@@ -98,19 +98,20 @@ function Hero() {
 
             <div className="mt-9 flex flex-wrap items-center gap-3">
               <Link
-                to="/"
+                to="/signup"
                 className="group inline-flex items-center gap-2 rounded-md bg-brand-gradient px-6 py-3.5 text-sm font-semibold text-white shadow-brand transition-transform hover:-translate-y-0.5"
               >
                 List your event
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <Link
-                to="/"
+                to="/marketplace"
                 className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-6 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
               >
                 Browse sponsorships
               </Link>
             </div>
+
 
             <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
               <Badge icon={ShieldCheck}>Every event IGE-vetted</Badge>
