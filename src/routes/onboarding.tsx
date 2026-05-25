@@ -21,9 +21,9 @@ const ROLES: { key: RoleKey; title: string; desc: string; icon: any }[] = [
 ];
 
 const NEXT_FOR_ROLE: Record<RoleKey, string> = {
-  organiser: "/onboarding/organiser",
-  sponsor: "/onboarding/sponsor",
-  referral_partner: "/onboarding/referral",
+  organiser: "/dashboard",
+  sponsor: "/dashboard",
+  referral_partner: "/dashboard",
   media_partner: "/dashboard",
 };
 
