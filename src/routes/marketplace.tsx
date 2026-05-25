@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listMarketplaceEvents } from "@/lib/marketplace.functions";
-import { EVENT_TYPES, SECTORS, COUNTRIES } from "@/lib/event-taxonomy";
+import { EVENT_TYPES, PRIMARY_SECTORS as SECTORS, COUNTRIES } from "@/lib/event-taxonomy";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { Search, SlidersHorizontal, MapPin, Calendar, Users, ShieldCheck, X } from "lucide-react";
 
