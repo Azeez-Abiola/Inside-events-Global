@@ -190,7 +190,7 @@ function ReferralForm({ onDone }: { onDone: () => void }) {
 }
 
 // ───── Reusable field primitives ─────
-export function Field({ label, value, onChange, type = "text", required, placeholder }: any) {
+export function Field({ label, value, onChange, type = "text", required, placeholder }: { label: string; value: string; onChange: (v: string) => void; type?: string; required?: boolean; placeholder?: string }) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium">{label}{required && <span className="text-destructive"> *</span>}</span>
@@ -205,7 +205,7 @@ export function Field({ label, value, onChange, type = "text", required, placeho
     </label>
   );
 }
-export function TextArea({ label, value, onChange, rows = 3, placeholder }: any) {
+export function TextArea({ label, value, onChange, rows = 3, placeholder }: { label: string; value: string; onChange: (v: string) => void; rows?: number; placeholder?: string }) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium">{label}</span>
@@ -219,6 +219,7 @@ export function TextArea({ label, value, onChange, rows = 3, placeholder }: any)
     </label>
   );
 }
+
 export function SelectField({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[] }) {
   return (
     <label className="block">
