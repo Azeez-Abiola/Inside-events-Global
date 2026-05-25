@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { listMarketplaceEvents } from "@/lib/marketplace.functions";
+import { listMarketplaceEvents, getCurrentRates } from "@/lib/marketplace.functions";
+import { fmtDual } from "@/lib/currency";
 import { EVENT_TYPES, PRIMARY_SECTORS as SECTORS, COUNTRIES } from "@/lib/event-taxonomy";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { Search, SlidersHorizontal, MapPin, Calendar, Users, ShieldCheck, X } from "lucide-react";
@@ -192,6 +193,8 @@ function MultiSelect({ options, value, onChange }: { options: readonly string[];
 }
 
 function EventCard({ event }: { event: any }) {
+  const fetchRates = useServerFn(getCurrentRates);
+  const { data: ratesData } = useQuery({ queryKey: ["fx-rates"], queryFn: () => fetchRates() });
   return (
     <Link
       to="/events/$slug"
@@ -229,7 +232,7 @@ function EventCard({ event }: { event: any }) {
         {event.starting && (
           <div className="mt-3 border-t border-border pt-2 text-sm">
             <span className="text-muted-foreground">From </span>
-            <span className="font-display font-bold">{event.starting.currency} {Number(event.starting.price).toLocaleString()}</span>
+            <span className="font-display font-bold">{fmtDual(event.starting.currency, Number(event.starting.price), ratesData?.rates)}</span>
           </div>
         )}
       </div>

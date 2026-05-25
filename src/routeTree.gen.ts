@@ -21,10 +21,14 @@ import { Route as RCodeRouteImport } from './routes/r.$code'
 import { Route as OnboardingProfileRouteImport } from './routes/onboarding.profile'
 import { Route as EventsSlugRouteImport } from './routes/events.$slug'
 import { Route as AuthenticatedReferralsRouteImport } from './routes/_authenticated/referrals'
+import { Route as AuthenticatedPipelineRouteImport } from './routes/_authenticated/pipeline'
+import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedEventsRouteImport } from './routes/_authenticated/events'
+import { Route as AuthenticatedDealsRouteImport } from './routes/_authenticated/deals'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedEventsIdRouteImport } from './routes/_authenticated/events.$id'
 import { Route as AuthenticatedAdminVettingRouteImport } from './routes/_authenticated/admin.vetting'
+import { Route as AuthenticatedAdminRevenueRouteImport } from './routes/_authenticated/admin.revenue'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
 import { Route as ApiPublicWebhooksPaystackRouteImport } from './routes/api/public/webhooks/paystack'
 
@@ -87,9 +91,24 @@ const AuthenticatedReferralsRoute = AuthenticatedReferralsRouteImport.update({
   path: '/referrals',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedPipelineRoute = AuthenticatedPipelineRouteImport.update({
+  id: '/pipeline',
+  path: '/pipeline',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedEventsRoute = AuthenticatedEventsRouteImport.update({
   id: '/events',
   path: '/events',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedDealsRoute = AuthenticatedDealsRouteImport.update({
+  id: '/deals',
+  path: '/deals',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -106,6 +125,12 @@ const AuthenticatedAdminVettingRoute =
   AuthenticatedAdminVettingRouteImport.update({
     id: '/admin/vetting',
     path: '/admin/vetting',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAdminRevenueRoute =
+  AuthenticatedAdminRevenueRouteImport.update({
+    id: '/admin/revenue',
+    path: '/admin/revenue',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const ApiPublicWebhooksStripeRoute = ApiPublicWebhooksStripeRouteImport.update({
@@ -129,11 +154,15 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/deals': typeof AuthenticatedDealsRoute
   '/events': typeof AuthenticatedEventsRouteWithChildren
+  '/messages': typeof AuthenticatedMessagesRoute
+  '/pipeline': typeof AuthenticatedPipelineRoute
   '/referrals': typeof AuthenticatedReferralsRoute
   '/events/$slug': typeof EventsSlugRoute
   '/onboarding/profile': typeof OnboardingProfileRoute
   '/r/$code': typeof RCodeRoute
+  '/admin/revenue': typeof AuthenticatedAdminRevenueRoute
   '/admin/vetting': typeof AuthenticatedAdminVettingRoute
   '/events/$id': typeof AuthenticatedEventsIdRoute
   '/api/public/webhooks/paystack': typeof ApiPublicWebhooksPaystackRoute
@@ -148,11 +177,15 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/deals': typeof AuthenticatedDealsRoute
   '/events': typeof AuthenticatedEventsRouteWithChildren
+  '/messages': typeof AuthenticatedMessagesRoute
+  '/pipeline': typeof AuthenticatedPipelineRoute
   '/referrals': typeof AuthenticatedReferralsRoute
   '/events/$slug': typeof EventsSlugRoute
   '/onboarding/profile': typeof OnboardingProfileRoute
   '/r/$code': typeof RCodeRoute
+  '/admin/revenue': typeof AuthenticatedAdminRevenueRoute
   '/admin/vetting': typeof AuthenticatedAdminVettingRoute
   '/events/$id': typeof AuthenticatedEventsIdRoute
   '/api/public/webhooks/paystack': typeof ApiPublicWebhooksPaystackRoute
@@ -169,11 +202,15 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/deals': typeof AuthenticatedDealsRoute
   '/_authenticated/events': typeof AuthenticatedEventsRouteWithChildren
+  '/_authenticated/messages': typeof AuthenticatedMessagesRoute
+  '/_authenticated/pipeline': typeof AuthenticatedPipelineRoute
   '/_authenticated/referrals': typeof AuthenticatedReferralsRoute
   '/events/$slug': typeof EventsSlugRoute
   '/onboarding/profile': typeof OnboardingProfileRoute
   '/r/$code': typeof RCodeRoute
+  '/_authenticated/admin/revenue': typeof AuthenticatedAdminRevenueRoute
   '/_authenticated/admin/vetting': typeof AuthenticatedAdminVettingRoute
   '/_authenticated/events/$id': typeof AuthenticatedEventsIdRoute
   '/api/public/webhooks/paystack': typeof ApiPublicWebhooksPaystackRoute
@@ -190,11 +227,15 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/dashboard'
+    | '/deals'
     | '/events'
+    | '/messages'
+    | '/pipeline'
     | '/referrals'
     | '/events/$slug'
     | '/onboarding/profile'
     | '/r/$code'
+    | '/admin/revenue'
     | '/admin/vetting'
     | '/events/$id'
     | '/api/public/webhooks/paystack'
@@ -209,11 +250,15 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/dashboard'
+    | '/deals'
     | '/events'
+    | '/messages'
+    | '/pipeline'
     | '/referrals'
     | '/events/$slug'
     | '/onboarding/profile'
     | '/r/$code'
+    | '/admin/revenue'
     | '/admin/vetting'
     | '/events/$id'
     | '/api/public/webhooks/paystack'
@@ -229,11 +274,15 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/_authenticated/dashboard'
+    | '/_authenticated/deals'
     | '/_authenticated/events'
+    | '/_authenticated/messages'
+    | '/_authenticated/pipeline'
     | '/_authenticated/referrals'
     | '/events/$slug'
     | '/onboarding/profile'
     | '/r/$code'
+    | '/_authenticated/admin/revenue'
     | '/_authenticated/admin/vetting'
     | '/_authenticated/events/$id'
     | '/api/public/webhooks/paystack'
@@ -341,11 +390,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReferralsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/pipeline': {
+      id: '/_authenticated/pipeline'
+      path: '/pipeline'
+      fullPath: '/pipeline'
+      preLoaderRoute: typeof AuthenticatedPipelineRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/messages': {
+      id: '/_authenticated/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof AuthenticatedMessagesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/events': {
       id: '/_authenticated/events'
       path: '/events'
       fullPath: '/events'
       preLoaderRoute: typeof AuthenticatedEventsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/deals': {
+      id: '/_authenticated/deals'
+      path: '/deals'
+      fullPath: '/deals'
+      preLoaderRoute: typeof AuthenticatedDealsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/dashboard': {
@@ -367,6 +437,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/vetting'
       fullPath: '/admin/vetting'
       preLoaderRoute: typeof AuthenticatedAdminVettingRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/admin/revenue': {
+      id: '/_authenticated/admin/revenue'
+      path: '/admin/revenue'
+      fullPath: '/admin/revenue'
+      preLoaderRoute: typeof AuthenticatedAdminRevenueRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/api/public/webhooks/stripe': {
@@ -399,15 +476,23 @@ const AuthenticatedEventsRouteWithChildren =
 
 interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDealsRoute: typeof AuthenticatedDealsRoute
   AuthenticatedEventsRoute: typeof AuthenticatedEventsRouteWithChildren
+  AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
+  AuthenticatedPipelineRoute: typeof AuthenticatedPipelineRoute
   AuthenticatedReferralsRoute: typeof AuthenticatedReferralsRoute
+  AuthenticatedAdminRevenueRoute: typeof AuthenticatedAdminRevenueRoute
   AuthenticatedAdminVettingRoute: typeof AuthenticatedAdminVettingRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDealsRoute: AuthenticatedDealsRoute,
   AuthenticatedEventsRoute: AuthenticatedEventsRouteWithChildren,
+  AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
+  AuthenticatedPipelineRoute: AuthenticatedPipelineRoute,
   AuthenticatedReferralsRoute: AuthenticatedReferralsRoute,
+  AuthenticatedAdminRevenueRoute: AuthenticatedAdminRevenueRoute,
   AuthenticatedAdminVettingRoute: AuthenticatedAdminVettingRoute,
 }
 

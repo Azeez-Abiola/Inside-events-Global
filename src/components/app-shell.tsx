@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
-import { LogOut, LayoutDashboard, CalendarRange, ShieldCheck, Handshake, Globe2 } from "lucide-react";
+import { LogOut, LayoutDashboard, CalendarRange, ShieldCheck, Handshake, Globe2, MessageSquare, DollarSign, Briefcase, Inbox } from "lucide-react";
 import logo from "@/assets/ige-logo.jpeg";
 import { useAuth } from "@/lib/auth-context";
 
@@ -15,9 +15,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   const nav: { to: string; label: string; icon: any; show: boolean }[] = [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, show: true },
     { to: "/events", label: "My events", icon: CalendarRange, show: isOrganiser },
-    { to: "/browse", label: "Browse events", icon: Globe2, show: isSponsor || isReferral },
-    { to: "/admin/vetting", label: "Vetting queue", icon: ShieldCheck, show: isAdmin },
+    { to: "/pipeline", label: "Pipeline", icon: Briefcase, show: isOrganiser },
+    { to: "/marketplace", label: "Marketplace", icon: Globe2, show: isSponsor || isReferral },
+    { to: "/deals", label: "My deals", icon: Inbox, show: isSponsor },
     { to: "/referrals", label: "Referrals", icon: Handshake, show: isReferral },
+    { to: "/messages", label: "Messages", icon: MessageSquare, show: true },
+    { to: "/admin/vetting", label: "Vetting", icon: ShieldCheck, show: isAdmin },
+    { to: "/admin/revenue", label: "Revenue", icon: DollarSign, show: isAdmin },
   ];
 
   return (

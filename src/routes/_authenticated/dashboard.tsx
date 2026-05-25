@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Megaphone, Globe2, Handshake, ShieldCheck, CalendarRange } from "lucide-react";
+import { Megaphone, Globe2, Handshake, ShieldCheck, MessageSquare, DollarSign, Briefcase, Inbox } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/lib/auth-context";
 
@@ -35,16 +35,25 @@ function Dashboard() {
         {roles.includes("organiser") && (
           <ActionCard to="/events" icon={Megaphone} title="My events" desc="Build sponsorship packs and track vetting status." cta="Manage events" />
         )}
+        {roles.includes("organiser") && (
+          <ActionCard to="/pipeline" icon={Briefcase} title="Sponsorship pipeline" desc="See sponsor inquiries and deal stages across your events." cta="Open pipeline" />
+        )}
         {(roles.includes("sponsor") || roles.includes("referral_partner")) && (
           <ActionCard to="/marketplace" icon={Globe2} title="Browse sponsorships" desc="Discover IGE-vetted events your buyers attend." cta="Open marketplace" />
+        )}
+        {roles.includes("sponsor") && (
+          <ActionCard to="/deals" icon={Inbox} title="My deals" desc="Track commitments you've submitted and saved events." cta="View deals" />
         )}
         {roles.includes("referral_partner") && (
           <ActionCard to="/referrals" icon={Handshake} title="Refer & earn" desc="Generate trackable links and earn commission." cta="Open referrals" />
         )}
+        <ActionCard to="/messages" icon={MessageSquare} title="Messages" desc="Talk to organisers, sponsors, and the IGE team." cta="Open inbox" />
         {isAdmin && (
           <ActionCard to="/admin/vetting" icon={ShieldCheck} title="Vetting queue" desc="Review submitted events and approve, reject, or request revisions." cta="Open queue" />
         )}
-        <ActionCard to="/dashboard" icon={CalendarRange} title="Notifications" desc="Updates on your events and deals will appear here." cta="Coming soon" disabled />
+        {isAdmin && (
+          <ActionCard to="/admin/revenue" icon={DollarSign} title="Revenue dashboard" desc="Deal pipeline, ABW commission, partner payouts." cta="Open revenue" />
+        )}
       </div>
     </AppShell>
   );
