@@ -2,9 +2,10 @@ import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { getPublicEventBySlug, submitCommitmentForm } from "@/lib/marketplace.functions";
+import { getPublicEventBySlug, submitCommitmentForm, getCurrentRates } from "@/lib/marketplace.functions";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
-import { Calendar, MapPin, Users, ShieldCheck, Globe, CheckCircle2, AlertCircle } from "lucide-react";
+import { Calendar, MapPin, Users, ShieldCheck, Globe, CheckCircle2, AlertCircle, CalendarPlus } from "lucide-react";
+import { fmtDual } from "@/lib/currency";
 import { z } from "zod";
 
 const searchSchema = z.object({ ref: z.string().max(20).optional() });
@@ -29,11 +30,14 @@ function EventDetail() {
   const { slug } = Route.useParams();
   const search = useSearch({ from: "/events/$slug" });
   const fetchEvent = useServerFn(getPublicEventBySlug);
+  const fetchRates = useServerFn(getCurrentRates);
 
   const { data, isLoading } = useQuery({
     queryKey: ["public-event", slug],
     queryFn: () => fetchEvent({ data: { slug } }),
   });
+  const { data: ratesData } = useQuery({ queryKey: ["fx-rates"], queryFn: () => fetchRates() });
+  const rates = ratesData?.rates;
 
   const [showForm, setShowForm] = useState(false);
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
@@ -134,7 +138,7 @@ function EventDetail() {
                   >
                     <div className="flex items-baseline justify-between">
                       <div className="font-display text-lg font-semibold">{t.tier_name}</div>
-                      <div className="font-display text-xl font-bold">{fmt(t.currency, Number(t.price))}</div>
+                      <div className="font-display text-xl font-bold">{fmtDual(t.currency, Number(t.price), rates)}</div>
                     </div>
                     {Array.isArray(t.assets) && t.assets.length > 0 && (
                       <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
