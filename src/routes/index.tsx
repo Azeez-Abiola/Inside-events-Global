@@ -241,6 +241,7 @@ function ThreeSides() {
         "Optional ABW-managed sales if you want a hands-off run",
       ],
       cta: "List your event",
+      to: "/signup" as const,
     },
     {
       id: "sponsors",
@@ -255,6 +256,7 @@ function ThreeSides() {
         "Direct messaging with verified organisers",
       ],
       cta: "Browse events",
+      to: "/marketplace" as const,
     },
     {
       id: "partners",
@@ -269,8 +271,10 @@ function ThreeSides() {
         "IGB Partner badge once you close your first deal",
       ],
       cta: "Become a partner",
+      to: "/signup" as const,
     },
   ];
+
 
   return (
     <section className="mx-auto max-w-7xl px-6 py-24 md:py-32">
