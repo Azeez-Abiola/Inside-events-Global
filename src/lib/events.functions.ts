@@ -97,9 +97,11 @@ export const autosaveEvent = createServerFn({ method: "POST" })
     if (!["draft", "revision_requested"].includes(ev.status)) {
       throw new Error("Event can no longer be edited in current status");
     }
-    const payload: Record<string, any> = { ...data.patch };
-    payload.form_step_completed = Math.max(data.step, 0);
-    payload.updated_at = new Date().toISOString();
+    const payload = {
+      ...data.patch,
+      form_step_completed: Math.max(data.step, 0),
+      updated_at: new Date().toISOString(),
+    } as never;
     const { error } = await supabase.from("events").update(payload).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true, savedAt: new Date().toISOString() };
