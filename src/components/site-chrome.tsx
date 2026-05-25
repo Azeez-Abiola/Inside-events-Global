@@ -56,7 +56,7 @@ export function SiteFooter() {
             referral partners actually close deals — not just exchange brochures.
           </p>
           <p className="mt-6 text-xs text-muted-foreground">
-            An AlexBoyo World company · © {new Date().getFullYear()} IGE
+            An Inside Global Event company · © 2026 IGE
           </p>
         </div>
         <div>
