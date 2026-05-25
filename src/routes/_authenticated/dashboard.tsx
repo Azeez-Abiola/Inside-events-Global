@@ -36,10 +36,10 @@ function Dashboard() {
           <ActionCard to="/events" icon={Megaphone} title="My events" desc="Build sponsorship packs and track vetting status." cta="Manage events" />
         )}
         {(roles.includes("sponsor") || roles.includes("referral_partner")) && (
-          <ActionCard to="/dashboard" icon={Globe2} title="Browse sponsorships" desc="Discover IGE-vetted events your buyers attend." cta="Coming in Sprint 3" disabled />
+          <ActionCard to="/marketplace" icon={Globe2} title="Browse sponsorships" desc="Discover IGE-vetted events your buyers attend." cta="Open marketplace" />
         )}
         {roles.includes("referral_partner") && (
-          <ActionCard to="/dashboard" icon={Handshake} title="Refer & earn" desc="Generate trackable links and earn commission." cta="Coming in Sprint 4" disabled />
+          <ActionCard to="/referrals" icon={Handshake} title="Refer & earn" desc="Generate trackable links and earn commission." cta="Open referrals" />
         )}
         {isAdmin && (
           <ActionCard to="/admin/vetting" icon={ShieldCheck} title="Vetting queue" desc="Review submitted events and approve, reject, or request revisions." cta="Open queue" />
