@@ -105,7 +105,7 @@ export const adminCreateDeal = createServerFn({ method: "POST" })
       .insert({
         commitment_form_id: cf.id,
         event_id: cf.event_id,
-        organiser_id: ev?.organiser_id,
+        organiser_id: ev?.organiser_id ?? cf.event_id, // fallback to satisfy NOT NULL
         sponsor_user_id: cf.sponsor_user_id,
         referral_partner_id: cf.referral_partner_id,
         deal_currency: cf.currency,
