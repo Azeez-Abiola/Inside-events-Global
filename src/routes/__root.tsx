@@ -9,10 +9,6 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
-import { AuthProvider } from "@/lib/auth-context";
-import { Toaster } from "@/components/ui/sonner";
-import { CookieBanner } from "@/components/cookie-banner";
-
 
 function NotFoundComponent() {
   return (
@@ -76,20 +72,24 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Inside Global Events — Sponsorship marketplace for Africa & the diaspora" },
-      { name: "description", content: "Close sponsorship deals in weeks, not months. IGE connects vetted event organisers with sponsors and rewards referral partners on every closed deal." },
-      { name: "author", content: "AlexBoyo World" },
-      { name: "theme-color", content: "#6B3FA0" },
-      { property: "og:title", content: "Inside Global Events" },
-      { property: "og:description", content: "Vetted sponsorship marketplace for African & diaspora events." },
+      { title: "Lovable App" },
+      { name: "description", content: "Inside Global Events IGE is a vertically integrated event intelligence and sponsorship marketplace platform built for the Africa and the global events economy." },
+      { name: "author", content: "Lovable" },
+      { property: "og:title", content: "Lovable App" },
+      { property: "og:description", content: "Inside Global Events IGE is a vertically integrated event intelligence and sponsorship marketplace platform built for the Africa and the global events economy." },
       { property: "og:type", content: "website" },
-      { property: "og:site_name", content: "Inside Global Events" },
-      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:card", content: "summary" },
+      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Lovable App" },
+      { name: "twitter:description", content: "Inside Global Events IGE is a vertically integrated event intelligence and sponsorship marketplace platform built for the Africa and the global events economy." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6410c0bf-c8c9-4d1e-b048-e98ce84ec6a2/id-preview-04099da8--0d1f4683-f826-450c-927b-386eaca7e044.lovable.app-1779749582346.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6410c0bf-c8c9-4d1e-b048-e98ce84ec6a2/id-preview-04099da8--0d1f4683-f826-450c-927b-386eaca7e044.lovable.app-1779749582346.png" },
     ],
-
     links: [
-      { rel: "stylesheet", href: appCss },
-      { rel: "manifest", href: "/manifest.webmanifest" },
+      {
+        rel: "stylesheet",
+        href: appCss,
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -117,12 +117,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Outlet />
-        <Toaster richColors position="top-right" />
-        <CookieBanner />
-      </AuthProvider>
+      <Outlet />
     </QueryClientProvider>
   );
 }
-
