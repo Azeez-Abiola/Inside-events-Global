@@ -189,7 +189,7 @@ export const submitEvent = createServerFn({ method: "POST" })
     if (!slug) {
       const { data: slugData, error: slugErr } = await supabaseAdmin.rpc("generate_event_slug", {
         p_name: ev.name,
-        p_city: ev.city,
+        p_city: ev.city ?? "",
       });
       if (slugErr) throw new Error(slugErr.message);
       slug = slugData as string;
