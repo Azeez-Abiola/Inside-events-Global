@@ -1041,6 +1041,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_event_slug: {
+        Args: { p_city: string; p_name: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
