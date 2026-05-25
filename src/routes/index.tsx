@@ -98,19 +98,20 @@ function Hero() {
 
             <div className="mt-9 flex flex-wrap items-center gap-3">
               <Link
-                to="/"
+                to="/signup"
                 className="group inline-flex items-center gap-2 rounded-md bg-brand-gradient px-6 py-3.5 text-sm font-semibold text-white shadow-brand transition-transform hover:-translate-y-0.5"
               >
                 List your event
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <Link
-                to="/"
+                to="/marketplace"
                 className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-6 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
               >
                 Browse sponsorships
               </Link>
             </div>
+
 
             <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
               <Badge icon={ShieldCheck}>Every event IGE-vetted</Badge>
@@ -240,6 +241,7 @@ function ThreeSides() {
         "Optional ABW-managed sales if you want a hands-off run",
       ],
       cta: "List your event",
+      to: "/signup" as const,
     },
     {
       id: "sponsors",
@@ -254,6 +256,7 @@ function ThreeSides() {
         "Direct messaging with verified organisers",
       ],
       cta: "Browse events",
+      to: "/marketplace" as const,
     },
     {
       id: "partners",
@@ -268,8 +271,10 @@ function ThreeSides() {
         "IGB Partner badge once you close your first deal",
       ],
       cta: "Become a partner",
+      to: "/signup" as const,
     },
   ];
+
 
   return (
     <section className="mx-auto max-w-7xl px-6 py-24 md:py-32">
@@ -320,12 +325,13 @@ function ThreeSides() {
             </ul>
 
             <Link
-              to="/"
+              to={s.to}
               className="mt-8 inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition-colors group-hover:text-primary-deep"
             >
               {s.cta}
               <ArrowRight className="h-4 w-4" />
             </Link>
+
           </article>
         ))}
       </div>
@@ -495,19 +501,20 @@ function FinalCta() {
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
-              to="/"
+              to="/signup"
               className="inline-flex items-center gap-2 rounded-md bg-white px-6 py-3.5 text-sm font-semibold text-primary-deep transition-transform hover:-translate-y-0.5"
             >
               Create your account
               <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link
-              to="/"
+            <a
+              href="mailto:partner@alexboyoworld.com"
               className="inline-flex items-center gap-2 rounded-md border border-white/30 bg-white/10 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/20"
             >
               Talk to the team
-            </Link>
+            </a>
           </div>
+
         </div>
       </div>
     </section>
