@@ -182,7 +182,7 @@ export const adminUpdateDealStatus = createServerFn({ method: "POST" })
       update.paid_at = new Date().toISOString();
     }
 
-    const { error } = await supabaseAdmin.from("deals").update(update).eq("id", data.id);
+    const { error } = await supabaseAdmin.from("deals").update(update as never).eq("id", data.id);
     if (error) throw new Error(error.message);
 
     await supabaseAdmin.from("deal_status_history").insert({
