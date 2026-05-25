@@ -183,6 +183,21 @@ function EventDetail() {
                 </div>
               )}
             </div>
+            {event.cal_booking_url && (
+              <div className="rounded-xl border border-border bg-card p-6">
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">Book an intro call</div>
+                <a
+                  href={event.cal_booking_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-cal-link={event.cal_booking_url.replace(/^https?:\/\/cal\.com\//, "")}
+                  className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted"
+                >
+                  <CalendarPlus className="h-4 w-4" /> Schedule with organiser
+                </a>
+                <p className="mt-2 text-xs text-muted-foreground">Powered by Cal.com — pick a time that works.</p>
+              </div>
+            )}
             {event.sponsorship_deadline && (
               <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
                 <div className="text-xs uppercase tracking-wide">Sponsorship deadline</div>
