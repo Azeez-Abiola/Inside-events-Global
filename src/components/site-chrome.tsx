@@ -24,18 +24,19 @@ export function SiteHeader() {
 
         <div className="flex items-center gap-2">
           <Link
-            to="/"
+            to="/login"
             className="hidden rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-muted sm:inline-flex"
           >
             Sign in
           </Link>
           <Link
-            to="/"
+            to="/signup"
             className="inline-flex items-center justify-center rounded-md bg-brand-gradient px-4 py-2 text-sm font-semibold text-white shadow-soft transition-transform hover:-translate-y-0.5"
           >
             Get started
           </Link>
         </div>
+
       </div>
     </header>
   );
