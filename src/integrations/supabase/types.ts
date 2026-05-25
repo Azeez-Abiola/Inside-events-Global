@@ -14,6 +14,174 @@ export type Database = {
   }
   public: {
     Tables: {
+      commission_config: {
+        Row: {
+          cookie_window_days: number
+          created_at: string
+          exclusive_partner_rate: number
+          id: string
+          igb_partner_rate: number
+          min_payout_usd: number
+          payout_schedule: string
+          standard_rate: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cookie_window_days?: number
+          created_at?: string
+          exclusive_partner_rate?: number
+          id?: string
+          igb_partner_rate?: number
+          min_payout_usd?: number
+          payout_schedule?: string
+          standard_rate?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cookie_window_days?: number
+          created_at?: string
+          exclusive_partner_rate?: number
+          id?: string
+          igb_partner_rate?: number
+          min_payout_usd?: number
+          payout_schedule?: string
+          standard_rate?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      commitment_forms: {
+        Row: {
+          budget_indicated: number | null
+          company_name: string
+          contact_email: string
+          contact_name: string
+          contact_phone: string | null
+          created_at: string
+          currency: string
+          event_id: string
+          id: string
+          message: string | null
+          referral_link_id: string | null
+          sponsor_id: string
+          status: string
+          submitted_at: string
+          tier_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          budget_indicated?: number | null
+          company_name: string
+          contact_email: string
+          contact_name: string
+          contact_phone?: string | null
+          created_at?: string
+          currency?: string
+          event_id: string
+          id?: string
+          message?: string | null
+          referral_link_id?: string | null
+          sponsor_id: string
+          status?: string
+          submitted_at?: string
+          tier_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          budget_indicated?: number | null
+          company_name?: string
+          contact_email?: string
+          contact_name?: string
+          contact_phone?: string | null
+          created_at?: string
+          currency?: string
+          event_id?: string
+          id?: string
+          message?: string | null
+          referral_link_id?: string | null
+          sponsor_id?: string
+          status?: string
+          submitted_at?: string
+          tier_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      deals: {
+        Row: {
+          amount: number
+          amount_usd: number | null
+          commission_amount_usd: number | null
+          commission_rate: number | null
+          commitment_form_id: string | null
+          contract_url: string | null
+          created_at: string
+          currency: string
+          event_id: string
+          id: string
+          notes: string | null
+          organiser_id: string
+          paid_at: string | null
+          payout_at: string | null
+          referral_link_id: string | null
+          referral_partner_id: string | null
+          signed_at: string | null
+          sponsor_id: string
+          status: string
+          tier_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          amount_usd?: number | null
+          commission_amount_usd?: number | null
+          commission_rate?: number | null
+          commitment_form_id?: string | null
+          contract_url?: string | null
+          created_at?: string
+          currency?: string
+          event_id: string
+          id?: string
+          notes?: string | null
+          organiser_id: string
+          paid_at?: string | null
+          payout_at?: string | null
+          referral_link_id?: string | null
+          referral_partner_id?: string | null
+          signed_at?: string | null
+          sponsor_id: string
+          status?: string
+          tier_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          amount_usd?: number | null
+          commission_amount_usd?: number | null
+          commission_rate?: number | null
+          commitment_form_id?: string | null
+          contract_url?: string | null
+          created_at?: string
+          currency?: string
+          event_id?: string
+          id?: string
+          notes?: string | null
+          organiser_id?: string
+          paid_at?: string | null
+          payout_at?: string | null
+          referral_link_id?: string | null
+          referral_partner_id?: string | null
+          signed_at?: string | null
+          sponsor_id?: string
+          status?: string
+          tier_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       event_sponsorship_tiers: {
         Row: {
           assets: string | null
@@ -250,6 +418,153 @@ export type Database = {
         }
         Relationships: []
       }
+      exchange_rates: {
+        Row: {
+          base_currency: string
+          created_at: string
+          fetched_at: string
+          id: string
+          quote_currency: string
+          rate: number
+          source: string
+        }
+        Insert: {
+          base_currency: string
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          quote_currency: string
+          rate: number
+          source?: string
+        }
+        Update: {
+          base_currency?: string
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          quote_currency?: string
+          rate?: number
+          source?: string
+        }
+        Relationships: []
+      }
+      fraud_flags: {
+        Row: {
+          created_at: string
+          details: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          reason: string
+          reported_by: string | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          reason: string
+          reported_by?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          reason?: string
+          reported_by?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          body: string
+          created_at: string
+          deal_id: string | null
+          event_id: string | null
+          id: string
+          read: boolean
+          read_at: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          deal_id?: string | null
+          event_id?: string | null
+          id?: string
+          read?: boolean
+          read_at?: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          deal_id?: string | null
+          event_id?: string | null
+          id?: string
+          read?: boolean
+          read_at?: string | null
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          link_url: string | null
+          read: boolean
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link_url?: string | null
+          read?: boolean
+          read_at?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link_url?: string | null
+          read?: boolean
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       organiser_profiles: {
         Row: {
           bio: string | null
@@ -339,6 +654,42 @@ export type Database = {
           linkedin_url?: string | null
           profile_complete?: number
           suspension_reason?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      referral_links: {
+        Row: {
+          clicks_count: number
+          conversions_count: number
+          created_at: string
+          event_id: string
+          id: string
+          is_active: boolean
+          referral_partner_id: string
+          short_code: string
+          updated_at: string
+        }
+        Insert: {
+          clicks_count?: number
+          conversions_count?: number
+          created_at?: string
+          event_id: string
+          id?: string
+          is_active?: boolean
+          referral_partner_id: string
+          short_code: string
+          updated_at?: string
+        }
+        Update: {
+          clicks_count?: number
+          conversions_count?: number
+          created_at?: string
+          event_id?: string
+          id?: string
+          is_active?: boolean
+          referral_partner_id?: string
+          short_code?: string
           updated_at?: string
         }
         Relationships: []
