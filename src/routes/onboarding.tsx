@@ -20,13 +20,6 @@ const ROLES: { key: RoleKey; title: string; desc: string; icon: any }[] = [
   { key: "media_partner", title: "Media Partner", desc: "Cross-promote with quality events.", icon: Newspaper },
 ];
 
-const NEXT_FOR_ROLE: Record<RoleKey, string> = {
-  organiser: "/dashboard",
-  sponsor: "/dashboard",
-  referral_partner: "/dashboard",
-  media_partner: "/dashboard",
-};
-
 function Onboarding() {
   const { user, roles, loading } = useAuth();
   const navigate = useNavigate();
@@ -41,8 +34,8 @@ function Onboarding() {
       return;
     }
     if (roles.length > 0) {
-      const r = roles[0] as RoleKey;
-      navigate({ to: NEXT_FOR_ROLE[r] ?? "/dashboard" });
+      // Role already assigned — send to profile completion
+      navigate({ to: "/onboarding/profile" });
       return;
     }
     const pending = typeof window !== "undefined" ? sessionStorage.getItem("ige:pending-role") : null;
@@ -51,7 +44,7 @@ function Onboarding() {
       (async () => {
         await applyRole(user.id, pending as RoleKey);
         try { sessionStorage.removeItem("ige:pending-role"); } catch {}
-        navigate({ to: NEXT_FOR_ROLE[pending as RoleKey] ?? "/dashboard" });
+        navigate({ to: "/onboarding/profile" });
       })();
       return;
     }
@@ -68,8 +61,8 @@ function Onboarding() {
     setSaving(true);
     try {
       await applyRole(user.id, selected);
-      toast.success("You're all set");
-      navigate({ to: NEXT_FOR_ROLE[selected] ?? "/dashboard" });
+      toast.success("Role set — let's complete your profile");
+      navigate({ to: "/onboarding/profile" });
     } catch (e: any) {
       toast.error(e.message ?? "Could not save your role");
     } finally {
