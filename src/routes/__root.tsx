@@ -120,7 +120,9 @@ function RootComponent() {
       <AuthProvider>
         <Outlet />
         <Toaster richColors position="top-right" />
+        <CookieBanner />
       </AuthProvider>
     </QueryClientProvider>
   );
 }
+
