@@ -20,6 +20,13 @@ const ROLES: { key: RoleKey; title: string; desc: string; icon: any }[] = [
   { key: "media_partner", title: "Media Partner", desc: "Cross-promote with quality events.", icon: Newspaper },
 ];
 
+const NEXT_FOR_ROLE: Record<RoleKey, string> = {
+  organiser: "/dashboard",
+  sponsor: "/dashboard",
+  referral_partner: "/dashboard",
+  media_partner: "/dashboard",
+};
+
 function Onboarding() {
   const { user, roles, loading } = useAuth();
   const navigate = useNavigate();
@@ -27,8 +34,6 @@ function Onboarding() {
   const [saving, setSaving] = useState(false);
   const [checking, setChecking] = useState(true);
 
-  // If already onboarded, bounce to dashboard. Also try to auto-apply a pending role
-  // captured before the OAuth round-trip on the signup page.
   useEffect(() => {
     if (loading) return;
     if (!user) {
@@ -36,20 +41,17 @@ function Onboarding() {
       return;
     }
     if (roles.length > 0) {
-      navigate({ to: "/dashboard" });
+      const r = roles[0] as RoleKey;
+      navigate({ to: NEXT_FOR_ROLE[r] ?? "/dashboard" });
       return;
     }
-
-    const pending = typeof window !== "undefined"
-      ? sessionStorage.getItem("ige:pending-role")
-      : null;
+    const pending = typeof window !== "undefined" ? sessionStorage.getItem("ige:pending-role") : null;
     if (pending && ROLES.some((r) => r.key === pending)) {
       setSelected(pending as RoleKey);
-      // auto-apply
       (async () => {
         await applyRole(user.id, pending as RoleKey);
         try { sessionStorage.removeItem("ige:pending-role"); } catch {}
-        navigate({ to: "/dashboard" });
+        navigate({ to: NEXT_FOR_ROLE[pending as RoleKey] ?? "/dashboard" });
       })();
       return;
     }
@@ -57,12 +59,8 @@ function Onboarding() {
   }, [loading, user, roles, navigate]);
 
   async function applyRole(userId: string, role: RoleKey) {
-    const { error } = await supabase
-      .from("user_roles")
-      .insert({ user_id: userId, role });
-    if (error && !error.message.includes("duplicate")) {
-      throw new Error(error.message);
-    }
+    const { error } = await supabase.from("user_roles").insert({ user_id: userId, role });
+    if (error && !error.message.includes("duplicate")) throw new Error(error.message);
   }
 
   async function handleContinue() {
@@ -71,7 +69,7 @@ function Onboarding() {
     try {
       await applyRole(user.id, selected);
       toast.success("You're all set");
-      navigate({ to: "/dashboard" });
+      navigate({ to: NEXT_FOR_ROLE[selected] ?? "/dashboard" });
     } catch (e: any) {
       toast.error(e.message ?? "Could not save your role");
     } finally {
@@ -112,22 +110,14 @@ function Onboarding() {
                 isSel ? "border-primary bg-brand-soft" : "border-border bg-card hover:bg-muted"
               }`}
             >
-              <span
-                className={`flex h-9 w-9 items-center justify-center rounded-lg ${
-                  isSel ? "bg-brand-gradient text-white" : "bg-muted text-muted-foreground"
-                }`}
-              >
+              <span className={`flex h-9 w-9 items-center justify-center rounded-lg ${isSel ? "bg-brand-gradient text-white" : "bg-muted text-muted-foreground"}`}>
                 <r.icon className="h-4 w-4" />
               </span>
               <span className="flex-1">
                 <span className="block text-sm font-semibold text-foreground">{r.title}</span>
                 <span className="block text-xs text-muted-foreground">{r.desc}</span>
               </span>
-              <span
-                className={`h-4 w-4 rounded-full border ${
-                  isSel ? "border-primary bg-primary" : "border-border"
-                }`}
-              />
+              <span className={`h-4 w-4 rounded-full border ${isSel ? "border-primary bg-primary" : "border-border"}`} />
             </button>
           );
         })}
@@ -138,7 +128,7 @@ function Onboarding() {
         disabled={saving}
         className="mt-6 inline-flex w-full items-center justify-center rounded-md bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition-transform hover:-translate-y-0.5 disabled:opacity-60"
       >
-        {saving ? "Saving…" : "Continue to dashboard"}
+        {saving ? "Saving…" : "Continue"}
       </button>
     </AuthShell>
   );
