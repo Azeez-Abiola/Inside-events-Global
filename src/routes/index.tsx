@@ -217,12 +217,11 @@ function Stats() {
   const stats = [
     { v: "100%", l: "of events vetted before going live" },
     { v: "40+", l: "markets, from London to Dubai to Singapore" },
-    { v: "0", l: "listing fees — we earn when you do" },
-    { v: "72h", l: "median time from listing to first sponsor inquiry" },
+    { v: "Zero", l: "listing fees, we earn when you do" },
   ];
   return (
     <section className="border-y border-border bg-muted/30">
-      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-8 px-6 py-12 md:grid-cols-4">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-6 py-12 md:grid-cols-3">
         {stats.map((s) => (
           <div key={s.l}>
             <div className="font-display text-3xl font-bold text-brand-gradient md:text-4xl">
