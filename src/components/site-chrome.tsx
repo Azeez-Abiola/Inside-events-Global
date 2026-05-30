@@ -6,7 +6,14 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         <Link to="/" className="flex items-center gap-2.5">
-          <img src={logo} alt="IGE" className="h-9 w-9 rounded-md object-cover" />
+          <img
+            src={logo}
+            alt="IGE"
+            className="h-9 w-9 rounded-md object-cover mix-blend-multiply dark:mix-blend-screen"
+          />
+          <span className="font-display italic font-semibold text-brand-gradient text-base sm:text-lg">
+            Inside Global Events
+          </span>
         </Link>
 
         <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
