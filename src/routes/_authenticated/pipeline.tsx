@@ -7,7 +7,7 @@ import { fmtMoney } from "@/lib/currency";
 import { Eye, Bookmark, MessageSquare } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/pipeline")({
-  head: () => ({ meta: [{ title: "Pipeline — IGE" }] }),
+  head: () => ({ meta: [{ title: "Pipeline - IGE" }] }),
   component: OrganiserPipeline,
 });
 
@@ -55,12 +55,12 @@ function OrganiserPipeline() {
                         <td className="px-4 py-3 font-medium">{f.company_name}</td>
                         <td className="px-4 py-3">{f.contact_name}</td>
                         <td className="px-4 py-3 text-xs">
-                          {f.budget_range_min || f.budget_range_max ? `${fmtMoney(f.currency, Number(f.budget_range_min ?? 0))} – ${fmtMoney(f.currency, Number(f.budget_range_max ?? 0))}` : "—"}
+                          {f.budget_range_min || f.budget_range_max ? `${fmtMoney(f.currency, Number(f.budget_range_min ?? 0))} – ${fmtMoney(f.currency, Number(f.budget_range_max ?? 0))}` : "-"}
                         </td>
                         <td className="px-4 py-3 capitalize">
                           {deal ? <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary-deep">{deal.status.replace(/_/g, " ")}</span> : <span className="text-xs text-muted-foreground">Pending vetting</span>}
                         </td>
-                        <td className="px-4 py-3 text-xs text-muted-foreground">{f.submitted_at ? new Date(f.submitted_at).toLocaleDateString() : "—"}</td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">{f.submitted_at ? new Date(f.submitted_at).toLocaleDateString() : "-"}</td>
                       </tr>
                     );
                   })}

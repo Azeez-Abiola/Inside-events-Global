@@ -9,7 +9,7 @@ import { fmtMoney } from "@/lib/currency";
 import { DollarSign, TrendingUp, AlertTriangle, Briefcase, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/revenue")({
-  head: () => ({ meta: [{ title: "Revenue — IGE Admin" }] }),
+  head: () => ({ meta: [{ title: "Revenue - IGE Admin" }] }),
   component: AdminRevenue,
 });
 
@@ -87,7 +87,7 @@ function AdminRevenue() {
                 return (
                   <tr key={d.id} className="border-t border-border align-top">
                     <td className="px-4 py-3">
-                      <div className="font-medium">{ev?.name ?? "—"}</div>
+                      <div className="font-medium">{ev?.name ?? "-"}</div>
                       <div className="text-xs text-muted-foreground">{[ev?.city, ev?.country].filter(Boolean).join(", ")}</div>
                     </td>
                     <td className="px-4 py-3">
@@ -104,15 +104,15 @@ function AdminRevenue() {
                       />
                       <div className="mt-0.5 text-[10px] text-muted-foreground">{d.deal_currency}</div>
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs">{d.deal_value_usd ? fmtMoney("USD", Number(d.deal_value_usd)) : "—"}</td>
-                    <td className="px-4 py-3 font-mono text-xs">{d.abw_commission_usd ? fmtMoney("USD", Number(d.abw_commission_usd)) : "—"}</td>
+                    <td className="px-4 py-3 font-mono text-xs">{d.deal_value_usd ? fmtMoney("USD", Number(d.deal_value_usd)) : "-"}</td>
+                    <td className="px-4 py-3 font-mono text-xs">{d.abw_commission_usd ? fmtMoney("USD", Number(d.abw_commission_usd)) : "-"}</td>
                     <td className="px-4 py-3">
                       {d.referral_partner_id ? (
                         <div>
-                          <div className="font-mono text-xs">{d.referral_commission_usd ? fmtMoney("USD", Number(d.referral_commission_usd)) : "—"}</div>
+                          <div className="font-mono text-xs">{d.referral_commission_usd ? fmtMoney("USD", Number(d.referral_commission_usd)) : "-"}</div>
                           <div className="text-[10px] text-muted-foreground">{d.referral_commission_paid ? "Paid" : "Owed"}</div>
                         </div>
-                      ) : <span className="text-xs text-muted-foreground">—</span>}
+                      ) : <span className="text-xs text-muted-foreground">-</span>}
                     </td>
                     <td className="px-4 py-3">
                       <select

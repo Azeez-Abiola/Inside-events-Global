@@ -9,7 +9,7 @@ import { listEventsForVetting, setEventVettingStatus, getEventForAdmin } from "@
 import { useAuth } from "@/lib/auth-context";
 
 export const Route = createFileRoute("/_authenticated/admin/vetting")({
-  head: () => ({ meta: [{ title: "Vetting queue — IGE Admin" }] }),
+  head: () => ({ meta: [{ title: "Vetting queue - IGE Admin" }] }),
   component: VettingQueue,
 });
 
@@ -79,7 +79,7 @@ function VettingQueue() {
                   >
                     <div className="font-semibold">{e.name}</div>
                     <div className="mt-1 text-xs text-muted-foreground">
-                      {[e.event_type, e.city, e.country].filter(Boolean).join(" · ") || "—"}
+                      {[e.event_type, e.city, e.country].filter(Boolean).join(" · ") || "-"}
                     </div>
                     <div className="mt-1 text-[11px] text-muted-foreground">{e.organiser_email}</div>
                   </button>
@@ -142,7 +142,7 @@ function VettingDrawer({ id, onClose }: { id: string; onClose: () => void }) {
               <Info label="Location" value={[data.event.city, data.event.country].filter(Boolean).join(", ")} />
               <Info label="Attendance" value={data.event.attendance_size} />
               <Info label="Primary sector" value={data.event.primary_sector} />
-              <Info label="Min spend" value={data.event.min_sponsorship_spend ? `${data.event.currency} ${Number(data.event.min_sponsorship_spend).toLocaleString()}` : "—"} />
+              <Info label="Min spend" value={data.event.min_sponsorship_spend ? `${data.event.currency} ${Number(data.event.min_sponsorship_spend).toLocaleString()}` : "-"} />
             </dl>
 
             <div className="mt-5 space-y-1.5 text-sm">
@@ -197,7 +197,7 @@ function Info({ label, value }: { label: string; value: any }) {
   return (
     <div>
       <dt className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</dt>
-      <dd className="mt-0.5">{value ?? "—"}</dd>
+      <dd className="mt-0.5">{value ?? "-"}</dd>
     </div>
   );
 }

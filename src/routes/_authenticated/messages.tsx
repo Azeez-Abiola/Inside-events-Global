@@ -12,7 +12,7 @@ const searchSchema = z.object({ thread: z.string().uuid().optional() });
 
 export const Route = createFileRoute("/_authenticated/messages")({
   validateSearch: searchSchema,
-  head: () => ({ meta: [{ title: "Messages — IGE" }] }),
+  head: () => ({ meta: [{ title: "Messages - IGE" }] }),
   component: MessagesPage,
 });
 
