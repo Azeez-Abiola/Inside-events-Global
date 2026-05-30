@@ -44,7 +44,7 @@ function PricingPage() {
       price: "Earn on every closed deal",
       desc: "Accredited partners earn a share of IGE's platform commission for every sponsorship they introduce that reaches payment.",
       points: [
-        "Up to 30% of IGE's commission per deal",
+        "Up to 20% of IGE's commission per deal",
         "Paid out of IGE commission, never added on top",
         "Transparent dashboard for tracked deals",
         "Monthly payouts once a deal settles",
