@@ -22,7 +22,7 @@ function PrivacyPage() {
 
       <section className="prose mt-8 space-y-6 text-sm leading-relaxed">
         <p>
-          Inside Global Events ("IGE", "we") is operated by AlexBoyo World. This policy
+          Inside Global Events ("IGE", "we") is a sponsorship marketplace platform. This policy
           explains how we collect and use personal information when you use insideglobalevents.com.
           We comply with the Nigeria Data Protection Regulation (NDPR) and the EU General Data
           Protection Regulation (GDPR).
@@ -48,8 +48,8 @@ function PrivacyPage() {
         <p>
           You can request access, correction, or deletion of your personal data at any time.
           Use <strong>Account → Delete account</strong> in your dashboard, or email{" "}
-          <a href="mailto:partner@alexboyoworld.com" className="text-primary hover:underline">
-            partner@alexboyoworld.com
+          <a href="mailto:Hi@insideglobalevents.com" className="text-primary hover:underline">
+            Hi@insideglobalevents.com
           </a>
           . We anonymise PII on request while retaining deal and referral records for accounting
           (12-month minimum retention).
@@ -63,9 +63,9 @@ function PrivacyPage() {
 
         <h2 className="text-xl font-semibold">Contact</h2>
         <p>
-          Data controller: AlexBoyo World ·{" "}
-          <a href="mailto:partner@alexboyoworld.com" className="text-primary hover:underline">
-            partner@alexboyoworld.com
+          Inside Global Events ·{" "}
+          <a href="mailto:Hi@insideglobalevents.com" className="text-primary hover:underline">
+            Hi@insideglobalevents.com
           </a>
         </p>
       </section>

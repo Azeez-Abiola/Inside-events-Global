@@ -175,7 +175,7 @@ function AboutPage() {
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <a
-                href="mailto:hi@insideglobalevent.com"
+                href="mailto:Hi@insideglobalevents.com"
                 className="inline-flex items-center gap-2 rounded-md border border-white/30 bg-white/10 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/20"
               >
                 Talk to the team

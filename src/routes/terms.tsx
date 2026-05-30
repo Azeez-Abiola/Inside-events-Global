@@ -21,7 +21,7 @@ function TermsPage() {
       <section className="mt-8 space-y-6 text-sm leading-relaxed">
         <p>
           By using Inside Global Events you agree to these terms. IGE is a sponsorship
-          marketplace operated by AlexBoyo World.
+          marketplace.
         </p>
 
         <h2 className="text-xl font-semibold">Listings &amp; vetting</h2>
@@ -60,9 +60,9 @@ function TermsPage() {
 
         <h2 className="text-xl font-semibold">Contact</h2>
         <p>
-          AlexBoyo World ·{" "}
-          <a href="mailto:partner@alexboyoworld.com" className="text-primary hover:underline">
-            partner@alexboyoworld.com
+          Inside Global Events ·{" "}
+          <a href="mailto:Hi@insideglobalevents.com" className="text-primary hover:underline">
+            Hi@insideglobalevents.com
           </a>
         </p>
       </section>
