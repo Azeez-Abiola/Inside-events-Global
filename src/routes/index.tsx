@@ -144,31 +144,42 @@ function HeroVisual() {
   return (
     <div className="relative mx-auto aspect-[4/5] w-full max-w-md">
       {/* main featured event card */}
-      <div className="absolute inset-0 rotate-[-2deg] rounded-2xl border border-border bg-card p-5 shadow-brand">
-        <div className="flex h-40 w-full items-center justify-center rounded-xl bg-brand-gradient-diag text-white">
-          <div className="text-center">
-            <div className="text-xs uppercase tracking-[0.2em] opacity-80">Featured</div>
-            <div className="mt-1 font-display text-2xl font-bold">Global FinTech Summit</div>
-            <div className="mt-1 text-xs opacity-80">London · 12–14 Oct 2026</div>
+      <div className="absolute inset-0 rotate-[-2deg] overflow-hidden rounded-2xl border border-border bg-card shadow-brand">
+        <div className="relative h-44 w-full overflow-hidden">
+          <img
+            src={featuredImg}
+            alt="Itsekiri Global HomeComing 2026"
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute left-3 top-3 inline-flex items-center rounded-full bg-black/50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur">
+            Featured
           </div>
         </div>
-        <div className="mt-4 flex items-center justify-between text-sm">
-          <div>
-            <div className="text-xs text-muted-foreground">Attendance</div>
-            <div className="font-semibold">3,200 senior buyers</div>
+        <div className="p-5">
+          <div className="font-display text-lg font-bold leading-tight">
+            Itsekiri Global HomeComing 2026
           </div>
-          <div className="text-right">
-            <div className="text-xs text-muted-foreground">From</div>
-            <div className="font-semibold">$25,000</div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            Warri Kingdom, Delta State · 17 to 21 Aug 2026
           </div>
-        </div>
-        <div className="mt-4 flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 rounded-full bg-secondary/10 px-2.5 py-1 text-[11px] font-medium text-secondary-deep">
-            <ShieldCheck className="h-3 w-3" /> IGE Vetted
-          </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary-deep">
-            ABW Managed
-          </span>
+          <div className="mt-4 flex items-center justify-between text-sm">
+            <div>
+              <div className="text-xs text-muted-foreground">Attendance</div>
+              <div className="font-semibold">20,000+ expected</div>
+            </div>
+            <div className="text-right">
+              <div className="text-xs text-muted-foreground">From</div>
+              <div className="font-semibold">₦5,000,000</div>
+            </div>
+          </div>
+          <div className="mt-4 flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 rounded-full bg-secondary/10 px-2.5 py-1 text-[11px] font-medium text-secondary-deep">
+              <ShieldCheck className="h-3 w-3" /> IGE Vetted
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary-deep">
+              Royal Patronage
+            </span>
+          </div>
         </div>
       </div>
 
@@ -180,7 +191,7 @@ function HeroVisual() {
           </div>
           <div>
             <div className="text-xs text-muted-foreground">Deal closed</div>
-            <div className="text-sm font-semibold">+$42,000</div>
+            <div className="text-sm font-semibold">+₦18,000,000</div>
           </div>
         </div>
       </div>
