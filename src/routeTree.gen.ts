@@ -19,6 +19,7 @@ import { Route as OrganisersRouteImport } from './routes/organisers'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
@@ -86,6 +87,11 @@ const MarketplaceRoute = MarketplaceRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HowItWorksRoute = HowItWorksRouteImport.update({
+  id: '/how-it-works',
+  path: '/how-it-works',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -184,6 +190,7 @@ const ApiPublicWebhooksPaystackRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/how-it-works': typeof HowItWorksRoute
   '/login': typeof LoginRoute
   '/marketplace': typeof MarketplaceRoute
   '/onboarding': typeof OnboardingRouteWithChildren
@@ -213,6 +220,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/how-it-works': typeof HowItWorksRoute
   '/login': typeof LoginRoute
   '/marketplace': typeof MarketplaceRoute
   '/onboarding': typeof OnboardingRouteWithChildren
@@ -244,6 +252,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
+  '/how-it-works': typeof HowItWorksRoute
   '/login': typeof LoginRoute
   '/marketplace': typeof MarketplaceRoute
   '/onboarding': typeof OnboardingRouteWithChildren
@@ -275,6 +284,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/forgot-password'
+    | '/how-it-works'
     | '/login'
     | '/marketplace'
     | '/onboarding'
@@ -304,6 +314,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/forgot-password'
+    | '/how-it-works'
     | '/login'
     | '/marketplace'
     | '/onboarding'
@@ -334,6 +345,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/forgot-password'
+    | '/how-it-works'
     | '/login'
     | '/marketplace'
     | '/onboarding'
@@ -365,6 +377,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  HowItWorksRoute: typeof HowItWorksRoute
   LoginRoute: typeof LoginRoute
   MarketplaceRoute: typeof MarketplaceRoute
   OnboardingRoute: typeof OnboardingRouteWithChildren
@@ -451,6 +464,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/how-it-works': {
+      id: '/how-it-works'
+      path: '/how-it-works'
+      fullPath: '/how-it-works'
+      preLoaderRoute: typeof HowItWorksRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -637,6 +657,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  HowItWorksRoute: HowItWorksRoute,
   LoginRoute: LoginRoute,
   MarketplaceRoute: MarketplaceRoute,
   OnboardingRoute: OnboardingRouteWithChildren,
