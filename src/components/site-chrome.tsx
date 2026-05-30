@@ -31,10 +31,10 @@ export function SiteHeader() {
             Sign in
           </Link>
           <Link
-            to="/signup"
+            to="/waitlist"
             className="inline-flex items-center justify-center rounded-md bg-brand-gradient px-4 py-2 text-sm font-semibold text-white shadow-soft transition-transform hover:-translate-y-0.5"
           >
-            Get started
+            Join waitlist
           </Link>
         </div>
 
@@ -80,6 +80,7 @@ export function SiteFooter() {
             <li><Link to="/about" className="hover:text-foreground">About IGE</Link></li>
             <li><Link to="/trust-vetting" className="hover:text-foreground">Trust &amp; vetting</Link></li>
             <li><Link to="/faq" className="hover:text-foreground">FAQ</Link></li>
+            <li><Link to="/waitlist" className="hover:text-foreground">Join the waitlist</Link></li>
             <li><Link to="/contact" className="hover:text-foreground">Contact</Link></li>
             <li><Link to="/privacy" className="hover:text-foreground">Privacy</Link></li>
             <li><Link to="/terms" className="hover:text-foreground">Terms</Link></li>
