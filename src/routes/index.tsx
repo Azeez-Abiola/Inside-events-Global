@@ -23,7 +23,7 @@ export const Route = createFileRoute("/")({
         content:
           "Inside Global Events connects vetted B2B event organisers, sponsors, and trusted referral partners. Discover sponsorship opportunities, close deals, and grow revenue without the noise.",
       },
-      { property: "og:title", content: "IGE · Inside Global Events" },
+      { property: "og:title", content: "Inside Global Events" },
       {
         property: "og:description",
         content:

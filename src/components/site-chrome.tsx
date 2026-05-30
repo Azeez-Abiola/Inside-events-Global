@@ -50,7 +50,7 @@ export function SiteFooter() {
             referral partners actually close deals, not just exchange brochures.
           </p>
           <p className="mt-6 text-xs text-muted-foreground">
-            An Inside Global Event company · © 2026 IGE
+            Inside Global Events
           </p>
         </div>
         <div>
