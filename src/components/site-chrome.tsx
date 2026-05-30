@@ -49,8 +49,8 @@ export function SiteFooter() {
       <div className="mx-auto grid max-w-7xl gap-10 px-6 py-14 md:grid-cols-4">
         <div className="md:col-span-2">
           <div className="flex items-center gap-2.5">
-            <img src={logo} alt="IGE" className="h-8 w-8 rounded-md object-cover" />
-            <span className="font-display text-base font-bold tracking-tight">​</span>
+            <img src={logo} alt="" aria-hidden="true" className="h-8 w-8 rounded-md object-cover" />
+            <span className="font-display text-base font-bold tracking-tight">Inside Global Events</span>
           </div>
           <p className="mt-4 max-w-sm text-sm text-muted-foreground">
             The vetted marketplace where B2B event organisers, sponsors, and trusted
