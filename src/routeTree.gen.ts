@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WaitlistRouteImport } from './routes/waitlist'
 import { Route as TrustVettingRouteImport } from './routes/trust-vetting'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SponsorsRouteImport } from './routes/sponsors'
@@ -44,6 +45,11 @@ import { Route as AuthenticatedAdminRevenueRouteImport } from './routes/_authent
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
 import { Route as ApiPublicWebhooksPaystackRouteImport } from './routes/api/public/webhooks/paystack'
 
+const WaitlistRoute = WaitlistRouteImport.update({
+  id: '/waitlist',
+  path: '/waitlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TrustVettingRoute = TrustVettingRouteImport.update({
   id: '/trust-vetting',
   path: '/trust-vetting',
@@ -236,6 +242,7 @@ export interface FileRoutesByFullPath {
   '/sponsors': typeof SponsorsRoute
   '/terms': typeof TermsRoute
   '/trust-vetting': typeof TrustVettingRoute
+  '/waitlist': typeof WaitlistRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/deals': typeof AuthenticatedDealsRoute
   '/events': typeof AuthenticatedEventsRouteWithChildren
@@ -271,6 +278,7 @@ export interface FileRoutesByTo {
   '/sponsors': typeof SponsorsRoute
   '/terms': typeof TermsRoute
   '/trust-vetting': typeof TrustVettingRoute
+  '/waitlist': typeof WaitlistRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/deals': typeof AuthenticatedDealsRoute
   '/events': typeof AuthenticatedEventsRouteWithChildren
@@ -308,6 +316,7 @@ export interface FileRoutesById {
   '/sponsors': typeof SponsorsRoute
   '/terms': typeof TermsRoute
   '/trust-vetting': typeof TrustVettingRoute
+  '/waitlist': typeof WaitlistRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/deals': typeof AuthenticatedDealsRoute
   '/_authenticated/events': typeof AuthenticatedEventsRouteWithChildren
@@ -345,6 +354,7 @@ export interface FileRouteTypes {
     | '/sponsors'
     | '/terms'
     | '/trust-vetting'
+    | '/waitlist'
     | '/dashboard'
     | '/deals'
     | '/events'
@@ -380,6 +390,7 @@ export interface FileRouteTypes {
     | '/sponsors'
     | '/terms'
     | '/trust-vetting'
+    | '/waitlist'
     | '/dashboard'
     | '/deals'
     | '/events'
@@ -416,6 +427,7 @@ export interface FileRouteTypes {
     | '/sponsors'
     | '/terms'
     | '/trust-vetting'
+    | '/waitlist'
     | '/_authenticated/dashboard'
     | '/_authenticated/deals'
     | '/_authenticated/events'
@@ -453,6 +465,7 @@ export interface RootRouteChildren {
   SponsorsRoute: typeof SponsorsRoute
   TermsRoute: typeof TermsRoute
   TrustVettingRoute: typeof TrustVettingRoute
+  WaitlistRoute: typeof WaitlistRoute
   EventsSlugRoute: typeof EventsSlugRoute
   RCodeRoute: typeof RCodeRoute
   ApiPublicWebhooksPaystackRoute: typeof ApiPublicWebhooksPaystackRoute
@@ -461,6 +474,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/waitlist': {
+      id: '/waitlist'
+      path: '/waitlist'
+      fullPath: '/waitlist'
+      preLoaderRoute: typeof WaitlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/trust-vetting': {
       id: '/trust-vetting'
       path: '/trust-vetting'
@@ -773,6 +793,7 @@ const rootRouteChildren: RootRouteChildren = {
   SponsorsRoute: SponsorsRoute,
   TermsRoute: TermsRoute,
   TrustVettingRoute: TrustVettingRoute,
+  WaitlistRoute: WaitlistRoute,
   EventsSlugRoute: EventsSlugRoute,
   RCodeRoute: RCodeRoute,
   ApiPublicWebhooksPaystackRoute: ApiPublicWebhooksPaystackRoute,
