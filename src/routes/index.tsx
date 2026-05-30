@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import ogImage from "@/assets/og-image.jpg";
+import featuredImg from "@/assets/featured-itsekiri.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
