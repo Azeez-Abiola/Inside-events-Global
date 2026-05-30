@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // ───────────────────────────────────────────────────────────────
-// Public marketplace listing — supabaseAdmin scoped to live events
+// Public marketplace listing - supabaseAdmin scoped to live events
 // ───────────────────────────────────────────────────────────────
 const FilterInput = z.object({
   q: z.string().max(120).optional(),
@@ -203,7 +203,7 @@ export const submitCommitmentForm = createServerFn({ method: "POST" })
         referral_link_id = link.id;
         referral_partner_id = link.referral_partner_id;
 
-        // Fraud check — self-referral
+        // Fraud check - self-referral
         const { data: partnerProfile } = await supabaseAdmin
           .from("profiles")
           .select("email_domain, linkedin_employer")

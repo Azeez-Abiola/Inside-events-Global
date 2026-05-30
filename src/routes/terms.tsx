@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
-      { title: "Terms of Service — Inside Global Events" },
+      { title: "Terms of Service - Inside Global Events" },
       { name: "description", content: "Terms governing use of the IGE sponsorship marketplace." },
     ],
     links: [{ rel: "canonical", href: "/terms" }],

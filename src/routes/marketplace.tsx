@@ -11,7 +11,7 @@ import { Search, SlidersHorizontal, MapPin, Calendar, Users, ShieldCheck, X } fr
 export const Route = createFileRoute("/marketplace")({
   head: () => ({
     meta: [
-      { title: "Marketplace · IGE — Inside Global Events" },
+      { title: "Marketplace · IGE - Inside Global Events" },
       { name: "description", content: "Discover IGE-vetted sponsorship opportunities across Africa and the diaspora." },
     ],
   }),
@@ -222,7 +222,7 @@ function EventCard({ event }: { event: any }) {
         </div>
         <h3 className="line-clamp-2 font-display text-base font-bold leading-tight">{event.name}</h3>
         <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{event.city ?? "—"}, {event.country ?? "—"}</span>
+          <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{event.city ?? "-"}, {event.country ?? "-"}</span>
           {event.start_date && <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(event.start_date).toLocaleDateString()}</span>}
         </div>
         <div className="mt-2 flex items-center gap-3 text-xs">

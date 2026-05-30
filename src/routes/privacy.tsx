@@ -3,9 +3,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
-      { title: "Privacy Policy — Inside Global Events" },
+      { title: "Privacy Policy - Inside Global Events" },
       { name: "description", content: "How IGE collects, uses, and protects your data under NDPR and GDPR." },
-      { property: "og:title", content: "Privacy Policy — Inside Global Events" },
+      { property: "og:title", content: "Privacy Policy - Inside Global Events" },
       { property: "og:description", content: "How IGE collects, uses, and protects your data." },
     ],
     links: [{ rel: "canonical", href: "/privacy" }],
@@ -33,7 +33,7 @@ function PrivacyPage() {
           <li>Account data: name, email, employer, role.</li>
           <li>Event and deal data you submit through the platform.</li>
           <li>Referral attribution: click metadata and conversion records.</li>
-          <li>Technical logs: IP address, browser, device — used for security only.</li>
+          <li>Technical logs: IP address, browser, device - used for security only.</li>
         </ul>
         <p>We never store card numbers or bank details. All payments are tokenised by Stripe or Paystack.</p>
 

@@ -21,7 +21,7 @@ import {
 } from "@/lib/event-taxonomy";
 
 export const Route = createFileRoute("/onboarding/profile")({
-  head: () => ({ meta: [{ title: "Complete your profile — IGE" }] }),
+  head: () => ({ meta: [{ title: "Complete your profile - IGE" }] }),
   component: OnboardingProfile,
 });
 
@@ -63,7 +63,7 @@ function SkipForm({ onDone }: { onDone: () => void }) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Media partner accounts get a custom onboarding from our partnerships team — we'll be in touch.
+        Media partner accounts get a custom onboarding from our partnerships team - we'll be in touch.
       </p>
       <button onClick={onDone} className="btn-primary w-full">Continue to dashboard</button>
     </div>

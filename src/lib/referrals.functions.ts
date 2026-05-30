@@ -115,7 +115,7 @@ export const generateReferralLink = createServerFn({ method: "POST" })
   });
 
 // ───────────────────────────────────────────────────────────────
-// Track click — used by /r/$code route
+// Track click - used by /r/$code route
 // ───────────────────────────────────────────────────────────────
 export const trackReferralClick = createServerFn({ method: "POST" })
   .inputValidator((d: { short_code: string; ua?: string; referrer?: string }) =>

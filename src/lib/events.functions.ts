@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // ───────────────────────────────────────────────────────────────
-// Status state machine — server-side enforcement
+// Status state machine - server-side enforcement
 // ───────────────────────────────────────────────────────────────
 const VALID_TRANSITIONS: Record<string, string[]> = {
   draft: ["submitted"],
@@ -184,7 +184,7 @@ export const submitEvent = createServerFn({ method: "POST" })
       .eq("event_id", ev.id);
     if (!tierCount || tierCount < 1) throw new Error("At least one sponsorship tier is required");
 
-    // Generate slug if missing — use admin RPC
+    // Generate slug if missing - use admin RPC
     let slug = ev.slug;
     if (!slug) {
       const { data: slugData, error: slugErr } = await supabaseAdmin.rpc("generate_event_slug", {

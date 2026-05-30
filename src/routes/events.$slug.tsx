@@ -160,7 +160,7 @@ function EventDetail() {
                   </div>
                 ))}
                 {!data?.tiers?.length && (
-                  <p className="text-sm text-muted-foreground">No packages published yet — contact the organiser directly.</p>
+                  <p className="text-sm text-muted-foreground">No packages published yet - contact the organiser directly.</p>
                 )}
               </div>
             </section>
@@ -195,7 +195,7 @@ function EventDetail() {
                 >
                   <CalendarPlus className="h-4 w-4" /> Schedule with organiser
                 </a>
-                <p className="mt-2 text-xs text-muted-foreground">Powered by Cal.com — pick a time that works.</p>
+                <p className="mt-2 text-xs text-muted-foreground">Powered by Cal.com - pick a time that works.</p>
               </div>
             )}
             {event.sponsorship_deadline && (
