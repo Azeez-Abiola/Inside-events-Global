@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AuthShell } from "@/components/auth-shell";
 
 export const Route = createFileRoute("/forgot-password")({
-  head: () => ({ meta: [{ title: "Reset password — IGE" }] }),
+  head: () => ({ meta: [{ title: "Reset password - IGE" }] }),
   component: ForgotPassword,
 });
 

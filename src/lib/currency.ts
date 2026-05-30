@@ -22,7 +22,7 @@ export function toUsd(amount: number, currency: string, rates: Rates): number | 
 }
 
 export function fmtDual(currency: string, amount: number | null | undefined, rates: Rates): string {
-  if (amount == null) return "—";
+  if (amount == null) return "-";
   const native = fmtMoney(currency, amount);
   if (currency === "USD") return native;
   const usd = toUsd(amount, currency, rates);

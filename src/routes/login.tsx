@@ -13,7 +13,7 @@ const search = z.object({
 export const Route = createFileRoute("/login")({
   validateSearch: search,
   head: () => ({
-    meta: [{ title: "Sign in — IGE" }],
+    meta: [{ title: "Sign in - IGE" }],
   }),
   component: LoginPage,
 });

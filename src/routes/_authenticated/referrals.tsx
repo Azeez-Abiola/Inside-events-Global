@@ -8,7 +8,7 @@ import { listMarketplaceEvents } from "@/lib/marketplace.functions";
 import { Copy, Link2, TrendingUp, Wallet, MousePointerClick, Award } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/referrals")({
-  head: () => ({ meta: [{ title: "Referrals — IGE" }] }),
+  head: () => ({ meta: [{ title: "Referrals - IGE" }] }),
   component: ReferralsPage,
 });
 
@@ -39,7 +39,7 @@ function ReferralsPage() {
 
       {data?.profile?.igb_partner_badge && (
         <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-secondary/10 px-3 py-1.5 text-sm text-secondary-deep">
-          <Award className="h-4 w-4" /> IGB Partner — Premium commission rate
+          <Award className="h-4 w-4" /> IGB Partner - Premium commission rate
         </div>
       )}
 
@@ -56,7 +56,7 @@ function ReferralsPage() {
                 const url = typeof window !== "undefined" ? `${window.location.origin}/r/${l.short_code}` : `/r/${l.short_code}`;
                 return (
                   <tr key={l.id} className="border-t border-border">
-                    <td className="px-4 py-3">{ev?.name ?? "—"}</td>
+                    <td className="px-4 py-3">{ev?.name ?? "-"}</td>
                     <td className="px-4 py-3">
                       <button
                         onClick={() => navigator.clipboard.writeText(url)}
@@ -91,10 +91,10 @@ function ReferralsPage() {
                 const ev = data!.events[d.event_id];
                 return (
                   <tr key={d.id} className="border-t border-border">
-                    <td className="px-4 py-3">{ev?.name ?? "—"}</td>
+                    <td className="px-4 py-3">{ev?.name ?? "-"}</td>
                     <td className="px-4 py-3 capitalize">{d.status.replace(/_/g, " ")}</td>
-                    <td className="px-4 py-3">{d.deal_value_native ? `${d.deal_currency} ${Number(d.deal_value_native).toLocaleString()}` : "—"}</td>
-                    <td className="px-4 py-3">{d.referral_commission_usd ? `$${Number(d.referral_commission_usd).toFixed(0)}` : "—"}</td>
+                    <td className="px-4 py-3">{d.deal_value_native ? `${d.deal_currency} ${Number(d.deal_value_native).toLocaleString()}` : "-"}</td>
+                    <td className="px-4 py-3">{d.referral_commission_usd ? `$${Number(d.referral_commission_usd).toFixed(0)}` : "-"}</td>
                     <td className="px-4 py-3">{d.referral_commission_paid ? "Paid" : "Pending"}</td>
                   </tr>
                 );

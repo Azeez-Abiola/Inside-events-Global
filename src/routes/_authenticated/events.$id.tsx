@@ -16,7 +16,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/events/$id")({
-  head: () => ({ meta: [{ title: "Edit event — IGE" }] }),
+  head: () => ({ meta: [{ title: "Edit event - IGE" }] }),
   component: EventEditor,
 });
 
@@ -101,7 +101,7 @@ function EventEditor() {
 
       {!editable && (
         <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-          This event is <strong>{data!.event.status.replace(/_/g, " ")}</strong> — it is read-only.
+          This event is <strong>{data!.event.status.replace(/_/g, " ")}</strong> - it is read-only.
           {data!.event.vetting_notes && <div className="mt-1 text-xs">Reviewer notes: {data!.event.vetting_notes}</div>}
           {data!.event.rejection_reason && <div className="mt-1 text-xs">Rejection reason: {data!.event.rejection_reason}</div>}
         </div>
@@ -267,7 +267,7 @@ function StepTiers({ eventId, currency, tiers, editable }: { eventId: string; cu
   return (
     <>
       <div className="space-y-2">
-        {tiers.length === 0 && <p className="text-sm text-muted-foreground">No tiers yet — add your first one below.</p>}
+        {tiers.length === 0 && <p className="text-sm text-muted-foreground">No tiers yet - add your first one below.</p>}
         {tiers.map((t, i) => (
           <div key={t.id} className="flex items-center justify-between rounded-lg border border-border bg-background p-3">
             <div>

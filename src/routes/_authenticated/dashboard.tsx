@@ -4,7 +4,7 @@ import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/lib/auth-context";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — IGE" }] }),
+  head: () => ({ meta: [{ title: "Dashboard - IGE" }] }),
   component: Dashboard,
 });
 

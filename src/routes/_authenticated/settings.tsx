@@ -19,7 +19,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
-    meta: [{ title: "Account settings — IGE" }],
+    meta: [{ title: "Account settings - IGE" }],
   }),
   component: SettingsPage,
 });

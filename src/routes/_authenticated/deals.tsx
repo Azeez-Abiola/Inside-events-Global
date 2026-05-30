@@ -6,7 +6,7 @@ import { getSponsorDashboard } from "@/lib/deals.functions";
 import { fmtMoney } from "@/lib/currency";
 
 export const Route = createFileRoute("/_authenticated/deals")({
-  head: () => ({ meta: [{ title: "My deals — IGE" }] }),
+  head: () => ({ meta: [{ title: "My deals - IGE" }] }),
   component: SponsorDeals,
 });
 
@@ -32,13 +32,13 @@ function SponsorDeals() {
                 return (
                   <tr key={f.id} className="border-t border-border">
                     <td className="px-4 py-3">
-                      <div className="font-medium">{ev?.name ?? "—"}</div>
+                      <div className="font-medium">{ev?.name ?? "-"}</div>
                       <div className="text-xs text-muted-foreground">{[ev?.city, ev?.country].filter(Boolean).join(", ")}</div>
                     </td>
                     <td className="px-4 py-3 text-xs">
-                      {f.budget_range_min || f.budget_range_max ? `${fmtMoney(f.currency, Number(f.budget_range_min ?? 0))} – ${fmtMoney(f.currency, Number(f.budget_range_max ?? 0))}` : "—"}
+                      {f.budget_range_min || f.budget_range_max ? `${fmtMoney(f.currency, Number(f.budget_range_min ?? 0))} – ${fmtMoney(f.currency, Number(f.budget_range_max ?? 0))}` : "-"}
                     </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">{f.submitted_at ? new Date(f.submitted_at).toLocaleDateString() : "—"}</td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">{f.submitted_at ? new Date(f.submitted_at).toLocaleDateString() : "-"}</td>
                     <td className="px-4 py-3">
                       {ev && <Link to="/events/$slug" params={{ slug: ev.slug }} className="text-xs text-primary hover:underline">View event →</Link>}
                     </td>

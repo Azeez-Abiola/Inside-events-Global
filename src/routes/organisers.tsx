@@ -26,7 +26,7 @@ function OrganisersPage() {
   const bullets = [
     "Guided event submission with auto-save drafts",
     "Sponsorship tiers, decks, floor plans, all in one place",
-    "Optional ABW-managed sales if you want a hands-off run",
+    "Optional IGE-managed sales if you want a hands-off run",
     "Direct messaging with verified sponsors",
     "Commission only, no listing fees",
   ];

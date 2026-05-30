@@ -34,7 +34,7 @@ function Onboarding() {
       return;
     }
     if (roles.length > 0) {
-      // Role already assigned — send to profile completion
+      // Role already assigned - send to profile completion
       navigate({ to: "/onboarding/profile" });
       return;
     }
@@ -61,7 +61,7 @@ function Onboarding() {
     setSaving(true);
     try {
       await applyRole(user.id, selected);
-      toast.success("Role set — let's complete your profile");
+      toast.success("Role set - let's complete your profile");
       navigate({ to: "/onboarding/profile" });
     } catch (e: any) {
       toast.error(e.message ?? "Could not save your role");

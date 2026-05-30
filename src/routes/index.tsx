@@ -249,7 +249,7 @@ function ThreeSides() {
       bullets: [
         "Guided event submission with auto-save drafts",
         "Sponsorship tiers, decks, floor plans, all in one place",
-        "Optional ABW-managed sales if you want a hands-off run",
+        "Optional IGE-managed sales if you want a hands-off run",
       ],
       cta: "List your event",
       to: "/signup" as const,
@@ -435,7 +435,7 @@ function Trust() {
 
           <ul className="mt-8 space-y-4">
             {[
-              "Every event manually reviewed by ABW before going live",
+              "Every event manually reviewed by IGE before going live",
               "Sponsor accounts verified via business email + LinkedIn",
               "Referral partners scored on track record and disclosure",
               "Fraud signals monitored continuously, bad actors removed",
@@ -519,7 +519,7 @@ function FinalCta() {
               <ArrowRight className="h-4 w-4" />
             </Link>
             <a
-              href="mailto:hi@insideglobalevent.com"
+              href="mailto:Hi@insideglobalevents.com"
               className="inline-flex items-center gap-2 rounded-md border border-white/30 bg-white/10 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/20"
             >
               Talk to the team

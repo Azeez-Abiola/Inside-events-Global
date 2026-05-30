@@ -7,7 +7,7 @@ import { AppShell, StatusBadge } from "@/components/app-shell";
 import { createEventDraft, getMyEvents, deleteDraftEvent } from "@/lib/events.functions";
 
 export const Route = createFileRoute("/_authenticated/events")({
-  head: () => ({ meta: [{ title: "My events — IGE" }] }),
+  head: () => ({ meta: [{ title: "My events - IGE" }] }),
   component: EventsList,
 });
 
