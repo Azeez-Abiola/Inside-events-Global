@@ -7,19 +7,13 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         <Link to="/" className="flex items-center gap-2.5">
           <img src={logo} alt="IGE" className="h-9 w-9 rounded-md object-cover" />
-          <div className="leading-tight">
-            <div className="font-display text-base font-bold tracking-tight">IGE</div>
-            <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              Inside Global Events
-            </div>
-          </div>
         </Link>
 
         <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
-          <a href="#organisers" className="transition-colors hover:text-foreground">For Organisers</a>
-          <a href="#sponsors" className="transition-colors hover:text-foreground">For Sponsors</a>
-          <a href="#partners" className="transition-colors hover:text-foreground">Referral Partners</a>
-          <a href="#how" className="transition-colors hover:text-foreground">How it works</a>
+          <Link to="/organisers" className="transition-colors hover:text-foreground">For Organisers</Link>
+          <Link to="/sponsors" className="transition-colors hover:text-foreground">For Sponsors</Link>
+          <Link to="/partners" className="transition-colors hover:text-foreground">Referral Partners</Link>
+          <Link to="/how-it-works" className="transition-colors hover:text-foreground">How it works</Link>
         </nav>
 
         <div className="flex items-center gap-2">
@@ -53,7 +47,7 @@ export function SiteFooter() {
           </div>
           <p className="mt-4 max-w-sm text-sm text-muted-foreground">
             The vetted marketplace where B2B event organisers, sponsors, and trusted
-            referral partners actually close deals — not just exchange brochures.
+            referral partners actually close deals, not just exchange brochures.
           </p>
           <p className="mt-6 text-xs text-muted-foreground">
             An Inside Global Event company · © 2026 IGE
@@ -64,10 +58,10 @@ export function SiteFooter() {
             Platform
           </div>
           <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-            <li><a href="#organisers" className="hover:text-foreground">For Organisers</a></li>
-            <li><a href="#sponsors" className="hover:text-foreground">For Sponsors</a></li>
-            <li><a href="#partners" className="hover:text-foreground">Referral Partners</a></li>
-            <li><a href="#how" className="hover:text-foreground">How it works</a></li>
+            <li><Link to="/organisers" className="hover:text-foreground">For Organisers</Link></li>
+            <li><Link to="/sponsors" className="hover:text-foreground">For Sponsors</Link></li>
+            <li><Link to="/partners" className="hover:text-foreground">Referral Partners</Link></li>
+            <li><Link to="/how-it-works" className="hover:text-foreground">How it works</Link></li>
           </ul>
         </div>
         <div>
@@ -75,7 +69,7 @@ export function SiteFooter() {
             Company
           </div>
           <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-            <li><a href="mailto:partner@alexboyoworld.com" className="hover:text-foreground">About ABW</a></li>
+            <li><a href="mailto:partner@insideglobalevents.com" className="hover:text-foreground">About IGE</a></li>
             <li><a href="#" className="hover:text-foreground">Trust &amp; vetting</a></li>
             <li><Link to="/privacy" className="hover:text-foreground">Privacy</Link></li>
             <li><Link to="/terms" className="hover:text-foreground">Terms</Link></li>

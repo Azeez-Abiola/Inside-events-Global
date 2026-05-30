@@ -12,17 +12,18 @@ import {
 } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import ogImage from "@/assets/og-image.jpg";
+import featuredImg from "@/assets/featured-itsekiri.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "IGE — The vetted marketplace for B2B event sponsorships" },
+      { title: "IGE · The vetted marketplace for B2B event sponsorships" },
       {
         name: "description",
         content:
-          "Inside Global Events connects vetted B2B event organisers, sponsors, and trusted referral partners. Discover sponsorship opportunities, close deals, and grow revenue — without the noise.",
+          "Inside Global Events connects vetted B2B event organisers, sponsors, and trusted referral partners. Discover sponsorship opportunities, close deals, and grow revenue without the noise.",
       },
-      { property: "og:title", content: "IGE — Inside Global Events" },
+      { property: "og:title", content: "IGE · Inside Global Events" },
       {
         property: "og:description",
         content:
@@ -92,7 +93,7 @@ function Hero() {
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
               IGE is the vetted marketplace connecting event organisers, brand
               sponsors, and trusted referral partners. List your event, find your
-              audience, get paid — without the spreadsheets, cold inbound, or
+              audience, get paid, without the spreadsheets, cold inbound, or
               broker noise.
             </p>
 
@@ -116,7 +117,7 @@ function Hero() {
             <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
               <Badge icon={ShieldCheck}>Every event IGE-vetted</Badge>
               <Badge icon={Globe2}>Global · 40+ markets</Badge>
-              <Badge icon={Handshake}>Commission only — no listing fees</Badge>
+              <Badge icon={Handshake}>Commission only, no listing fees</Badge>
             </div>
           </div>
 
@@ -143,31 +144,42 @@ function HeroVisual() {
   return (
     <div className="relative mx-auto aspect-[4/5] w-full max-w-md">
       {/* main featured event card */}
-      <div className="absolute inset-0 rotate-[-2deg] rounded-2xl border border-border bg-card p-5 shadow-brand">
-        <div className="flex h-40 w-full items-center justify-center rounded-xl bg-brand-gradient-diag text-white">
-          <div className="text-center">
-            <div className="text-xs uppercase tracking-[0.2em] opacity-80">Featured</div>
-            <div className="mt-1 font-display text-2xl font-bold">Global FinTech Summit</div>
-            <div className="mt-1 text-xs opacity-80">London · 12–14 Oct 2026</div>
+      <div className="absolute inset-0 rotate-[-2deg] overflow-hidden rounded-2xl border border-border bg-card shadow-brand">
+        <div className="relative h-44 w-full overflow-hidden">
+          <img
+            src={featuredImg}
+            alt="Itsekiri Global HomeComing 2026"
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute left-3 top-3 inline-flex items-center rounded-full bg-black/50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur">
+            Featured
           </div>
         </div>
-        <div className="mt-4 flex items-center justify-between text-sm">
-          <div>
-            <div className="text-xs text-muted-foreground">Attendance</div>
-            <div className="font-semibold">3,200 senior buyers</div>
+        <div className="p-5">
+          <div className="font-display text-lg font-bold leading-tight">
+            Itsekiri Global HomeComing 2026
           </div>
-          <div className="text-right">
-            <div className="text-xs text-muted-foreground">From</div>
-            <div className="font-semibold">$25,000</div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            Warri Kingdom, Delta State · 17 to 21 Aug 2026
           </div>
-        </div>
-        <div className="mt-4 flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 rounded-full bg-secondary/10 px-2.5 py-1 text-[11px] font-medium text-secondary-deep">
-            <ShieldCheck className="h-3 w-3" /> IGE Vetted
-          </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary-deep">
-            ABW Managed
-          </span>
+          <div className="mt-4 flex items-center justify-between text-sm">
+            <div>
+              <div className="text-xs text-muted-foreground">Attendance</div>
+              <div className="font-semibold">20,000+ expected</div>
+            </div>
+            <div className="text-right">
+              <div className="text-xs text-muted-foreground">From</div>
+              <div className="font-semibold">₦5,000,000</div>
+            </div>
+          </div>
+          <div className="mt-4 flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 rounded-full bg-secondary/10 px-2.5 py-1 text-[11px] font-medium text-secondary-deep">
+              <ShieldCheck className="h-3 w-3" /> IGE Vetted
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary-deep">
+              Royal Patronage
+            </span>
+          </div>
         </div>
       </div>
 
@@ -179,7 +191,7 @@ function HeroVisual() {
           </div>
           <div>
             <div className="text-xs text-muted-foreground">Deal closed</div>
-            <div className="text-sm font-semibold">+$42,000</div>
+            <div className="text-sm font-semibold">+₦18,000,000</div>
           </div>
         </div>
       </div>
@@ -205,12 +217,11 @@ function Stats() {
   const stats = [
     { v: "100%", l: "of events vetted before going live" },
     { v: "40+", l: "markets, from London to Dubai to Singapore" },
-    { v: "0", l: "listing fees — we earn when you do" },
-    { v: "72h", l: "median time from listing to first sponsor inquiry" },
+    { v: "Zero", l: "listing fees, we earn when you do" },
   ];
   return (
     <section className="border-y border-border bg-muted/30">
-      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-8 px-6 py-12 md:grid-cols-4">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-6 py-12 md:grid-cols-3">
         {stats.map((s) => (
           <div key={s.l}>
             <div className="font-display text-3xl font-bold text-brand-gradient md:text-4xl">
@@ -237,7 +248,7 @@ function ThreeSides() {
         "Build a complete sponsorship pack in a guided 9-step flow. Once IGE-vetted, your event is surfaced to verified sponsors and partners actively looking for your audience.",
       bullets: [
         "Guided event submission with auto-save drafts",
-        "Sponsorship tiers, decks, floor plans — all in one place",
+        "Sponsorship tiers, decks, floor plans, all in one place",
         "Optional ABW-managed sales if you want a hands-off run",
       ],
       cta: "List your event",
@@ -249,7 +260,7 @@ function ThreeSides() {
       icon: Globe2,
       title: "Discover events your buyers are already attending.",
       desc:
-        "Search a curated catalogue of vetted B2B events worldwide. Filter by audience seniority, sector, geography, and budget — then commit with confidence.",
+        "Search a curated catalogue of vetted B2B events worldwide. Filter by audience seniority, sector, geography, and budget, then commit with confidence.",
       bullets: [
         "Every event manually IGE-vetted before going live",
         "Side-by-side comparison of tiers, audience and ROI signals",
@@ -288,7 +299,7 @@ function ThreeSides() {
         </h2>
         <p className="mt-4 text-lg text-muted-foreground">
           IGE is not a directory. It's a working marketplace where organisers list,
-          sponsors discover, and partners earn — all under one vetted roof.
+          sponsors discover, and partners earn, all under one vetted roof.
         </p>
       </div>
 
@@ -347,7 +358,7 @@ function HowItWorks() {
       n: "01",
       title: "Sign up & verify",
       desc:
-        "Pick your side — organiser, sponsor, or referral partner. Verify with your work email or LinkedIn so the marketplace stays clean.",
+        "Pick your side, organiser, sponsor, or referral partner. Verify with your work email or LinkedIn so the marketplace stays clean.",
     },
     {
       n: "02",
@@ -376,7 +387,7 @@ function HowItWorks() {
             How it works
           </div>
           <h2 className="mt-3 font-display text-4xl font-bold tracking-tight md:text-5xl">
-            From signup to signed sponsorship — in days, not quarters.
+            From signup to signed sponsorship, in days, not quarters.
           </h2>
         </div>
 
@@ -418,7 +429,7 @@ function Trust() {
           <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
             We built IGE because B2B sponsorship is full of inflated decks,
             ghost organisers, and brokers chasing finder's fees. So we made
-            vetting non-negotiable — for every event, every sponsor, every
+            vetting non-negotiable, for every event, every sponsor, every
             partner on the platform.
           </p>
 
@@ -427,7 +438,7 @@ function Trust() {
               "Every event manually reviewed by ABW before going live",
               "Sponsor accounts verified via business email + LinkedIn",
               "Referral partners scored on track record and disclosure",
-              "Fraud signals monitored continuously — bad actors removed",
+              "Fraud signals monitored continuously, bad actors removed",
             ].map((t) => (
               <li key={t} className="flex gap-3">
                 <ShieldCheck className="mt-0.5 h-5 w-5 flex-shrink-0 text-secondary" />
