@@ -46,7 +46,7 @@ const sections = [
   {
     title: "For referral partners",
     items: [
-      { q: "How much can I earn?", a: "Accredited partners earn up to 30% of IGE's platform commission on every introduced deal that reaches payment received." },
+      { q: "How much can I earn?", a: "Accredited partners earn up to 20% of IGE's platform commission on every introduced deal that reaches payment received." },
       { q: "When are payouts made?", a: "Commission payouts run monthly, after the underlying sponsorship payment has settled and any refund window has closed." },
       { q: "How is my referral tracked?", a: "Each partner has a unique referral link and dashboard. Deals introduced via that link are attributed automatically and visible end-to-end." },
       { q: "What is not allowed?", a: "Self-referrals through affiliated entities, fraudulent introductions, and spam outreach. Violations result in forfeited commission and account suspension." },
