@@ -13,7 +13,7 @@ export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
       { title: "Contact · Inside Global Events" },
-      { name: "description", content: "Get in touch with the Inside Global Events team. Email, phone, and office locations across Lagos and London." },
+      { name: "description", content: "Get in touch with the Inside Global Events team. Email, phone, and office locations across Lagos and Paris." },
       { property: "og:title", content: "Contact · Inside Global Events" },
       { property: "og:description", content: "Talk to the IGE team about sponsorships, partnerships, and trust enquiries." },
     ],
@@ -80,7 +80,7 @@ function ContactPage() {
                 <Phone className="h-5 w-5 text-primary" />
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Phone</div>
-                  <a href="tel:+2348000000000" className="font-medium hover:underline">+234 800 000 0000</a>
+                  <a href="tel:+2349030915964" className="font-medium hover:underline">+234 903 091 5964</a>
                 </div>
               </div>
             </div>
@@ -89,14 +89,14 @@ function ContactPage() {
                 <MapPin className="mt-0.5 h-5 w-5 text-primary" />
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Lagos</div>
-                  <p className="text-sm">Victoria Island, Lagos, Nigeria</p>
+                  <p className="text-sm">Yaba, Lagos, Nigeria</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <MapPin className="mt-0.5 h-5 w-5 text-primary" />
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">London</div>
-                  <p className="text-sm">Soho, London, United Kingdom</p>
+                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Paris</div>
+                  <p className="text-sm">Paris, France</p>
                 </div>
               </div>
             </div>
