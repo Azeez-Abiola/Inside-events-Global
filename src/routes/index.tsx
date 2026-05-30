@@ -248,7 +248,7 @@ function ThreeSides() {
         "Build a complete sponsorship pack in a guided 9-step flow. Once IGE-vetted, your event is surfaced to verified sponsors and partners actively looking for your audience.",
       bullets: [
         "Guided event submission with auto-save drafts",
-        "Sponsorship tiers, decks, floor plans — all in one place",
+        "Sponsorship tiers, decks, floor plans, all in one place",
         "Optional ABW-managed sales if you want a hands-off run",
       ],
       cta: "List your event",
@@ -260,7 +260,7 @@ function ThreeSides() {
       icon: Globe2,
       title: "Discover events your buyers are already attending.",
       desc:
-        "Search a curated catalogue of vetted B2B events worldwide. Filter by audience seniority, sector, geography, and budget — then commit with confidence.",
+        "Search a curated catalogue of vetted B2B events worldwide. Filter by audience seniority, sector, geography, and budget, then commit with confidence.",
       bullets: [
         "Every event manually IGE-vetted before going live",
         "Side-by-side comparison of tiers, audience and ROI signals",
@@ -299,7 +299,7 @@ function ThreeSides() {
         </h2>
         <p className="mt-4 text-lg text-muted-foreground">
           IGE is not a directory. It's a working marketplace where organisers list,
-          sponsors discover, and partners earn — all under one vetted roof.
+          sponsors discover, and partners earn, all under one vetted roof.
         </p>
       </div>
 
@@ -358,7 +358,7 @@ function HowItWorks() {
       n: "01",
       title: "Sign up & verify",
       desc:
-        "Pick your side — organiser, sponsor, or referral partner. Verify with your work email or LinkedIn so the marketplace stays clean.",
+        "Pick your side, organiser, sponsor, or referral partner. Verify with your work email or LinkedIn so the marketplace stays clean.",
     },
     {
       n: "02",
@@ -387,7 +387,7 @@ function HowItWorks() {
             How it works
           </div>
           <h2 className="mt-3 font-display text-4xl font-bold tracking-tight md:text-5xl">
-            From signup to signed sponsorship — in days, not quarters.
+            From signup to signed sponsorship, in days, not quarters.
           </h2>
         </div>
 
@@ -429,7 +429,7 @@ function Trust() {
           <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
             We built IGE because B2B sponsorship is full of inflated decks,
             ghost organisers, and brokers chasing finder's fees. So we made
-            vetting non-negotiable — for every event, every sponsor, every
+            vetting non-negotiable, for every event, every sponsor, every
             partner on the platform.
           </p>
 
@@ -438,7 +438,7 @@ function Trust() {
               "Every event manually reviewed by ABW before going live",
               "Sponsor accounts verified via business email + LinkedIn",
               "Referral partners scored on track record and disclosure",
-              "Fraud signals monitored continuously — bad actors removed",
+              "Fraud signals monitored continuously, bad actors removed",
             ].map((t) => (
               <li key={t} className="flex gap-3">
                 <ShieldCheck className="mt-0.5 h-5 w-5 flex-shrink-0 text-secondary" />
