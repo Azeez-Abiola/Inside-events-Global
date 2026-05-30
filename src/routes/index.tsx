@@ -17,13 +17,13 @@ import featuredImg from "@/assets/featured-itsekiri.png";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "IGE — The vetted marketplace for B2B event sponsorships" },
+      { title: "IGE · The vetted marketplace for B2B event sponsorships" },
       {
         name: "description",
         content:
-          "Inside Global Events connects vetted B2B event organisers, sponsors, and trusted referral partners. Discover sponsorship opportunities, close deals, and grow revenue — without the noise.",
+          "Inside Global Events connects vetted B2B event organisers, sponsors, and trusted referral partners. Discover sponsorship opportunities, close deals, and grow revenue without the noise.",
       },
-      { property: "og:title", content: "IGE — Inside Global Events" },
+      { property: "og:title", content: "IGE · Inside Global Events" },
       {
         property: "og:description",
         content:
