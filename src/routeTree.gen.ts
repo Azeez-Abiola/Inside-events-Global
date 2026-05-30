@@ -14,6 +14,7 @@ import { Route as SponsorsRouteImport } from './routes/sponsors'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as PartnersRouteImport } from './routes/partners'
 import { Route as OrganisersRouteImport } from './routes/organisers'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
@@ -60,6 +61,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartnersRoute = PartnersRouteImport.update({
+  id: '/partners',
+  path: '/partners',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrganisersRoute = OrganisersRouteImport.update({
@@ -182,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/marketplace': typeof MarketplaceRoute
   '/onboarding': typeof OnboardingRouteWithChildren
   '/organisers': typeof OrganisersRoute
+  '/partners': typeof PartnersRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
@@ -210,6 +217,7 @@ export interface FileRoutesByTo {
   '/marketplace': typeof MarketplaceRoute
   '/onboarding': typeof OnboardingRouteWithChildren
   '/organisers': typeof OrganisersRoute
+  '/partners': typeof PartnersRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
@@ -240,6 +248,7 @@ export interface FileRoutesById {
   '/marketplace': typeof MarketplaceRoute
   '/onboarding': typeof OnboardingRouteWithChildren
   '/organisers': typeof OrganisersRoute
+  '/partners': typeof PartnersRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
@@ -270,6 +279,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/onboarding'
     | '/organisers'
+    | '/partners'
     | '/privacy'
     | '/reset-password'
     | '/signup'
@@ -298,6 +308,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/onboarding'
     | '/organisers'
+    | '/partners'
     | '/privacy'
     | '/reset-password'
     | '/signup'
@@ -327,6 +338,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/onboarding'
     | '/organisers'
+    | '/partners'
     | '/privacy'
     | '/reset-password'
     | '/signup'
@@ -357,6 +369,7 @@ export interface RootRouteChildren {
   MarketplaceRoute: typeof MarketplaceRoute
   OnboardingRoute: typeof OnboardingRouteWithChildren
   OrganisersRoute: typeof OrganisersRoute
+  PartnersRoute: typeof PartnersRoute
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
@@ -403,6 +416,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partners': {
+      id: '/partners'
+      path: '/partners'
+      fullPath: '/partners'
+      preLoaderRoute: typeof PartnersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/organisers': {
@@ -621,6 +641,7 @@ const rootRouteChildren: RootRouteChildren = {
   MarketplaceRoute: MarketplaceRoute,
   OnboardingRoute: OnboardingRouteWithChildren,
   OrganisersRoute: OrganisersRoute,
+  PartnersRoute: PartnersRoute,
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
