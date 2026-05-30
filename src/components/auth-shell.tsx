@@ -30,11 +30,10 @@ export function AuthShell({
 
           <div className="mt-auto">
             <blockquote className="font-display text-3xl font-bold leading-tight">
-              “The first marketplace where B2B sponsorships actually close —
-              because everyone on it is vetted.”
+              “The first marketplace where B2B sponsorships is vetted.”
             </blockquote>
             <div className="mt-6 text-sm opacity-80">
-              — AlexBoyo World · Inside Global Events
+              Inside Global Events
             </div>
           </div>
 
