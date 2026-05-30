@@ -50,7 +50,7 @@ export function SiteFooter() {
         <div className="md:col-span-2">
           <div className="flex items-center gap-2.5">
             <img src={logo} alt="IGE" className="h-8 w-8 rounded-md object-cover" />
-            <span className="font-display text-base font-bold tracking-tight">IGE</span>
+            <span className="font-display text-base font-bold tracking-tight">​</span>
           </div>
           <p className="mt-4 max-w-sm text-sm text-muted-foreground">
             The vetted marketplace where B2B event organisers, sponsors, and trusted
