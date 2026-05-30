@@ -216,7 +216,7 @@ function HeroVisual() {
 function Stats() {
   const stats = [
     { v: "100%", l: "of events vetted before going live" },
-    { v: "40+", l: "markets, from London to Dubai to Singapore" },
+    { v: "40+", l: "markets, from Paris to Dubai to Singapore" },
     { v: "Zero", l: "listing fees, we earn when you do" },
   ];
   return (
