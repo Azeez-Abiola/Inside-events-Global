@@ -62,6 +62,7 @@ export function SiteFooter() {
             <li><Link to="/sponsors" className="hover:text-foreground">For Sponsors</Link></li>
             <li><Link to="/partners" className="hover:text-foreground">Referral Partners</Link></li>
             <li><Link to="/how-it-works" className="hover:text-foreground">How it works</Link></li>
+            <li><Link to="/pricing" className="hover:text-foreground">Pricing</Link></li>
           </ul>
         </div>
         <div>
@@ -70,12 +71,15 @@ export function SiteFooter() {
           </div>
           <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
             <li><Link to="/about" className="hover:text-foreground">About IGE</Link></li>
-            <li><a href="#" className="hover:text-foreground">Trust &amp; vetting</a></li>
+            <li><Link to="/trust-vetting" className="hover:text-foreground">Trust &amp; vetting</Link></li>
+            <li><Link to="/faq" className="hover:text-foreground">FAQ</Link></li>
+            <li><Link to="/contact" className="hover:text-foreground">Contact</Link></li>
             <li><Link to="/privacy" className="hover:text-foreground">Privacy</Link></li>
             <li><Link to="/terms" className="hover:text-foreground">Terms</Link></li>
 
           </ul>
         </div>
+
       </div>
     </footer>
   );
