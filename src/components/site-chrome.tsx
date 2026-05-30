@@ -69,7 +69,7 @@ export function SiteFooter() {
             Company
           </div>
           <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-            <li><a href="mailto:hi@insideglobalevent.com" className="hover:text-foreground">About IGE</a></li>
+            <li><Link to="/about" className="hover:text-foreground">About IGE</Link></li>
             <li><a href="#" className="hover:text-foreground">Trust &amp; vetting</a></li>
             <li><Link to="/privacy" className="hover:text-foreground">Privacy</Link></li>
             <li><Link to="/terms" className="hover:text-foreground">Terms</Link></li>
