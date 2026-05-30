@@ -93,7 +93,7 @@ function Hero() {
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
               IGE is the vetted marketplace connecting event organisers, brand
               sponsors, and trusted referral partners. List your event, find your
-              audience, get paid — without the spreadsheets, cold inbound, or
+              audience, get paid, without the spreadsheets, cold inbound, or
               broker noise.
             </p>
 
@@ -117,7 +117,7 @@ function Hero() {
             <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
               <Badge icon={ShieldCheck}>Every event IGE-vetted</Badge>
               <Badge icon={Globe2}>Global · 40+ markets</Badge>
-              <Badge icon={Handshake}>Commission only — no listing fees</Badge>
+              <Badge icon={Handshake}>Commission only, no listing fees</Badge>
             </div>
           </div>
 
