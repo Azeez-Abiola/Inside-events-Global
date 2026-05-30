@@ -1039,6 +1039,42 @@ export type Database = {
         }
         Relationships: []
       }
+      waitlist_signups: {
+        Row: {
+          audience: string
+          company: string | null
+          country: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          notes: string | null
+          role_title: string | null
+        }
+        Insert: {
+          audience: string
+          company?: string | null
+          country?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          notes?: string | null
+          role_title?: string | null
+        }
+        Update: {
+          audience?: string
+          company?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          notes?: string | null
+          role_title?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
