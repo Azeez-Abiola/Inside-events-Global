@@ -9,11 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TrustVettingRouteImport } from './routes/trust-vetting'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SponsorsRouteImport } from './routes/sponsors'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PartnersRouteImport } from './routes/partners'
 import { Route as OrganisersRouteImport } from './routes/organisers'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
@@ -40,6 +42,11 @@ import { Route as AuthenticatedAdminRevenueRouteImport } from './routes/_authent
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
 import { Route as ApiPublicWebhooksPaystackRouteImport } from './routes/api/public/webhooks/paystack'
 
+const TrustVettingRoute = TrustVettingRouteImport.update({
+  id: '/trust-vetting',
+  path: '/trust-vetting',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -63,6 +70,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PartnersRoute = PartnersRouteImport.update({
@@ -203,11 +215,13 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRouteWithChildren
   '/organisers': typeof OrganisersRoute
   '/partners': typeof PartnersRoute
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/sponsors': typeof SponsorsRoute
   '/terms': typeof TermsRoute
+  '/trust-vetting': typeof TrustVettingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/deals': typeof AuthenticatedDealsRoute
   '/events': typeof AuthenticatedEventsRouteWithChildren
@@ -234,11 +248,13 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRouteWithChildren
   '/organisers': typeof OrganisersRoute
   '/partners': typeof PartnersRoute
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/sponsors': typeof SponsorsRoute
   '/terms': typeof TermsRoute
+  '/trust-vetting': typeof TrustVettingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/deals': typeof AuthenticatedDealsRoute
   '/events': typeof AuthenticatedEventsRouteWithChildren
@@ -267,11 +283,13 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRouteWithChildren
   '/organisers': typeof OrganisersRoute
   '/partners': typeof PartnersRoute
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/sponsors': typeof SponsorsRoute
   '/terms': typeof TermsRoute
+  '/trust-vetting': typeof TrustVettingRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/deals': typeof AuthenticatedDealsRoute
   '/_authenticated/events': typeof AuthenticatedEventsRouteWithChildren
@@ -300,11 +318,13 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/organisers'
     | '/partners'
+    | '/pricing'
     | '/privacy'
     | '/reset-password'
     | '/signup'
     | '/sponsors'
     | '/terms'
+    | '/trust-vetting'
     | '/dashboard'
     | '/deals'
     | '/events'
@@ -331,11 +351,13 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/organisers'
     | '/partners'
+    | '/pricing'
     | '/privacy'
     | '/reset-password'
     | '/signup'
     | '/sponsors'
     | '/terms'
+    | '/trust-vetting'
     | '/dashboard'
     | '/deals'
     | '/events'
@@ -363,11 +385,13 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/organisers'
     | '/partners'
+    | '/pricing'
     | '/privacy'
     | '/reset-password'
     | '/signup'
     | '/sponsors'
     | '/terms'
+    | '/trust-vetting'
     | '/_authenticated/dashboard'
     | '/_authenticated/deals'
     | '/_authenticated/events'
@@ -396,11 +420,13 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRouteWithChildren
   OrganisersRoute: typeof OrganisersRoute
   PartnersRoute: typeof PartnersRoute
+  PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   SponsorsRoute: typeof SponsorsRoute
   TermsRoute: typeof TermsRoute
+  TrustVettingRoute: typeof TrustVettingRoute
   EventsSlugRoute: typeof EventsSlugRoute
   RCodeRoute: typeof RCodeRoute
   ApiPublicWebhooksPaystackRoute: typeof ApiPublicWebhooksPaystackRoute
@@ -409,6 +435,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/trust-vetting': {
+      id: '/trust-vetting'
+      path: '/trust-vetting'
+      fullPath: '/trust-vetting'
+      preLoaderRoute: typeof TrustVettingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terms': {
       id: '/terms'
       path: '/terms'
@@ -442,6 +475,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/partners': {
@@ -684,11 +724,13 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRouteWithChildren,
   OrganisersRoute: OrganisersRoute,
   PartnersRoute: PartnersRoute,
+  PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   SponsorsRoute: SponsorsRoute,
   TermsRoute: TermsRoute,
+  TrustVettingRoute: TrustVettingRoute,
   EventsSlugRoute: EventsSlugRoute,
   RCodeRoute: RCodeRoute,
   ApiPublicWebhooksPaystackRoute: ApiPublicWebhooksPaystackRoute,
@@ -697,3 +739,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
