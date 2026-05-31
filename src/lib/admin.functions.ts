@@ -67,11 +67,13 @@ export const getEventForAdmin = createServerFn({ method: "GET" })
         .order("display_order"),
     ]);
     if (error) throw new Error(error.message);
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id, email")
-      .eq("id", ev.organiser_id)
-      .single();
+    const { data: profile } = ev.organiser_id
+      ? await supabase
+          .from("profiles")
+          .select("id, email")
+          .eq("id", ev.organiser_id)
+          .single()
+      : { data: null };
     return { event: ev, tiers: tiers ?? [], organiser: profile };
   });
 
