@@ -418,7 +418,7 @@ export type Database = {
           organiser_contact_name: string | null
           organiser_contact_phone: string | null
           organiser_contact_role: string | null
-          organiser_id: string
+          organiser_id: string | null
           past_editions: number | null
           payment_terms: string | null
           post_event_report: boolean
@@ -476,7 +476,7 @@ export type Database = {
           organiser_contact_name?: string | null
           organiser_contact_phone?: string | null
           organiser_contact_role?: string | null
-          organiser_id: string
+          organiser_id?: string | null
           past_editions?: number | null
           payment_terms?: string | null
           post_event_report?: boolean
@@ -534,7 +534,7 @@ export type Database = {
           organiser_contact_name?: string | null
           organiser_contact_phone?: string | null
           organiser_contact_role?: string | null
-          organiser_id?: string
+          organiser_id?: string | null
           past_editions?: number | null
           payment_terms?: string | null
           post_event_report?: boolean
@@ -1017,6 +1017,59 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      sponsorship_interests: {
+        Row: {
+          company: string | null
+          created_at: string
+          email: string
+          event_id: string | null
+          event_name: string | null
+          full_name: string
+          id: string
+          message: string | null
+          notified: boolean
+          phone: string | null
+          role_title: string | null
+          tier_interest: string | null
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          email: string
+          event_id?: string | null
+          event_name?: string | null
+          full_name: string
+          id?: string
+          message?: string | null
+          notified?: boolean
+          phone?: string | null
+          role_title?: string | null
+          tier_interest?: string | null
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          email?: string
+          event_id?: string | null
+          event_name?: string | null
+          full_name?: string
+          id?: string
+          message?: string | null
+          notified?: boolean
+          phone?: string | null
+          role_title?: string | null
+          tier_interest?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsorship_interests_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
