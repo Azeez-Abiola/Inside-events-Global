@@ -1,7 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { CheckCircle2, Loader2, Megaphone, Globe2, Handshake, Sparkles } from "lucide-react";
+import { CheckCircle2, Loader2, Megaphone, Globe2, Handshake, Sparkles, MessageSquare } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -96,6 +96,7 @@ function WaitlistPage() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const { days, hours, minutes, seconds } = useCountdown(LAUNCH);
+  const navigate = useNavigate();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -119,7 +120,8 @@ function WaitlistPage() {
     }
     setDone(true);
     form.reset();
-    toast.success("You're on the waitlist.");
+    toast.success("You're on the waitlist — redirecting…");
+    setTimeout(() => navigate({ to: "/" }), 1200);
   }
 
   return (
@@ -154,6 +156,15 @@ function WaitlistPage() {
             </div>
             <div className="mt-3 text-xs uppercase tracking-[0.18em] text-muted-foreground">
               Public launch · 1 July
+            </div>
+            <div className="mt-6">
+              <Link
+                to="/contact"
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-4 py-2 text-sm font-medium text-foreground backdrop-blur transition-colors hover:bg-muted"
+              >
+                <MessageSquare className="h-4 w-4" />
+                Talk to the team
+              </Link>
             </div>
           </div>
         </section>
