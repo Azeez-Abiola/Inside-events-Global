@@ -106,11 +106,13 @@ export const getPublicEventBySlug = createServerFn({ method: "POST" })
         .select("*")
         .eq("event_id", ev.id)
         .order("display_order"),
-      supabaseAdmin
-        .from("organiser_profiles")
-        .select("org_name, logo_url, bio, website, track_record, event_history, past_sponsor_logos")
-        .eq("user_id", ev.organiser_id)
-        .maybeSingle(),
+      ev.organiser_id
+        ? supabaseAdmin
+            .from("organiser_profiles")
+            .select("org_name, logo_url, bio, website, track_record, event_history, past_sponsor_logos")
+            .eq("user_id", ev.organiser_id)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
     ]);
 
     // Fire and forget increment
@@ -272,13 +274,15 @@ export const submitCommitmentForm = createServerFn({ method: "POST" })
       .update({ inquiry_count: (ev.inquiry_count ?? 0) + 1 })
       .eq("id", ev.id);
 
-    await supabaseAdmin.from("notifications").insert({
-      user_id: ev.organiser_id,
-      type: "new_inquiry",
-      title: `New sponsor interest in ${ev.name}`,
-      body: `${data.company_name} just submitted a commitment form.`,
-      data: { event_id: ev.id, commitment_form_id: cf.id },
-    });
+    if (ev.organiser_id) {
+      await supabaseAdmin.from("notifications").insert({
+        user_id: ev.organiser_id,
+        type: "new_inquiry",
+        title: `New sponsor interest in ${ev.name}`,
+        body: `${data.company_name} just submitted a commitment form.`,
+        data: { event_id: ev.id, commitment_form_id: cf.id },
+      });
+    }
 
     if (referral_partner_id) {
       await supabaseAdmin.from("notifications").insert({

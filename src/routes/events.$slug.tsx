@@ -4,7 +4,9 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { getPublicEventBySlug, submitCommitmentForm, getCurrentRates } from "@/lib/marketplace.functions";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
-import { Calendar, MapPin, Users, ShieldCheck, Globe, CheckCircle2, AlertCircle, CalendarPlus } from "lucide-react";
+import { Calendar, MapPin, Users, ShieldCheck, Globe, CheckCircle2, AlertCircle, CalendarPlus, Download, Sparkles } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { fmtDual } from "@/lib/currency";
 import { z } from "zod";
 
@@ -40,6 +42,7 @@ function EventDetail() {
   const rates = ratesData?.rates;
 
   const [showForm, setShowForm] = useState(false);
+  const [showSponsor, setShowSponsor] = useState(false);
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
 
   if (isLoading) {
@@ -171,18 +174,39 @@ function EventDetail() {
               <div className="text-xs uppercase tracking-wide text-muted-foreground">Get involved</div>
               <button
                 type="button"
+                onClick={() => { setSelectedTier(null); setShowSponsor(true); }}
+                className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-soft hover:-translate-y-0.5 transition-transform"
+              >
+                <Sparkles className="h-4 w-4" /> Sponsor this event
+              </button>
+              <button
+                type="button"
                 onClick={() => setShowForm(true)}
-                className="mt-3 w-full rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+                className="mt-2 w-full rounded-md border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted"
               >
                 Submit a Commitment Form
               </button>
-              <p className="mt-2 text-xs text-muted-foreground">Confirms budget readiness. Reviewed by IGE before reaching the organiser.</p>
+              <p className="mt-2 text-xs text-muted-foreground">Commitment forms are verified by IGE before reaching the organiser.</p>
               {search.ref && (
                 <div className="mt-3 rounded-md bg-secondary/10 px-3 py-2 text-xs text-secondary-deep">
                   Attributed to partner: <span className="font-mono">{search.ref}</span>
                 </div>
               )}
             </div>
+            {event.sponsorship_deck_url && (
+              <div className="rounded-xl border border-border bg-card p-6">
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">Sponsorship deck</div>
+                <a
+                  href={event.sponsorship_deck_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download
+                  className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted"
+                >
+                  <Download className="h-4 w-4" /> Download deck (PDF)
+                </a>
+              </div>
+            )}
             {event.cal_booking_url && (
               <div className="rounded-xl border border-border bg-card p-6">
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">Book an intro call</div>
@@ -190,12 +214,10 @@ function EventDetail() {
                   href={event.cal_booking_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  data-cal-link={event.cal_booking_url.replace(/^https?:\/\/cal\.com\//, "")}
                   className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted"
                 >
                   <CalendarPlus className="h-4 w-4" /> Schedule with organiser
                 </a>
-                <p className="mt-2 text-xs text-muted-foreground">Powered by Cal.com - pick a time that works.</p>
               </div>
             )}
             {event.sponsorship_deadline && (
@@ -207,6 +229,14 @@ function EventDetail() {
           </aside>
         </div>
       </main>
+
+      {showSponsor && (
+        <SponsorInterestDialog
+          eventId={event.id}
+          eventName={event.name}
+          onClose={() => setShowSponsor(false)}
+        />
+      )}
 
       {showForm && (
         <CommitmentDialog
