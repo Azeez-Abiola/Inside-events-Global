@@ -75,6 +75,21 @@ export const getEventForEdit = createServerFn({ method: "GET" })
 // ───────────────────────────────────────────────────────────────
 // Autosave
 // ───────────────────────────────────────────────────────────────
+// Allowlist of fields that the autosave endpoint is permitted to write.
+// Privileged columns (status, ige_vetted, organiser_id, view_count, etc.)
+// are intentionally excluded — those flow through dedicated server fns
+// with explicit checks.
+const AUTOSAVE_ALLOWED = new Set<string>([
+  "name", "tagline", "description", "event_type", "format",
+  "start_date", "end_date", "timezone", "city", "country", "venue_name", "venue_address",
+  "expected_attendees", "audience_profile", "audience_demographics",
+  "banner_image_url", "sponsorship_deck_url", "gallery_urls",
+  "organiser_contact_name", "organiser_contact_role", "organiser_contact_email", "organiser_contact_phone",
+  "website_url", "instagram_handle", "linkedin_url",
+  "past_sponsors", "media_partners", "consent_given",
+  "category", "tags", "currency",
+]);
+
 const AutosaveInput = z.object({
   id: z.string().uuid(),
   step: z.number().int().min(0).max(9),
@@ -97,8 +112,11 @@ export const autosaveEvent = createServerFn({ method: "POST" })
     if (!["draft", "revision_requested"].includes(ev.status)) {
       throw new Error("Event can no longer be edited in current status");
     }
+    const safePatch = Object.fromEntries(
+      Object.entries(data.patch).filter(([k]) => AUTOSAVE_ALLOWED.has(k)),
+    );
     const payload = {
-      ...data.patch,
+      ...safePatch,
       form_step_completed: Math.max(data.step, 0),
       updated_at: new Date().toISOString(),
     } as never;
