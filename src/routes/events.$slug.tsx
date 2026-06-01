@@ -237,6 +237,7 @@ function EventDetail() {
           onClose={() => setShowSponsor(false)}
         />
       )}
+      {/* SponsorInterestDialog defined below */}
 
       {showForm && (
         <CommitmentDialog
