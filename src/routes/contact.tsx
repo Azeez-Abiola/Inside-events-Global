@@ -117,9 +117,10 @@ function ContactPage() {
             {sent && (
               <div className="flex items-start gap-3 rounded-lg bg-primary/10 p-4 text-sm">
                 <CheckCircle2 className="mt-0.5 h-5 w-5 text-primary" />
-                <span>Thanks. Your mail client should have opened with your message ready to send.</span>
+                <span>Thanks. We've received your message and sent you a confirmation email.</span>
               </div>
             )}
+
             <div className="grid gap-5 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="name">Full name</Label>
