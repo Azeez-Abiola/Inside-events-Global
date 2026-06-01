@@ -237,6 +237,7 @@ function EventDetail() {
           onClose={() => setShowSponsor(false)}
         />
       )}
+      {/* SponsorInterestDialog defined below */}
 
       {showForm && (
         <CommitmentDialog
@@ -401,5 +402,79 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <div className="mb-1 font-medium text-foreground">{label}</div>
       {children}
     </label>
+  );
+}
+
+function SponsorInterestDialog({
+  eventId, eventName, onClose,
+}: { eventId: string; eventName: string; onClose: () => void }) {
+  const [form, setForm] = useState({
+    full_name: "", email: "", company: "", role_title: "", phone: "",
+    tier_interest: "", message: "",
+  });
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("sponsorship_interests").insert({
+        event_id: eventId,
+        event_name: eventName,
+        full_name: form.full_name,
+        email: form.email,
+        company: form.company || null,
+        role_title: form.role_title || null,
+        phone: form.phone || null,
+        tier_interest: form.tier_interest || null,
+        message: form.message || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => toast.success("Interest received — the IGE team will be in touch."),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-card shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        {mutation.isSuccess ? (
+          <div className="p-10 text-center">
+            <CheckCircle2 className="mx-auto h-12 w-12 text-secondary" />
+            <h2 className="mt-4 font-display text-2xl font-bold">Thanks — we'll be in touch</h2>
+            <p className="mt-2 text-muted-foreground">A member of the IGE team will contact you within 48 hours about sponsoring {eventName}.</p>
+            <button onClick={onClose} className="mt-6 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">Close</button>
+          </div>
+        ) : (
+          <form
+            onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }}
+            className="space-y-4 p-8"
+          >
+            <div>
+              <h2 className="font-display text-2xl font-bold">Sponsor {eventName}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Tell us a bit about your brand — IGE will reach out with the deck and next steps.</p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Your name *"><input required value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} className="input" /></Field>
+              <Field label="Work email *"><input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="input" /></Field>
+              <Field label="Company"><input value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} className="input" /></Field>
+              <Field label="Role / title"><input value={form.role_title} onChange={(e) => setForm({ ...form, role_title: e.target.value })} className="input" /></Field>
+              <Field label="Phone"><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="input" /></Field>
+              <Field label="Tier of interest"><input value={form.tier_interest} onChange={(e) => setForm({ ...form, tier_interest: e.target.value })} placeholder="e.g. Title / Gold" className="input" /></Field>
+            </div>
+            <Field label="Message"><textarea rows={3} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className="input" /></Field>
+            {mutation.error && (
+              <div className="flex items-start gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                <AlertCircle className="mt-0.5 h-4 w-4" />
+                {(mutation.error as Error).message}
+              </div>
+            )}
+            <div className="flex justify-end gap-3 pt-2">
+              <button type="button" onClick={onClose} className="rounded-md px-4 py-2 text-sm font-medium hover:bg-muted">Cancel</button>
+              <button type="submit" disabled={mutation.isPending} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+                {mutation.isPending ? "Sending…" : "Send interest"}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+      <style>{`.input{display:block;width:100%;border-radius:.375rem;border:1px solid hsl(var(--border,0 0% 90%));background:transparent;padding:.5rem .75rem;font-size:.875rem;outline:none}.input:focus{border-color:hsl(var(--primary,221 83% 53%))}`}</style>
+    </div>
   );
 }
