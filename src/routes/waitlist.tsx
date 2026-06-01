@@ -1,14 +1,13 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { z } from "zod";
-import { CheckCircle2, Loader2, Megaphone, Globe2, Handshake, Sparkles, MessageSquare } from "lucide-react";
+import { CheckCircle2, Megaphone, Globe2, Handshake, Sparkles, MessageSquare } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  BrandWaitlistForm,
+  OrganiserWaitlistForm,
+  AffiliateWaitlistForm,
+  DonePanel,
+} from "@/components/waitlist-forms";
 
 export const Route = createFileRoute("/waitlist")({
   head: () => ({
