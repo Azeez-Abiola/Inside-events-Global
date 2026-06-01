@@ -41,6 +41,8 @@ import { Route as AuthenticatedEventsRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedDealsRouteImport } from './routes/_authenticated/deals'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as ApiPublicWaitlistNotifyRouteImport } from './routes/api/public/waitlist-notify'
+import { Route as ApiPublicContactRouteImport } from './routes/api/public/contact'
 import { Route as AuthenticatedEventsIdRouteImport } from './routes/_authenticated/events.$id'
 import { Route as AuthenticatedAdminVettingRouteImport } from './routes/_authenticated/admin.vetting'
 import { Route as AuthenticatedAdminRevenueRouteImport } from './routes/_authenticated/admin.revenue'
@@ -211,6 +213,16 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicWaitlistNotifyRoute = ApiPublicWaitlistNotifyRouteImport.update({
+  id: '/api/public/waitlist-notify',
+  path: '/api/public/waitlist-notify',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicContactRoute = ApiPublicContactRouteImport.update({
+  id: '/api/public/contact',
+  path: '/api/public/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedEventsIdRoute = AuthenticatedEventsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -302,6 +314,8 @@ export interface FileRoutesByFullPath {
   '/admin/revenue': typeof AuthenticatedAdminRevenueRoute
   '/admin/vetting': typeof AuthenticatedAdminVettingRoute
   '/events/$id': typeof AuthenticatedEventsIdRoute
+  '/api/public/contact': typeof ApiPublicContactRoute
+  '/api/public/waitlist-notify': typeof ApiPublicWaitlistNotifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/webhooks/paystack': typeof ApiPublicWebhooksPaystackRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
@@ -345,6 +359,8 @@ export interface FileRoutesByTo {
   '/admin/revenue': typeof AuthenticatedAdminRevenueRoute
   '/admin/vetting': typeof AuthenticatedAdminVettingRoute
   '/events/$id': typeof AuthenticatedEventsIdRoute
+  '/api/public/contact': typeof ApiPublicContactRoute
+  '/api/public/waitlist-notify': typeof ApiPublicWaitlistNotifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/webhooks/paystack': typeof ApiPublicWebhooksPaystackRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
@@ -390,6 +406,8 @@ export interface FileRoutesById {
   '/_authenticated/admin/revenue': typeof AuthenticatedAdminRevenueRoute
   '/_authenticated/admin/vetting': typeof AuthenticatedAdminVettingRoute
   '/_authenticated/events/$id': typeof AuthenticatedEventsIdRoute
+  '/api/public/contact': typeof ApiPublicContactRoute
+  '/api/public/waitlist-notify': typeof ApiPublicWaitlistNotifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/webhooks/paystack': typeof ApiPublicWebhooksPaystackRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
@@ -435,6 +453,8 @@ export interface FileRouteTypes {
     | '/admin/revenue'
     | '/admin/vetting'
     | '/events/$id'
+    | '/api/public/contact'
+    | '/api/public/waitlist-notify'
     | '/lovable/email/suppression'
     | '/api/public/webhooks/paystack'
     | '/api/public/webhooks/stripe'
@@ -478,6 +498,8 @@ export interface FileRouteTypes {
     | '/admin/revenue'
     | '/admin/vetting'
     | '/events/$id'
+    | '/api/public/contact'
+    | '/api/public/waitlist-notify'
     | '/lovable/email/suppression'
     | '/api/public/webhooks/paystack'
     | '/api/public/webhooks/stripe'
@@ -522,6 +544,8 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/revenue'
     | '/_authenticated/admin/vetting'
     | '/_authenticated/events/$id'
+    | '/api/public/contact'
+    | '/api/public/waitlist-notify'
     | '/lovable/email/suppression'
     | '/api/public/webhooks/paystack'
     | '/api/public/webhooks/stripe'
@@ -556,6 +580,8 @@ export interface RootRouteChildren {
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   EventsSlugRoute: typeof EventsSlugRoute
   RCodeRoute: typeof RCodeRoute
+  ApiPublicContactRoute: typeof ApiPublicContactRoute
+  ApiPublicWaitlistNotifyRoute: typeof ApiPublicWaitlistNotifyRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicWebhooksPaystackRoute: typeof ApiPublicWebhooksPaystackRoute
   ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
@@ -792,6 +818,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/waitlist-notify': {
+      id: '/api/public/waitlist-notify'
+      path: '/api/public/waitlist-notify'
+      fullPath: '/api/public/waitlist-notify'
+      preLoaderRoute: typeof ApiPublicWaitlistNotifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/contact': {
+      id: '/api/public/contact'
+      path: '/api/public/contact'
+      fullPath: '/api/public/contact'
+      preLoaderRoute: typeof ApiPublicContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/events/$id': {
       id: '/_authenticated/events/$id'
       path: '/$id'
@@ -940,6 +980,8 @@ const rootRouteChildren: RootRouteChildren = {
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   EventsSlugRoute: EventsSlugRoute,
   RCodeRoute: RCodeRoute,
+  ApiPublicContactRoute: ApiPublicContactRoute,
+  ApiPublicWaitlistNotifyRoute: ApiPublicWaitlistNotifyRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicWebhooksPaystackRoute: ApiPublicWebhooksPaystackRoute,
   ApiPublicWebhooksStripeRoute: ApiPublicWebhooksStripeRoute,

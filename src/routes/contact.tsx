@@ -43,15 +43,26 @@ function ContactPage() {
       return;
     }
     setSubmitting(true);
-    // Fallback: open the user's mail client with prefilled content.
-    const body = `From: ${parsed.data.name} (${parsed.data.email})\nCompany: ${parsed.data.company ?? "-"}\n\n${parsed.data.message}`;
-    window.location.href = `mailto:Hi@insideglobalevents.com?subject=${encodeURIComponent(parsed.data.subject)}&body=${encodeURIComponent(body)}`;
-    setTimeout(() => {
-      setSubmitting(false);
+    try {
+      const res = await fetch("/api/public/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(parsed.data),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.error ?? "Failed to send message");
+      }
       setSent(true);
       form.reset();
-    }, 600);
+      toast.success("Message sent. We'll be in touch within one business day.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to send message");
+    } finally {
+      setSubmitting(false);
+    }
   }
+
 
   return (
     <div className="min-h-screen bg-background">
