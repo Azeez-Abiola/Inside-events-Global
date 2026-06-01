@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WaitlistRouteImport } from './routes/waitlist'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as TrustVettingRouteImport } from './routes/trust-vetting'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SponsorsRouteImport } from './routes/sponsors'
@@ -45,6 +46,7 @@ import { Route as ApiPublicWaitlistNotifyRouteImport } from './routes/api/public
 import { Route as ApiPublicContactRouteImport } from './routes/api/public/contact'
 import { Route as AuthenticatedEventsIdRouteImport } from './routes/_authenticated/events.$id'
 import { Route as AuthenticatedAdminVettingRouteImport } from './routes/_authenticated/admin.vetting'
+import { Route as AuthenticatedAdminSubmissionsRouteImport } from './routes/_authenticated/admin.submissions'
 import { Route as AuthenticatedAdminRevenueRouteImport } from './routes/_authenticated/admin.revenue'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -57,6 +59,11 @@ import { Route as ApiPublicWebhooksPaystackRouteImport } from './routes/api/publ
 const WaitlistRoute = WaitlistRouteImport.update({
   id: '/waitlist',
   path: '/waitlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TrustVettingRoute = TrustVettingRouteImport.update({
@@ -234,6 +241,12 @@ const AuthenticatedAdminVettingRoute =
     path: '/admin/vetting',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAdminSubmissionsRoute =
+  AuthenticatedAdminSubmissionsRouteImport.update({
+    id: '/admin/submissions',
+    path: '/admin/submissions',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAdminRevenueRoute =
   AuthenticatedAdminRevenueRouteImport.update({
     id: '/admin/revenue',
@@ -299,6 +312,7 @@ export interface FileRoutesByFullPath {
   '/sponsors': typeof SponsorsRoute
   '/terms': typeof TermsRoute
   '/trust-vetting': typeof TrustVettingRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/waitlist': typeof WaitlistRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/deals': typeof AuthenticatedDealsRoute
@@ -312,6 +326,7 @@ export interface FileRoutesByFullPath {
   '/onboarding/profile': typeof OnboardingProfileRoute
   '/r/$code': typeof RCodeRoute
   '/admin/revenue': typeof AuthenticatedAdminRevenueRoute
+  '/admin/submissions': typeof AuthenticatedAdminSubmissionsRoute
   '/admin/vetting': typeof AuthenticatedAdminVettingRoute
   '/events/$id': typeof AuthenticatedEventsIdRoute
   '/api/public/contact': typeof ApiPublicContactRoute
@@ -344,6 +359,7 @@ export interface FileRoutesByTo {
   '/sponsors': typeof SponsorsRoute
   '/terms': typeof TermsRoute
   '/trust-vetting': typeof TrustVettingRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/waitlist': typeof WaitlistRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/deals': typeof AuthenticatedDealsRoute
@@ -357,6 +373,7 @@ export interface FileRoutesByTo {
   '/onboarding/profile': typeof OnboardingProfileRoute
   '/r/$code': typeof RCodeRoute
   '/admin/revenue': typeof AuthenticatedAdminRevenueRoute
+  '/admin/submissions': typeof AuthenticatedAdminSubmissionsRoute
   '/admin/vetting': typeof AuthenticatedAdminVettingRoute
   '/events/$id': typeof AuthenticatedEventsIdRoute
   '/api/public/contact': typeof ApiPublicContactRoute
@@ -391,6 +408,7 @@ export interface FileRoutesById {
   '/sponsors': typeof SponsorsRoute
   '/terms': typeof TermsRoute
   '/trust-vetting': typeof TrustVettingRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/waitlist': typeof WaitlistRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/deals': typeof AuthenticatedDealsRoute
@@ -404,6 +422,7 @@ export interface FileRoutesById {
   '/onboarding/profile': typeof OnboardingProfileRoute
   '/r/$code': typeof RCodeRoute
   '/_authenticated/admin/revenue': typeof AuthenticatedAdminRevenueRoute
+  '/_authenticated/admin/submissions': typeof AuthenticatedAdminSubmissionsRoute
   '/_authenticated/admin/vetting': typeof AuthenticatedAdminVettingRoute
   '/_authenticated/events/$id': typeof AuthenticatedEventsIdRoute
   '/api/public/contact': typeof ApiPublicContactRoute
@@ -438,6 +457,7 @@ export interface FileRouteTypes {
     | '/sponsors'
     | '/terms'
     | '/trust-vetting'
+    | '/unsubscribe'
     | '/waitlist'
     | '/dashboard'
     | '/deals'
@@ -451,6 +471,7 @@ export interface FileRouteTypes {
     | '/onboarding/profile'
     | '/r/$code'
     | '/admin/revenue'
+    | '/admin/submissions'
     | '/admin/vetting'
     | '/events/$id'
     | '/api/public/contact'
@@ -483,6 +504,7 @@ export interface FileRouteTypes {
     | '/sponsors'
     | '/terms'
     | '/trust-vetting'
+    | '/unsubscribe'
     | '/waitlist'
     | '/dashboard'
     | '/deals'
@@ -496,6 +518,7 @@ export interface FileRouteTypes {
     | '/onboarding/profile'
     | '/r/$code'
     | '/admin/revenue'
+    | '/admin/submissions'
     | '/admin/vetting'
     | '/events/$id'
     | '/api/public/contact'
@@ -529,6 +552,7 @@ export interface FileRouteTypes {
     | '/sponsors'
     | '/terms'
     | '/trust-vetting'
+    | '/unsubscribe'
     | '/waitlist'
     | '/_authenticated/dashboard'
     | '/_authenticated/deals'
@@ -542,6 +566,7 @@ export interface FileRouteTypes {
     | '/onboarding/profile'
     | '/r/$code'
     | '/_authenticated/admin/revenue'
+    | '/_authenticated/admin/submissions'
     | '/_authenticated/admin/vetting'
     | '/_authenticated/events/$id'
     | '/api/public/contact'
@@ -576,6 +601,7 @@ export interface RootRouteChildren {
   SponsorsRoute: typeof SponsorsRoute
   TermsRoute: typeof TermsRoute
   TrustVettingRoute: typeof TrustVettingRoute
+  UnsubscribeRoute: typeof UnsubscribeRoute
   WaitlistRoute: typeof WaitlistRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   EventsSlugRoute: typeof EventsSlugRoute
@@ -599,6 +625,13 @@ declare module '@tanstack/react-router' {
       path: '/waitlist'
       fullPath: '/waitlist'
       preLoaderRoute: typeof WaitlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/trust-vetting': {
@@ -846,6 +879,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminVettingRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/admin/submissions': {
+      id: '/_authenticated/admin/submissions'
+      path: '/admin/submissions'
+      fullPath: '/admin/submissions'
+      preLoaderRoute: typeof AuthenticatedAdminSubmissionsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/admin/revenue': {
       id: '/_authenticated/admin/revenue'
       path: '/admin/revenue'
@@ -925,6 +965,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedReferralsRoute: typeof AuthenticatedReferralsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedAdminRevenueRoute: typeof AuthenticatedAdminRevenueRoute
+  AuthenticatedAdminSubmissionsRoute: typeof AuthenticatedAdminSubmissionsRoute
   AuthenticatedAdminVettingRoute: typeof AuthenticatedAdminVettingRoute
 }
 
@@ -937,6 +978,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedReferralsRoute: AuthenticatedReferralsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedAdminRevenueRoute: AuthenticatedAdminRevenueRoute,
+  AuthenticatedAdminSubmissionsRoute: AuthenticatedAdminSubmissionsRoute,
   AuthenticatedAdminVettingRoute: AuthenticatedAdminVettingRoute,
 }
 
@@ -976,6 +1018,7 @@ const rootRouteChildren: RootRouteChildren = {
   SponsorsRoute: SponsorsRoute,
   TermsRoute: TermsRoute,
   TrustVettingRoute: TrustVettingRoute,
+  UnsubscribeRoute: UnsubscribeRoute,
   WaitlistRoute: WaitlistRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   EventsSlugRoute: EventsSlugRoute,
