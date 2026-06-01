@@ -87,12 +87,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6410c0bf-c8c9-4d1e-b048-e98ce84ec6a2/id-preview-04099da8--0d1f4683-f826-450c-927b-386eaca7e044.lovable.app-1779749582346.png" },
     ],
     links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "canonical", href: "https://www.insideglobalevents.com/" },
+    ],
+    scripts: [
       {
-        rel: "stylesheet",
-        href: appCss,
-      },
+        src: "https://plausible.io/js/script.js",
+        defer: true,
+        "data-domain": "insideglobalevents.com",
+      } as any,
     ],
   }),
+
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
