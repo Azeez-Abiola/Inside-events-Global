@@ -1096,35 +1096,53 @@ export type Database = {
         Row: {
           audience: string
           company: string | null
+          consent_given: boolean
           country: string | null
           created_at: string
           email: string
+          form_data: Json
           full_name: string
           id: string
           notes: string | null
+          phone: string | null
+          referral_source: string | null
+          referred_by: string | null
           role_title: string | null
+          status: string
         }
         Insert: {
           audience: string
           company?: string | null
+          consent_given?: boolean
           country?: string | null
           created_at?: string
           email: string
+          form_data?: Json
           full_name: string
           id?: string
           notes?: string | null
+          phone?: string | null
+          referral_source?: string | null
+          referred_by?: string | null
           role_title?: string | null
+          status?: string
         }
         Update: {
           audience?: string
           company?: string | null
+          consent_given?: boolean
           country?: string | null
           created_at?: string
           email?: string
+          form_data?: Json
           full_name?: string
           id?: string
           notes?: string | null
+          phone?: string | null
+          referral_source?: string | null
+          referred_by?: string | null
           role_title?: string | null
+          status?: string
         }
         Relationships: []
       }
