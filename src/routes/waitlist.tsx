@@ -54,15 +54,7 @@ const benefits: Record<Audience, { title: string; desc: string }[]> = {
   ],
 };
 
-const schema = z.object({
-  audience: z.enum(["organiser", "sponsor", "referral_partner"]),
-  full_name: z.string().trim().min(1, "Name is required").max(100),
-  email: z.string().trim().email("Enter a valid email").max(255),
-  company: z.string().trim().max(150).optional(),
-  role_title: z.string().trim().max(150).optional(),
-  country: z.string().trim().max(100).optional(),
-  notes: z.string().trim().max(1000).optional(),
-});
+const LAUNCH_TS = new Date("2026-07-01T00:00:00Z").getTime();
 
 const LAUNCH = new Date("2026-07-01T00:00:00Z").getTime();
 
