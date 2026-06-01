@@ -133,8 +133,28 @@ async function submitForm(audience: "organiser" | "sponsor" | "referral_partner"
     toast.error(error.message);
     return false;
   }
+  // Notify ops — fire-and-forget; don't block success on email failure.
+  try {
+    await fetch("/api/public/waitlist-notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        audience,
+        name: full_name,
+        email,
+        company: (all["company"] as string) || null,
+        role: (all["role_title"] as string) || null,
+        country: (all["country"] as string) || null,
+        phone: (all["phone"] as string) || null,
+        notes: (all["notes"] as string) || null,
+      }),
+    });
+  } catch {
+    // ignore
+  }
   return true;
 }
+
 
 function FormShell({
   audience, onDone, children,

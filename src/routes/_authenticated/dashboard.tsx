@@ -52,8 +52,12 @@ function Dashboard() {
           <ActionCard to="/admin/vetting" icon={ShieldCheck} title="Vetting queue" desc="Review submitted events and approve, reject, or request revisions." cta="Open queue" />
         )}
         {isAdmin && (
+          <ActionCard to="/admin/submissions" icon={Inbox} title="Submissions" desc="Waitlist signups and contact-form messages in one place." cta="Open submissions" />
+        )}
+        {isAdmin && (
           <ActionCard to="/admin/revenue" icon={DollarSign} title="Revenue dashboard" desc="Deal pipeline, ABW commission, partner payouts." cta="Open revenue" />
         )}
+
       </div>
     </AppShell>
   );
