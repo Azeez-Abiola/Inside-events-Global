@@ -22,11 +22,10 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
     handlers: {
       POST: async ({ request }) => {
         const secret = process.env.STRIPE_WEBHOOK_SECRET;
+        if (!secret) return new Response("Webhook secret not configured", { status: 500 });
         const body = await request.text();
-        if (secret) {
-          const ok = await verifyStripeSignature(body, request.headers.get("stripe-signature"), secret);
-          if (!ok) return new Response("Invalid signature", { status: 401 });
-        }
+        const ok = await verifyStripeSignature(body, request.headers.get("stripe-signature"), secret);
+        if (!ok) return new Response("Invalid signature", { status: 401 });
         let evt: any;
         try { evt = JSON.parse(body); } catch { return new Response("Bad payload", { status: 400 }); }
 

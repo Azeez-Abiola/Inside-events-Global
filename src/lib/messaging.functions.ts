@@ -43,6 +43,12 @@ export const getThread = createServerFn({ method: "POST" })
       .select("*")
       .eq("thread_id", data.thread_id)
       .order("created_at", { ascending: true });
+    // Authorization: caller must be a participant in this thread.
+    const messages = msgs ?? [];
+    const isParticipant = messages.some(
+      (m: any) => m.sender_id === userId || m.recipient_id === userId,
+    );
+    if (!isParticipant) throw new Error("Forbidden");
     // Mark as read
     await supabase
       .from("messages")
@@ -50,7 +56,7 @@ export const getThread = createServerFn({ method: "POST" })
       .eq("thread_id", data.thread_id)
       .eq("recipient_id", userId)
       .eq("read", false);
-    return { messages: msgs ?? [] };
+    return { messages };
   });
 
 const SendInput = z.object({

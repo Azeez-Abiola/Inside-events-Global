@@ -15,12 +15,11 @@ export const Route = createFileRoute("/api/public/webhooks/paystack")({
     handlers: {
       POST: async ({ request }) => {
         const secret = process.env.PAYSTACK_SECRET_KEY;
+        if (!secret) return new Response("Webhook secret not configured", { status: 500 });
         const body = await request.text();
         const header = request.headers.get("x-paystack-signature");
-        if (secret) {
-          const expected = await hmacSha512Hex(secret, body);
-          if (header !== expected) return new Response("Invalid signature", { status: 401 });
-        }
+        const expected = await hmacSha512Hex(secret, body);
+        if (header !== expected) return new Response("Invalid signature", { status: 401 });
         let evt: any;
         try { evt = JSON.parse(body); } catch { return new Response("Bad payload", { status: 400 }); }
 
