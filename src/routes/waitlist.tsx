@@ -56,8 +56,6 @@ const benefits: Record<Audience, { title: string; desc: string }[]> = {
 
 const LAUNCH_TS = new Date("2026-07-01T00:00:00Z").getTime();
 
-const LAUNCH = new Date("2026-07-01T00:00:00Z").getTime();
-
 function useCountdown(target: number) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
