@@ -45,7 +45,7 @@ export function WaitlistGate({ children }: { children: React.ReactNode }) {
       if (!cancelled) {
         setAllowed(false);
         setChecked(true);
-        navigate({ to: "/waitlist", replace: true });
+        navigate({ to: "/welcome", replace: true });
       }
     }
     run();
