@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 // Signed-in users (admins / team) bypass so they can still manage the platform.
 const LAUNCH = new Date("2026-07-01T00:00:00Z").getTime();
 const ALLOWED_PREFIXES = [
+  "/welcome",
   "/waitlist",
   "/contact",
   "/login",
@@ -44,7 +45,7 @@ export function WaitlistGate({ children }: { children: React.ReactNode }) {
       if (!cancelled) {
         setAllowed(false);
         setChecked(true);
-        navigate({ to: "/waitlist", replace: true });
+        navigate({ to: "/welcome", replace: true });
       }
     }
     run();

@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as WaitlistRouteImport } from './routes/waitlist'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as TrustVettingRouteImport } from './routes/trust-vetting'
@@ -56,6 +57,11 @@ import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/em
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
 import { Route as ApiPublicWebhooksPaystackRouteImport } from './routes/api/public/webhooks/paystack'
 
+const WelcomeRoute = WelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WaitlistRoute = WaitlistRouteImport.update({
   id: '/waitlist',
   path: '/waitlist',
@@ -314,6 +320,7 @@ export interface FileRoutesByFullPath {
   '/trust-vetting': typeof TrustVettingRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/waitlist': typeof WaitlistRoute
+  '/welcome': typeof WelcomeRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/deals': typeof AuthenticatedDealsRoute
   '/events': typeof AuthenticatedEventsRouteWithChildren
@@ -361,6 +368,7 @@ export interface FileRoutesByTo {
   '/trust-vetting': typeof TrustVettingRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/waitlist': typeof WaitlistRoute
+  '/welcome': typeof WelcomeRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/deals': typeof AuthenticatedDealsRoute
   '/events': typeof AuthenticatedEventsRouteWithChildren
@@ -410,6 +418,7 @@ export interface FileRoutesById {
   '/trust-vetting': typeof TrustVettingRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/waitlist': typeof WaitlistRoute
+  '/welcome': typeof WelcomeRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/deals': typeof AuthenticatedDealsRoute
   '/_authenticated/events': typeof AuthenticatedEventsRouteWithChildren
@@ -459,6 +468,7 @@ export interface FileRouteTypes {
     | '/trust-vetting'
     | '/unsubscribe'
     | '/waitlist'
+    | '/welcome'
     | '/dashboard'
     | '/deals'
     | '/events'
@@ -506,6 +516,7 @@ export interface FileRouteTypes {
     | '/trust-vetting'
     | '/unsubscribe'
     | '/waitlist'
+    | '/welcome'
     | '/dashboard'
     | '/deals'
     | '/events'
@@ -554,6 +565,7 @@ export interface FileRouteTypes {
     | '/trust-vetting'
     | '/unsubscribe'
     | '/waitlist'
+    | '/welcome'
     | '/_authenticated/dashboard'
     | '/_authenticated/deals'
     | '/_authenticated/events'
@@ -603,6 +615,7 @@ export interface RootRouteChildren {
   TrustVettingRoute: typeof TrustVettingRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   WaitlistRoute: typeof WaitlistRoute
+  WelcomeRoute: typeof WelcomeRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   EventsSlugRoute: typeof EventsSlugRoute
   RCodeRoute: typeof RCodeRoute
@@ -620,6 +633,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/welcome': {
+      id: '/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof WelcomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/waitlist': {
       id: '/waitlist'
       path: '/waitlist'
@@ -1020,6 +1040,7 @@ const rootRouteChildren: RootRouteChildren = {
   TrustVettingRoute: TrustVettingRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   WaitlistRoute: WaitlistRoute,
+  WelcomeRoute: WelcomeRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   EventsSlugRoute: EventsSlugRoute,
   RCodeRoute: RCodeRoute,
