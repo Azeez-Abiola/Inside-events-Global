@@ -379,12 +379,6 @@ function WelcomePage() {
                     loading="lazy"
                   />
                 </div>
-                <p
-                  className="mt-3 text-center font-display italic text-xs"
-                  style={{ color: "rgba(251,239,226,0.7)" }}
-                >
-                  Partnership &amp; Sponsorship Proposal · 2026
-                </p>
               </div>
             </div>
           </article>
