@@ -390,6 +390,171 @@ function WelcomePage() {
             </div>
           </article>
 
+          {/* Featured event — Battle of the Bots Lagos 2.0 */}
+          <article
+            className="mt-10 overflow-hidden rounded-3xl shadow-brand"
+            style={{ backgroundColor: "#1a0b3d", color: "#FFF7D6" }}
+          >
+            <div className="relative">
+              <img
+                src={botbCover.url}
+                alt="Battle of the Bots Lagos 2.0 — Africa's biggest inter-school robotics competition"
+                className="h-auto w-full object-cover"
+                loading="lazy"
+              />
+              <span
+                className="absolute left-6 top-6 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] backdrop-blur"
+                style={{ backgroundColor: "rgba(255,215,64,0.95)", color: "#2a0b5a" }}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Also featured this month
+              </span>
+            </div>
+
+            <div className="grid gap-10 p-8 md:grid-cols-5 md:gap-12 md:p-12">
+              <div className="md:col-span-3">
+                <p
+                  className="font-display italic text-base md:text-lg"
+                  style={{ color: "#FFD740" }}
+                >
+                  Africa's Biggest Inter-School Robotics Competition
+                </p>
+                <h3
+                  className="mt-3 font-display text-3xl font-bold leading-[1.05] tracking-tight md:text-5xl"
+                  style={{ color: "#FFF7D6" }}
+                >
+                  Battle of the Bots{" "}
+                  <span style={{ color: "#FFD740" }}>Lagos 2.0</span>
+                </h3>
+                <p
+                  className="mt-5 max-w-xl text-sm leading-relaxed md:text-base"
+                  style={{ color: "rgba(255,247,214,0.85)" }}
+                >
+                  Powered by Nigenius, Battle of the Bots returns to Lagos with
+                  the 2026 theme <em>Robotics for Industrialization</em> —
+                  bringing together the brightest young minds across Africa
+                  for a day of competition, exhibitions, and STEAM experience.
+                </p>
+
+                <ul className="mt-7 space-y-3 text-sm">
+                  <li className="flex items-start gap-3">
+                    <Calendar className="mt-0.5 h-4 w-4" style={{ color: "#FFD740" }} />
+                    <span style={{ color: "rgba(255,247,214,0.9)" }}>
+                      20th June, 2026
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <MapPin className="mt-0.5 h-4 w-4" style={{ color: "#FFD740" }} />
+                    <span style={{ color: "rgba(255,247,214,0.9)" }}>
+                      The Podium, Lekki · Lagos, Nigeria
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Trophy className="mt-0.5 h-4 w-4" style={{ color: "#FFD740" }} />
+                    <span style={{ color: "rgba(255,247,214,0.9)" }}>
+                      Cash prizes, exhibitions, hackathons &amp; STEAM
+                      experience.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <ShieldCheck className="mt-0.5 h-4 w-4" style={{ color: "#FFD740" }} />
+                    <span style={{ color: "rgba(255,247,214,0.9)" }}>
+                      Vetted by the IGE partnerships team.
+                    </span>
+                  </li>
+                </ul>
+
+                <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {[
+                    { icon: Cpu, t: "Robotics", d: "Inter-school competition" },
+                    { icon: Lightbulb, t: "STEAM", d: "Hands-on experience" },
+                    { icon: Rocket, t: "Hackathons", d: "Build, ship, demo" },
+                    { icon: Trophy, t: "Cash Prizes", d: "For winning teams" },
+                  ].map((p) => (
+                    <div
+                      key={p.t}
+                      className="rounded-2xl p-4"
+                      style={{ backgroundColor: "#FFD740", color: "#2a0b5a" }}
+                    >
+                      <p.icon className="h-5 w-5" />
+                      <div className="mt-3 font-display text-base font-bold">{p.t}</div>
+                      <p className="mt-1 text-[11px] leading-snug opacity-90">
+                        {p.d}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <a
+                    href="https://bit.ly/BattleoftheBots2026tickets"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-semibold shadow transition-transform hover:-translate-y-0.5"
+                    style={{ backgroundColor: "#FFD740", color: "#2a0b5a" }}
+                  >
+                    <Ticket className="h-4 w-4" />
+                    Get your tickets
+                  </a>
+                  <a
+                    href={`mailto:${HI_EMAIL}?subject=Battle%20of%20the%20Bots%20Lagos%202.0%20—%20Sponsorship%20via%20IGE`}
+                    className="inline-flex items-center gap-2 rounded-md border px-5 py-3 text-sm font-semibold transition-colors"
+                    style={{
+                      borderColor: "rgba(255,247,214,0.45)",
+                      color: "#FFF7D6",
+                      backgroundColor: "rgba(255,247,214,0.1)",
+                    }}
+                  >
+                    <Mail className="h-4 w-4" />
+                    {HI_EMAIL}
+                  </a>
+                  <a
+                    href={IG_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 rounded-md border px-5 py-3 text-sm font-semibold transition-colors"
+                    style={{
+                      borderColor: "rgba(255,247,214,0.35)",
+                      color: "#FFF7D6",
+                      backgroundColor: "rgba(255,247,214,0.08)",
+                    }}
+                  >
+                    <Instagram className="h-4 w-4" />
+                    Follow for updates
+                  </a>
+                </div>
+              </div>
+
+              <div className="md:col-span-2">
+                <div
+                  className="rounded-2xl p-6"
+                  style={{ backgroundColor: "rgba(255,215,64,0.08)", border: "1px solid rgba(255,215,64,0.25)" }}
+                >
+                  <div
+                    className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+                    style={{ color: "#FFD740" }}
+                  >
+                    Theme
+                  </div>
+                  <div className="mt-2 font-display text-2xl font-bold leading-tight" style={{ color: "#FFF7D6" }}>
+                    Robotics for Industrialization
+                  </div>
+                  <p className="mt-3 text-sm" style={{ color: "rgba(255,247,214,0.8)" }}>
+                    Powered by Nigenius. Sponsors include Sycamore, Indomie,
+                    Sosa, Moniepoint, MTN, Rise, Bell Oil &amp; Gas, Oracle
+                    Academy, Peak, Dobi Health, Wowbii, UAC Foods, Pave and
+                    more.
+                  </p>
+                </div>
+                <p
+                  className="mt-3 text-center font-display italic text-xs"
+                  style={{ color: "rgba(255,247,214,0.7)" }}
+                >
+                  Lagos · June 2026
+                </p>
+              </div>
+            </div>
+          </article>
 
           <div className="mt-8 rounded-2xl border border-dashed border-border bg-card/40 p-6 text-center text-sm text-muted-foreground">
             More vetted events from across the Africa–Europe corridor will be
