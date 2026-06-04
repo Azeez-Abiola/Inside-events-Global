@@ -11,9 +11,14 @@ import { Search, SlidersHorizontal, MapPin, Calendar, Users, ShieldCheck, X } fr
 export const Route = createFileRoute("/marketplace")({
   head: () => ({
     meta: [
-      { title: "Marketplace · IGE - Inside Global Events 2026" },
-      { name: "description", content: "Discover IGE-vetted sponsorship opportunities across Africa and the diaspora." },
+      { title: "Event Sponsorship Marketplace — Browse Vetted B2B Events | IGE" },
+      { name: "description", content: "Browse the IGE event sponsorship marketplace. Filter vetted B2B events by sector, audience, country, and format. Find sponsorship opportunities that match your buyers." },
+      { name: "keywords", content: "event sponsorship marketplace, sponsorship opportunities, B2B events to sponsor, vetted sponsorship listings, find events to sponsor" },
+      { property: "og:title", content: "Event Sponsorship Marketplace — IGE" },
+      { property: "og:description", content: "Discover IGE-vetted sponsorship opportunities across the Africa–Europe corridor and globally." },
+      { property: "og:url", content: "https://www.insideglobalevents.com/marketplace" },
     ],
+    links: [{ rel: "canonical", href: "https://www.insideglobalevents.com/marketplace" }],
   }),
   component: MarketplacePage,
 });

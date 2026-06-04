@@ -17,23 +17,30 @@ import featuredImg from "@/assets/featured-itsekiri.png";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "IGE · The vetted marketplace for B2B event sponsorships" },
+      { title: "IGE — Event Sponsorship Marketplace | Find Sponsors & Sponsor B2B Events" },
       {
         name: "description",
         content:
-          "Inside Global Events 2026 connects vetted B2B event organisers, sponsors, and trusted referral partners. Discover sponsorship opportunities, close deals, and grow revenue without the noise.",
+          "Inside Global Events (IGE) is the vetted event sponsorship marketplace. Find sponsors for your event, discover B2B events to sponsor, measure sponsorship ROI, and earn referral commission. Africa–Europe corridor and global.",
       },
-      { property: "og:title", content: "Inside Global Events 2026" },
+      {
+        name: "keywords",
+        content:
+          "event sponsorship, event sponsorship marketplace, B2B event sponsorship, find event sponsors, sponsor B2B events, corporate event sponsorship, sponsorship ROI, sponsorship packages, sponsorship platform, vetted sponsors, referral commission, Africa Europe events, conference sponsorship",
+      },
+      { property: "og:title", content: "IGE — The Event Sponsorship Marketplace" },
       {
         property: "og:description",
         content:
-          "The vetted marketplace where B2B event organisers, sponsors, and referral partners actually close deals.",
+          "Find sponsors, sponsor vetted B2B events, and earn referral commission on closed sponsorship deals.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://www.insideglobalevents.com/" },
       { property: "og:image", content: ogImage },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:image", content: ogImage },
     ],
+    links: [{ rel: "canonical", href: "https://www.insideglobalevents.com/" }],
   }),
 
   component: Landing,

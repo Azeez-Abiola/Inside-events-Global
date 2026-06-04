@@ -5,11 +5,14 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 export const Route = createFileRoute("/faq")({
   head: () => ({
     meta: [
-      { title: "FAQ · Inside Global Events 2026" },
-      { name: "description", content: "Answers to common questions from organisers, sponsors, and referral partners about vetting, timelines, commission, and payouts." },
-      { property: "og:title", content: "FAQ · Inside Global Events 2026" },
-      { property: "og:description", content: "Vetting, timelines, payouts and more." },
+      { title: "Event Sponsorship FAQ — Vetting, ROI, Commission & Payouts | IGE" },
+      { name: "description", content: "Answers to the most common event sponsorship questions: how vetting works, sponsorship ROI, commission rates, payouts, contracts, and referral partner earnings." },
+      { name: "keywords", content: "event sponsorship FAQ, sponsorship ROI, sponsorship commission, sponsorship vetting, sponsorship payouts, referral commission" },
+      { property: "og:title", content: "Event Sponsorship FAQ — IGE" },
+      { property: "og:description", content: "Vetting, ROI, commission, and payouts — answered." },
+      { property: "og:url", content: "https://www.insideglobalevents.com/faq" },
     ],
+    links: [{ rel: "canonical", href: "https://www.insideglobalevents.com/faq" }],
     scripts: [{
       type: "application/ld+json",
       children: JSON.stringify({

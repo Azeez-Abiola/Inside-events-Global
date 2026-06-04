@@ -5,19 +5,22 @@ import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 export const Route = createFileRoute("/how-it-works")({
   head: () => ({
     meta: [
-      { title: "How it works · IGE" },
+      { title: "How Event Sponsorship Works on IGE — From Pitch to Paid" },
       {
         name: "description",
         content:
-          "From signup to signed sponsorship in days, not quarters. See how organisers, sponsors and partners work inside IGE.",
+          "See how IGE structures B2B event sponsorship deals end-to-end: vetting, sponsorship packages, sponsor matching, contracts, payment, and ROI tracking. From signup to signed sponsorship in days.",
       },
-      { property: "og:title", content: "How it works · IGE" },
       {
-        property: "og:description",
+        name: "keywords",
         content:
-          "From signup to signed sponsorship in days, not quarters.",
+          "how event sponsorship works, sponsorship process, sponsorship deal flow, sponsorship contract, sponsorship activation, sponsorship payment",
       },
+      { property: "og:title", content: "How Event Sponsorship Works on IGE" },
+      { property: "og:description", content: "From signup to signed sponsorship in days, not quarters." },
+      { property: "og:url", content: "https://www.insideglobalevents.com/how-it-works" },
     ],
+    links: [{ rel: "canonical", href: "https://www.insideglobalevents.com/how-it-works" }],
   }),
   component: HowItWorksPage,
 });

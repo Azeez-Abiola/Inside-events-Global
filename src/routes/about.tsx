@@ -5,19 +5,14 @@ import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About IGE · Inside Global Events 2026" },
-      {
-        name: "description",
-        content:
-          "Inside Global Events 2026 (IGE) is a vertically integrated event intelligence and sponsorship marketplace built for the Africa-Europe corridor and the global events economy.",
-      },
-      { property: "og:title", content: "About IGE · Inside Global Events 2026" },
-      {
-        property: "og:description",
-        content:
-          "End-to-end commercial infrastructure connecting event organisers, brand sponsors, and a distributed network of partnerships professionals.",
-      },
+      { title: "About IGE — The Trust Layer for Event Sponsorship" },
+      { name: "description", content: "Inside Global Events (IGE) is a vertically integrated event sponsorship marketplace and event intelligence platform built for the Africa–Europe corridor and the global events economy." },
+      { name: "keywords", content: "about IGE, event sponsorship marketplace, event intelligence, B2B sponsorship platform, Africa Europe events" },
+      { property: "og:title", content: "About IGE — Event Sponsorship Marketplace" },
+      { property: "og:description", content: "Commercial infrastructure for B2B event sponsorship: vetted organisers, verified sponsors, accredited referral partners." },
+      { property: "og:url", content: "https://www.insideglobalevents.com/about" },
     ],
+    links: [{ rel: "canonical", href: "https://www.insideglobalevents.com/about" }],
   }),
   component: AboutPage,
 });

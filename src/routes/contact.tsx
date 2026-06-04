@@ -12,11 +12,13 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact · Inside Global Events 2026" },
-      { name: "description", content: "Get in touch with the Inside Global Events 2026 team. Email, phone, and office locations across Lagos and Paris." },
-      { property: "og:title", content: "Contact · Inside Global Events 2026" },
+      { title: "Contact IGE — Talk to the Event Sponsorship Team" },
+      { name: "description", content: "Contact Inside Global Events about sponsorship opportunities, listing your event, partnerships, or vetting. Email, phone, and offices in Lagos and Paris." },
+      { property: "og:title", content: "Contact IGE — Event Sponsorship Marketplace" },
       { property: "og:description", content: "Talk to the IGE team about sponsorships, partnerships, and trust enquiries." },
+      { property: "og:url", content: "https://www.insideglobalevents.com/contact" },
     ],
+    links: [{ rel: "canonical", href: "https://www.insideglobalevents.com/contact" }],
   }),
   component: ContactPage,
 });

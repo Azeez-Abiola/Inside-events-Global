@@ -5,19 +5,22 @@ import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 export const Route = createFileRoute("/partners")({
   head: () => ({
     meta: [
-      { title: "Referral Partners · IGE" },
+      { title: "Earn Sponsorship Referral Commission — IGE Partner Program" },
       {
         name: "description",
         content:
-          "Turn your network into recurring commission. Generate trackable referral links, close sponsorships, and earn transparent commission.",
+          "Turn your network into recurring revenue. Refer event sponsorship deals on IGE, track conversions, and earn up to 20% transparent commission on every closed sponsorship.",
       },
-      { property: "og:title", content: "Referral Partners · IGE" },
       {
-        property: "og:description",
+        name: "keywords",
         content:
-          "Turn your network into recurring commission with IGE.",
+          "sponsorship referral, event sponsorship affiliate, sponsorship commission, refer sponsors, partnership marketing, B2B sponsorship referral program",
       },
+      { property: "og:title", content: "Earn Sponsorship Referral Commission — IGE Partners" },
+      { property: "og:description", content: "Refer sponsorship deals, earn transparent commission, get paid in your currency." },
+      { property: "og:url", content: "https://www.insideglobalevents.com/partners" },
     ],
+    links: [{ rel: "canonical", href: "https://www.insideglobalevents.com/partners" }],
   }),
   component: PartnersPage,
 });
