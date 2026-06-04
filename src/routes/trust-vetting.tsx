@@ -5,11 +5,14 @@ import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 export const Route = createFileRoute("/trust-vetting")({
   head: () => ({
     meta: [
-      { title: "Trust & Vetting · Inside Global Events 2026" },
-      { name: "description", content: "How IGE vets organisers, sponsors, and referral partners before any deal is brokered on the marketplace." },
-      { property: "og:title", content: "Trust & Vetting · Inside Global Events 2026" },
-      { property: "og:description", content: "Our vetting process, compliance standards, and disclaimers." },
+      { title: "Sponsorship Trust & Vetting — How IGE Verifies Every Deal" },
+      { name: "description", content: "How IGE vets organisers, sponsors, and referral partners. Identity checks, track record review, partner accreditation, and continuous monitoring make IGE the trust layer for B2B event sponsorship." },
+      { name: "keywords", content: "vetted event sponsorship, sponsorship due diligence, sponsorship red flags, sponsorship trust, verified sponsors, verified event organisers" },
+      { property: "og:title", content: "Sponsorship Trust & Vetting — IGE" },
+      { property: "og:description", content: "Every organiser, sponsor, and partner is vetted before any deal is brokered." },
+      { property: "og:url", content: "https://www.insideglobalevents.com/trust-vetting" },
     ],
+    links: [{ rel: "canonical", href: "https://www.insideglobalevents.com/trust-vetting" }],
   }),
   component: TrustVettingPage,
 });
