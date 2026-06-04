@@ -239,123 +239,105 @@ function WelcomePage() {
             className="mt-10 overflow-hidden rounded-3xl shadow-brand"
             style={{ backgroundColor: "#5C1410", color: "#FBEFE2" }}
           >
-            {/* Top: cover image with title overlay */}
+            {/* Cover image */}
             <div className="relative">
               <img
                 src={homecomingCover.url}
-                alt="Itsekiri Global HomeComing 2026 — Reconnecting Heritage, Rebuilding Home"
-                className="mx-auto h-auto w-full max-w-md object-contain"
+                alt="Itsekiri Global HomeComing 2026 — Reconnecting Heritage, Rebuilding Home · August 17–21, 2026 · Warri Kingdom, Delta State, Nigeria"
+                className="h-auto w-full object-cover"
                 loading="lazy"
               />
             </div>
 
             {/* Body */}
-            <div className="grid gap-10 p-8 md:grid-cols-5 md:gap-12 md:p-12">
-              <div className="md:col-span-3">
-                <p
-                  className="font-display italic text-base md:text-lg"
-                  style={{ color: "#E07A3C" }}
-                >
-                  A Royal Call to Reconnect, Rebuild &amp; Celebrate
-                </p>
-                <h3
-                  className="mt-3 font-display text-3xl font-bold leading-[1.05] tracking-tight md:text-5xl"
-                  style={{ color: "#FBEFE2" }}
-                >
-                  The Itsekiri Global{" "}
-                  <span style={{ color: "#E07A3C" }}>HomeComing</span>
-                </h3>
-                <p
-                  className="mt-5 max-w-xl text-sm leading-relaxed md:text-base"
-                  style={{ color: "rgba(251,239,226,0.85)" }}
-                >
-                  The 2026 Homecoming, inspired by His Majesty Ogiame Atuwatse
-                  III, unites Itsekiris worldwide to return, reconnect, and
-                  reinvest in Warri Kingdom while celebrating the Olu of
-                  Warri's 5th Coronation Anniversary.
-                </p>
+            <div className="p-8 md:p-12">
+              <p
+                className="font-display italic text-base md:text-lg"
+                style={{ color: "#E07A3C" }}
+              >
+                A Royal Call to Reconnect, Rebuild &amp; Celebrate
+              </p>
+              <h3
+                className="mt-3 font-display text-3xl font-bold leading-[1.05] tracking-tight md:text-5xl"
+                style={{ color: "#FBEFE2" }}
+              >
+                The Itsekiri Global{" "}
+                <span style={{ color: "#E07A3C" }}>HomeComing</span>
+              </h3>
+              <p
+                className="mt-5 max-w-2xl text-sm leading-relaxed md:text-base"
+                style={{ color: "rgba(251,239,226,0.85)" }}
+              >
+                The 2026 Homecoming, inspired by His Majesty Ogiame Atuwatse
+                III, unites Itsekiris worldwide to return, reconnect, and
+                reinvest in Warri Kingdom while celebrating the Olu of
+                Warri's 5th Coronation Anniversary.
+              </p>
 
-                <ul className="mt-7 space-y-3 text-sm">
-                  <li className="flex items-start gap-3">
-                    <Calendar className="mt-0.5 h-4 w-4" style={{ color: "#E07A3C" }} />
-                    <span style={{ color: "rgba(251,239,226,0.9)" }}>
-                      August 17th–21st, 2026 · Warri Kingdom, Delta State,
-                      Nigeria
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Crown className="mt-0.5 h-4 w-4" style={{ color: "#E07A3C" }} />
-                    <span style={{ color: "rgba(251,239,226,0.9)" }}>
-                      5th Coronation Anniversary of His Majesty Ogiame
-                      Atuwatse III, Olu of Warri.
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Handshake className="mt-0.5 h-4 w-4" style={{ color: "#E07A3C" }} />
-                    <span style={{ color: "rgba(251,239,226,0.9)" }}>
-                      Partnership &amp; sponsorship opportunities open now.
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <ShieldCheck className="mt-0.5 h-4 w-4" style={{ color: "#E07A3C" }} />
-                    <span style={{ color: "rgba(251,239,226,0.9)" }}>
-                      Vetted by the IGE partnerships team.
-                    </span>
-                  </li>
-                </ul>
+              <ul className="mt-7 space-y-3 text-sm">
+                <li className="flex items-start gap-3">
+                  <Calendar className="mt-0.5 h-4 w-4 shrink-0" style={{ color: "#E07A3C" }} />
+                  <span style={{ color: "rgba(251,239,226,0.9)" }}>
+                    August 17th–21st, 2026 · Warri Kingdom, Delta State,
+                    Nigeria
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Crown className="mt-0.5 h-4 w-4 shrink-0" style={{ color: "#E07A3C" }} />
+                  <span style={{ color: "rgba(251,239,226,0.9)" }}>
+                    5th Coronation Anniversary of His Majesty Ogiame
+                    Atuwatse III, Olu of Warri.
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Handshake className="mt-0.5 h-4 w-4 shrink-0" style={{ color: "#E07A3C" }} />
+                  <span style={{ color: "rgba(251,239,226,0.9)" }}>
+                    Partnership &amp; sponsorship opportunities open now.
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" style={{ color: "#E07A3C" }} />
+                  <span style={{ color: "rgba(251,239,226,0.9)" }}>
+                    Vetted by the IGE partnerships team.
+                  </span>
+                </li>
+              </ul>
 
-
-                <div className="mt-8 flex flex-wrap gap-3">
-                  <a
-                    href="mailto:Partner@itsekiriglobalhomecoming.com?subject=Itsekiri%20Global%20Homecoming%20—%20Partnership%20Interest"
-                    className="inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-semibold shadow transition-transform hover:-translate-y-0.5"
-                    style={{ backgroundColor: "#E07A3C", color: "#3a0d0a" }}
-                  >
-                    <Mail className="h-4 w-4" />
-                    Partner@itsekiriglobalhomecoming.com
-                  </a>
-                  <a
-                    href={`mailto:${HI_EMAIL}?subject=Itsekiri%20Global%20Homecoming%20—%20Sponsorship%20via%20IGE`}
-                    className="inline-flex items-center gap-2 rounded-md border px-5 py-3 text-sm font-semibold transition-colors"
-                    style={{
-                      borderColor: "rgba(251,239,226,0.45)",
-                      color: "#FBEFE2",
-                      backgroundColor: "rgba(251,239,226,0.1)",
-                    }}
-                  >
-                    <Mail className="h-4 w-4" />
-                    {HI_EMAIL}
-                  </a>
-                  <a
-                    href={IG_URL}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-md border px-5 py-3 text-sm font-semibold transition-colors"
-                    style={{
-                      borderColor: "rgba(251,239,226,0.35)",
-                      color: "#FBEFE2",
-                      backgroundColor: "rgba(251,239,226,0.08)",
-                    }}
-                  >
-                    <Instagram className="h-4 w-4" />
-                    Follow for updates
-                  </a>
-                </div>
-              </div>
-
-              {/* Right: royals portrait, framed */}
-              <div className="md:col-span-2">
-                <div
-                  className="overflow-hidden rounded-2xl"
-                  style={{ backgroundColor: "#3a0d0a" }}
+              <div className="mt-8 flex flex-wrap gap-3">
+                <a
+                  href="mailto:Partner@itsekiriglobalhomecoming.com?subject=Itsekiri%20Global%20Homecoming%20—%20Partnership%20Interest"
+                  className="inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-semibold shadow transition-transform hover:-translate-y-0.5"
+                  style={{ backgroundColor: "#E07A3C", color: "#3a0d0a" }}
                 >
-                  <img
-                    src={homecomingRoyals.url}
-                    alt="His Majesty Ogiame Atuwatse III and Olori in royal attire"
-                    className="h-full w-full object-scale-down"
-                    loading="lazy"
-                  />
-                </div>
+                  <Mail className="h-4 w-4" />
+                  Partner@itsekiriglobalhomecoming.com
+                </a>
+                <a
+                  href={`mailto:${HI_EMAIL}?subject=Itsekiri%20Global%20Homecoming%20—%20Sponsorship%20via%20IGE`}
+                  className="inline-flex items-center gap-2 rounded-md border px-5 py-3 text-sm font-semibold transition-colors"
+                  style={{
+                    borderColor: "rgba(251,239,226,0.45)",
+                    color: "#FBEFE2",
+                    backgroundColor: "rgba(251,239,226,0.1)",
+                  }}
+                >
+                  <Mail className="h-4 w-4" />
+                  {HI_EMAIL}
+                </a>
+                <a
+                  href={IG_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-md border px-5 py-3 text-sm font-semibold transition-colors"
+                  style={{
+                    borderColor: "rgba(251,239,226,0.35)",
+                    color: "#FBEFE2",
+                    backgroundColor: "rgba(251,239,226,0.08)",
+                  }}
+                >
+                  <Instagram className="h-4 w-4" />
+                  Follow for updates
+                </a>
               </div>
             </div>
           </article>
