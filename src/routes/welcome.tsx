@@ -49,7 +49,7 @@ export const Route = createFileRoute("/welcome")({
 
 const HI_EMAIL = "Hi@insideglobalevents.com";
 const IG_HANDLE = "insideglobalevents";
-const IG_URL = "https://www.instagram.com/insideglobalevents?igsh=MXU3NTdoM2UxbTVzdA==";
+const IG_URL = "https://www.instagram.com/insideglobalevents";
 
 
 function WelcomePage() {
