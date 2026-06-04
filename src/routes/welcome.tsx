@@ -4,7 +4,7 @@ import {
   Calendar,
   Instagram,
   Mail,
-  MapPin,
+
   Sparkles,
   Globe2,
   Handshake,
