@@ -4,15 +4,22 @@ import {
   Calendar,
   Instagram,
   Mail,
-  MapPin,
+
   Sparkles,
   Globe2,
   Handshake,
   Megaphone,
   ShieldCheck,
   CheckCircle2,
+  Crown,
+  Heart,
+  Building2,
+  TrendingUp,
 } from "lucide-react";
 import { SiteFooter } from "@/components/site-chrome";
+import homecomingCover from "@/assets/itsekiri-homecoming-cover.jpg.asset.json";
+import homecomingRoyals from "@/assets/itsekiri-homecoming-royals.jpg.asset.json";
+
 
 export const Route = createFileRoute("/welcome")({
   head: () => ({
@@ -36,7 +43,8 @@ export const Route = createFileRoute("/welcome")({
 
 const HI_EMAIL = "Hi@insideglobalevents.com";
 const IG_HANDLE = "insideglobalevents";
-const IG_URL = `https://instagram.com/${IG_HANDLE}`;
+const IG_URL = "https://www.instagram.com/insideglobalevents?igsh=MXU3NTdoM2UxbTVzdA==";
+
 
 function WelcomePage() {
   return (
@@ -215,60 +223,110 @@ function WelcomePage() {
             </span>
           </div>
 
-          <article className="mt-10 overflow-hidden rounded-3xl border border-border bg-card shadow-brand">
-            <div className="grid gap-0 md:grid-cols-5">
-              <div
-                aria-hidden
-                className="relative h-56 md:col-span-2 md:h-auto"
-                style={{ background: "var(--gradient-brand-diag)" }}
+          {/* Featured event — Itsekiri Global Homecoming 2026, themed to the deck */}
+          <article
+            className="mt-10 overflow-hidden rounded-3xl shadow-brand"
+            style={{ backgroundColor: "#5C1410", color: "#FBEFE2" }}
+          >
+            {/* Top: cover image with title overlay */}
+            <div className="relative">
+              <img
+                src={homecomingCover.url}
+                alt="Itsekiri Global HomeComing 2026 — Reconnecting Heritage, Rebuilding Home"
+                className="h-auto w-full object-cover"
+                loading="lazy"
+              />
+              <span
+                className="absolute left-6 top-6 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] backdrop-blur"
+                style={{ backgroundColor: "rgba(224,122,60,0.95)", color: "#3a0d0a" }}
               >
-                <div className="absolute inset-0 flex items-end p-8">
-                  <div>
-                    <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
-                      <Sparkles className="h-3.5 w-3.5" />
-                      Featured event of the month
-                    </span>
-                    <div className="mt-4 font-display text-2xl font-bold leading-tight text-white md:text-3xl">
-                      Itsekiri Global Homecoming
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="p-8 md:col-span-3 md:p-10">
-                <h3 className="font-display text-2xl font-bold tracking-tight md:text-3xl">
-                  A cultural homecoming for the global Itsekiri community.
-                </h3>
-                <p className="mt-4 text-sm leading-relaxed text-muted-foreground md:text-base">
-                  IGE is proud to spotlight the Itsekiri Global Homecoming as
-                  our launch featured event — a gathering of Itsekiri sons,
-                  daughters, businesses and allies from across the diaspora to
-                  celebrate heritage, build community and unlock new commercial
-                  partnerships.
+                <Sparkles className="h-3.5 w-3.5" />
+                Featured event of the month
+              </span>
+            </div>
+
+            {/* Body */}
+            <div className="grid gap-10 p-8 md:grid-cols-5 md:gap-12 md:p-12">
+              <div className="md:col-span-3">
+                <p
+                  className="font-display italic text-base md:text-lg"
+                  style={{ color: "#E07A3C" }}
+                >
+                  A Royal Call to Reconnect, Rebuild &amp; Celebrate
                 </p>
-                <ul className="mt-6 space-y-3 text-sm">
+                <h3
+                  className="mt-3 font-display text-3xl font-bold leading-[1.05] tracking-tight md:text-5xl"
+                  style={{ color: "#FBEFE2" }}
+                >
+                  The Itsekiri Global{" "}
+                  <span style={{ color: "#E07A3C" }}>HomeComing</span>
+                </h3>
+                <p
+                  className="mt-5 max-w-xl text-sm leading-relaxed md:text-base"
+                  style={{ color: "rgba(251,239,226,0.85)" }}
+                >
+                  The 2026 Homecoming, inspired by His Majesty Ogiame Atuwatse
+                  III, unites Itsekiris worldwide to return, reconnect, and
+                  reinvest in Warri Kingdom while celebrating the Olu of
+                  Warri's 5th Coronation Anniversary.
+                </p>
+
+                <ul className="mt-7 space-y-3 text-sm">
                   <li className="flex items-start gap-3">
-                    <MapPin className="mt-0.5 h-4 w-4 text-primary" />
-                    <span className="text-muted-foreground">
-                      Warri, Delta State, Nigeria — dates announced soon.
+                    <Calendar className="mt-0.5 h-4 w-4" style={{ color: "#E07A3C" }} />
+                    <span style={{ color: "rgba(251,239,226,0.9)" }}>
+                      August 17th–21st, 2026 · Warri Kingdom, Delta State,
+                      Nigeria
                     </span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <Handshake className="mt-0.5 h-4 w-4 text-primary" />
-                    <span className="text-muted-foreground">
-                      Sponsorship and partnership opportunities available now.
+                    <Crown className="mt-0.5 h-4 w-4" style={{ color: "#E07A3C" }} />
+                    <span style={{ color: "rgba(251,239,226,0.9)" }}>
+                      5th Coronation Anniversary of His Majesty Ogiame
+                      Atuwatse III, Olu of Warri.
                     </span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <ShieldCheck className="mt-0.5 h-4 w-4 text-primary" />
-                    <span className="text-muted-foreground">
+                    <Handshake className="mt-0.5 h-4 w-4" style={{ color: "#E07A3C" }} />
+                    <span style={{ color: "rgba(251,239,226,0.9)" }}>
+                      Partnership &amp; sponsorship opportunities open now.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <ShieldCheck className="mt-0.5 h-4 w-4" style={{ color: "#E07A3C" }} />
+                    <span style={{ color: "rgba(251,239,226,0.9)" }}>
                       Vetted by the IGE partnerships team.
                     </span>
                   </li>
                 </ul>
+
+                {/* Four-pillar tiles, modelled on the deck */}
+                <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {[
+                    { icon: Heart, t: "Identity", d: "Cultural pride & ancestral reconnection" },
+                    { icon: Building2, t: "Impact", d: "Skills, investment & development" },
+                    { icon: Globe2, t: "Unity", d: "Diaspora–homeland bridge" },
+                    { icon: TrendingUp, t: "Growth", d: "Economic & social uplift" },
+                  ].map((p) => (
+                    <div
+                      key={p.t}
+                      className="rounded-2xl p-4"
+                      style={{ backgroundColor: "#E07A3C", color: "#FBEFE2" }}
+                    >
+                      <p.icon className="h-5 w-5" />
+                      <div className="mt-3 font-display text-base font-bold">{p.t}</div>
+                      <p className="mt-1 text-[11px] leading-snug opacity-95">
+                        {p.d}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
                 <div className="mt-8 flex flex-wrap gap-3">
                   <a
                     href={`mailto:${HI_EMAIL}?subject=Itsekiri%20Global%20Homecoming%20—%20Interest`}
-                    className="inline-flex items-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow hover:-translate-y-0.5 transition-transform"
+                    className="inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-semibold shadow transition-transform hover:-translate-y-0.5"
+                    style={{ backgroundColor: "#E07A3C", color: "#3a0d0a" }}
                   >
                     Express interest
                     <ArrowRight className="h-4 w-4" />
@@ -277,15 +335,42 @@ function WelcomePage() {
                     href={IG_URL}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-5 py-3 text-sm font-semibold text-foreground hover:bg-accent"
+                    className="inline-flex items-center gap-2 rounded-md border px-5 py-3 text-sm font-semibold transition-colors"
+                    style={{
+                      borderColor: "rgba(251,239,226,0.35)",
+                      color: "#FBEFE2",
+                      backgroundColor: "rgba(251,239,226,0.08)",
+                    }}
                   >
                     <Instagram className="h-4 w-4" />
                     Follow for updates
                   </a>
                 </div>
               </div>
+
+              {/* Right: royals portrait, framed */}
+              <div className="md:col-span-2">
+                <div
+                  className="overflow-hidden rounded-2xl"
+                  style={{ backgroundColor: "#3a0d0a" }}
+                >
+                  <img
+                    src={homecomingRoyals.url}
+                    alt="His Majesty Ogiame Atuwatse III and Olori in royal attire"
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+                <p
+                  className="mt-3 text-center font-display italic text-xs"
+                  style={{ color: "rgba(251,239,226,0.7)" }}
+                >
+                  Partnership &amp; Sponsorship Proposal · 2026
+                </p>
+              </div>
             </div>
           </article>
+
 
           <div className="mt-8 rounded-2xl border border-dashed border-border bg-card/40 p-6 text-center text-sm text-muted-foreground">
             More vetted events from across the Africa–Europe corridor will be
