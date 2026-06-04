@@ -299,27 +299,6 @@ function WelcomePage() {
                   </li>
                 </ul>
 
-                {/* Four-pillar tiles, modelled on the deck */}
-                <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  {[
-                    { icon: Heart, t: "Identity", d: "Cultural pride & ancestral reconnection" },
-                    { icon: Building2, t: "Impact", d: "Skills, investment & development" },
-                    { icon: Globe2, t: "Unity", d: "Diaspora–homeland bridge" },
-                    { icon: TrendingUp, t: "Growth", d: "Economic & social uplift" },
-                  ].map((p) => (
-                    <div
-                      key={p.t}
-                      className="rounded-2xl p-4"
-                      style={{ backgroundColor: "#E07A3C", color: "#FBEFE2" }}
-                    >
-                      <p.icon className="h-5 w-5" />
-                      <div className="mt-3 font-display text-base font-bold">{p.t}</div>
-                      <p className="mt-1 text-[11px] leading-snug opacity-95">
-                        {p.d}
-                      </p>
-                    </div>
-                  ))}
-                </div>
 
                 <div className="mt-8 flex flex-wrap gap-3">
                   <a
