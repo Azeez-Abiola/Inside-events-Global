@@ -26,8 +26,7 @@ import {
 } from "lucide-react";
 import { SiteFooter } from "@/components/site-chrome";
 import botbCover from "@/assets/battle-of-the-bots-2026.jpg.asset.json";
-import homecomingCover from "@/assets/itsekiri-homecoming-cover.jpg.asset.json";
-import homecomingRoyals from "@/assets/itsekiri-homecoming-royals.jpg.asset.json";
+import homecomingCover from "@/assets/itsekiri-homecoming-2026.png.asset.json";
 import projectXCover from "@/assets/project-x-almost-famous.jpg.asset.json";
 import igeLogo from "@/assets/ige-logo.png.asset.json";
 
