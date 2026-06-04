@@ -5,19 +5,22 @@ import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 export const Route = createFileRoute("/sponsors")({
   head: () => ({
     meta: [
-      { title: "For Sponsors · IGE" },
+      { title: "Sponsor B2B Events — Vetted Event Sponsorship Opportunities | IGE" },
       {
         name: "description",
         content:
-          "Discover vetted B2B events your buyers are already attending. Search a curated catalogue, compare tiers, and commit with confidence.",
+          "Sponsor vetted B2B events your buyers actually attend. Compare sponsorship tiers, audience data, and ROI signals. Discover corporate event sponsorship opportunities across the Africa–Europe corridor and globally.",
       },
-      { property: "og:title", content: "For Sponsors · IGE" },
       {
-        property: "og:description",
+        name: "keywords",
         content:
-          "Discover vetted B2B events your buyers are already attending.",
+          "sponsor B2B events, event sponsorship opportunities, corporate sponsorship, how to choose events to sponsor, sponsorship ROI, B2B conference sponsorship, sponsorship tiers, vetted sponsorship marketplace",
       },
+      { property: "og:title", content: "Sponsor B2B Events — IGE for Sponsors" },
+      { property: "og:description", content: "Discover vetted event sponsorship opportunities and commit with confidence." },
+      { property: "og:url", content: "https://www.insideglobalevents.com/sponsors" },
     ],
+    links: [{ rel: "canonical", href: "https://www.insideglobalevents.com/sponsors" }],
   }),
   component: SponsorsPage,
 });
