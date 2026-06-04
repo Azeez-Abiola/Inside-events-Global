@@ -15,8 +15,15 @@ import {
   Heart,
   Building2,
   TrendingUp,
+  MapPin,
+  Trophy,
+  Cpu,
+  Lightbulb,
+  Rocket,
+  Ticket,
 } from "lucide-react";
 import { SiteFooter } from "@/components/site-chrome";
+import botbCover from "@/assets/battle-of-the-bots-2026.jpg.asset.json";
 import homecomingCover from "@/assets/itsekiri-homecoming-cover.jpg.asset.json";
 import homecomingRoyals from "@/assets/itsekiri-homecoming-royals.jpg.asset.json";
 
@@ -324,12 +331,24 @@ function WelcomePage() {
 
                 <div className="mt-8 flex flex-wrap gap-3">
                   <a
-                    href={`mailto:${HI_EMAIL}?subject=Itsekiri%20Global%20Homecoming%20—%20Interest`}
+                    href="mailto:Partner@itsekiriglobalhomecoming.com?subject=Itsekiri%20Global%20Homecoming%20—%20Partnership%20Interest"
                     className="inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-semibold shadow transition-transform hover:-translate-y-0.5"
                     style={{ backgroundColor: "#E07A3C", color: "#3a0d0a" }}
                   >
-                    Express interest
-                    <ArrowRight className="h-4 w-4" />
+                    <Mail className="h-4 w-4" />
+                    Partner@itsekiriglobalhomecoming.com
+                  </a>
+                  <a
+                    href={`mailto:${HI_EMAIL}?subject=Itsekiri%20Global%20Homecoming%20—%20Sponsorship%20via%20IGE`}
+                    className="inline-flex items-center gap-2 rounded-md border px-5 py-3 text-sm font-semibold transition-colors"
+                    style={{
+                      borderColor: "rgba(251,239,226,0.45)",
+                      color: "#FBEFE2",
+                      backgroundColor: "rgba(251,239,226,0.1)",
+                    }}
+                  >
+                    <Mail className="h-4 w-4" />
+                    {HI_EMAIL}
                   </a>
                   <a
                     href={IG_URL}
