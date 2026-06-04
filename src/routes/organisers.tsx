@@ -5,19 +5,22 @@ import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 export const Route = createFileRoute("/organisers")({
   head: () => ({
     meta: [
-      { title: "For Organisers · IGE" },
+      { title: "Find Event Sponsors — List Your B2B Event on IGE" },
       {
         name: "description",
         content:
-          "List your B2B event on IGE. Build a complete sponsorship pack in a guided flow and reach verified sponsors actively looking for your audience.",
+          "Find event sponsors fast. List your B2B event on IGE's vetted sponsorship marketplace, build sponsorship packages, pitch verified corporate sponsors, and close sponsorship deals. Zero listing fees.",
       },
-      { property: "og:title", content: "For Organisers · IGE" },
       {
-        property: "og:description",
+        name: "keywords",
         content:
-          "List your B2B event on IGE and reach verified sponsors actively looking for your audience.",
+          "find event sponsors, how to get event sponsorship, list your event for sponsorship, sponsorship packages, sponsorship proposal, attract sponsors, event sponsorship platform for organisers",
       },
+      { property: "og:title", content: "Find Event Sponsors — IGE for Organisers" },
+      { property: "og:description", content: "List your B2B event and reach verified sponsors actively looking for your audience." },
+      { property: "og:url", content: "https://www.insideglobalevents.com/organisers" },
     ],
+    links: [{ rel: "canonical", href: "https://www.insideglobalevents.com/organisers" }],
   }),
   component: OrganisersPage,
 });
