@@ -239,7 +239,7 @@ function WelcomePage() {
               <img
                 src={homecomingCover.url}
                 alt="Itsekiri Global HomeComing 2026 — Reconnecting Heritage, Rebuilding Home"
-                className="h-auto w-full object-cover"
+                className="h-auto w-full object-scale-down"
                 loading="lazy"
               />
             </div>
@@ -347,7 +347,7 @@ function WelcomePage() {
                   <img
                     src={homecomingRoyals.url}
                     alt="His Majesty Ogiame Atuwatse III and Olori in royal attire"
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-scale-down"
                     loading="lazy"
                   />
                 </div>
@@ -364,7 +364,7 @@ function WelcomePage() {
               <img
                 src={botbCover.url}
                 alt="Battle of the Bots Lagos 2.0 — Africa's biggest inter-school robotics competition"
-                className="h-auto w-full object-cover"
+                className="h-auto w-full object-scale-down"
                 loading="lazy"
               />
               <span
