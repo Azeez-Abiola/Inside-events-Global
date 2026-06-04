@@ -49,7 +49,7 @@ export const Route = createFileRoute("/welcome")({
 
 const HI_EMAIL = "Hi@insideglobalevents.com";
 const IG_HANDLE = "insideglobalevents";
-const IG_URL = "https://www.instagram.com/insideglobalevents?igsh=MXU3NTdoM2UxbTVzdA==";
+const IG_URL = "https://www.instagram.com/insideglobalevents";
 
 
 function WelcomePage() {
@@ -379,12 +379,6 @@ function WelcomePage() {
                     loading="lazy"
                   />
                 </div>
-                <p
-                  className="mt-3 text-center font-display italic text-xs"
-                  style={{ color: "rgba(251,239,226,0.7)" }}
-                >
-                  Partnership &amp; Sponsorship Proposal · 2026
-                </p>
               </div>
             </div>
           </article>
