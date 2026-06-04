@@ -245,7 +245,7 @@ function WelcomePage() {
               <img
                 src={homecomingCover.url}
                 alt="Itsekiri Global HomeComing 2026 — Reconnecting Heritage, Rebuilding Home"
-                className="h-auto w-full object-scale-down"
+                className="mx-auto h-auto w-full max-w-md object-contain"
                 loading="lazy"
               />
             </div>
@@ -370,7 +370,7 @@ function WelcomePage() {
               <img
                 src={botbCover.url}
                 alt="Battle of the Bots Lagos 2.0 — Africa's biggest inter-school robotics competition"
-                className="h-auto w-full object-scale-down"
+                className="mx-auto h-auto w-full max-w-md object-contain"
                 loading="lazy"
               />
               <span
@@ -536,7 +536,7 @@ function WelcomePage() {
               <img
                 src={projectXCover.url}
                 alt="Project X ... Almost Famous — A Play by The MECT Company"
-                className="h-auto w-full object-scale-down"
+                className="mx-auto h-auto w-full max-w-md object-contain"
                 loading="lazy"
               />
               <span
