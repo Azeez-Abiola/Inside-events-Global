@@ -5,9 +5,9 @@ import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 export const Route = createFileRoute("/trust-vetting")({
   head: () => ({
     meta: [
-      { title: "Trust & Vetting · Inside Global Events" },
+      { title: "Trust & Vetting · Inside Global Events 2026" },
       { name: "description", content: "How IGE vets organisers, sponsors, and referral partners before any deal is brokered on the marketplace." },
-      { property: "og:title", content: "Trust & Vetting · Inside Global Events" },
+      { property: "og:title", content: "Trust & Vetting · Inside Global Events 2026" },
       { property: "og:description", content: "Our vetting process, compliance standards, and disclaimers." },
     ],
   }),
@@ -29,7 +29,7 @@ function TrustVettingPage() {
         <Link to="/" className="text-sm text-primary hover:underline">← Home</Link>
         <h1 className="mt-6 font-display text-4xl font-bold tracking-tight md:text-5xl">Trust &amp; Vetting</h1>
         <p className="mt-4 text-lg text-muted-foreground">
-          Every organiser, sponsor, and referral partner on Inside Global Events is vetted before they
+          Every organiser, sponsor, and referral partner on Inside Global Events 2026 is vetted before they
           can transact. Vetting is what makes the marketplace work.
         </p>
 

@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
-      { title: "Terms of Service - Inside Global Events" },
+      { title: "Terms of Service - Inside Global Events 2026" },
       { name: "description", content: "Terms governing use of the IGE sponsorship marketplace." },
     ],
     links: [{ rel: "canonical", href: "/terms" }],
@@ -20,7 +20,7 @@ function TermsPage() {
 
       <section className="mt-8 space-y-6 text-sm leading-relaxed">
         <p>
-          By using Inside Global Events you agree to these terms. IGE is a sponsorship
+          By using Inside Global Events 2026 you agree to these terms. IGE is a sponsorship
           marketplace.
         </p>
 
@@ -60,7 +60,7 @@ function TermsPage() {
 
         <h2 className="text-xl font-semibold">Contact</h2>
         <p>
-          Inside Global Events ·{" "}
+          Inside Global Events 2026 ·{" "}
           <a href="mailto:Hi@insideglobalevents.com" className="text-primary hover:underline">
             Hi@insideglobalevents.com
           </a>

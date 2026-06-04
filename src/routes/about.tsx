@@ -5,13 +5,13 @@ import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About IGE · Inside Global Events" },
+      { title: "About IGE · Inside Global Events 2026" },
       {
         name: "description",
         content:
-          "Inside Global Events (IGE) is a vertically integrated event intelligence and sponsorship marketplace built for the Africa-Europe corridor and the global events economy.",
+          "Inside Global Events 2026 (IGE) is a vertically integrated event intelligence and sponsorship marketplace built for the Africa-Europe corridor and the global events economy.",
       },
-      { property: "og:title", content: "About IGE · Inside Global Events" },
+      { property: "og:title", content: "About IGE · Inside Global Events 2026" },
       {
         property: "og:description",
         content:
@@ -70,7 +70,7 @@ function AboutPage() {
               <span className="text-brand-gradient">global events economy.</span>
             </h1>
             <p className="mt-6 max-w-3xl text-lg leading-relaxed text-muted-foreground">
-              I.G.E (Inside Global Events) is a vertically integrated event
+              I.G.E (Inside Global Events 2026) is a vertically integrated event
               intelligence and sponsorship marketplace platform built for the
               Africa to Europe corridor and the global events economy. It is not
               another event listing directory. It is end-to-end commercial

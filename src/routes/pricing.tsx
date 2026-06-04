@@ -5,9 +5,9 @@ import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
-      { title: "Pricing & Commission · Inside Global Events" },
-      { name: "description", content: "How Inside Global Events earns revenue: listing is free, commission is charged only when a sponsorship deal closes." },
-      { property: "og:title", content: "Pricing & Commission · Inside Global Events" },
+      { title: "Pricing & Commission · Inside Global Events 2026" },
+      { name: "description", content: "How Inside Global Events 2026 earns revenue: listing is free, commission is charged only when a sponsorship deal closes." },
+      { property: "og:title", content: "Pricing & Commission · Inside Global Events 2026" },
       { property: "og:description", content: "Transparent commission model for organisers, sponsors, and referral partners." },
     ],
   }),

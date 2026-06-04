@@ -5,7 +5,7 @@ import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/unsubscribe")({
-  head: () => ({ meta: [{ title: "Unsubscribe — Inside Global Events" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Unsubscribe — Inside Global Events 2026" }, { name: "robots", content: "noindex" }] }),
   component: UnsubscribePage,
   validateSearch: (s: Record<string, unknown>) => ({ token: typeof s.token === "string" ? s.token : "" }),
 });

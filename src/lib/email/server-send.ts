@@ -9,7 +9,7 @@ import { render } from '@react-email/components'
 import { supabaseAdmin } from '@/integrations/supabase/client.server'
 import { TEMPLATES } from '@/lib/email-templates/registry'
 
-const SITE_NAME = 'Inside Global Events'
+const SITE_NAME = 'Inside Global Events 2026'
 const SENDER_DOMAIN = 'notify.www.insideglobalevents.com'
 const FROM_DOMAIN = 'notify.www.insideglobalevents.com'
 

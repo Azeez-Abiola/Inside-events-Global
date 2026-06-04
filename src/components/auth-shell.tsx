@@ -18,10 +18,10 @@ export function AuthShell({
       <div className="grid min-h-screen lg:grid-cols-2">
         {/* Left: brand panel */}
         <div className="relative hidden overflow-hidden bg-brand-gradient-diag p-12 text-white lg:flex lg:flex-col">
-          <Link to="/" className="flex items-center gap-3" aria-label="Inside Global Events — Home">
+          <Link to="/" className="flex items-center gap-3" aria-label="Inside Global Events 2026 — Home">
             <img src={logo} alt="" aria-hidden="true" className="h-10 w-10 rounded-md object-cover" />
             <div className="uppercase tracking-[0.18em] opacity-90 text-lg font-sans font-extrabold">
-              Inside Global Events
+              Inside Global Events 2026
             </div>
           </Link>
 
@@ -30,7 +30,7 @@ export function AuthShell({
               “The first marketplace where B2B sponsorships is vetted.”
             </blockquote>
             <div className="mt-6 text-sm opacity-80">
-              Inside Global Events
+              Inside Global Events 2026
             </div>
           </div>
 
@@ -46,9 +46,9 @@ export function AuthShell({
 
         {/* Right: form */}
         <div className="flex flex-col px-6 py-10 sm:px-12">
-          <Link to="/" className="flex items-center gap-2.5 lg:hidden" aria-label="Inside Global Events — Home">
+          <Link to="/" className="flex items-center gap-2.5 lg:hidden" aria-label="Inside Global Events 2026 — Home">
             <img src={logo} alt="" aria-hidden="true" className="h-9 w-9 rounded-md object-cover" />
-            <span className="font-display text-base font-bold">Inside Global Events</span>
+            <span className="font-display text-base font-bold">Inside Global Events 2026</span>
           </Link>
 
           <div className="m-auto w-full max-w-md">

@@ -12,8 +12,8 @@ import {
 export const Route = createFileRoute("/waitlist")({
   head: () => ({
     meta: [
-      { title: "Join the waitlist · Inside Global Events" },
-      { name: "description", content: "Get founding-member access to Inside Global Events. Waitlist opens for organisers, sponsors, and referral partners ahead of the 1 July launch." },
+      { title: "Join the waitlist · Inside Global Events 2026" },
+      { name: "description", content: "Get founding-member access to Inside Global Events 2026. Waitlist opens for organisers, sponsors, and referral partners ahead of the 1 July launch." },
       { property: "og:title", content: "Join the IGE waitlist" },
       { property: "og:description", content: "Founding-member access, locked-in rates, and priority matching before the 1 July launch." },
     ],
@@ -110,7 +110,7 @@ function WaitlistPage() {
               Join the <span className="text-brand-gradient">IGE waitlist.</span>
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-lg text-muted-foreground">
-              Inside Global Events opens to the public on 1 July. Founding organisers,
+              Inside Global Events 2026 opens to the public on 1 July. Founding organisers,
               brands, and referral partners get early access, locked-in rates, and
               priority matching.
             </p>
