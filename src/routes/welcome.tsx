@@ -242,13 +242,6 @@ function WelcomePage() {
                 className="h-auto w-full object-cover"
                 loading="lazy"
               />
-              <span
-                className="absolute left-6 top-6 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] backdrop-blur"
-                style={{ backgroundColor: "rgba(224,122,60,0.95)", color: "#3a0d0a" }}
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                Featured event of the month
-              </span>
             </div>
 
             {/* Body */}
