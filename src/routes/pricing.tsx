@@ -5,11 +5,14 @@ import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
-      { title: "Pricing & Commission · Inside Global Events 2026" },
-      { name: "description", content: "How Inside Global Events 2026 earns revenue: listing is free, commission is charged only when a sponsorship deal closes." },
-      { property: "og:title", content: "Pricing & Commission · Inside Global Events 2026" },
-      { property: "og:description", content: "Transparent commission model for organisers, sponsors, and referral partners." },
+      { title: "Event Sponsorship Pricing & Commission — IGE" },
+      { name: "description", content: "Transparent event sponsorship pricing: free listing for organisers, no fees for sponsors, 10% platform commission only when a sponsorship deal closes. Referral partners earn up to 20%." },
+      { name: "keywords", content: "event sponsorship pricing, sponsorship commission, sponsorship platform fees, sponsorship marketplace cost" },
+      { property: "og:title", content: "Event Sponsorship Pricing — IGE" },
+      { property: "og:description", content: "Free to list. Commission only when sponsorship deals close." },
+      { property: "og:url", content: "https://www.insideglobalevents.com/pricing" },
     ],
+    links: [{ rel: "canonical", href: "https://www.insideglobalevents.com/pricing" }],
   }),
   component: PricingPage,
 });
