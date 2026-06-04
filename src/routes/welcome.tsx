@@ -29,6 +29,7 @@ import botbCover from "@/assets/battle-of-the-bots-2026.jpg.asset.json";
 import homecomingCover from "@/assets/itsekiri-homecoming-cover.jpg.asset.json";
 import homecomingRoyals from "@/assets/itsekiri-homecoming-royals.jpg.asset.json";
 import projectXCover from "@/assets/project-x-almost-famous.jpg.asset.json";
+import igeLogo from "@/assets/ige-logo.png.asset.json";
 
 
 export const Route = createFileRoute("/welcome")({
@@ -62,11 +63,12 @@ function WelcomePage() {
       {/* Lightweight header (no nav — gate page) */}
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <Link to="/welcome" className="flex items-center gap-2">
-            <span
-              aria-hidden
-              className="inline-block h-7 w-7 rounded-md"
-              style={{ background: "var(--gradient-brand-diag)" }}
+          <Link to="/welcome" className="flex items-center gap-3">
+            <img
+              src={igeLogo.url}
+              alt="Inside Global Events logo"
+              className="h-10 w-10 object-contain mix-blend-multiply dark:mix-blend-screen"
+              loading="eager"
             />
             <span className="font-display text-lg font-bold tracking-tight">
               Inside Global Events 2026
