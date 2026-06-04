@@ -3,9 +3,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
-      { title: "Privacy Policy - Inside Global Events" },
+      { title: "Privacy Policy - Inside Global Events 2026" },
       { name: "description", content: "How IGE collects, uses, and protects your data under NDPR and GDPR." },
-      { property: "og:title", content: "Privacy Policy - Inside Global Events" },
+      { property: "og:title", content: "Privacy Policy - Inside Global Events 2026" },
       { property: "og:description", content: "How IGE collects, uses, and protects your data." },
     ],
     links: [{ rel: "canonical", href: "/privacy" }],
@@ -22,7 +22,7 @@ function PrivacyPage() {
 
       <section className="prose mt-8 space-y-6 text-sm leading-relaxed">
         <p>
-          Inside Global Events ("IGE", "we") is a sponsorship marketplace platform. This policy
+          Inside Global Events 2026 ("IGE", "we") is a sponsorship marketplace platform. This policy
           explains how we collect and use personal information when you use insideglobalevents.com.
           We comply with the Nigeria Data Protection Regulation (NDPR) and the EU General Data
           Protection Regulation (GDPR).
@@ -63,7 +63,7 @@ function PrivacyPage() {
 
         <h2 className="text-xl font-semibold">Contact</h2>
         <p>
-          Inside Global Events ·{" "}
+          Inside Global Events 2026 ·{" "}
           <a href="mailto:Hi@insideglobalevents.com" className="text-primary hover:underline">
             Hi@insideglobalevents.com
           </a>

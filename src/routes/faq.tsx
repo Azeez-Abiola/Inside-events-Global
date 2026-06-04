@@ -5,9 +5,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 export const Route = createFileRoute("/faq")({
   head: () => ({
     meta: [
-      { title: "FAQ · Inside Global Events" },
+      { title: "FAQ · Inside Global Events 2026" },
       { name: "description", content: "Answers to common questions from organisers, sponsors, and referral partners about vetting, timelines, commission, and payouts." },
-      { property: "og:title", content: "FAQ · Inside Global Events" },
+      { property: "og:title", content: "FAQ · Inside Global Events 2026" },
       { property: "og:description", content: "Vetting, timelines, payouts and more." },
     ],
     scripts: [{

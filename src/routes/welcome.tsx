@@ -17,13 +17,13 @@ import { SiteFooter } from "@/components/site-chrome";
 export const Route = createFileRoute("/welcome")({
   head: () => ({
     meta: [
-      { title: "Welcome to IGE · Inside Global Events" },
+      { title: "Welcome to IGE · Inside Global Events 2026" },
       {
         name: "description",
         content:
-          "Inside Global Events (IGE) connects event organisers, brand sponsors, and partnerships professionals across the Africa–Europe corridor. Waitlist launching soon.",
+          "Inside Global Events 2026 (IGE) connects event organisers, brand sponsors, and partnerships professionals across the Africa–Europe corridor. Waitlist launching soon.",
       },
-      { property: "og:title", content: "Welcome to Inside Global Events" },
+      { property: "og:title", content: "Welcome to Inside Global Events 2026" },
       {
         property: "og:description",
         content:
@@ -51,7 +51,7 @@ function WelcomePage() {
               style={{ background: "var(--gradient-brand-diag)" }}
             />
             <span className="font-display text-lg font-bold tracking-tight">
-              Inside Global Events
+              Inside Global Events 2026
             </span>
           </Link>
           <a
@@ -89,7 +89,7 @@ function WelcomePage() {
               <span className="text-brand-gradient">global events economy.</span>
             </h1>
             <p className="mt-6 max-w-3xl text-lg leading-relaxed text-muted-foreground">
-              I.G.E (Inside Global Events) is a vertically integrated event
+              I.G.E (Inside Global Events 2026) is a vertically integrated event
               intelligence and sponsorship marketplace built for the Africa to
               Europe corridor — connecting event organisers, brand sponsors, and
               a distributed network of partnerships professionals.

@@ -12,9 +12,9 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact · Inside Global Events" },
-      { name: "description", content: "Get in touch with the Inside Global Events team. Email, phone, and office locations across Lagos and Paris." },
-      { property: "og:title", content: "Contact · Inside Global Events" },
+      { title: "Contact · Inside Global Events 2026" },
+      { name: "description", content: "Get in touch with the Inside Global Events 2026 team. Email, phone, and office locations across Lagos and Paris." },
+      { property: "og:title", content: "Contact · Inside Global Events 2026" },
       { property: "og:description", content: "Talk to the IGE team about sponsorships, partnerships, and trust enquiries." },
     ],
   }),
@@ -72,7 +72,7 @@ function ContactPage() {
         <h1 className="mt-6 font-display text-4xl font-bold tracking-tight md:text-5xl">Contact us</h1>
         <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
           Questions about listing an event, becoming a sponsor, or joining as a referral partner?
-          The Inside Global Events team usually replies within one business day.
+          The Inside Global Events 2026 team usually replies within one business day.
         </p>
 
         <div className="mt-12 grid gap-10 md:grid-cols-[1fr_1.2fr]">

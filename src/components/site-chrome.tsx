@@ -12,7 +12,7 @@ export function SiteHeader() {
             className="h-9 w-9 rounded-md object-cover mix-blend-multiply dark:mix-blend-screen"
           />
           <span className="font-display italic font-semibold text-brand-gradient text-base sm:text-lg">
-            Inside Global Events
+            Inside Global Events 2026
           </span>
         </Link>
 
@@ -50,14 +50,14 @@ export function SiteFooter() {
         <div className="md:col-span-2">
           <div className="flex items-center gap-2.5">
             <img src={logo} alt="" aria-hidden="true" className="h-8 w-8 rounded-md object-cover" />
-            <span className="font-display text-base font-bold tracking-tight">Inside Global Events</span>
+            <span className="font-display text-base font-bold tracking-tight">Inside Global Events 2026</span>
           </div>
           <p className="mt-4 max-w-sm text-sm text-muted-foreground">
             The vetted marketplace where B2B event organisers, sponsors, and trusted
             referral partners actually close deals, not just exchange brochures.
           </p>
           <p className="mt-6 text-xs text-muted-foreground">
-            Inside Global Events
+            Inside Global Events 2026
           </p>
         </div>
         <div>

@@ -2,7 +2,7 @@ import * as React from 'react'
 import { Body, Container, Head, Heading, Html, Preview, Text } from '@react-email/components'
 import type { TemplateEntry } from './registry'
 
-const SITE_NAME = 'Inside Global Events'
+const SITE_NAME = 'Inside Global Events 2026'
 
 interface Props {
   name?: string

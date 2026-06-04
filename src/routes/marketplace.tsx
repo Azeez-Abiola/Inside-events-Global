@@ -11,7 +11,7 @@ import { Search, SlidersHorizontal, MapPin, Calendar, Users, ShieldCheck, X } fr
 export const Route = createFileRoute("/marketplace")({
   head: () => ({
     meta: [
-      { title: "Marketplace · IGE - Inside Global Events" },
+      { title: "Marketplace · IGE - Inside Global Events 2026" },
       { name: "description", content: "Discover IGE-vetted sponsorship opportunities across Africa and the diaspora." },
     ],
   }),
