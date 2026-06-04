@@ -525,6 +525,195 @@ function WelcomePage() {
             </div>
           </article>
 
+          {/* Featured event — Project X ... Almost Famous */}
+          <article
+            className="mt-10 overflow-hidden rounded-3xl shadow-brand"
+            style={{ backgroundColor: "#2a0b5a", color: "#FFF7E6" }}
+          >
+            <div className="relative">
+              <img
+                src={projectXCover.url}
+                alt="Project X ... Almost Famous — A Play by The MECT Company"
+                className="h-auto w-full object-scale-down"
+                loading="lazy"
+              />
+              <span
+                className="absolute left-6 top-6 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] backdrop-blur"
+                style={{ backgroundColor: "rgba(255,193,7,0.95)", color: "#2a0b5a" }}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Also featured this month
+              </span>
+            </div>
+
+            <div className="grid gap-10 p-8 md:grid-cols-5 md:gap-12 md:p-12">
+              <div className="md:col-span-3">
+                <p
+                  className="font-display italic text-base md:text-lg"
+                  style={{ color: "#FFC107" }}
+                >
+                  The MECT Company presents — A Play
+                </p>
+                <h3
+                  className="mt-3 font-display text-3xl font-bold leading-[1.05] tracking-tight md:text-5xl"
+                  style={{ color: "#FFF7E6" }}
+                >
+                  Project X{" "}
+                  <span style={{ color: "#FFC107" }}>…Almost Famous</span>
+                </h3>
+                <p
+                  className="mt-5 max-w-xl text-sm leading-relaxed md:text-base"
+                  style={{ color: "rgba(255,247,230,0.85)" }}
+                >
+                  A play that follows four young men living together in Lagos
+                  as they navigate their music career, friendship, love,
+                  identity, and the daily realities of trying to "make it" in
+                  a city that never slows down. Witty. Heartfelt. Culturally
+                  honest. It feels like your brothers and your guy's group
+                  chat — live on stage.
+                </p>
+
+                <ul className="mt-7 space-y-3 text-sm">
+                  <li className="flex items-start gap-3">
+                    <Calendar className="mt-0.5 h-4 w-4" style={{ color: "#FFC107" }} />
+                    <span style={{ color: "rgba(255,247,230,0.9)" }}>
+                      July 18th, 19th, 25th &amp; 26th, 2026
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <MapPin className="mt-0.5 h-4 w-4" style={{ color: "#FFC107" }} />
+                    <span style={{ color: "rgba(255,247,230,0.9)" }}>
+                      Agip Hall, MUSON Centre, Onikan · Lagos, Nigeria
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Drama className="mt-0.5 h-4 w-4" style={{ color: "#FFC107" }} />
+                    <span style={{ color: "rgba(255,247,230,0.9)" }}>
+                      Directed by Goodness Emmanuel · Written by Chiemeka
+                      Osuagwu
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <ShieldCheck className="mt-0.5 h-4 w-4" style={{ color: "#FFC107" }} />
+                    <span style={{ color: "rgba(255,247,230,0.9)" }}>
+                      Vetted by the IGE partnerships team.
+                    </span>
+                  </li>
+                </ul>
+
+                <div className="mt-8">
+                  <div
+                    className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+                    style={{ color: "#FFC107" }}
+                  >
+                    Cast — Executive Producers
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {[
+                      { name: "Chimezie Imo", note: "Far From Home · Breath of Life" },
+                      { name: "Mike Afolarin", note: "AMVCA Trailblazer 2024" },
+                      { name: "Emeka Nwagbaraocha", note: "Rattlesnake · MTV Shuga" },
+                      { name: "Tomiwa Tegbe", note: "Wives on Strike · MTV Shuga" },
+                    ].map((c) => (
+                      <div
+                        key={c.name}
+                        className="rounded-2xl p-4"
+                        style={{ backgroundColor: "rgba(255,193,7,0.12)", border: "1px solid rgba(255,193,7,0.3)" }}
+                      >
+                        <Users className="h-4 w-4" style={{ color: "#FFC107" }} />
+                        <div className="mt-2 font-display text-sm font-bold" style={{ color: "#FFF7E6" }}>
+                          {c.name}
+                        </div>
+                        <p className="mt-1 text-[11px] leading-snug" style={{ color: "rgba(255,247,230,0.75)" }}>
+                          {c.note}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <a
+                    href={`mailto:${HI_EMAIL}?subject=Project%20X%20Almost%20Famous%20—%20Sponsorship%20via%20IGE`}
+                    className="inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-semibold shadow transition-transform hover:-translate-y-0.5"
+                    style={{ backgroundColor: "#FFC107", color: "#2a0b5a" }}
+                  >
+                    <Mail className="h-4 w-4" />
+                    Sponsor via {HI_EMAIL}
+                  </a>
+                  <a
+                    href={IG_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 rounded-md border px-5 py-3 text-sm font-semibold transition-colors"
+                    style={{
+                      borderColor: "rgba(255,247,230,0.35)",
+                      color: "#FFF7E6",
+                      backgroundColor: "rgba(255,247,230,0.08)",
+                    }}
+                  >
+                    <Instagram className="h-4 w-4" />
+                    Follow for updates
+                  </a>
+                </div>
+              </div>
+
+              <div className="md:col-span-2 space-y-4">
+                <div
+                  className="rounded-2xl p-6"
+                  style={{ backgroundColor: "rgba(255,193,7,0.08)", border: "1px solid rgba(255,193,7,0.25)" }}
+                >
+                  <div
+                    className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+                    style={{ color: "#FFC107" }}
+                  >
+                    The Story
+                  </div>
+                  <div className="mt-2 font-display text-xl font-bold leading-tight" style={{ color: "#FFF7E6" }}>
+                    Four guys. One Lagos apartment. A shot at making it.
+                  </div>
+                  <p className="mt-3 text-sm" style={{ color: "rgba(255,247,230,0.8)" }}>
+                    Music dreams, friendship, love, identity and the hustle of
+                    a city that never slows down — staged with humour and
+                    cultural honesty.
+                  </p>
+                </div>
+
+                <div
+                  className="rounded-2xl p-6"
+                  style={{ backgroundColor: "rgba(255,193,7,0.08)", border: "1px solid rgba(255,193,7,0.25)" }}
+                >
+                  <div
+                    className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+                    style={{ color: "#FFC107" }}
+                  >
+                    Creative team
+                  </div>
+                  <ul className="mt-3 space-y-3 text-sm" style={{ color: "rgba(255,247,230,0.85)" }}>
+                    <li className="flex items-start gap-3">
+                      <Film className="mt-0.5 h-4 w-4" style={{ color: "#FFC107" }} />
+                      <span>
+                        <strong style={{ color: "#FFF7E6" }}>Goodness Emmanuel</strong> — Director/Producer · LAMDA Distinction &amp; Gold Medal · The Griot (2nd most-watched Nigerian film on Netflix, 2022) · AMVCA &amp; AFRIFF winner.
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <Film className="mt-0.5 h-4 w-4" style={{ color: "#FFC107" }} />
+                      <span>
+                        <strong style={{ color: "#FFF7E6" }}>Chiemeka Osuagwu</strong> — Writer · AMVCA 2026 Best Writer (TV) nominee · Far From Home, MTV Shuga Naija, Showmax Agu.
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+                <p
+                  className="text-center font-display italic text-xs"
+                  style={{ color: "rgba(255,247,230,0.7)" }}
+                >
+                  Lagos · July 2026
+                </p>
+              </div>
+            </div>
+          </article>
+
           <div className="mt-8 rounded-2xl border border-dashed border-border bg-card/40 p-6 text-center text-sm text-muted-foreground">
             More vetted events from across the Africa–Europe corridor will be
             announced here in the coming weeks.
