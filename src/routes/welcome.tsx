@@ -317,6 +317,13 @@ function WelcomePage() {
                   href="mailto:Partner@itsekiriglobalhomecoming.com?subject=Itsekiri%20Global%20Homecoming%20—%20Partnership%20Interest"
                   className="inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-semibold shadow transition-transform hover:-translate-y-0.5"
                   style={{ backgroundColor: "#E07A3C", color: "#3a0d0a" }}
+                  onClick={() =>
+                    trackEvent("Click Featured Event Email", {
+                      event: "itsekiri-homecoming",
+                      email: "Partner@itsekiriglobalhomecoming.com",
+                      section: "featured-events",
+                    })
+                  }
                 >
                   <Mail className="h-4 w-4" />
                   Partner@itsekiriglobalhomecoming.com
