@@ -25,6 +25,7 @@ import {
   Drama,
 } from "lucide-react";
 import { SiteFooter } from "@/components/site-chrome";
+import { trackEvent } from "@/lib/analytics";
 import botbCover from "@/assets/battle-of-the-bots-2026.jpg.asset.json";
 import homecomingCover from "@/assets/itsekiri-homecoming-2026.png.asset.json";
 import projectXCover from "@/assets/project-x-almost-famous.jpg.asset.json";
@@ -289,7 +290,15 @@ function WelcomePage() {
                     Atuwatse III, Olu of Warri.
                   </span>
                 </li>
-                <li className="flex items-start gap-3">
+                <li
+                  className="flex cursor-pointer items-start gap-3"
+                  onClick={() =>
+                    trackEvent("Click Partnership Line", {
+                      event: "itsekiri-homecoming",
+                      section: "featured-events",
+                    })
+                  }
+                >
                   <Handshake className="mt-0.5 h-4 w-4 shrink-0" style={{ color: "#E07A3C" }} />
                   <span style={{ color: "rgba(251,239,226,0.9)" }}>
                     Partnership &amp; sponsorship opportunities open now.
@@ -308,6 +317,13 @@ function WelcomePage() {
                   href="mailto:Partner@itsekiriglobalhomecoming.com?subject=Itsekiri%20Global%20Homecoming%20—%20Partnership%20Interest"
                   className="inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-semibold shadow transition-transform hover:-translate-y-0.5"
                   style={{ backgroundColor: "#E07A3C", color: "#3a0d0a" }}
+                  onClick={() =>
+                    trackEvent("Click Featured Event Email", {
+                      event: "itsekiri-homecoming",
+                      email: "Partner@itsekiriglobalhomecoming.com",
+                      section: "featured-events",
+                    })
+                  }
                 >
                   <Mail className="h-4 w-4" />
                   Partner@itsekiriglobalhomecoming.com
@@ -320,6 +336,13 @@ function WelcomePage() {
                     color: "#FBEFE2",
                     backgroundColor: "rgba(251,239,226,0.1)",
                   }}
+                  onClick={() =>
+                    trackEvent("Click Featured Event Email", {
+                      event: "itsekiri-homecoming",
+                      email: HI_EMAIL,
+                      section: "featured-events",
+                    })
+                  }
                 >
                   <Mail className="h-4 w-4" />
                   {HI_EMAIL}
