@@ -336,6 +336,13 @@ function WelcomePage() {
                     color: "#FBEFE2",
                     backgroundColor: "rgba(251,239,226,0.1)",
                   }}
+                  onClick={() =>
+                    trackEvent("Click Featured Event Email", {
+                      event: "itsekiri-homecoming",
+                      email: HI_EMAIL,
+                      section: "featured-events",
+                    })
+                  }
                 >
                   <Mail className="h-4 w-4" />
                   {HI_EMAIL}
