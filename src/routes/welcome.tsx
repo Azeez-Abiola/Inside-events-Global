@@ -290,7 +290,15 @@ function WelcomePage() {
                     Atuwatse III, Olu of Warri.
                   </span>
                 </li>
-                <li className="flex items-start gap-3">
+                <li
+                  className="flex cursor-pointer items-start gap-3"
+                  onClick={() =>
+                    trackEvent("Click Partnership Line", {
+                      event: "itsekiri-homecoming",
+                      section: "featured-events",
+                    })
+                  }
+                >
                   <Handshake className="mt-0.5 h-4 w-4 shrink-0" style={{ color: "#E07A3C" }} />
                   <span style={{ color: "rgba(251,239,226,0.9)" }}>
                     Partnership &amp; sponsorship opportunities open now.
