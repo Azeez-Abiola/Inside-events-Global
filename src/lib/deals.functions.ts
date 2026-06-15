@@ -350,7 +350,7 @@ export const getOrganiserPipeline = createServerFn({ method: "GET" })
       const [f, d] = await Promise.all([
         supabaseAdmin
           .from("commitment_forms")
-          .select("id, event_id, company_name, contact_name, currency, budget_range_min, budget_range_max, tier_id, submitted_at, referral_partner_id")
+          .select("id, event_id, company_name, contact_name, sponsor_user_id, currency, budget_range_min, budget_range_max, tier_id, submitted_at, referral_partner_id")
           .in("event_id", eventIds)
           .order("submitted_at", { ascending: false }),
         supabaseAdmin
@@ -391,7 +391,7 @@ export const getSponsorDashboard = createServerFn({ method: "GET" })
     if (ids.length) {
       const { data: evs } = await supabaseAdmin
         .from("events")
-        .select("id, slug, name, banner_image_url, start_date, city, country")
+        .select("id, slug, name, banner_image_url, start_date, city, country, organiser_id")
         .in("id", ids);
       for (const e of evs ?? []) evMap[e.id] = e;
     }

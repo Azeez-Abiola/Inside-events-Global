@@ -14,5 +14,15 @@ export default defineConfig({
   },
   // Required for Vercel: without nitro, `vite build` only emits static assets and
   // the deployment serves 404 for all routes.
-  nitro: { preset: "vercel" },
+  nitro: {
+    preset: "vercel",
+    vercel: {
+      functions: {
+        runtime: "nodejs22.x",
+      },
+    },
+    externals: {
+      inline: ["ws"],
+    },
+  },
 });

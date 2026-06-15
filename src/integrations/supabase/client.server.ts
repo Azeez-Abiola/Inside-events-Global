@@ -3,9 +3,18 @@
 // Use this for admin operations in server functions and server routes only.
 // For user-authenticated queries (with RLS), use the auth middleware instead.
 import { createClient } from '@supabase/supabase-js';
+import { WebSocket as NodeWebSocket } from 'ws';
 import type { Database } from './types';
 
+function ensureNodeWebSocket() {
+  if (typeof globalThis.WebSocket === "undefined") {
+    (globalThis as typeof globalThis & { WebSocket: typeof WebSocket }).WebSocket =
+      NodeWebSocket as unknown as typeof WebSocket;
+  }
+}
+
 function createSupabaseAdminClient() {
+  ensureNodeWebSocket();
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 

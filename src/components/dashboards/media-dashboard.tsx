@@ -3,16 +3,16 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { CalendarDays, Bookmark, Newspaper, Loader2, Calendar, Send } from "lucide-react";
+import { CalendarDays, Bookmark, Newspaper, Loader2, Calendar, Send, BarChart3 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { StatCard } from "@/components/dashboards/shared";
-import { DashboardHeader, DashboardTabs } from "@/components/dashboards/dashboard-shell";
+import { DashboardHeader } from "@/components/dashboards/dashboard-shell";
+import { MediaAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
 import { listMarketplaceEvents } from "@/lib/marketplace.functions";
 import { getSponsorDashboard } from "@/lib/deals.functions";
 import { submitMediaRequest, getMyMediaRequests } from "@/lib/media.functions";
 
-export function MediaPartnerDashboard() {
-  const [activeTab, setActiveTab] = useState<"explore" | "saved" | "requests">("explore");
+export function MediaPartnerDashboard({ section = "explore" }: { section?: "overview" | "explore" | "saved" | "requests" | "analytics" }) {
   const [requestEvent, setRequestEvent] = useState<{ id: string; name: string } | null>(null);
 
   const fetchMarketplace = useServerFn(listMarketplaceEvents);
@@ -50,17 +50,25 @@ export function MediaPartnerDashboard() {
           <StatCard icon={Newspaper} label="My requests" value={requests.length} loading={requestsLoading} />
         </div>
 
-        <DashboardTabs
-          active={activeTab}
-          onChange={(id) => setActiveTab(id as typeof activeTab)}
-          tabs={[
-            { id: "explore", label: "Explore", count: events.length },
-            { id: "saved", label: "Saved", count: savedEvents.length },
-            { id: "requests", label: "My requests", count: requests.length },
-          ]}
-        />
+        {section === "overview" && (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {[
+              { to: "/dashboard/explore", label: "Explore", desc: "Events to cover" },
+              { to: "/dashboard/saved", label: "Saved", desc: "Bookmarked opportunities" },
+              { to: "/dashboard/requests", label: "My requests", desc: "Coverage requests" },
+              { to: "/dashboard/analytics", label: "Analytics", desc: "Sector & request trends" },
+            ].map((item) => (
+              <Link key={item.to} to={item.to} className="rounded-xl border border-border bg-card p-5 hover:border-primary hover:shadow-soft transition-all">
+                <div className="font-semibold">{item.label}</div>
+                <div className="mt-1 text-sm text-muted-foreground">{item.desc}</div>
+              </Link>
+            ))}
+          </div>
+        )}
 
-        {activeTab === "explore" ? (
+        {section === "analytics" ? (
+          <MediaAnalyticsPanel />
+        ) : section === "explore" ? (
           exploreLoading ? (
             <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
           ) : (
@@ -90,7 +98,7 @@ export function MediaPartnerDashboard() {
               ))}
             </div>
           )
-        ) : activeTab === "saved" ? (
+        ) : section === "saved" ? (
           savesLoading ? (
             <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
           ) : savedEvents.length === 0 ? (
@@ -112,36 +120,38 @@ export function MediaPartnerDashboard() {
               ))}
             </div>
           )
-        ) : requestsLoading ? (
-          <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-        ) : requests.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border p-12 text-center">
-            <p className="text-muted-foreground text-sm">No coverage requests yet. Browse Explore and request coverage on an event.</p>
-          </div>
-        ) : (
-          <div className="rounded-xl border border-border bg-card overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
-                <tr><th className="px-5 py-3">Event</th><th className="px-5 py-3">Type</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Requested</th></tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {requests.map((r: any) => {
-                  const ev = requestsData!.events[r.event_id];
-                  return (
-                    <tr key={r.id} className="hover:bg-muted/10">
-                      <td className="px-5 py-3.5 font-medium text-foreground">{ev?.name ?? "—"}</td>
-                      <td className="px-5 py-3.5 capitalize text-muted-foreground">{r.request_type.replace(/_/g, " ")}</td>
-                      <td className="px-5 py-3.5">
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${r.status === "approved" ? "bg-emerald-100 text-emerald-800" : r.status === "declined" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>{r.status}</span>
-                      </td>
-                      <td className="px-5 py-3.5 text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+        ) : section === "requests" ? (
+          requestsLoading ? (
+            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+          ) : requests.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border p-12 text-center">
+              <p className="text-muted-foreground text-sm">No coverage requests yet. Browse Explore and request coverage on an event.</p>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-border bg-card overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
+                  <tr><th className="px-5 py-3">Event</th><th className="px-5 py-3">Type</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Requested</th></tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {requests.map((r: any) => {
+                    const ev = requestsData!.events[r.event_id];
+                    return (
+                      <tr key={r.id} className="hover:bg-muted/10">
+                        <td className="px-5 py-3.5 font-medium text-foreground">{ev?.name ?? "—"}</td>
+                        <td className="px-5 py-3.5 capitalize text-muted-foreground">{r.request_type.replace(/_/g, " ")}</td>
+                        <td className="px-5 py-3.5">
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${r.status === "approved" ? "bg-emerald-100 text-emerald-800" : r.status === "declined" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>{r.status}</span>
+                        </td>
+                        <td className="px-5 py-3.5 text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )
+        ) : null}
       </div>
 
       {requestEvent && <CoverageRequestModal event={requestEvent} onClose={() => setRequestEvent(null)} />}

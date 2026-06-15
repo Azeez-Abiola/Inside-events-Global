@@ -1,7 +1,7 @@
 import { j as jsxRuntimeExports, r as reactExports } from "./react.mjs";
 import { a as createContextScope } from "./radix-ui__react-context.mjs";
 import { u as useComposedRefs } from "./radix-ui__react-compose-refs.mjs";
-import { R as Root, b as Trigger, c as createDialogScope, P as Portal, W as WarningProvider, a as Content, T as Title, D as Description, C as Close, O as Overlay } from "./radix-ui__react-dialog.mjs";
+import { R as Root, c as createDialogScope, P as Portal, W as WarningProvider, a as Content, T as Title, D as Description, C as Close, O as Overlay, b as Trigger } from "./radix-ui__react-dialog.mjs";
 import { c as composeEventHandlers } from "./radix-ui__primitive.mjs";
 import { e as createSlottable } from "./radix-ui__react-slot.mjs";
 var ROOT_NAME = "AlertDialog";

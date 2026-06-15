@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { getPublicEventBySlug, submitCommitmentForm, getCurrentRates, toggleSaveEvent } from "@/lib/marketplace.functions";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
-import { Calendar, MapPin, Users, ShieldCheck, Globe, CheckCircle2, AlertCircle, CalendarPlus, Download, Sparkles, Bookmark, BookmarkCheck } from "lucide-react";
+import { AppShell } from "@/components/app-shell";
+import { Calendar, MapPin, Users, ShieldCheck, Globe, CheckCircle2, AlertCircle, CalendarPlus, Download, Sparkles, Bookmark, BookmarkCheck, Pencil, ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
@@ -12,6 +13,9 @@ import { fmtDual } from "@/lib/currency";
 import { z } from "zod";
 
 const searchSchema = z.object({ ref: z.string().max(20).optional() });
+
+const FORM_INPUT =
+  "w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-shadow focus:ring-2 focus:ring-ring";
 
 export const Route = createFileRoute("/events/$slug")({
   validateSearch: searchSchema,
@@ -32,8 +36,11 @@ function fmt(curr: string, n: number) {
 function EventDetail() {
   const { slug } = Route.useParams();
   const search = useSearch({ from: "/events/$slug" });
+  const { user, roles } = useAuth();
   const fetchEvent = useServerFn(getPublicEventBySlug);
   const fetchRates = useServerFn(getCurrentRates);
+
+  const isAdmin = roles.includes("abw_admin") || roles.includes("super_admin");
 
   const { data, isLoading } = useQuery({
     queryKey: ["public-event", slug],
@@ -48,41 +55,51 @@ function EventDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <SiteHeader />
-        <div className="mx-auto max-w-6xl px-6 py-24 text-center text-muted-foreground">Loading event…</div>
-      </div>
+      <EventPageLayout>
+        <div className="py-24 text-center text-muted-foreground">Loading event…</div>
+      </EventPageLayout>
     );
   }
 
   const event = data?.event;
   if (!event) {
     return (
-      <div className="min-h-screen bg-background">
-        <SiteHeader />
-        <div className="mx-auto max-w-6xl px-6 py-24 text-center">
+      <EventPageLayout>
+        <div className="py-24 text-center">
           <h1 className="font-display text-3xl font-bold">Event not found</h1>
           <p className="mt-2 text-muted-foreground">This event may have been unlisted.</p>
           <Link to="/marketplace" className="mt-6 inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
             Back to marketplace
           </Link>
         </div>
-      </div>
+      </EventPageLayout>
     );
   }
 
+  const isOwner = !!user && user.id === event.organiser_id;
+  const canEngageAsSponsor = !isOwner && !isAdmin;
+
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
+    <EventPageLayout>
+      {user && (
+        <div className="mb-6">
+          <Link
+            to={isAdmin ? "/dashboard/vetting" : "/dashboard"}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Back
+          </Link>
+        </div>
+      )}
 
       {event.banner_image_url && (
-        <div className="relative h-72 w-full overflow-hidden bg-muted">
+        <div className="relative -mx-6 mb-8 h-72 overflow-hidden bg-muted md:rounded-xl">
           <img src={event.banner_image_url} alt={event.name} className="h-full w-full object-cover" />
         </div>
       )}
 
-      <main className="mx-auto max-w-6xl px-6 py-10">
-        <div className="grid gap-10 lg:grid-cols-[2fr_1fr]">
+      <div className="grid gap-10 lg:grid-cols-[2fr_1fr]">
           <div>
             <div className="flex flex-wrap items-center gap-2">
               {event.ige_vetted && (
@@ -154,13 +171,15 @@ function EventDetail() {
                     {t.slots_remaining !== null && (
                       <div className="mt-3 text-xs text-muted-foreground">{t.slots_remaining} of {t.slots_total} slots left</div>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => { setSelectedTier(t.id); setShowForm(true); }}
-                      className="mt-4 w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                    >
-                      Express interest
-                    </button>
+                    {canEngageAsSponsor && (
+                      <button
+                        type="button"
+                        onClick={() => { setSelectedTier(t.id); setShowForm(true); }}
+                        className="mt-4 w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                      >
+                        Express interest
+                      </button>
+                    )}
                   </div>
                 ))}
                 {!data?.tiers?.length && (
@@ -170,72 +189,22 @@ function EventDetail() {
             </section>
           </div>
 
-          <aside className="space-y-4">
-            <div className="rounded-xl border border-border bg-card p-6">
-              <div className="text-xs uppercase tracking-wide text-muted-foreground">Get involved</div>
-              <button
-                type="button"
-                onClick={() => { setSelectedTier(null); setShowSponsor(true); }}
-                className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-soft hover:-translate-y-0.5 transition-transform"
-              >
-                <Sparkles className="h-4 w-4" /> Sponsor this event
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowForm(true)}
-                className="mt-2 w-full rounded-md border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted"
-              >
-                Submit a Commitment Form
-              </button>
-              <SaveEventButton eventId={event.id} />
-              <p className="mt-2 text-xs text-muted-foreground">Commitment forms are verified by IGE before reaching the organiser.</p>
-              {search.ref && (
-                <div className="mt-3 rounded-md bg-secondary/10 px-3 py-2 text-xs text-secondary-deep">
-                  Attributed to partner: <span className="font-mono">{search.ref}</span>
-                </div>
-              )}
-            </div>
-            {event.sponsorship_deck_url && (
-              <div className="rounded-xl border border-border bg-card p-6">
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">Sponsorship deck</div>
-                <a
-                  href={event.sponsorship_deck_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  download
-                  className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted"
-                >
-                  <Download className="h-4 w-4" /> Download deck (PDF)
-                </a>
-              </div>
-            )}
-            {event.cal_booking_url && (
-              <div className="rounded-xl border border-border bg-card p-6">
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">Book an intro call</div>
-                <a
-                  href={event.cal_booking_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted"
-                >
-                  <CalendarPlus className="h-4 w-4" /> Schedule with organiser
-                </a>
-              </div>
-            )}
-            {event.sponsorship_deadline && (
-              <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
-                <div className="text-xs uppercase tracking-wide">Sponsorship deadline</div>
-                <div className="mt-1 font-medium text-foreground">{new Date(event.sponsorship_deadline).toLocaleDateString()}</div>
-              </div>
-            )}
-          </aside>
+          <GetInvolvedAside
+            event={event}
+            refCode={search.ref ?? null}
+            isAdmin={isAdmin}
+            isOwner={isOwner}
+            canEngageAsSponsor={canEngageAsSponsor}
+            onSponsor={() => { setSelectedTier(null); setShowSponsor(true); }}
+            onCommitment={() => setShowForm(true)}
+          />
         </div>
-      </main>
 
       {showSponsor && (
         <SponsorInterestDialog
           eventId={event.id}
           eventName={event.name}
+          tiers={data?.tiers ?? []}
           onClose={() => setShowSponsor(false)}
         />
       )}
@@ -250,9 +219,146 @@ function EventDetail() {
           onClose={() => setShowForm(false)}
         />
       )}
+    </EventPageLayout>
+  );
+}
 
+function EventPageLayout({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <div className="min-h-screen bg-background" />;
+  }
+
+  if (user) {
+    return <AppShell>{children}</AppShell>;
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <SiteHeader />
+      <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
       <SiteFooter />
     </div>
+  );
+}
+
+function GetInvolvedAside({
+  event,
+  refCode,
+  isAdmin,
+  isOwner,
+  canEngageAsSponsor,
+  onSponsor,
+  onCommitment,
+}: {
+  event: any;
+  refCode: string | null;
+  isAdmin: boolean;
+  isOwner: boolean;
+  canEngageAsSponsor: boolean;
+  onSponsor: () => void;
+  onCommitment: () => void;
+}) {
+  const actionBtn = "inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted transition-colors";
+
+  return (
+    <aside className="space-y-4">
+      {isOwner && (
+        <div className="rounded-xl border border-primary/30 bg-brand-soft/30 p-6">
+          <div className="text-xs font-semibold uppercase tracking-wide text-primary-deep">Your event</div>
+          <p className="mt-2 text-sm text-muted-foreground">Manage this listing from your organiser workspace.</p>
+          <div className="mt-4 space-y-2">
+            <Link
+              to="/events/edit/$id"
+              params={{ id: event.id }}
+              className={`${actionBtn} border-primary/40 bg-card`}
+            >
+              <Pencil className="h-4 w-4" /> Edit event
+            </Link>
+            <Link to="/dashboard/pipeline" className={actionBtn}>
+              View pipeline & analytics
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {isAdmin && (
+        <div className="rounded-xl border border-border bg-card p-6">
+          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Admin</div>
+          <p className="mt-2 text-sm text-muted-foreground">Review vetting details or open the full editor.</p>
+          <div className="mt-4 space-y-2">
+            <Link to="/dashboard/vetting" className={actionBtn}>
+              <ShieldCheck className="h-4 w-4" /> Open vetting queue
+            </Link>
+            <Link
+              to="/events/edit/$id"
+              params={{ id: event.id }}
+              className={actionBtn}
+            >
+              <Pencil className="h-4 w-4" /> Event editor
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {canEngageAsSponsor && (
+        <div className="rounded-xl border border-border bg-card p-6">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Get involved</div>
+          <button
+            type="button"
+            onClick={onSponsor}
+            className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-soft hover:-translate-y-0.5 transition-transform"
+          >
+            <Sparkles className="h-4 w-4" /> Sponsor this event
+          </button>
+          <button type="button" onClick={onCommitment} className={`mt-2 ${actionBtn}`}>
+            Submit a Commitment Form
+          </button>
+          <SaveEventButton eventId={event.id} />
+          <p className="mt-2 text-xs text-muted-foreground">Commitment forms are verified by IGE before reaching the organiser.</p>
+          {refCode && (
+            <div className="mt-3 rounded-md bg-secondary/10 px-3 py-2 text-xs text-secondary-deep">
+              Attributed to partner: <span className="font-mono">{refCode}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {event.sponsorship_deck_url && (
+        <div className="rounded-xl border border-border bg-card p-6">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Sponsorship deck</div>
+          <a
+            href={event.sponsorship_deck_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            download
+            className={`mt-3 ${actionBtn}`}
+          >
+            <Download className="h-4 w-4" /> Download deck (PDF)
+          </a>
+        </div>
+      )}
+      {event.cal_booking_url && (
+        <div className="rounded-xl border border-border bg-card p-6">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Book an intro call</div>
+          <a
+            href={event.cal_booking_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`mt-3 ${actionBtn}`}
+          >
+            <CalendarPlus className="h-4 w-4" /> Schedule with organiser
+          </a>
+        </div>
+      )}
+      {event.sponsorship_deadline && (
+        <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+          <div className="text-xs uppercase tracking-wide">Sponsorship deadline</div>
+          <div className="mt-1 font-medium text-foreground">{new Date(event.sponsorship_deadline).toLocaleDateString()}</div>
+        </div>
+      )}
+    </aside>
   );
 }
 
@@ -321,19 +427,19 @@ function CommitmentDialog({
 
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Your name *">
-                <input required value={form.contact_name} onChange={(e) => setForm({ ...form, contact_name: e.target.value })} className="input" />
+                <input required value={form.contact_name} onChange={(e) => setForm({ ...form, contact_name: e.target.value })} className={FORM_INPUT} />
               </Field>
               <Field label="Your title">
-                <input value={form.contact_title} onChange={(e) => setForm({ ...form, contact_title: e.target.value })} className="input" />
+                <input value={form.contact_title} onChange={(e) => setForm({ ...form, contact_title: e.target.value })} className={FORM_INPUT} />
               </Field>
               <Field label="Company name *">
-                <input required value={form.company_name} onChange={(e) => setForm({ ...form, company_name: e.target.value })} className="input" />
+                <input required value={form.company_name} onChange={(e) => setForm({ ...form, company_name: e.target.value })} className={FORM_INPUT} />
               </Field>
               <Field label="Company LinkedIn URL *">
-                <input required type="url" placeholder="https://linkedin.com/company/…" value={form.company_linkedin_url} onChange={(e) => setForm({ ...form, company_linkedin_url: e.target.value })} className="input" />
+                <input required type="url" placeholder="https://linkedin.com/company/…" value={form.company_linkedin_url} onChange={(e) => setForm({ ...form, company_linkedin_url: e.target.value })} className={FORM_INPUT} />
               </Field>
               <Field label="Currency *">
-                <select value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} className="input">
+                <select value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} className={FORM_INPUT}>
                   <option value="USD">USD</option>
                   <option value="EUR">EUR</option>
                   <option value="GBP">GBP</option>
@@ -341,7 +447,7 @@ function CommitmentDialog({
                 </select>
               </Field>
               <Field label="Partnership type">
-                <select value={form.partnership_type} onChange={(e) => setForm({ ...form, partnership_type: e.target.value })} className="input">
+                <select value={form.partnership_type} onChange={(e) => setForm({ ...form, partnership_type: e.target.value })} className={FORM_INPUT}>
                   <option value="cash">Cash</option>
                   <option value="in_kind">In-kind</option>
                   <option value="co_creation">Co-creation</option>
@@ -349,18 +455,18 @@ function CommitmentDialog({
                 </select>
               </Field>
               <Field label="Budget min">
-                <input type="number" min={0} value={form.budget_range_min} onChange={(e) => setForm({ ...form, budget_range_min: e.target.value })} className="input" />
+                <input type="number" min={0} value={form.budget_range_min} onChange={(e) => setForm({ ...form, budget_range_min: e.target.value })} className={FORM_INPUT} />
               </Field>
               <Field label="Budget max">
-                <input type="number" min={0} value={form.budget_range_max} onChange={(e) => setForm({ ...form, budget_range_max: e.target.value })} className="input" />
+                <input type="number" min={0} value={form.budget_range_max} onChange={(e) => setForm({ ...form, budget_range_max: e.target.value })} className={FORM_INPUT} />
               </Field>
             </div>
 
             <Field label="Expected ROI / objectives">
-              <textarea rows={3} value={form.expected_roi} onChange={(e) => setForm({ ...form, expected_roi: e.target.value })} className="input" />
+              <textarea rows={3} value={form.expected_roi} onChange={(e) => setForm({ ...form, expected_roi: e.target.value })} className={FORM_INPUT} />
             </Field>
             <Field label="Custom requirements">
-              <textarea rows={3} value={form.custom_requirements} onChange={(e) => setForm({ ...form, custom_requirements: e.target.value })} className="input" />
+              <textarea rows={3} value={form.custom_requirements} onChange={(e) => setForm({ ...form, custom_requirements: e.target.value })} className={FORM_INPUT} />
             </Field>
 
             <label className="flex items-start gap-2 rounded-md border border-border bg-muted/40 p-3 text-sm">
@@ -393,7 +499,6 @@ function CommitmentDialog({
           </form>
         )}
       </div>
-      <style>{`.input{display:block;width:100%;border-radius:.375rem;border:1px solid hsl(var(--border,0 0% 90%));background:transparent;padding:.5rem .75rem;font-size:.875rem;outline:none}.input:focus{border-color:hsl(var(--primary,221 83% 53%))}`}</style>
     </div>
   );
 }
@@ -463,8 +568,8 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function SponsorInterestDialog({
-  eventId, eventName, onClose,
-}: { eventId: string; eventName: string; onClose: () => void }) {
+  eventId, eventName, tiers, onClose,
+}: { eventId: string; eventName: string; tiers: any[]; onClose: () => void }) {
   const [form, setForm] = useState({
     full_name: "", email: "", company: "", role_title: "", phone: "",
     tier_interest: "", message: "",
@@ -508,14 +613,33 @@ function SponsorInterestDialog({
               <p className="mt-1 text-sm text-muted-foreground">Tell us a bit about your brand — IGE will reach out with the deck and next steps.</p>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Your name *"><input required value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} className="input" /></Field>
-              <Field label="Work email *"><input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="input" /></Field>
-              <Field label="Company"><input value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} className="input" /></Field>
-              <Field label="Role / title"><input value={form.role_title} onChange={(e) => setForm({ ...form, role_title: e.target.value })} className="input" /></Field>
-              <Field label="Phone"><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="input" /></Field>
-              <Field label="Tier of interest"><input value={form.tier_interest} onChange={(e) => setForm({ ...form, tier_interest: e.target.value })} placeholder="e.g. Title / Gold" className="input" /></Field>
+              <Field label="Your name *"><input required value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} className={FORM_INPUT} /></Field>
+              <Field label="Work email *"><input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={FORM_INPUT} /></Field>
+              <Field label="Company"><input value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} className={FORM_INPUT} /></Field>
+              <Field label="Role / title"><input value={form.role_title} onChange={(e) => setForm({ ...form, role_title: e.target.value })} className={FORM_INPUT} /></Field>
+              <Field label="Phone"><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className={FORM_INPUT} /></Field>
+              <Field label="Tier of interest">
+                {tiers.length > 0 ? (
+                  <select
+                    value={form.tier_interest}
+                    onChange={(e) => setForm({ ...form, tier_interest: e.target.value })}
+                    className={FORM_INPUT}
+                  >
+                    <option value="">Select a tier…</option>
+                    {tiers.map((t: any) => (
+                      <option key={t.id} value={t.tier_name}>
+                        {t.tier_name} — {t.currency} {Number(t.price).toLocaleString()}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <p className="rounded-md border border-dashed border-border bg-muted/30 px-3 py-2.5 text-sm text-muted-foreground">
+                    No sponsorship tiers published yet.
+                  </p>
+                )}
+              </Field>
             </div>
-            <Field label="Message"><textarea rows={3} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className="input" /></Field>
+            <Field label="Message"><textarea rows={3} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className={FORM_INPUT} /></Field>
             {mutation.error && (
               <div className="flex items-start gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
                 <AlertCircle className="mt-0.5 h-4 w-4" />
@@ -531,7 +655,6 @@ function SponsorInterestDialog({
           </form>
         )}
       </div>
-      <style>{`.input{display:block;width:100%;border-radius:.375rem;border:1px solid hsl(var(--border,0 0% 90%));background:transparent;padding:.5rem .75rem;font-size:.875rem;outline:none}.input:focus{border-color:hsl(var(--primary,221 83% 53%))}`}</style>
     </div>
   );
 }

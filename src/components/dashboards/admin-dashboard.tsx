@@ -6,11 +6,12 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ShieldCheck, Users, DollarSign, Loader2, ArrowRight, CheckCircle2, Pencil, XCircle, Award, Wallet, Inbox,
-  AlertTriangle, Check, X, SlidersHorizontal,
+  AlertTriangle, Check, X, SlidersHorizontal, BarChart3,
 } from "lucide-react";
 import { AppShell, StatusBadge } from "@/components/app-shell";
 import { StatCard } from "@/components/dashboards/shared";
-import { DashboardHeader, DashboardTabs } from "@/components/dashboards/dashboard-shell";
+import { DashboardHeader } from "@/components/dashboards/dashboard-shell";
+import { AdminAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
 import { listEventsForVetting, setEventVettingStatus, getEventForAdmin } from "@/lib/admin.functions";
 import { adminGetRevenue, adminListFraudFlags, adminResolveFraudFlag, adminUpsertCommissionConfig, adminCreateDeal, adminUpdateDealStatus, adminMarkCommissionPaid } from "@/lib/deals.functions";
 import { fmtMoney } from "@/lib/currency";
@@ -21,8 +22,7 @@ const DEAL_STATUSES = [
   "payment_received", "closed_lost", "cancelled",
 ];
 
-export function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<"vetting" | "submissions" | "revenue" | "controls">("vetting");
+export function AdminDashboard({ section = "overview" }: { section?: "overview" | "vetting" | "submissions" | "revenue" | "controls" | "analytics" }) {
   const [activeSubTab, setActiveSubTab] = useState<"waitlist" | "contact">("waitlist");
   const [drawerOpen, setDrawerOpen] = useState<string | null>(null);
   const qc = useQueryClient();
@@ -132,22 +132,26 @@ export function AdminDashboard() {
           <StatCard icon={DollarSign} label="Deal volume (GMV)" value={adminGmv} loading={revenueLoading} />
         </div>
 
-        <DashboardTabs
-          active={activeTab}
-          onChange={(id) => setActiveTab(id as typeof activeTab)}
-          tabs={[
-            { id: "vetting", label: "Event queue", count: vettingCount },
-            { id: "submissions", label: "Submissions", count: waitlistCount + (contact.data?.length ?? 0) },
-            { id: "revenue", label: "Revenue & deals" },
-            {
-              id: "controls",
-              label: "Fraud & rates",
-              count: (fraud.data?.flags ?? []).filter((f: any) => f.status === "open").length || undefined,
-            },
-          ]}
-        />
+        {section === "overview" && (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[
+              { to: "/dashboard/vetting", label: "Event queue", desc: "Review submitted listings" },
+              { to: "/dashboard/submissions", label: "Submissions", desc: "Waitlist & contact inbox" },
+              { to: "/dashboard/revenue", label: "Revenue & deals", desc: "GMV, deals & payouts" },
+              { to: "/dashboard/controls", label: "Fraud & rates", desc: "Flags & commission config" },
+              { to: "/dashboard/analytics", label: "Analytics", desc: "Platform metrics" },
+            ].map((item) => (
+              <Link key={item.to} to={item.to} className="rounded-xl border border-border bg-card p-5 hover:border-primary hover:shadow-soft transition-all">
+                <div className="font-semibold">{item.label}</div>
+                <div className="mt-1 text-sm text-muted-foreground">{item.desc}</div>
+              </Link>
+            ))}
+          </div>
+        )}
 
-        {activeTab === "vetting" ? (
+        {section === "analytics" ? (
+          <AdminAnalyticsPanel />
+        ) : section === "vetting" ? (
           vettingLoading ? (
             <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
           ) : (
@@ -180,7 +184,7 @@ export function AdminDashboard() {
               ))}
             </div>
           )
-        ) : activeTab === "submissions" ? (
+        ) : section === "submissions" ? (
           <div className="space-y-4">
             <div className="flex gap-4 border-b border-border/60 pb-2">
               <button onClick={() => setActiveSubTab("waitlist")} className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${activeSubTab === "waitlist" ? "bg-primary text-white" : "text-muted-foreground hover:bg-muted"}`}>
@@ -256,7 +260,7 @@ export function AdminDashboard() {
               </div>
             )}
           </div>
-        ) : activeTab === "controls" ? (
+        ) : section === "controls" ? (
           <div className="space-y-8">
             {/* Fraud flags */}
             <section>
@@ -327,7 +331,8 @@ export function AdminDashboard() {
               </div>
             </section>
           </div>
-        ) : revenueLoading ? (
+        ) : section === "revenue" ? (
+          revenueLoading ? (
           <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
         ) : (
           <div className="space-y-6">
@@ -462,7 +467,8 @@ export function AdminDashboard() {
               </div>
             </div>
           </div>
-        )}
+        )
+        ) : null}
 
         {drawerOpen && <VettingDrawer id={drawerOpen} onClose={() => setDrawerOpen(null)} />}
       </div>

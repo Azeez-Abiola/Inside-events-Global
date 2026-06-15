@@ -20,6 +20,7 @@ import {
 import { createEventDraft, getMyEvents, deleteDraftEvent } from "@/lib/events.functions";
 import { getOrganiserPipeline } from "@/lib/deals.functions";
 import { fmtMoney } from "@/lib/currency";
+import { OrganiserAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
 import {
   EVENT_STATUS_GROUPS,
   type EventStatusGroup,
@@ -219,16 +220,7 @@ export function OrganiserDashboard() {
           )
         )}
 
-        {mainTab === "analytics" && (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <StatCard icon={Eye} label="Total profile views" value={totalViews} loading={eventsLoading} />
-            <StatCard icon={Bookmark} label="Times saved by sponsors" value={totalSaves} loading={eventsLoading} />
-            <StatCard icon={MessageSquare} label="Commitment inquiries" value={totalInquiries} loading={eventsLoading} />
-            <StatCard icon={BarChart3} label="Closed deals" value={closedDeals} loading={pipelineLoading} />
-            <StatCard icon={CalendarDays} label="Total events" value={events.length} loading={eventsLoading} />
-            <StatCard icon={ShieldCheck} label="IGE vetted" value={events.filter((e: any) => e.ige_vetted).length} loading={eventsLoading} />
-          </div>
-        )}
+        {mainTab === "analytics" && <OrganiserAnalyticsPanel />}
       </div>
     </AppShell>
   );
@@ -341,6 +333,7 @@ function PipelineEventTable({
               <th className="px-3 py-3">Referral</th>
               <th className="px-3 py-3">Deal stage</th>
               <th className="px-3 py-3">Submitted</th>
+              <th className="px-3 py-3"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -372,12 +365,23 @@ function PipelineEventTable({
                   <td className="px-3 py-3 text-xs text-muted-foreground">
                     {f.submitted_at ? new Date(f.submitted_at).toLocaleDateString() : "—"}
                   </td>
+                  <td className="px-3 py-3 text-right">
+                    {f.sponsor_user_id && (
+                      <Link
+                        to="/messages"
+                        search={{ to: f.sponsor_user_id, event_id: ev.id }}
+                        className="text-xs font-semibold text-primary hover:underline"
+                      >
+                        Message →
+                      </Link>
+                    )}
+                  </td>
                 </tr>
               );
             })}
             {!forms.length && (
               <tr>
-                <td colSpan={6} className="px-3 py-8 text-center text-sm text-muted-foreground italic">
+                <td colSpan={7} className="px-3 py-8 text-center text-sm text-muted-foreground italic">
                   No sponsor inquiries yet for this event.
                 </td>
               </tr>

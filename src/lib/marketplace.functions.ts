@@ -24,6 +24,52 @@ const FilterInput = z.object({
   per_page: z.number().int().min(1).max(48).default(12),
 });
 
+const FacetInput = z.object({
+  vetted_only: z.boolean().default(true),
+  decision_makers: z.boolean().default(false),
+});
+
+function uniqueSorted(values: (string | null | undefined)[]) {
+  return [...new Set(values.filter((v): v is string => !!v && v.trim()))].sort((a, b) =>
+    a.localeCompare(b),
+  );
+}
+
+export const getMarketplaceFilterOptions = createServerFn({ method: "POST" })
+  .inputValidator((d) => FacetInput.parse(d ?? {}))
+  .handler(async ({ data }) => {
+    let q = supabaseAdmin
+      .from("events")
+      .select("event_type, primary_sector, country, format, ige_vetted, decision_makers_pct")
+      .in("status", ["approved", "listed"]);
+
+    if (data.vetted_only) q = q.eq("ige_vetted", true);
+    if (data.decision_makers) q = q.gte("decision_makers_pct", 30);
+
+    const [{ data: events, error }, { data: allLive, error: allErr }] = await Promise.all([
+      q,
+      supabaseAdmin
+        .from("events")
+        .select("ige_vetted, decision_makers_pct")
+        .in("status", ["approved", "listed"]),
+    ]);
+    if (error) throw new Error(error.message);
+    if (allErr) throw new Error(allErr.message);
+
+    const rows = events ?? [];
+    const live = allLive ?? [];
+
+    return {
+      event_types: uniqueSorted(rows.map((e) => e.event_type)),
+      sectors: uniqueSorted(rows.map((e) => e.primary_sector)),
+      countries: uniqueSorted(rows.map((e) => e.country)),
+      formats: uniqueSorted(rows.map((e) => e.format)),
+      has_vetted_events: live.some((e) => e.ige_vetted),
+      has_non_vetted_events: live.some((e) => !e.ige_vetted),
+      has_decision_maker_events: live.some((e) => (e.decision_makers_pct ?? 0) >= 30),
+    };
+  });
+
 export const listMarketplaceEvents = createServerFn({ method: "POST" })
   .inputValidator((d) => FilterInput.parse(d))
   .handler(async ({ data }) => {

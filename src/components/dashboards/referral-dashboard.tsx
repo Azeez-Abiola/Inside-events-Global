@@ -1,17 +1,18 @@
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Plus, Link2, MousePointerClick, TrendingUp, Wallet, Award, Copy, MessageCircle, Share2, Mail } from "lucide-react";
+import { Plus, Link2, MousePointerClick, TrendingUp, Wallet, Award, Copy, MessageCircle, Share2, Mail, BarChart3 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { StatCard } from "@/components/dashboards/shared";
-import { DashboardHeader, DashboardTabs } from "@/components/dashboards/dashboard-shell";
+import { DashboardHeader } from "@/components/dashboards/dashboard-shell";
+import { ReferralAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
 import { getReferralDashboard, generateReferralLink } from "@/lib/referrals.functions";
 import { listMarketplaceEvents } from "@/lib/marketplace.functions";
 import { fmtMoney } from "@/lib/currency";
 
-export function ReferralDashboard() {
-  const [activeTab, setActiveTab] = useState<"links" | "deals">("links");
+export function ReferralDashboard({ section = "links" }: { section?: "overview" | "links" | "deals" | "analytics" }) {
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const fetch = useServerFn(getReferralDashboard);
@@ -57,16 +58,24 @@ export function ReferralDashboard() {
           </div>
         )}
 
-        <DashboardTabs
-          active={activeTab}
-          onChange={(id) => setActiveTab(id as typeof activeTab)}
-          tabs={[
-            { id: "links", label: "My referrals", count: activeLinks },
-            { id: "deals", label: "Commission pipeline", count: data?.deals?.length ?? 0 },
-          ]}
-        />
+        {section === "overview" && (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[
+              { to: "/dashboard/referrals", label: "My referrals", desc: "Vouch links & sharing" },
+              { to: "/dashboard/deals", label: "Commission pipeline", desc: "Attributed deals" },
+              { to: "/dashboard/analytics", label: "Analytics", desc: "Clicks & earnings" },
+            ].map((item) => (
+              <Link key={item.to} to={item.to} className="rounded-xl border border-border bg-card p-5 hover:border-primary hover:shadow-soft transition-all">
+                <div className="font-semibold">{item.label}</div>
+                <div className="mt-1 text-sm text-muted-foreground">{item.desc}</div>
+              </Link>
+            ))}
+          </div>
+        )}
 
-        {activeTab === "links" ? (
+        {section === "analytics" ? (
+          <ReferralAnalyticsPanel />
+        ) : section === "links" ? (
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm min-w-[700px]">
@@ -120,7 +129,7 @@ export function ReferralDashboard() {
               </table>
             </div>
           </div>
-        ) : (
+        ) : section === "deals" ? (
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm min-w-[700px]">
@@ -165,7 +174,7 @@ export function ReferralDashboard() {
               </table>
             </div>
           </div>
-        )}
+        ) : null}
 
         {pickerOpen && <EventPicker onClose={() => setPickerOpen(false)} />}
       </div>

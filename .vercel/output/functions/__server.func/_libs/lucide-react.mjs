@@ -75,17 +75,17 @@ const createLucideIcon = (iconName, iconNode) => {
   Component.displayName = toPascalCase(iconName);
   return Component;
 };
-const __iconNode$14 = [
+const __iconNode$15 = [
   ["path", { d: "m12 19-7-7 7-7", key: "1l729n" }],
   ["path", { d: "M19 12H5", key: "x3x0zl" }]
 ];
-const ArrowLeft = createLucideIcon("arrow-left", __iconNode$14);
-const __iconNode$13 = [
+const ArrowLeft = createLucideIcon("arrow-left", __iconNode$15);
+const __iconNode$14 = [
   ["path", { d: "M5 12h14", key: "1ays0h" }],
   ["path", { d: "m12 5 7 7-7 7", key: "xquz4c" }]
 ];
-const ArrowRight = createLucideIcon("arrow-right", __iconNode$13);
-const __iconNode$12 = [
+const ArrowRight = createLucideIcon("arrow-right", __iconNode$14);
+const __iconNode$13 = [
   [
     "path",
     {
@@ -95,8 +95,8 @@ const __iconNode$12 = [
   ],
   ["circle", { cx: "12", cy: "8", r: "6", key: "1vp47v" }]
 ];
-const Award = createLucideIcon("award", __iconNode$12);
-const __iconNode$11 = [
+const Award = createLucideIcon("award", __iconNode$13);
+const __iconNode$12 = [
   ["path", { d: "M10.268 21a2 2 0 0 0 3.464 0", key: "vwvbt9" }],
   [
     "path",
@@ -106,8 +106,8 @@ const __iconNode$11 = [
     }
   ]
 ];
-const Bell = createLucideIcon("bell", __iconNode$11);
-const __iconNode$10 = [
+const Bell = createLucideIcon("bell", __iconNode$12);
+const __iconNode$11 = [
   [
     "path",
     {
@@ -117,8 +117,8 @@ const __iconNode$10 = [
   ],
   ["path", { d: "m9 10 2 2 4-4", key: "1gnqz4" }]
 ];
-const BookmarkCheck = createLucideIcon("bookmark-check", __iconNode$10);
-const __iconNode$$ = [
+const BookmarkCheck = createLucideIcon("bookmark-check", __iconNode$11);
+const __iconNode$10 = [
   [
     "path",
     {
@@ -127,13 +127,8 @@ const __iconNode$$ = [
     }
   ]
 ];
-const Bookmark = createLucideIcon("bookmark", __iconNode$$);
-const __iconNode$_ = [
-  ["path", { d: "M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16", key: "jecpp" }],
-  ["rect", { width: "20", height: "14", x: "2", y: "6", rx: "2", key: "i6l2r4" }]
-];
-const Briefcase = createLucideIcon("briefcase", __iconNode$_);
-const __iconNode$Z = [
+const Bookmark = createLucideIcon("bookmark", __iconNode$10);
+const __iconNode$$ = [
   ["path", { d: "M8 2v4", key: "1cmpym" }],
   ["path", { d: "M16 2v4", key: "4m81vk" }],
   ["rect", { width: "18", height: "18", x: "3", y: "4", rx: "2", key: "1hopcy" }],
@@ -145,8 +140,8 @@ const __iconNode$Z = [
   ["path", { d: "M12 18h.01", key: "mhygvu" }],
   ["path", { d: "M16 18h.01", key: "kzsmim" }]
 ];
-const CalendarDays = createLucideIcon("calendar-days", __iconNode$Z);
-const __iconNode$Y = [
+const CalendarDays = createLucideIcon("calendar-days", __iconNode$$);
+const __iconNode$_ = [
   ["path", { d: "M16 19h6", key: "xwg31i" }],
   ["path", { d: "M16 2v4", key: "4m81vk" }],
   ["path", { d: "M19 16v6", key: "tddt3s" }],
@@ -154,8 +149,8 @@ const __iconNode$Y = [
   ["path", { d: "M3 10h18", key: "8toen8" }],
   ["path", { d: "M8 2v4", key: "1cmpym" }]
 ];
-const CalendarPlus = createLucideIcon("calendar-plus", __iconNode$Y);
-const __iconNode$X = [
+const CalendarPlus = createLucideIcon("calendar-plus", __iconNode$_);
+const __iconNode$Z = [
   ["rect", { width: "18", height: "18", x: "3", y: "4", rx: "2", key: "1hopcy" }],
   ["path", { d: "M16 2v4", key: "4m81vk" }],
   ["path", { d: "M3 10h18", key: "8toen8" }],
@@ -165,42 +160,55 @@ const __iconNode$X = [
   ["path", { d: "M7 14h.01", key: "1qa3f1" }],
   ["path", { d: "M17 18h.01", key: "1bdyru" }]
 ];
-const CalendarRange = createLucideIcon("calendar-range", __iconNode$X);
-const __iconNode$W = [
+const CalendarRange = createLucideIcon("calendar-range", __iconNode$Z);
+const __iconNode$Y = [
   ["path", { d: "M8 2v4", key: "1cmpym" }],
   ["path", { d: "M16 2v4", key: "4m81vk" }],
   ["rect", { width: "18", height: "18", x: "3", y: "4", rx: "2", key: "1hopcy" }],
   ["path", { d: "M3 10h18", key: "8toen8" }]
 ];
-const Calendar = createLucideIcon("calendar", __iconNode$W);
-const __iconNode$V = [
+const Calendar = createLucideIcon("calendar", __iconNode$Y);
+const __iconNode$X = [
   ["path", { d: "M3 3v16a2 2 0 0 0 2 2h16", key: "c24i48" }],
   ["path", { d: "M18 17V9", key: "2bz60n" }],
   ["path", { d: "M13 17V5", key: "1frdt8" }],
   ["path", { d: "M8 17v-3", key: "17ska0" }]
 ];
-const ChartColumn = createLucideIcon("chart-column", __iconNode$V);
-const __iconNode$U = [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]];
-const Check = createLucideIcon("check", __iconNode$U);
-const __iconNode$T = [["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]];
-const ChevronDown = createLucideIcon("chevron-down", __iconNode$T);
-const __iconNode$S = [
+const ChartColumn = createLucideIcon("chart-column", __iconNode$X);
+const __iconNode$W = [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]];
+const Check = createLucideIcon("check", __iconNode$W);
+const __iconNode$V = [["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]];
+const ChevronDown = createLucideIcon("chevron-down", __iconNode$V);
+const __iconNode$U = [["path", { d: "m15 18-6-6 6-6", key: "1wnfg3" }]];
+const ChevronLeft = createLucideIcon("chevron-left", __iconNode$U);
+const __iconNode$T = [
   ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
   ["line", { x1: "12", x2: "12", y1: "8", y2: "12", key: "1pkeuh" }],
   ["line", { x1: "12", x2: "12.01", y1: "16", y2: "16", key: "4dfq90" }]
 ];
-const CircleAlert = createLucideIcon("circle-alert", __iconNode$S);
-const __iconNode$R = [
+const CircleAlert = createLucideIcon("circle-alert", __iconNode$T);
+const __iconNode$S = [
   ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
   ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
 ];
-const CircleCheck = createLucideIcon("circle-check", __iconNode$R);
-const __iconNode$Q = [
+const CircleCheck = createLucideIcon("circle-check", __iconNode$S);
+const __iconNode$R = [
   ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
   ["path", { d: "m15 9-6 6", key: "1uzhvr" }],
   ["path", { d: "m9 9 6 6", key: "z0biqf" }]
 ];
-const CircleX = createLucideIcon("circle-x", __iconNode$Q);
+const CircleX = createLucideIcon("circle-x", __iconNode$R);
+const __iconNode$Q = [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  [
+    "path",
+    {
+      d: "m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z",
+      key: "9ktpf1"
+    }
+  ]
+];
+const Compass = createLucideIcon("compass", __iconNode$Q);
 const __iconNode$P = [
   ["rect", { width: "14", height: "14", x: "8", y: "8", rx: "2", ry: "2", key: "17jyea" }],
   ["path", { d: "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2", key: "zix9uf" }]
@@ -463,6 +471,16 @@ const __iconNode$p = [
 ];
 const MessageSquare = createLucideIcon("message-square", __iconNode$p);
 const __iconNode$o = [
+  [
+    "path",
+    {
+      d: "M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401",
+      key: "kfwtm"
+    }
+  ]
+];
+const Moon = createLucideIcon("moon", __iconNode$o);
+const __iconNode$n = [
   ["path", { d: "M14 4.1 12 6", key: "ita8i4" }],
   ["path", { d: "m5.1 8-2.9-.8", key: "1go3kf" }],
   ["path", { d: "m6 12-1.9 2", key: "mnht97" }],
@@ -475,8 +493,8 @@ const __iconNode$o = [
     }
   ]
 ];
-const MousePointerClick = createLucideIcon("mouse-pointer-click", __iconNode$o);
-const __iconNode$n = [
+const MousePointerClick = createLucideIcon("mouse-pointer-click", __iconNode$n);
+const __iconNode$m = [
   ["path", { d: "M15 18h-5", key: "95g1m2" }],
   ["path", { d: "M18 14h-8", key: "sponae" }],
   [
@@ -488,8 +506,8 @@ const __iconNode$n = [
   ],
   ["rect", { width: "8", height: "4", x: "10", y: "6", rx: "1", key: "aywv1n" }]
 ];
-const Newspaper = createLucideIcon("newspaper", __iconNode$n);
-const __iconNode$m = [
+const Newspaper = createLucideIcon("newspaper", __iconNode$m);
+const __iconNode$l = [
   [
     "path",
     {
@@ -499,8 +517,8 @@ const __iconNode$m = [
   ],
   ["path", { d: "m15 5 4 4", key: "1mk7zo" }]
 ];
-const Pencil = createLucideIcon("pencil", __iconNode$m);
-const __iconNode$l = [
+const Pencil = createLucideIcon("pencil", __iconNode$l);
+const __iconNode$k = [
   [
     "path",
     {
@@ -509,19 +527,12 @@ const __iconNode$l = [
     }
   ]
 ];
-const Phone = createLucideIcon("phone", __iconNode$l);
-const __iconNode$k = [
+const Phone = createLucideIcon("phone", __iconNode$k);
+const __iconNode$j = [
   ["path", { d: "M5 12h14", key: "1ays0h" }],
   ["path", { d: "M12 5v14", key: "s699le" }]
 ];
-const Plus = createLucideIcon("plus", __iconNode$k);
-const __iconNode$j = [
-  ["path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", key: "v9h5vc" }],
-  ["path", { d: "M21 3v5h-5", key: "1q7to0" }],
-  ["path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", key: "3uifl3" }],
-  ["path", { d: "M8 16H3v5", key: "1cv678" }]
-];
-const RefreshCw = createLucideIcon("refresh-cw", __iconNode$j);
+const Plus = createLucideIcon("plus", __iconNode$j);
 const __iconNode$i = [
   ["path", { d: "M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5", key: "qeys4" }],
   [
@@ -585,22 +596,10 @@ const __iconNode$d = [
       key: "oel41y"
     }
   ],
-  ["path", { d: "M12 8v4", key: "1got3b" }],
-  ["path", { d: "M12 16h.01", key: "1drbdi" }]
-];
-const ShieldAlert = createLucideIcon("shield-alert", __iconNode$d);
-const __iconNode$c = [
-  [
-    "path",
-    {
-      d: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",
-      key: "oel41y"
-    }
-  ],
   ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
 ];
-const ShieldCheck = createLucideIcon("shield-check", __iconNode$c);
-const __iconNode$b = [
+const ShieldCheck = createLucideIcon("shield-check", __iconNode$d);
+const __iconNode$c = [
   ["path", { d: "M10 5H3", key: "1qgfaw" }],
   ["path", { d: "M12 19H3", key: "yhmn1j" }],
   ["path", { d: "M14 3v4", key: "1sua03" }],
@@ -611,8 +610,8 @@ const __iconNode$b = [
   ["path", { d: "M8 10v4", key: "tgpxqk" }],
   ["path", { d: "M8 12H3", key: "a7s4jb" }]
 ];
-const SlidersHorizontal = createLucideIcon("sliders-horizontal", __iconNode$b);
-const __iconNode$a = [
+const SlidersHorizontal = createLucideIcon("sliders-horizontal", __iconNode$c);
+const __iconNode$b = [
   [
     "path",
     {
@@ -624,7 +623,19 @@ const __iconNode$a = [
   ["path", { d: "M22 4h-4", key: "gwowj6" }],
   ["circle", { cx: "4", cy: "20", r: "2", key: "6kqj1y" }]
 ];
-const Sparkles = createLucideIcon("sparkles", __iconNode$a);
+const Sparkles = createLucideIcon("sparkles", __iconNode$b);
+const __iconNode$a = [
+  ["circle", { cx: "12", cy: "12", r: "4", key: "4exip2" }],
+  ["path", { d: "M12 2v2", key: "tus03m" }],
+  ["path", { d: "M12 20v2", key: "1lh1kg" }],
+  ["path", { d: "m4.93 4.93 1.41 1.41", key: "149t6j" }],
+  ["path", { d: "m17.66 17.66 1.41 1.41", key: "ptbguv" }],
+  ["path", { d: "M2 12h2", key: "1t8f8n" }],
+  ["path", { d: "M20 12h2", key: "1q8mjw" }],
+  ["path", { d: "m6.34 17.66-1.41 1.41", key: "1m8zz5" }],
+  ["path", { d: "m19.07 4.93-1.41 1.41", key: "1shlcs" }]
+];
+const Sun = createLucideIcon("sun", __iconNode$a);
 const __iconNode$9 = [
   [
     "path",
@@ -708,7 +719,7 @@ const __iconNode = [
 ];
 const X = createLucideIcon("x", __iconNode);
 export {
-  Send as $,
+  Search as $,
   ArrowLeft as A,
   Bell as B,
   Calendar as C,
@@ -718,63 +729,64 @@ export {
   Globe as G,
   Handshake as H,
   Inbox as I,
-  Link2 as J,
-  LoaderCircle as K,
+  Lightbulb as J,
+  Link2 as K,
   LayoutDashboard as L,
-  LogOut as M,
-  Mail as N,
-  MapPin as O,
-  Megaphone as P,
-  MessageCircle as Q,
-  MessageSquare as R,
-  MousePointerClick as S,
-  Newspaper as T,
-  Pencil as U,
-  Phone as V,
-  Plus as W,
-  RefreshCw as X,
-  Rocket as Y,
-  Save as Z,
-  Search as _,
+  LoaderCircle as M,
+  LogOut as N,
+  Mail as O,
+  MapPin as P,
+  Megaphone as Q,
+  MessageCircle as R,
+  MessageSquare as S,
+  Moon as T,
+  MousePointerClick as U,
+  Newspaper as V,
+  Pencil as W,
+  Phone as X,
+  Plus as Y,
+  Rocket as Z,
+  Save as _,
   ArrowRight as a,
-  Share2 as a0,
-  ShieldAlert as a1,
+  Send as a0,
+  Share2 as a1,
   ShieldCheck as a2,
   SlidersHorizontal as a3,
   Sparkles as a4,
-  Ticket as a5,
-  Trash2 as a6,
-  TrendingUp as a7,
-  TriangleAlert as a8,
-  Trophy as a9,
-  Upload as aa,
-  UserCheck as ab,
-  Users as ac,
-  Wallet as ad,
-  X as ae,
+  Sun as a5,
+  Ticket as a6,
+  Trash2 as a7,
+  TrendingUp as a8,
+  TriangleAlert as a9,
+  Trophy as aa,
+  Upload as ab,
+  UserCheck as ac,
+  Users as ad,
+  Wallet as ae,
+  X as af,
   Award as b,
   Bookmark as c,
   BookmarkCheck as d,
-  Briefcase as e,
-  CalendarDays as f,
-  CalendarPlus as g,
-  CalendarRange as h,
-  ChartColumn as i,
-  Check as j,
-  ChevronDown as k,
+  CalendarDays as e,
+  CalendarPlus as f,
+  CalendarRange as g,
+  ChartColumn as h,
+  Check as i,
+  ChevronDown as j,
+  ChevronLeft as k,
   CircleAlert as l,
   CircleCheck as m,
   CircleX as n,
-  Copy as o,
-  Cpu as p,
-  Crown as q,
-  Download as r,
-  Drama as s,
-  ExternalLink as t,
-  Eye as u,
-  EyeOff as v,
-  Film as w,
-  FolderOpen as x,
-  Instagram as y,
-  Lightbulb as z
+  Compass as o,
+  Copy as p,
+  Cpu as q,
+  Crown as r,
+  Download as s,
+  Drama as t,
+  ExternalLink as u,
+  Eye as v,
+  EyeOff as w,
+  Film as x,
+  FolderOpen as y,
+  Instagram as z
 };

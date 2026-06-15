@@ -1,73 +1,121 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { LogOut, LayoutDashboard, CalendarRange, ShieldCheck, Handshake, MessageSquare, DollarSign, Bell } from "lucide-react";
+import { LogOut, Bell, Loader2 } from "lucide-react";
 import logo from "@/assets/ige-logo.jpeg";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
+import { getWorkspaceNav } from "@/lib/workspace-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, roles, signOut } = useAuth();
   const loc = useLocation();
-  const isAdmin = roles.includes("abw_admin") || roles.includes("super_admin");
-  const isOrganiser = roles.includes("organiser");
-  const isSponsor = roles.includes("sponsor");
-  const isReferral = roles.includes("referral_partner");
+  const nav = getWorkspaceNav(roles);
+  const [signOutOpen, setSignOutOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
-  const isMedia = roles.includes("media_partner");
-
-  const nav: { to: string; label: string; icon: any; show: boolean }[] = [
-    {
-      to: "/dashboard",
-      label: isOrganiser && !isAdmin ? "My events" : "Dashboard",
-      icon: isOrganiser && !isAdmin ? CalendarRange : LayoutDashboard,
-      show: true,
-    },
-    { to: "/marketplace", label: "Marketplace", icon: Globe2, show: isAdmin || isSponsor || isReferral || isMedia },
-    { to: "/referrals", label: "Referrals", icon: Handshake, show: isReferral && !isAdmin },
-    { to: "/admin/vetting", label: "Vetting", icon: ShieldCheck, show: isAdmin },
-    { to: "/admin/revenue", label: "Revenue", icon: DollarSign, show: isAdmin },
-    { to: "/messages", label: "Messages", icon: MessageSquare, show: true },
-  ];
+  async function confirmSignOut() {
+    setSigningOut(true);
+    try {
+      await signOut();
+      setSignOutOpen(false);
+    } finally {
+      setSigningOut(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          <div className="flex items-center gap-8">
-            <Link to="/" className="flex items-center gap-2.5">
-              <img src={logo} alt="IGE" className="h-8 w-8 rounded-md object-cover" />
-              <span className="font-display text-base font-bold">IGE</span>
-            </Link>
-            <nav className="hidden items-center gap-1 md:flex">
-              {nav.filter((n) => n.show).map((n) => {
-                const active = loc.pathname === n.to || loc.pathname.startsWith(n.to + "/");
-                return (
-                  <Link
-                    key={n.to}
-                    to={n.to}
-                    className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                      active ? "bg-brand-soft text-primary-deep" : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    }`}
-                  >
-                    <n.icon className="h-3.5 w-3.5" />
-                    {n.label}
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
-          <div className="flex items-center gap-3 text-sm">
+      <header className="border-b border-white/10 bg-brand-gradient-diag text-white shadow-soft">
+        <div className="mx-auto grid h-16 max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-4 px-4 sm:px-6">
+          <Link to="/dashboard" className="flex items-center gap-2.5 shrink-0">
+            <img src={logo} alt="IGE" className="h-8 w-8 rounded-md object-cover ring-1 ring-white/20" />
+            <span className="font-display text-base font-bold hidden sm:inline">IGE</span>
+          </Link>
+
+          <nav className="hidden lg:flex items-center justify-center gap-0.5 flex-wrap">
+            {nav.map((n) => {
+              const active = loc.pathname === n.to || (n.to !== "/dashboard" && loc.pathname.startsWith(n.to + "/")) || (n.to === "/dashboard" && loc.pathname === "/dashboard");
+              return (
+                <Link
+                  key={n.to}
+                  to={n.to}
+                  className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors whitespace-nowrap ${
+                    active ? "bg-white/20 text-white shadow-sm" : "text-white/75 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  <n.icon className="h-3.5 w-3.5 shrink-0" />
+                  {n.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="flex items-center justify-end gap-2 text-sm shrink-0">
             <NotificationsBell />
-            <span className="hidden text-muted-foreground sm:inline">{user?.email}</span>
+            <ThemeToggle />
+            <span className="hidden text-white/80 md:inline max-w-[140px] truncate text-xs">{user?.email}</span>
             <button
-              onClick={signOut}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted"
+              onClick={() => setSignOutOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-md border border-white/20 bg-white/10 px-2.5 py-1.5 text-sm font-medium text-white hover:bg-white/20 transition-colors"
             >
-              <LogOut className="h-3.5 w-3.5" /> Sign out
+              <LogOut className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Sign out</span>
             </button>
           </div>
         </div>
+
+        <AlertDialog open={signOutOpen} onOpenChange={setSignOutOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Sign out?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to sign out? You will be returned to the login screen.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={signingOut}>No</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
+                  e.preventDefault();
+                  void confirmSignOut();
+                }}
+                disabled={signingOut}
+              >
+                {signingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : "Yes, sign out"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Mobile nav scroll */}
+        <nav className="flex lg:hidden gap-1 overflow-x-auto border-t border-white/10 px-4 py-2 scrollbar-none">
+          {nav.map((n) => {
+            const active = loc.pathname === n.to || (n.to !== "/dashboard" && loc.pathname.startsWith(n.to + "/")) || (n.to === "/dashboard" && loc.pathname === "/dashboard");
+            return (
+              <Link
+                key={n.to}
+                to={n.to}
+                className={`inline-flex shrink-0 items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium ${
+                  active ? "bg-white/20 text-white" : "text-white/75"
+                }`}
+              >
+                <n.icon className="h-3 w-3" />
+                {n.label}
+              </Link>
+            );
+          })}
+        </nav>
       </header>
       <main className="mx-auto max-w-7xl px-6 py-10">{children}</main>
     </div>
@@ -84,7 +132,7 @@ function NotificationsBell() {
     queryFn: async () => {
       const { data } = await supabase
         .from("notifications")
-        .select("id, type, title, body, read, created_at")
+        .select("id, type, title, body, read, created_at, data")
         .order("created_at", { ascending: false })
         .limit(20);
       return data ?? [];
@@ -107,7 +155,7 @@ function NotificationsBell() {
     <div className="relative">
       <button
         onClick={() => { setOpen((o) => !o); if (!open && unread) markAllRead(); }}
-        className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-card text-foreground hover:bg-muted"
+        className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors"
         aria-label="Notifications"
       >
         <Bell className="h-4 w-4" />
@@ -120,7 +168,7 @@ function NotificationsBell() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
+          <div className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-xl border border-border bg-card text-foreground shadow-2xl">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <span className="text-sm font-bold">Notifications</span>
               {unread > 0 && <button onClick={markAllRead} className="text-xs text-primary hover:underline">Mark all read</button>}
@@ -129,13 +177,25 @@ function NotificationsBell() {
               {(items ?? []).length === 0 ? (
                 <div className="px-4 py-10 text-center text-sm text-muted-foreground">No notifications yet.</div>
               ) : (
-                (items ?? []).map((n: any) => (
-                  <div key={n.id} className={`border-b border-border px-4 py-3 ${n.read ? "" : "bg-brand-soft/40"}`}>
-                    <div className="text-sm font-semibold text-foreground">{n.title}</div>
-                    {n.body && <div className="mt-0.5 text-xs text-muted-foreground">{n.body}</div>}
-                    <div className="mt-1 text-[10px] text-muted-foreground">{new Date(n.created_at).toLocaleString()}</div>
-                  </div>
-                ))
+                (items ?? []).map((n: any) => {
+                  const threadId = n.data?.thread_id as string | undefined;
+                  const content = (
+                    <>
+                      <div className="text-sm font-semibold">{n.title}</div>
+                      {n.body && <div className="mt-0.5 text-xs text-muted-foreground">{n.body}</div>}
+                      <div className="mt-1 text-[10px] text-muted-foreground">{new Date(n.created_at).toLocaleString()}</div>
+                    </>
+                  );
+                  return (
+                    <div key={n.id} className={`border-b border-border px-4 py-3 ${n.read ? "" : "bg-brand-soft/40"}`}>
+                      {threadId ? (
+                        <Link to="/messages" search={{ thread: threadId }} onClick={() => setOpen(false)} className="block hover:opacity-80">
+                          {content}
+                        </Link>
+                      ) : content}
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>

@@ -3,11 +3,20 @@ import { createMiddleware } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from './types'
+import { WebSocket as NodeWebSocket } from 'ws'
+
+function ensureNodeWebSocket() {
+  if (typeof globalThis.WebSocket === "undefined") {
+    (globalThis as typeof globalThis & { WebSocket: typeof WebSocket }).WebSocket =
+      NodeWebSocket as unknown as typeof WebSocket;
+  }
+}
 
 
 
 export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server(
   async ({ next }) => {
+    ensureNodeWebSocket();
     
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;

@@ -2,15 +2,16 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Inbox, Bookmark, CalendarDays, Loader2, Calendar } from "lucide-react";
+import { Inbox, Bookmark, CalendarDays, Loader2, Calendar, BarChart3 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { StatCard } from "@/components/dashboards/shared";
 import { DashboardEmpty, DashboardHeader, DashboardTabs } from "@/components/dashboards/dashboard-shell";
+import { SponsorAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
 import { getSponsorDashboard } from "@/lib/deals.functions";
 import { fmtMoney } from "@/lib/currency";
 
 export function SponsorDashboard() {
-  const [activeTab, setActiveTab] = useState<"commitments" | "saved" | "fresh">("commitments");
+  const [activeTab, setActiveTab] = useState<"commitments" | "saved" | "fresh" | "analytics">("commitments");
   const fetch = useServerFn(getSponsorDashboard);
   const { data, isLoading } = useQuery({ queryKey: ["sponsor-dash"], queryFn: () => fetch() });
 
@@ -46,10 +47,13 @@ export function SponsorDashboard() {
             { id: "commitments", label: "My commitments", count: commitmentsCount },
             { id: "saved", label: "Saved events", count: savedEventsCount },
             { id: "fresh", label: "Discover", count: data?.freshEvents?.length ?? 0 },
+            { id: "analytics", label: "Analytics" },
           ]}
         />
 
-        {activeTab === "commitments" ? (
+        {activeTab === "analytics" ? (
+          <SponsorAnalyticsPanel />
+        ) : activeTab === "commitments" ? (
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm min-w-[600px]">
@@ -78,10 +82,19 @@ export function SponsorDashboard() {
                         <td className="px-5 py-3.5 text-xs text-muted-foreground">
                           {f.submitted_at ? new Date(f.submitted_at).toLocaleDateString() : "-"}
                         </td>
-                        <td className="px-5 py-3.5 text-right">
+                        <td className="px-5 py-3.5 text-right space-x-3">
                           {ev?.slug && (
                             <Link to="/events/$slug" params={{ slug: ev.slug }} className="text-xs text-primary font-bold hover:underline">
                               View event →
+                            </Link>
+                          )}
+                          {ev?.organiser_id && (
+                            <Link
+                              to="/messages"
+                              search={{ to: ev.organiser_id, event_id: ev.id }}
+                              className="text-xs text-primary font-bold hover:underline"
+                            >
+                              Message organiser →
                             </Link>
                           )}
                         </td>

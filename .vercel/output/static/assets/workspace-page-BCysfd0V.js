@@ -1,0 +1,1 @@
+import{G as r}from"./index-DohUS9CH.js";import{A as p}from"./app-shell-FVd2uRyM.js";import{a as i}from"./dashboard-analytics-Wry9WWK-.js";function n({title:s,subtitle:a,action:e,children:o}){return r.jsx(p,{children:r.jsxs("div",{className:"space-y-8",children:[r.jsx(i,{title:s,subtitle:a,action:e}),o]})})}export{n as W};

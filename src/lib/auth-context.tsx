@@ -97,9 +97,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (devActive) {
       setDevRoles(null);
       router.invalidate();
+      await router.navigate({ to: "/login" });
       return;
     }
     await supabase.auth.signOut();
+    await router.navigate({ to: "/login" });
   };
 
   const mockUser = devActive ? (DEV_USER as unknown as User) : null;
