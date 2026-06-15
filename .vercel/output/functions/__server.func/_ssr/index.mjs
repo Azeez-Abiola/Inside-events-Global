@@ -53,7 +53,7 @@ function renderErrorPage() {
 let serverEntryPromise;
 async function getServerEntry() {
   if (!serverEntryPromise) {
-    serverEntryPromise = import("./server-DRh9RfeA.mjs").then((n) => n.A).then(
+    serverEntryPromise = import("./server-DKH1hyTS.mjs").then((n) => n.A).then(
       (m) => m.default ?? m
     );
   }
@@ -76,11 +76,11 @@ function isCatastrophicSsrErrorBody(body, responseStatus) {
     return false;
   }
   const fields = payload;
-  const expectedKeys = /* @__PURE__ */ new Set(["message", "status", "unhandled"]);
-  if (!Object.keys(fields).every((key) => expectedKeys.has(key))) {
+  const allowedKeys = /* @__PURE__ */ new Set(["message", "status", "unhandled", "statusText"]);
+  if (!Object.keys(fields).every((key) => allowedKeys.has(key))) {
     return false;
   }
-  return fields.unhandled === true && fields.message === "HTTPError" && (fields.status === void 0 || fields.status === responseStatus);
+  return fields.unhandled === true && (fields.message === "HTTPError" || fields.statusText === "Server Error") && (fields.status === void 0 || fields.status === responseStatus);
 }
 async function normalizeCatastrophicSsrResponse(response) {
   if (response.status < 500) return response;

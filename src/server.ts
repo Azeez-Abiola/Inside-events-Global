@@ -38,14 +38,14 @@ function isCatastrophicSsrErrorBody(body: string, responseStatus: number): boole
   }
 
   const fields = payload as Record<string, unknown>;
-  const expectedKeys = new Set(["message", "status", "unhandled"]);
-  if (!Object.keys(fields).every((key) => expectedKeys.has(key))) {
+  const allowedKeys = new Set(["message", "status", "unhandled", "statusText"]);
+  if (!Object.keys(fields).every((key) => allowedKeys.has(key))) {
     return false;
   }
 
   return (
     fields.unhandled === true &&
-    fields.message === "HTTPError" &&
+    (fields.message === "HTTPError" || fields.statusText === "Server Error") &&
     (fields.status === undefined || fields.status === responseStatus)
   );
 }

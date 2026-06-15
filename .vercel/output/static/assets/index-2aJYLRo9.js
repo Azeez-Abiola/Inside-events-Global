@@ -1,1 +1,0 @@
-import{V as e,c as s}from"./index-BaXe-09X.js";import{f as u}from"./index-DMzGNlEN.js";var c=s[" useId ".trim().toString()]||(()=>{}),f=0;function d(t){const[r,a]=e.useState(c());return u(()=>{a(o=>o??String(f++))},[t]),t||(r?`radix-${r}`:"")}export{d as u};

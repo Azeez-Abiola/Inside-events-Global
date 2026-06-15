@@ -23,8 +23,9 @@ const ALLOWED_PREFIXES = [
 export function WaitlistGate({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [checked, setChecked] = useState(false);
-  const [allowed, setAllowed] = useState(true);
+  const isServer = typeof window === "undefined";
+  const [checked, setChecked] = useState(isServer);
+  const [allowed, setAllowed] = useState(isServer);
 
   useEffect(() => {
     let cancelled = false;
