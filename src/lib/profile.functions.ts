@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { sendWelcomeEmailForUser } from "@/lib/email/welcome";
 
 const OrganiserInput = z.object({
   org_name: z.string().trim().min(1).max(160),
@@ -19,6 +20,9 @@ export const upsertOrganiserProfile = createServerFn({ method: "POST" })
       .from("organiser_profiles")
       .upsert({ user_id: userId, ...data } as never, { onConflict: "user_id" });
     if (error) throw new Error(error.message);
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    const role = roles?.[0]?.role;
+    if (role) await sendWelcomeEmailForUser(userId, role).catch(() => {});
     return { ok: true };
   });
 
@@ -45,6 +49,9 @@ export const upsertSponsorProfile = createServerFn({ method: "POST" })
       .from("sponsor_profiles")
       .upsert({ user_id: userId, ...data } as never, { onConflict: "user_id" });
     if (error) throw new Error(error.message);
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    const role = roles?.[0]?.role;
+    if (role) await sendWelcomeEmailForUser(userId, role).catch(() => {});
     return { ok: true };
   });
 
@@ -81,6 +88,20 @@ export const upsertReferralProfile = createServerFn({ method: "POST" })
     ]);
     if (pErr) throw new Error(pErr.message);
     if (rErr) throw new Error(rErr.message);
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    const role = roles?.[0]?.role;
+    if (role) await sendWelcomeEmailForUser(userId, role).catch(() => {});
+    return { ok: true };
+  });
+
+export const sendWelcomeEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    const role = roles?.[0]?.role;
+    if (!role) return { ok: false };
+    await sendWelcomeEmailForUser(userId, role);
     return { ok: true };
   });
 

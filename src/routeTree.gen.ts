@@ -25,6 +25,7 @@ import { Route as OrganisersRouteImport } from './routes/organisers'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as KnowledgeBaseRouteImport } from './routes/knowledge-base'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FaqRouteImport } from './routes/faq'
@@ -151,6 +152,11 @@ const MarketplaceRoute = MarketplaceRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KnowledgeBaseRoute = KnowledgeBaseRouteImport.update({
+  id: '/knowledge-base',
+  path: '/knowledge-base',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HowItWorksRoute = HowItWorksRouteImport.update({
@@ -418,6 +424,7 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/knowledge-base': typeof KnowledgeBaseRoute
   '/login': typeof LoginRoute
   '/marketplace': typeof MarketplaceRoute
   '/onboarding': typeof OnboardingRouteWithChildren
@@ -482,6 +489,7 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/knowledge-base': typeof KnowledgeBaseRoute
   '/login': typeof LoginRoute
   '/marketplace': typeof MarketplaceRoute
   '/onboarding': typeof OnboardingRouteWithChildren
@@ -546,6 +554,7 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/knowledge-base': typeof KnowledgeBaseRoute
   '/login': typeof LoginRoute
   '/marketplace': typeof MarketplaceRoute
   '/onboarding': typeof OnboardingRouteWithChildren
@@ -612,6 +621,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/forgot-password'
     | '/how-it-works'
+    | '/knowledge-base'
     | '/login'
     | '/marketplace'
     | '/onboarding'
@@ -676,6 +686,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/forgot-password'
     | '/how-it-works'
+    | '/knowledge-base'
     | '/login'
     | '/marketplace'
     | '/onboarding'
@@ -739,6 +750,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/forgot-password'
     | '/how-it-works'
+    | '/knowledge-base'
     | '/login'
     | '/marketplace'
     | '/onboarding'
@@ -805,6 +817,7 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HowItWorksRoute: typeof HowItWorksRoute
+  KnowledgeBaseRoute: typeof KnowledgeBaseRoute
   LoginRoute: typeof LoginRoute
   MarketplaceRoute: typeof MarketplaceRoute
   OnboardingRoute: typeof OnboardingRouteWithChildren
@@ -948,6 +961,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/knowledge-base': {
+      id: '/knowledge-base'
+      path: '/knowledge-base'
+      fullPath: '/knowledge-base'
+      preLoaderRoute: typeof KnowledgeBaseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/how-it-works': {
@@ -1387,6 +1407,7 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HowItWorksRoute: HowItWorksRoute,
+  KnowledgeBaseRoute: KnowledgeBaseRoute,
   LoginRoute: LoginRoute,
   MarketplaceRoute: MarketplaceRoute,
   OnboardingRoute: OnboardingRouteWithChildren,

@@ -1,1 +1,0 @@
-import{V as o,e as s}from"./index-DohUS9CH.js";import{f as u}from"./index-CKTV_obK.js";var c=s[" useId ".trim().toString()]||(()=>{}),f=0;function d(t){const[r,a]=o.useState(c());return u(()=>{a(e=>e??String(f++))},[t]),t||(r?`radix-${r}`:"")}export{d as u};

@@ -10,6 +10,7 @@ import { MagicLinkEmail } from '@/lib/email-templates/magic-link'
 import { RecoveryEmail } from '@/lib/email-templates/recovery'
 import { EmailChangeEmail } from '@/lib/email-templates/email-change'
 import { ReauthenticationEmail } from '@/lib/email-templates/reauthentication'
+import { normalizeAuthRedirectUrl } from '@/lib/site-url'
 
 const EMAIL_SUBJECTS: Record<string, string> = {
   signup: 'Confirm your email',
@@ -31,7 +32,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "connect-sponsor-earn"
+const SITE_NAME = "Inside Global Events 2026"
 const SENDER_DOMAIN = "notify.www.insideglobalevents.com"
 const ROOT_DOMAIN = "www.insideglobalevents.com"
 const FROM_DOMAIN = "notify.www.insideglobalevents.com"
@@ -136,7 +137,7 @@ export const Route = createFileRoute("/lovable/email/auth/webhook")({
           siteName: SITE_NAME,
           siteUrl: `https://${ROOT_DOMAIN}`,
           recipient: payload.data.email,
-          confirmationUrl: payload.data.url,
+          confirmationUrl: normalizeAuthRedirectUrl(payload.data.url),
           token: payload.data.token,
           email: payload.data.email,
           oldEmail: payload.data.old_email,

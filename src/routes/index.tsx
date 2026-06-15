@@ -15,6 +15,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
+import { ClientOnly } from "@/components/client-only";
 import { listMarketplaceEvents } from "@/lib/marketplace.functions";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import ogImage from "@/assets/og-image.jpg";
@@ -59,7 +60,21 @@ function Landing() {
       <main>
         <Hero />
         <Stats />
-        <MarketplacePreview />
+        <ClientOnly
+          fallback={
+            <section className="border-t border-border/60 bg-muted/20 py-20">
+              <div className="mx-auto max-w-7xl px-6">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="h-72 animate-pulse rounded-xl bg-muted" />
+                  ))}
+                </div>
+              </div>
+            </section>
+          }
+        >
+          <MarketplacePreview />
+        </ClientOnly>
         <ThreeSides />
         <HowItWorks />
         <Trust />
@@ -75,6 +90,8 @@ function MarketplacePreview() {
   const { data, isLoading } = useQuery({
     queryKey: ["marketplace-preview"],
     queryFn: () => fetchEvents({ data: { vetted_only: false, sort: "newest", per_page: 6 } }),
+    retry: false,
+    throwOnError: false,
   });
   const events = data?.events ?? [];
   const ref = useScrollReveal() as React.RefObject<HTMLElement>;

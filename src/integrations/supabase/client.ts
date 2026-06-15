@@ -2,6 +2,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { WebSocket as NodeWebSocket } from 'ws';
 import type { Database } from './types';
+import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/supabase-env';
 
 function ensureNodeWebSocket() {
   if (typeof window !== "undefined") return;
@@ -15,8 +16,8 @@ function createSupabaseClient() {
   ensureNodeWebSocket();
   // Use import.meta.env for client-side (Vite build-time replacement)
   // Fall back to process.env for SSR (server-side rendering)
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-  const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
+  const SUPABASE_URL = getSupabaseUrl();
+  const SUPABASE_PUBLISHABLE_KEY = getSupabaseAnonKey();
 
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     const missing = [

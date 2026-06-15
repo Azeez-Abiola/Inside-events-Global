@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { sendTransactionalEmailServer } from "@/lib/email/server-send";
+import { getSiteUrl } from "@/lib/site-url";
 
 async function enrichProfiles(userIds: string[]) {
   if (!userIds.length) return {} as Record<string, { email: string; name: string; company?: string }>;
@@ -18,6 +20,22 @@ async function enrichProfiles(userIds: string[]) {
     };
   }
   return map;
+}
+
+async function senderDisplayName(senderId: string): Promise<string> {
+  const [{ data: org }, { data: sp }, { data: ref }, { data: profile }] = await Promise.all([
+    supabaseAdmin.from("organiser_profiles").select("org_name").eq("user_id", senderId).maybeSingle(),
+    supabaseAdmin.from("sponsor_profiles").select("brand_name").eq("user_id", senderId).maybeSingle(),
+    supabaseAdmin.from("referral_partner_profiles").select("full_name").eq("user_id", senderId).maybeSingle(),
+    supabaseAdmin.from("profiles").select("email").eq("id", senderId).maybeSingle(),
+  ]);
+  return (
+    org?.org_name ??
+    sp?.brand_name ??
+    ref?.full_name ??
+    profile?.email?.split("@")[0] ??
+    "Someone"
+  );
 }
 
 export const listThreads = createServerFn({ method: "GET" })
@@ -111,13 +129,17 @@ export const sendMessage = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const thread_id = data.thread_id ?? crypto.randomUUID();
-    const { error } = await supabase.from("messages").insert({
-      thread_id,
-      sender_id: userId,
-      recipient_id: data.recipient_id,
-      event_id: data.event_id ?? null,
-      body: data.body,
-    });
+    const { data: inserted, error } = await supabase
+      .from("messages")
+      .insert({
+        thread_id,
+        sender_id: userId,
+        recipient_id: data.recipient_id,
+        event_id: data.event_id ?? null,
+        body: data.body,
+      })
+      .select("id")
+      .single();
     if (error) throw new Error(error.message);
     await supabaseAdmin.from("notifications").insert({
       user_id: data.recipient_id,
@@ -126,6 +148,25 @@ export const sendMessage = createServerFn({ method: "POST" })
       body: data.body.slice(0, 140),
       data: { thread_id },
     });
+
+    const [{ data: recipient }, senderName] = await Promise.all([
+      supabaseAdmin.from("profiles").select("email").eq("id", data.recipient_id).maybeSingle(),
+      senderDisplayName(userId),
+    ]);
+    if (recipient?.email) {
+      const siteUrl = getSiteUrl();
+      await sendTransactionalEmailServer({
+        templateName: "new-message",
+        recipientEmail: recipient.email,
+        idempotencyKey: `new-message-${inserted.id}`,
+        templateData: {
+          senderName,
+          preview: data.body.slice(0, 200),
+          threadUrl: `${siteUrl}/messages?thread=${thread_id}`,
+        },
+      }).catch(() => {});
+    }
+
     return { ok: true, thread_id };
   });
 

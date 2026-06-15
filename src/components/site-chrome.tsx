@@ -20,6 +20,7 @@ export function SiteHeader() {
           <Link to="/marketplace" className="transition-colors hover:text-foreground">Marketplace</Link>
           <Link to="/about" className="transition-colors hover:text-foreground">About</Link>
           <Link to="/how-it-works" className="transition-colors hover:text-foreground">How it works</Link>
+          <Link to="/knowledge-base" className="transition-colors hover:text-foreground">Knowledge base</Link>
         </nav>
 
         <div className="flex items-center gap-2">
@@ -78,6 +79,7 @@ export function SiteFooter() {
           <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
             <li><Link to="/about" className="hover:text-foreground">About IGE</Link></li>
             <li><Link to="/trust-vetting" className="hover:text-foreground">Trust &amp; vetting</Link></li>
+            <li><Link to="/knowledge-base" className="hover:text-foreground">Knowledge base</Link></li>
             <li><Link to="/faq" className="hover:text-foreground">FAQ</Link></li>
             <li><Link to="/waitlist" className="hover:text-foreground">Join the waitlist</Link></li>
             <li><Link to="/contact" className="hover:text-foreground">Contact</Link></li>

@@ -1,7 +1,8 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LogOut, Bell, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import logo from "@/assets/ige-logo.jpeg";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -138,8 +139,43 @@ function NotificationsBell() {
       return data ?? [];
     },
     enabled: !!user,
-    refetchInterval: 30000,
+    refetchInterval: 60000,
   });
+
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`notifications-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const n = payload.new as {
+            type?: string;
+            title?: string;
+            body?: string;
+            data?: { thread_id?: string };
+          };
+          qc.invalidateQueries({ queryKey: ["notifications", user.id] });
+          qc.invalidateQueries({ queryKey: ["threads"] });
+          const desc = n.body?.slice(0, 120);
+          if (n.type === "new_message") {
+            toast.message(n.title ?? "New message", { description: desc });
+          } else {
+            toast.info(n.title ?? "Notification", { description: desc });
+          }
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, qc]);
 
   const unread = (items ?? []).filter((n: any) => !n.read).length;
 

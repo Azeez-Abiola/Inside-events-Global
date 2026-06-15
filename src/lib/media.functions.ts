@@ -9,48 +9,61 @@ const RequestInput = z.object({
   message: z.string().trim().max(1000).optional().nullable(),
 });
 
+async function assertMediaPartner(userId: string) {
+  const { data: roles } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", userId);
+  if (!roles?.some((r) => r.role === "media_partner")) {
+    throw new Error("Only media partners can request coverage");
+  }
+}
+
 // Media partner submits a coverage / press-credentials request for an event.
 export const submitMediaRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => RequestInput.parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+    const { userId } = context;
+    await assertMediaPartner(userId);
 
-    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-    if (!roles?.some((r) => r.role === "media_partner")) {
-      throw new Error("Only media partners can request coverage");
+    const { error } = await supabaseAdmin.from("media_requests" as any).upsert(
+      {
+        event_id: data.event_id,
+        media_partner_id: userId,
+        request_type: data.request_type,
+        message: data.message ?? null,
+        status: "pending",
+      },
+      { onConflict: "event_id,media_partner_id,request_type" },
+    );
+
+    if (error) {
+      const code = (error as { code?: string }).code;
+      if (code === "PGRST205" || error.message.includes("media_requests") || error.code === "42P01") {
+        throw new Error(
+          "Media requests are not set up yet. Run scripts/apply-media-requests.mjs or apply the SQL migration in Supabase.",
+        );
+      }
+      throw new Error(error.message);
     }
 
-    // media_requests is newer than the generated types — cast to bypass stale typings.
-    const { error } = await (supabase as any)
-      .from("media_requests")
-      .upsert(
-        {
-          event_id: data.event_id,
-          media_partner_id: userId,
-          request_type: data.request_type,
-          message: data.message ?? null,
-          status: "pending",
-        },
-        { onConflict: "event_id,media_partner_id,request_type" },
-      );
-    if (error) throw new Error(error.message);
-
-    // Notify admins (best effort).
-    const { data: admins } = await supabaseAdmin
-      .from("user_roles")
-      .select("user_id")
-      .in("role", ["abw_admin", "super_admin"]);
-    if (admins?.length) {
-      await supabaseAdmin.from("notifications").insert(
-        admins.map((a: any) => ({
-          user_id: a.user_id,
-          type: "media_request",
-          title: "New media coverage request",
-          body: `A media partner requested ${data.request_type.replace(/_/g, " ")}.`,
-          data: { event_id: data.event_id },
-        })),
-      );
+    // Notify admins (best effort — must not fail the request).
+    try {
+      const { data: admins } = await supabaseAdmin
+        .from("user_roles")
+        .select("user_id")
+        .in("role", ["abw_admin", "super_admin"]);
+      if (admins?.length) {
+        await supabaseAdmin.from("notifications").insert(
+          admins.map((a) => ({
+            user_id: a.user_id,
+            type: "media_request",
+            title: "New media coverage request",
+            body: `A media partner requested ${data.request_type.replace(/_/g, " ")}.`,
+            data: { event_id: data.event_id },
+          })),
+        );
+      }
+    } catch (notifyErr) {
+      console.error("[submitMediaRequest] admin notify failed", notifyErr);
     }
 
     return { ok: true };
@@ -60,21 +73,59 @@ export const submitMediaRequest = createServerFn({ method: "POST" })
 export const getMyMediaRequests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase, userId } = context;
-    const { data: reqs } = await (supabase as any)
-      .from("media_requests")
-      .select("id, event_id, request_type, message, status, created_at")
-      .eq("media_partner_id", userId)
+    const { userId } = context;
+
+    try {
+      const { data: reqs, error } = await supabaseAdmin
+        .from("media_requests" as any)
+        .select("id, event_id, request_type, message, status, created_at")
+        .eq("media_partner_id", userId)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        if (error.message.includes("media_requests") || error.code === "42P01") {
+          return { requests: [], events: {} };
+        }
+        throw new Error(error.message);
+      }
+
+      const eventIds = Array.from(
+        new Set((reqs ?? []).map((r: { event_id: string }) => r.event_id).filter(Boolean)),
+      ) as string[];
+      const eventMap: Record<string, { id: string; name: string; slug: string; city: string | null; country: string | null }> = {};
+      if (eventIds.length) {
+        const { data: evs } = await supabaseAdmin
+          .from("events")
+          .select("id, name, slug, city, country")
+          .in("id", eventIds);
+        for (const e of evs ?? []) eventMap[e.id] = e;
+      }
+      return { requests: reqs ?? [], events: eventMap };
+    } catch (e) {
+      console.error("[getMyMediaRequests]", e);
+      return { requests: [], events: {} };
+    }
+  });
+
+// Saved events for media partners (same event_saves table as sponsors).
+export const getMediaPartnerSaves = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+    const { data: saves } = await supabaseAdmin
+      .from("event_saves")
+      .select("event_id, created_at")
+      .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
-    const eventIds = Array.from(new Set((reqs ?? []).map((r: any) => r.event_id).filter(Boolean))) as string[];
-    let eventMap: Record<string, any> = {};
-    if (eventIds.length) {
+    const ids = (saves ?? []).map((s) => s.event_id);
+    const eventMap: Record<string, any> = {};
+    if (ids.length) {
       const { data: evs } = await supabaseAdmin
         .from("events")
-        .select("id, name, slug, city, country")
-        .in("id", eventIds);
+        .select("id, slug, name, banner_image_url, start_date, city, country, primary_sector")
+        .in("id", ids);
       for (const e of evs ?? []) eventMap[e.id] = e;
     }
-    return { requests: reqs ?? [], events: eventMap };
+    return { saves: saves ?? [], eventMap };
   });

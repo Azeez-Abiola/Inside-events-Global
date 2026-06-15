@@ -4,6 +4,7 @@ import { a as ReactDOMServer } from "./react-dom.mjs";
 import { PassThrough } from "node:stream";
 import { i as isbot } from "./isbot.mjs";
 var reactUse = reactExports.use;
+var useLayoutEffect = typeof window !== "undefined" ? reactExports.useLayoutEffect : reactExports.useEffect;
 function useForwardedRef(ref) {
   const innerRef = reactExports.useRef(null);
   reactExports.useImperativeHandle(ref, () => innerRef.current, []);
@@ -180,6 +181,22 @@ function useNavigate(_defaultOpts) {
       from: options.from ?? _defaultOpts?.from
     });
   }, [_defaultOpts?.from, router]);
+}
+function Navigate(props) {
+  const router = useRouter();
+  const navigate = useNavigate();
+  const previousPropsRef = reactExports.useRef(null);
+  useLayoutEffect(() => {
+    if (previousPropsRef.current !== props) {
+      navigate(props);
+      previousPropsRef.current = props;
+    }
+  }, [
+    router,
+    props,
+    navigate
+  ]);
+  return null;
 }
 function useRouteContext(opts) {
   return useMatch({
@@ -1138,6 +1155,7 @@ var renderRouterToStream = async ({ request, router, responseHeaders, children }
 export {
   HeadContent as H,
   Link as L,
+  Navigate as N,
   Outlet as O,
   RouterProvider as R,
   Scripts as S,

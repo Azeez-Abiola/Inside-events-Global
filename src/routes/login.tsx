@@ -1,14 +1,17 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { getSiteUrl } from "@/lib/site-url";
 import { AuthShell, GoogleButton, Divider } from "@/components/auth-shell";
 
 const search = z.object({
   redirect: z.string().optional(),
+  email: z.string().max(200).optional(),
+  password: z.string().optional(),
 });
 
 export const Route = createFileRoute("/login")({
@@ -21,11 +24,17 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { redirect } = useSearch({ from: "/login" });
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { redirect, email: emailParam, password: passwordParam } = useSearch({ from: "/login" });
+  const [email, setEmail] = useState(emailParam ?? "");
+  const [password, setPassword] = useState(passwordParam ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const demoPrefill = !!(emailParam && passwordParam);
+
+  useEffect(() => {
+    if (emailParam) setEmail(emailParam);
+    if (passwordParam) setPassword(passwordParam);
+  }, [emailParam, passwordParam]);
 
   async function handlePassword(e: React.FormEvent) {
     e.preventDefault();
@@ -43,7 +52,7 @@ function LoginPage() {
   async function handleGoogle() {
     setGoogleLoading(true);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: getSiteUrl(),
     });
     if (result.error) {
       setGoogleLoading(false);
@@ -51,7 +60,7 @@ function LoginPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: redirect ?? "/onboarding" });
+    navigate({ to: redirect ?? "/dashboard" });
   }
 
   return (
@@ -72,6 +81,11 @@ function LoginPage() {
     >
       <GoogleButton onClick={handleGoogle} loading={googleLoading} label="Sign in with Google" />
       <Divider />
+      {demoPrefill && (
+        <p className="rounded-lg border border-primary/20 bg-brand-soft px-3 py-2 text-xs text-primary-deep">
+          Demo credentials filled in — click Sign in to open this workspace.
+        </p>
+      )}
       <form onSubmit={handlePassword} className="space-y-4">
         <Field
           label="Work email"

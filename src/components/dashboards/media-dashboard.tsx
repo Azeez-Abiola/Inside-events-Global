@@ -1,22 +1,24 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { CalendarDays, Bookmark, Newspaper, Loader2, Calendar, Send, BarChart3 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import { useAuth } from "@/lib/auth-context";
+import { ensureAccessToken, isAuthError } from "@/lib/auth-session";
+import { demoLoginSearch } from "@/lib/demo-accounts";
 import { StatCard } from "@/components/dashboards/shared";
 import { DashboardHeader } from "@/components/dashboards/dashboard-shell";
 import { MediaAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
-import { listMarketplaceEvents } from "@/lib/marketplace.functions";
-import { getSponsorDashboard } from "@/lib/deals.functions";
-import { submitMediaRequest, getMyMediaRequests } from "@/lib/media.functions";
+import { listMarketplaceEvents, toggleSaveEvent } from "@/lib/marketplace.functions";
+import { submitMediaRequest, getMyMediaRequests, getMediaPartnerSaves } from "@/lib/media.functions";
 
 export function MediaPartnerDashboard({ section = "explore" }: { section?: "overview" | "explore" | "saved" | "requests" | "analytics" }) {
   const [requestEvent, setRequestEvent] = useState<{ id: string; name: string } | null>(null);
 
   const fetchMarketplace = useServerFn(listMarketplaceEvents);
-  const fetchSaves = useServerFn(getSponsorDashboard);
+  const fetchSaves = useServerFn(getMediaPartnerSaves);
   const fetchRequests = useServerFn(getMyMediaRequests);
 
   const { data: marketplaceData, isLoading: exploreLoading } = useQuery({
@@ -24,7 +26,7 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
     queryFn: () => fetchMarketplace({ data: { vetted_only: true, per_page: 12 } as any }),
   });
   const { data: savesData, isLoading: savesLoading } = useQuery({
-    queryKey: ["sponsor-dash"],
+    queryKey: ["media-saves"],
     queryFn: () => fetchSaves(),
   });
   const { data: requestsData, isLoading: requestsLoading } = useQuery({
@@ -86,10 +88,12 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
                       <div className="mt-1 text-xs text-muted-foreground truncate">{e.primary_sector} · {[e.city, e.country].filter(Boolean).join(", ")}</div>
                     </div>
                   </Link>
-                  <div className="px-4 pb-4">
+                  <div className="px-4 pb-4 flex gap-2">
+                    <EventSaveButton eventId={e.id} compact />
                     <button
+                      type="button"
                       onClick={() => setRequestEvent({ id: e.id, name: e.name })}
-                      className="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-semibold hover:bg-muted"
+                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-semibold hover:bg-muted"
                     >
                       <Newspaper className="h-3.5 w-3.5" /> Request coverage
                     </button>
@@ -158,20 +162,74 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
     </AppShell>
   );
 }
-function CoverageRequestModal({ event, onClose }: { event: { id: string; name: string }; onClose: () => void }) {
+function EventSaveButton({ eventId, compact }: { eventId: string; compact?: boolean }) {
+  const { user } = useAuth();
+  const toggle = useServerFn(toggleSaveEvent);
   const qc = useQueryClient();
+
+  const { data: isSaved } = useQuery({
+    queryKey: ["event-saved", eventId, user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("event_saves").select("id").eq("event_id", eventId).maybeSingle();
+      return !!data;
+    },
+    enabled: !!user,
+  });
+
+  const mut = useMutation({
+    mutationFn: () => toggle({ data: { event_id: eventId } }),
+    onSuccess: (res: { saved: boolean }) => {
+      qc.invalidateQueries({ queryKey: ["media-saves"] });
+      qc.invalidateQueries({ queryKey: ["event-saved", eventId] });
+      qc.invalidateQueries({ queryKey: ["sponsor-dash"] });
+      toast.success(res.saved ? "Event saved" : "Removed from saved");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <button
+      type="button"
+      onClick={() => mut.mutate()}
+      disabled={mut.isPending || !user}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-md border px-3 py-2 text-xs font-semibold transition-colors disabled:opacity-50 ${
+        compact ? "shrink-0" : "w-full"
+      } ${isSaved ? "border-secondary/40 bg-secondary/10 text-secondary-deep" : "border-border hover:bg-muted"}`}
+    >
+      <Bookmark className={`h-3.5 w-3.5 ${isSaved ? "fill-current" : ""}`} />
+      {compact ? (isSaved ? "Saved" : "Save") : isSaved ? "Saved" : "Save event"}
+    </button>
+  );
+}
+
+export function CoverageRequestModal({ event, onClose }: { event: { id: string; name: string }; onClose: () => void }) {
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const { isDevImpersonating } = useAuth();
   const submit = useServerFn(submitMediaRequest);
   const [type, setType] = useState<"coverage" | "press_credentials" | "content">("coverage");
   const [message, setMessage] = useState("");
 
   const mut = useMutation({
-    mutationFn: () => submit({ data: { event_id: event.id, request_type: type, message: message || null } }),
+    mutationFn: async () => {
+      if (isDevImpersonating) {
+        throw new Error("Sign in with media@ige.test — the DEV role switcher cannot submit requests.");
+      }
+      await ensureAccessToken();
+      return submit({ data: { event_id: event.id, request_type: type, message: message || null } });
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["media-requests"] });
-      toast.success("Request sent to the IGE team");
+      toast.success("Request sent successfully");
       onClose();
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => {
+      const msg = e.message || "Could not send request";
+      toast.error(msg);
+      if (isAuthError(msg)) {
+        navigate({ to: "/login", search: demoLoginSearch("media@ige.test") });
+      }
+    },
   });
 
   return (
@@ -179,6 +237,12 @@ function CoverageRequestModal({ event, onClose }: { event: { id: string; name: s
       <div className="w-full max-w-md rounded-xl bg-card p-6 shadow-2xl border border-border" onClick={(e) => e.stopPropagation()}>
         <h3 className="font-display text-xl font-bold text-foreground">Request coverage</h3>
         <p className="mt-1 text-sm text-muted-foreground">For <span className="font-semibold text-foreground">{event.name}</span></p>
+
+        {isDevImpersonating && (
+          <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100">
+            DEV role switcher is active. Sign in with <strong>media@ige.test</strong> to submit real requests.
+          </p>
+        )}
 
         <label className="mt-5 block text-sm">
           <span className="mb-1.5 block font-medium">Request type</span>

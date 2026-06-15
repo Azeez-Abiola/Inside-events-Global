@@ -5,6 +5,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { WebSocket as NodeWebSocket } from 'ws';
 import type { Database } from './types';
+import { getSupabaseAnonKey, getSupabaseServiceRoleKey, getSupabaseUrl } from '@/lib/supabase-env';
 
 function ensureNodeWebSocket() {
   if (typeof globalThis.WebSocket === "undefined") {
@@ -15,8 +16,8 @@ function ensureNodeWebSocket() {
 
 function createSupabaseAdminClient() {
   ensureNodeWebSocket();
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const SUPABASE_URL = getSupabaseUrl();
+  const SUPABASE_SERVICE_ROLE_KEY = getSupabaseServiceRoleKey();
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     const missing = [
@@ -37,7 +38,32 @@ function createSupabaseAdminClient() {
   });
 }
 
+function createSupabasePublicClient() {
+  ensureNodeWebSocket();
+  const SUPABASE_URL = getSupabaseUrl();
+  const SUPABASE_PUBLISHABLE_KEY = getSupabaseAnonKey();
+
+  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+    const missing = [
+      ...(!SUPABASE_URL ? ['SUPABASE_URL / VITE_SUPABASE_URL'] : []),
+      ...(!SUPABASE_PUBLISHABLE_KEY ? ['SUPABASE_PUBLISHABLE_KEY / VITE_SUPABASE_PUBLISHABLE_KEY'] : []),
+    ];
+    const message = `Missing Supabase public env: ${missing.join(', ')}`;
+    console.error(`[Supabase] ${message}`);
+    throw new Error(message);
+  }
+
+  return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    auth: {
+      storage: undefined,
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+}
+
 let _supabaseAdmin: ReturnType<typeof createSupabaseAdminClient> | undefined;
+let _supabasePublic: ReturnType<typeof createSupabasePublicClient> | undefined;
 
 // Server-side Supabase client with service role - bypasses RLS
 // SECURITY: Only use this for trusted server-side operations, never expose to client code
@@ -46,5 +72,13 @@ export const supabaseAdmin = new Proxy({} as ReturnType<typeof createSupabaseAdm
   get(_, prop, receiver) {
     if (!_supabaseAdmin) _supabaseAdmin = createSupabaseAdminClient();
     return Reflect.get(_supabaseAdmin, prop, receiver);
+  },
+});
+
+/** Anon key client for public reads (marketplace, event pages). Works with only VITE_* env at build. */
+export const supabasePublic = new Proxy({} as ReturnType<typeof createSupabasePublicClient>, {
+  get(_, prop, receiver) {
+    if (!_supabasePublic) _supabasePublic = createSupabasePublicClient();
+    return Reflect.get(_supabasePublic, prop, receiver);
   },
 });

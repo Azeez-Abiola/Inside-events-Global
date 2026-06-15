@@ -5,11 +5,12 @@ import { useState } from "react";
 import { getPublicEventBySlug, submitCommitmentForm, getCurrentRates, toggleSaveEvent } from "@/lib/marketplace.functions";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { AppShell } from "@/components/app-shell";
-import { Calendar, MapPin, Users, ShieldCheck, Globe, CheckCircle2, AlertCircle, CalendarPlus, Download, Sparkles, Bookmark, BookmarkCheck, Pencil, ChevronLeft } from "lucide-react";
+import { Calendar, MapPin, Users, ShieldCheck, Globe, CheckCircle2, AlertCircle, CalendarPlus, Download, Sparkles, Bookmark, BookmarkCheck, Pencil, ChevronLeft, Newspaper } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import { fmtDual } from "@/lib/currency";
+import { CoverageRequestModal } from "@/components/dashboards/media-dashboard";
 import { z } from "zod";
 
 const searchSchema = z.object({ ref: z.string().max(20).optional() });
@@ -51,6 +52,7 @@ function EventDetail() {
 
   const [showForm, setShowForm] = useState(false);
   const [showSponsor, setShowSponsor] = useState(false);
+  const [showMediaRequest, setShowMediaRequest] = useState(false);
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
 
   if (isLoading) {
@@ -77,7 +79,8 @@ function EventDetail() {
   }
 
   const isOwner = !!user && user.id === event.organiser_id;
-  const canEngageAsSponsor = !isOwner && !isAdmin;
+  const isMediaPartner = roles.includes("media_partner");
+  const canEngageAsSponsor = !isOwner && !isAdmin && !isMediaPartner;
 
   return (
     <EventPageLayout>
@@ -194,9 +197,11 @@ function EventDetail() {
             refCode={search.ref ?? null}
             isAdmin={isAdmin}
             isOwner={isOwner}
+            isMediaPartner={isMediaPartner}
             canEngageAsSponsor={canEngageAsSponsor}
             onSponsor={() => { setSelectedTier(null); setShowSponsor(true); }}
             onCommitment={() => setShowForm(true)}
+            onMediaRequest={() => setShowMediaRequest(true)}
           />
         </div>
 
@@ -217,6 +222,13 @@ function EventDetail() {
           tierId={selectedTier}
           refCode={search.ref ?? null}
           onClose={() => setShowForm(false)}
+        />
+      )}
+
+      {showMediaRequest && (
+        <CoverageRequestModal
+          event={{ id: event.id, name: event.name }}
+          onClose={() => setShowMediaRequest(false)}
         />
       )}
     </EventPageLayout>
@@ -248,17 +260,21 @@ function GetInvolvedAside({
   refCode,
   isAdmin,
   isOwner,
+  isMediaPartner,
   canEngageAsSponsor,
   onSponsor,
   onCommitment,
+  onMediaRequest,
 }: {
   event: any;
   refCode: string | null;
   isAdmin: boolean;
   isOwner: boolean;
+  isMediaPartner: boolean;
   canEngageAsSponsor: boolean;
   onSponsor: () => void;
   onCommitment: () => void;
+  onMediaRequest: () => void;
 }) {
   const actionBtn = "inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted transition-colors";
 
@@ -298,6 +314,19 @@ function GetInvolvedAside({
             >
               <Pencil className="h-4 w-4" /> Event editor
             </Link>
+          </div>
+        </div>
+      )}
+
+      {isMediaPartner && (
+        <div className="rounded-xl border border-border bg-card p-6">
+          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Media partner</div>
+          <p className="mt-2 text-sm text-muted-foreground">Save this event or request coverage / press credentials.</p>
+          <div className="mt-4 space-y-2">
+            <SaveEventButton eventId={event.id} />
+            <button type="button" onClick={onMediaRequest} className={`${actionBtn} border-primary/30`}>
+              <Newspaper className="h-4 w-4" /> Request coverage
+            </button>
           </div>
         </div>
       )}
@@ -526,6 +555,7 @@ function SaveEventButton({ eventId }: { eventId: string }) {
     onSuccess: (res: any) => {
       qc.invalidateQueries({ queryKey: ["event-saved", eventId] });
       qc.invalidateQueries({ queryKey: ["sponsor-dash"] });
+      qc.invalidateQueries({ queryKey: ["media-saves"] });
       toast.success(res.saved ? "Saved to your list" : "Removed from saved");
     },
     onError: (e: any) => toast.error(e.message),

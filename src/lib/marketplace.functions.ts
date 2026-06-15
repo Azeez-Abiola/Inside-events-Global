@@ -1,10 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { supabaseAdmin, supabasePublic } from "@/integrations/supabase/client.server";
 
 // ───────────────────────────────────────────────────────────────
-// Public marketplace listing - supabaseAdmin scoped to live events
+// Public marketplace listing - anon client (RLS: public view live events)
 // ───────────────────────────────────────────────────────────────
 const FilterInput = z.object({
   q: z.string().max(120).optional(),
@@ -38,7 +38,8 @@ function uniqueSorted(values: (string | null | undefined)[]) {
 export const getMarketplaceFilterOptions = createServerFn({ method: "POST" })
   .inputValidator((d) => FacetInput.parse(d ?? {}))
   .handler(async ({ data }) => {
-    let q = supabaseAdmin
+    try {
+    let q = supabasePublic
       .from("events")
       .select("event_type, primary_sector, country, format, ige_vetted, decision_makers_pct")
       .in("status", ["approved", "listed"]);
@@ -48,7 +49,7 @@ export const getMarketplaceFilterOptions = createServerFn({ method: "POST" })
 
     const [{ data: events, error }, { data: allLive, error: allErr }] = await Promise.all([
       q,
-      supabaseAdmin
+      supabasePublic
         .from("events")
         .select("ige_vetted, decision_makers_pct")
         .in("status", ["approved", "listed"]),
@@ -68,12 +69,25 @@ export const getMarketplaceFilterOptions = createServerFn({ method: "POST" })
       has_non_vetted_events: live.some((e) => !e.ige_vetted),
       has_decision_maker_events: live.some((e) => (e.decision_makers_pct ?? 0) >= 30),
     };
+    } catch (e) {
+      console.error("[getMarketplaceFilterOptions]", e);
+      return {
+        event_types: [],
+        sectors: [],
+        countries: [],
+        formats: [],
+        has_vetted_events: false,
+        has_non_vetted_events: false,
+        has_decision_maker_events: false,
+      };
+    }
   });
 
 export const listMarketplaceEvents = createServerFn({ method: "POST" })
   .inputValidator((d) => FilterInput.parse(d))
   .handler(async ({ data }) => {
-    let q = supabaseAdmin
+    try {
+    let q = supabasePublic
       .from("events")
       .select(
         "id, slug, name, event_type, format, start_date, end_date, city, country, primary_sector, attendance_size, decision_makers_pct, banner_image_url, ige_vetted, currency, created_at",
@@ -113,7 +127,7 @@ export const listMarketplaceEvents = createServerFn({ method: "POST" })
     const ids = (events ?? []).map((e) => e.id);
     let priceMap: Record<string, { price: number; currency: string } | null> = {};
     if (ids.length) {
-      const { data: tiers } = await supabaseAdmin
+      const { data: tiers } = await supabasePublic
         .from("event_sponsorship_tiers")
         .select("event_id, price, currency")
         .in("event_id", ids)
@@ -129,6 +143,10 @@ export const listMarketplaceEvents = createServerFn({ method: "POST" })
       page: data.page,
       per_page: data.per_page,
     };
+    } catch (e) {
+      console.error("[listMarketplaceEvents]", e);
+      return { events: [], total: 0, page: data.page, per_page: data.per_page };
+    }
   });
 
 // ───────────────────────────────────────────────────────────────
@@ -137,7 +155,8 @@ export const listMarketplaceEvents = createServerFn({ method: "POST" })
 export const getPublicEventBySlug = createServerFn({ method: "POST" })
   .inputValidator((d: { slug: string }) => z.object({ slug: z.string().min(1).max(200) }).parse(d))
   .handler(async ({ data }) => {
-    const { data: ev, error } = await supabaseAdmin
+    try {
+    const { data: ev, error } = await supabasePublic
       .from("events")
       .select("*")
       .eq("slug", data.slug)
@@ -147,13 +166,13 @@ export const getPublicEventBySlug = createServerFn({ method: "POST" })
     if (!ev) return { event: null, tiers: [], organiser: null };
 
     const [{ data: tiers }, { data: organiser }] = await Promise.all([
-      supabaseAdmin
+      supabasePublic
         .from("event_sponsorship_tiers")
         .select("*")
         .eq("event_id", ev.id)
         .order("display_order"),
       ev.organiser_id
-        ? supabaseAdmin
+        ? supabasePublic
             .from("organiser_profiles")
             .select("org_name, logo_url, bio, website, track_record, event_history, past_sponsor_logos")
             .eq("user_id", ev.organiser_id)
@@ -161,14 +180,11 @@ export const getPublicEventBySlug = createServerFn({ method: "POST" })
         : Promise.resolve({ data: null }),
     ]);
 
-    // Fire and forget increment
-    void supabaseAdmin.rpc as any;
-    void supabaseAdmin
-      .from("events")
-      .update({ view_count: (ev.view_count ?? 0) + 1 })
-      .eq("id", ev.id);
-
-    return { event: ev, tiers: tiers ?? [], organiser };
+    return { event: ev, tiers: tiers ?? [], organiser: organiser ?? null };
+    } catch (e) {
+      console.error("[getPublicEventBySlug]", e);
+      return { event: null, tiers: [], organiser: null };
+    }
   });
 
 // ───────────────────────────────────────────────────────────────
