@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { CalendarDays, Bookmark, Newspaper, Loader2, Calendar, Send } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { StatCard } from "@/components/dashboards/shared";
+import { DashboardHeader, DashboardTabs } from "@/components/dashboards/dashboard-shell";
 import { listMarketplaceEvents } from "@/lib/marketplace.functions";
 import { getSponsorDashboard } from "@/lib/deals.functions";
 import { submitMediaRequest, getMyMediaRequests } from "@/lib/media.functions";
@@ -37,29 +38,27 @@ export function MediaPartnerDashboard() {
 
   return (
     <AppShell>
-      <div className="space-y-6">
-        <div>
-          <h1 className="font-display text-4xl font-bold tracking-tight bg-gradient-to-r from-primary-deep to-primary bg-clip-text text-transparent">
-            Media Hub
-          </h1>
-          <p className="mt-1.5 text-muted-foreground text-sm">
-            Discover top-tier B2B events to cover, and request coverage or press credentials.
-          </p>
+      <div className="space-y-8">
+        <DashboardHeader
+          title="Media partner workspace"
+          subtitle="Discover vetted events to cover and request press credentials or coverage access."
+        />
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <StatCard icon={CalendarDays} label="Events to cover" value={events.length} loading={exploreLoading} />
+          <StatCard icon={Bookmark} label="Saved opportunities" value={savedEvents.length} loading={savesLoading} />
+          <StatCard icon={Newspaper} label="My requests" value={requests.length} loading={requestsLoading} />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard icon={CalendarDays} label="Events to Cover" value={events.length} loading={exploreLoading} />
-          <StatCard icon={Bookmark} label="Saved Opportunities" value={savedEvents.length} loading={savesLoading} />
-          <StatCard icon={Newspaper} label="My Requests" value={requests.length} loading={requestsLoading} />
-        </div>
-
-        <div className="border-b border-border">
-          <div className="flex gap-6">
-            <button onClick={() => setActiveTab("explore")} className={tabCls(activeTab === "explore")}>Explore ({events.length})</button>
-            <button onClick={() => setActiveTab("saved")} className={tabCls(activeTab === "saved")}>Saved ({savedEvents.length})</button>
-            <button onClick={() => setActiveTab("requests")} className={tabCls(activeTab === "requests")}>My Requests ({requests.length})</button>
-          </div>
-        </div>
+        <DashboardTabs
+          active={activeTab}
+          onChange={(id) => setActiveTab(id as typeof activeTab)}
+          tabs={[
+            { id: "explore", label: "Explore", count: events.length },
+            { id: "saved", label: "Saved", count: savedEvents.length },
+            { id: "requests", label: "My requests", count: requests.length },
+          ]}
+        />
 
         {activeTab === "explore" ? (
           exploreLoading ? (
@@ -149,11 +148,6 @@ export function MediaPartnerDashboard() {
     </AppShell>
   );
 }
-
-function tabCls(active: boolean) {
-  return `pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${active ? "border-primary text-primary-deep" : "border-transparent text-muted-foreground hover:text-foreground"}`;
-}
-
 function CoverageRequestModal({ event, onClose }: { event: { id: string; name: string }; onClose: () => void }) {
   const qc = useQueryClient();
   const submit = useServerFn(submitMediaRequest);

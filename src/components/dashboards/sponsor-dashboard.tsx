@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Inbox, Bookmark, CalendarDays, Loader2, Calendar } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { StatCard } from "@/components/dashboards/shared";
+import { DashboardEmpty, DashboardHeader, DashboardTabs } from "@/components/dashboards/dashboard-shell";
 import { getSponsorDashboard } from "@/lib/deals.functions";
 import { fmtMoney } from "@/lib/currency";
 
@@ -18,43 +19,35 @@ export function SponsorDashboard() {
 
   return (
     <AppShell>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="font-display text-4xl font-bold tracking-tight bg-gradient-to-r from-primary-deep to-primary bg-clip-text text-transparent">
-              Brand Workspace
-            </h1>
-            <p className="mt-1.5 text-muted-foreground text-sm">
-              Discover global vetted B2B events, track your sponsorship commitments, and save opportunities.
-            </p>
-          </div>
-          <Link
-            to="/marketplace"
-            className="inline-flex items-center gap-1.5 rounded-md bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-soft hover:-translate-y-0.5 transition-all self-start sm:self-auto"
-          >
-            Explore Marketplace
-          </Link>
+      <div className="space-y-8">
+        <DashboardHeader
+          title="Sponsor workspace"
+          subtitle="Discover vetted B2B events, track sponsorship commitments, and save opportunities for your brand."
+          action={
+            <Link
+              to="/marketplace"
+              className="inline-flex items-center gap-1.5 rounded-md bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-soft hover:-translate-y-0.5 transition-all"
+            >
+              Explore marketplace
+            </Link>
+          }
+        />
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <StatCard icon={Inbox} label="Submitted commitments" value={commitmentsCount} loading={isLoading} />
+          <StatCard icon={Bookmark} label="Saved events" value={savedEventsCount} loading={isLoading} />
+          <StatCard icon={CalendarDays} label="New listings" value={data?.freshEvents?.length ?? 0} loading={isLoading} />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard icon={Inbox} label="Submitted Commitments" value={commitmentsCount} loading={isLoading} />
-          <StatCard icon={Bookmark} label="Saved Events" value={savedEventsCount} loading={isLoading} />
-          <StatCard icon={CalendarDays} label="Fresh Event Listings" value={data?.freshEvents?.length ?? 0} loading={isLoading} />
-        </div>
-
-        <div className="border-b border-border">
-          <div className="flex gap-6">
-            <button onClick={() => setActiveTab("commitments")} className={`pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${activeTab === "commitments" ? "border-primary text-primary-deep" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-              My Commitments ({commitmentsCount})
-            </button>
-            <button onClick={() => setActiveTab("saved")} className={`pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${activeTab === "saved" ? "border-primary text-primary-deep" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-              Saved Events ({savedEventsCount})
-            </button>
-            <button onClick={() => setActiveTab("fresh")} className={`pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${activeTab === "fresh" ? "border-primary text-primary-deep" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-              Fresh Listings
-            </button>
-          </div>
-        </div>
+        <DashboardTabs
+          active={activeTab}
+          onChange={(id) => setActiveTab(id as typeof activeTab)}
+          tabs={[
+            { id: "commitments", label: "My commitments", count: commitmentsCount },
+            { id: "saved", label: "Saved events", count: savedEventsCount },
+            { id: "fresh", label: "Discover", count: data?.freshEvents?.length ?? 0 },
+          ]}
+        />
 
         {activeTab === "commitments" ? (
           <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -86,7 +79,7 @@ export function SponsorDashboard() {
                           {f.submitted_at ? new Date(f.submitted_at).toLocaleDateString() : "-"}
                         </td>
                         <td className="px-5 py-3.5 text-right">
-                          {ev && (
+                          {ev?.slug && (
                             <Link to="/events/$slug" params={{ slug: ev.slug }} className="text-xs text-primary font-bold hover:underline">
                               View event →
                             </Link>
@@ -111,14 +104,17 @@ export function SponsorDashboard() {
           isLoading ? (
             <div className="flex justify-center py-12 text-muted-foreground"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
           ) : !data?.saves?.length ? (
-            <div className="rounded-xl border border-dashed border-border bg-card p-12 text-center">
-              <p className="text-muted-foreground text-sm">No saved events yet. Browse the marketplace and bookmark opportunities.</p>
-            </div>
+            <DashboardEmpty
+              icon={Bookmark}
+              title="No saved events"
+              description="Browse the marketplace and save events that match your sponsorship criteria."
+              action={<Link to="/marketplace" className="text-sm font-semibold text-primary hover:underline">Explore marketplace →</Link>}
+            />
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {(data?.saves ?? []).map((s: any) => {
                 const ev = data!.eventMap[s.event_id];
-                if (!ev) return null;
+                if (!ev?.slug) return null;
                 return (
                   <Link key={s.event_id} to="/events/$slug" params={{ slug: ev.slug }} className="group overflow-hidden rounded-xl border border-border bg-card transition-all hover:-translate-y-0.5 hover:shadow-soft hover:border-primary">
                     {ev.banner_image_url ? (
@@ -136,21 +132,23 @@ export function SponsorDashboard() {
             </div>
           )
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {(data?.freshEvents ?? []).map((e: any) => (
-              <Link key={e.id} to="/events/$slug" params={{ slug: e.slug }} className="group overflow-hidden rounded-xl border border-border bg-card hover:shadow-soft hover:border-primary transition-all duration-300">
-                {e.banner_image_url ? (
-                  <img src={e.banner_image_url} alt={e.name} className="h-32 w-full object-cover group-hover:scale-[1.02] transition-transform duration-300" />
-                ) : (
-                  <div className="h-32 bg-muted flex items-center justify-center text-muted-foreground"><Calendar className="h-8 w-8" /></div>
-                )}
-                <div className="p-4">
-                  <div className="font-bold text-foreground truncate group-hover:text-primary-deep transition-colors">{e.name}</div>
-                  <div className="mt-1 text-xs text-muted-foreground truncate">{e.primary_sector} · {[e.city, e.country].filter(Boolean).join(", ")}</div>
-                </div>
-              </Link>
-            ))}
-          </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {(data?.freshEvents ?? []).map((e: any) =>
+                e.slug ? (
+                  <Link key={e.id} to="/events/$slug" params={{ slug: e.slug }} className="group overflow-hidden rounded-xl border border-border bg-card hover:shadow-soft hover:border-primary transition-all duration-300">
+                    {e.banner_image_url ? (
+                      <img src={e.banner_image_url} alt={e.name} className="h-32 w-full object-cover group-hover:scale-[1.02] transition-transform duration-300" />
+                    ) : (
+                      <div className="h-32 bg-muted flex items-center justify-center text-muted-foreground"><Calendar className="h-8 w-8" /></div>
+                    )}
+                    <div className="p-4">
+                      <div className="font-bold text-foreground truncate group-hover:text-primary-deep transition-colors">{e.name}</div>
+                      <div className="mt-1 text-xs text-muted-foreground truncate">{e.primary_sector} · {[e.city, e.country].filter(Boolean).join(", ")}</div>
+                    </div>
+                  </Link>
+                ) : null
+              )}
+            </div>
         )}
       </div>
     </AppShell>

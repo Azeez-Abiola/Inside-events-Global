@@ -79,16 +79,35 @@ export const getEventForEdit = createServerFn({ method: "GET" })
 // Privileged columns (status, ige_vetted, organiser_id, view_count, etc.)
 // are intentionally excluded — those flow through dedicated server fns
 // with explicit checks.
-const AUTOSAVE_ALLOWED = new Set<string>([
-  "name", "tagline", "description", "event_type", "format",
-  "start_date", "end_date", "timezone", "city", "country", "venue_name", "venue_address",
-  "expected_attendees", "audience_profile", "audience_demographics",
-  "banner_image_url", "sponsorship_deck_url", "gallery_urls",
+export const AUTOSAVE_ALLOWED = new Set<string>([
+  // Basics
+  "name", "event_type", "format", "start_date", "end_date", "country", "city", "venue", "website",
+  // Contacts
   "organiser_contact_name", "organiser_contact_role", "organiser_contact_email", "organiser_contact_phone",
-  "website_url", "instagram_handle", "linkedin_url",
-  "past_sponsors", "media_partners", "consent_given",
-  "category", "tags", "currency",
+  // Track record
+  "years_running_event", "past_editions", "attendance_size",
+  // Audience
+  "primary_audience", "audience_seniority", "decision_makers_pct", "geographic_mix",
+  // Sector & theme
+  "primary_sector", "secondary_sector", "event_theme",
+  // Sponsorship economics
+  "min_sponsorship_spend", "currency", "speaking_slots", "exposure_channels",
+  "speaking_opps", "lead_capture", "post_event_report",
+  // Assets
+  "sponsorship_deck_url", "banner_image_url", "floor_plan_url",
+  // Review & submit
+  "sponsorship_deadline", "payment_terms", "abw_management_requested", "consent_given",
 ]);
+
+export function pickAutosavePatch(form: Record<string, unknown>) {
+  const patch = Object.fromEntries(
+    Object.entries(form).filter(([k]) => AUTOSAVE_ALLOWED.has(k)),
+  );
+  if (typeof patch.format === "string") {
+    patch.format = patch.format.toLowerCase();
+  }
+  return patch;
+}
 
 const AutosaveInput = z.object({
   id: z.string().uuid(),
@@ -148,25 +167,88 @@ export const upsertTier = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: ev } = await supabase
       .from("events")
-      .select("organiser_id")
+      .select("organiser_id, status")
       .eq("id", data.event_id)
       .single();
     if (!ev || ev.organiser_id !== userId) throw new Error("Forbidden");
-    const payload = { ...data, assets: data.assets as any };
-    const { data: row, error } = await supabase
+    if (!["draft", "revision_requested"].includes(ev.status)) {
+      throw new Error("Event can no longer be edited in current status");
+    }
+
+    const row = {
+      event_id: data.event_id,
+      tier_name: data.tier_name,
+      price: data.price,
+      currency: data.currency,
+      assets: data.assets ?? [],
+      slots_total: data.slots_total,
+      slots_remaining: data.slots_total,
+      is_exclusive: data.is_exclusive,
+      custom_options: data.custom_options ?? null,
+      display_order: data.display_order,
+    };
+
+    if (data.id) {
+      const { data: updated, error } = await supabase
+        .from("event_sponsorship_tiers")
+        .update({
+          tier_name: row.tier_name,
+          price: row.price,
+          currency: row.currency,
+          assets: row.assets as never,
+          slots_total: row.slots_total,
+          is_exclusive: row.is_exclusive,
+          custom_options: row.custom_options,
+          display_order: row.display_order,
+        })
+        .eq("id", data.id)
+        .select()
+        .single();
+      if (error) throw new Error(error.message);
+      return { tier: updated };
+    }
+
+    const { count } = await supabase
       .from("event_sponsorship_tiers")
-      .upsert(payload)
+      .select("*", { count: "exact", head: true })
+      .eq("event_id", data.event_id);
+    if ((count ?? 0) >= 6) throw new Error("Maximum of 6 sponsorship tiers per event");
+
+    const { data: inserted, error } = await supabase
+      .from("event_sponsorship_tiers")
+      .insert({
+        ...row,
+        assets: row.assets as never,
+      })
       .select()
       .single();
     if (error) throw new Error(error.message);
-    return { tier: row };
+    return { tier: inserted };
   });
 
 export const deleteTier = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+    const { data: tier, error: tierErr } = await supabase
+      .from("event_sponsorship_tiers")
+      .select("id, event_id")
+      .eq("id", data.id)
+      .single();
+    if (tierErr) throw new Error(tierErr.message);
+
+    const { data: ev, error: evErr } = await supabase
+      .from("events")
+      .select("organiser_id, status")
+      .eq("id", tier.event_id)
+      .single();
+    if (evErr) throw new Error(evErr.message);
+    if (ev.organiser_id !== userId) throw new Error("Forbidden");
+    if (!["draft", "revision_requested"].includes(ev.status)) {
+      throw new Error("Event can no longer be edited in current status");
+    }
+
     const { error } = await supabase.from("event_sponsorship_tiers").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };

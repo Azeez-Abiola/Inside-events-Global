@@ -27,7 +27,7 @@ function EventsList() {
     mutationFn: () => createDraft(),
     onSuccess: ({ id }) => {
       qc.invalidateQueries({ queryKey: ["events", "mine"] });
-      navigate({ to: "/events/$id", params: { id } });
+      navigate({ to: "/events/edit/$id", params: { id } });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -69,7 +69,7 @@ function EventsList() {
         <div className="mt-8 grid gap-3">
           {events.map((e: any) => (
             <Link
-              to="/events/$id" params={{ id: e.id }} key={e.id}
+              to="/events/edit/$id" params={{ id: e.id }} key={e.id}
               className="group flex items-start justify-between gap-4 rounded-xl border border-border bg-card p-5 hover:border-primary"
             >
               <div className="min-w-0 flex-1">

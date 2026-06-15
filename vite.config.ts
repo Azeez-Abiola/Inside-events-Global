@@ -12,4 +12,7 @@ export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
+  // Required for Vercel: without nitro, `vite build` only emits static assets and
+  // the deployment serves 404 for all routes.
+  nitro: { preset: "vercel" },
 });

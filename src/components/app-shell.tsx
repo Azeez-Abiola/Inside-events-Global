@@ -1,7 +1,7 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { LogOut, LayoutDashboard, CalendarRange, ShieldCheck, Handshake, Globe2, MessageSquare, DollarSign, Briefcase, Inbox, Bell } from "lucide-react";
+import { LogOut, LayoutDashboard, CalendarRange, ShieldCheck, Handshake, MessageSquare, DollarSign, Bell } from "lucide-react";
 import logo from "@/assets/ige-logo.jpeg";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,9 +14,19 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isSponsor = roles.includes("sponsor");
   const isReferral = roles.includes("referral_partner");
 
+  const isMedia = roles.includes("media_partner");
+
   const nav: { to: string; label: string; icon: any; show: boolean }[] = [
-    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, show: true },
-    { to: "/marketplace", label: "Marketplace", icon: Globe2, show: !isAdmin },
+    {
+      to: "/dashboard",
+      label: isOrganiser && !isAdmin ? "My events" : "Dashboard",
+      icon: isOrganiser && !isAdmin ? CalendarRange : LayoutDashboard,
+      show: true,
+    },
+    { to: "/marketplace", label: "Marketplace", icon: Globe2, show: isAdmin || isSponsor || isReferral || isMedia },
+    { to: "/referrals", label: "Referrals", icon: Handshake, show: isReferral && !isAdmin },
+    { to: "/admin/vetting", label: "Vetting", icon: ShieldCheck, show: isAdmin },
+    { to: "/admin/revenue", label: "Revenue", icon: DollarSign, show: isAdmin },
     { to: "/messages", label: "Messages", icon: MessageSquare, show: true },
   ];
 

@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -9,6 +10,7 @@ import {
 } from "lucide-react";
 import { AppShell, StatusBadge } from "@/components/app-shell";
 import { StatCard } from "@/components/dashboards/shared";
+import { DashboardHeader, DashboardTabs } from "@/components/dashboards/dashboard-shell";
 import { listEventsForVetting, setEventVettingStatus, getEventForAdmin } from "@/lib/admin.functions";
 import { adminGetRevenue, adminListFraudFlags, adminResolveFraudFlag, adminUpsertCommissionConfig, adminCreateDeal, adminUpdateDealStatus, adminMarkCommissionPaid } from "@/lib/deals.functions";
 import { fmtMoney } from "@/lib/currency";
@@ -118,43 +120,32 @@ export function AdminDashboard() {
 
   return (
     <AppShell>
-      <div className="space-y-6">
-        <div>
-          <h1 className="font-display text-4xl font-bold tracking-tight bg-gradient-to-r from-primary-deep to-primary bg-clip-text text-transparent">
-            Admin Control Center
-          </h1>
-          <p className="mt-1.5 text-muted-foreground text-sm">
-            Vet submitted events, manage waitlist/contact form submissions, and track platform revenue pipelines.
-          </p>
+      <div className="space-y-8">
+        <DashboardHeader
+          title="Admin control center"
+          subtitle="Vet submitted events, manage inbound signups, and track platform revenue and referral commissions."
+        />
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <StatCard icon={ShieldCheck} label="Vetting queue" value={vettingCount} loading={vettingLoading} />
+          <StatCard icon={Users} label="Waitlist signups" value={waitlistCount} loading={waitlist.isLoading} />
+          <StatCard icon={DollarSign} label="Deal volume (GMV)" value={adminGmv} loading={revenueLoading} />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard icon={ShieldCheck} label="Vetting Queue Size" value={vettingCount} loading={vettingLoading} />
-          <StatCard icon={Users} label="Waitlist Signups" value={waitlistCount} loading={waitlist.isLoading} />
-          <StatCard icon={DollarSign} label="Active Deal Volume" value={adminGmv} loading={revenueLoading} />
-        </div>
-
-        <div className="border-b border-border">
-          <div className="flex gap-6">
-            <button onClick={() => setActiveTab("vetting")} className={`pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${activeTab === "vetting" ? "border-primary text-primary-deep" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-              Vetting Queue ({vettingCount})
-            </button>
-            <button onClick={() => setActiveTab("submissions")} className={`pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${activeTab === "submissions" ? "border-primary text-primary-deep" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-              Submissions ({waitlistCount + (contact.data?.length ?? 0)})
-            </button>
-            <button onClick={() => setActiveTab("revenue")} className={`pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${activeTab === "revenue" ? "border-primary text-primary-deep" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-              Revenue Dashboard
-            </button>
-            <button onClick={() => setActiveTab("controls")} className={`pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer inline-flex items-center gap-1.5 ${activeTab === "controls" ? "border-primary text-primary-deep" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-              Fraud &amp; Rates
-              {(fraud.data?.flags ?? []).filter((f: any) => f.status === "open").length > 0 && (
-                <span className="rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground">
-                  {(fraud.data?.flags ?? []).filter((f: any) => f.status === "open").length}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
+        <DashboardTabs
+          active={activeTab}
+          onChange={(id) => setActiveTab(id as typeof activeTab)}
+          tabs={[
+            { id: "vetting", label: "Event queue", count: vettingCount },
+            { id: "submissions", label: "Submissions", count: waitlistCount + (contact.data?.length ?? 0) },
+            { id: "revenue", label: "Revenue & deals" },
+            {
+              id: "controls",
+              label: "Fraud & rates",
+              count: (fraud.data?.flags ?? []).filter((f: any) => f.status === "open").length || undefined,
+            },
+          ]}
+        />
 
         {activeTab === "vetting" ? (
           vettingLoading ? (
@@ -569,6 +560,12 @@ function VettingDrawer({ id, onClose }: { id: string; onClose: () => void }) {
                   )}
                   {data.event.status === "approved" && (
                     <ActionBtn onClick={() => transition.mutate("listed")} variant="primary" icon={ArrowRight} label="List publicly" pending={transition.isPending} />
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-4 pt-2">
+                  <Link to="/events/edit/$id" params={{ id }} className="text-xs text-primary font-semibold hover:underline">View full event editor →</Link>
+                  {(data.event.status === "approved" || data.event.status === "listed") && data.event.slug && (
+                    <Link to="/events/$slug" params={{ slug: data.event.slug }} className="text-xs text-primary font-semibold hover:underline">View public listing →</Link>
                   )}
                 </div>
               </div>

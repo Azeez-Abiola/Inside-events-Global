@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Plus, Link2, MousePointerClick, TrendingUp, Wallet, Award, Copy, MessageCircle, Share2, Mail } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { StatCard } from "@/components/dashboards/shared";
+import { DashboardHeader, DashboardTabs } from "@/components/dashboards/dashboard-shell";
 import { getReferralDashboard, generateReferralLink } from "@/lib/referrals.functions";
 import { listMarketplaceEvents } from "@/lib/marketplace.functions";
 import { fmtMoney } from "@/lib/currency";
@@ -28,47 +29,42 @@ export function ReferralDashboard() {
 
   return (
     <AppShell>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="font-display text-4xl font-bold tracking-tight bg-gradient-to-r from-primary-deep to-primary bg-clip-text text-transparent">
-              Partner Portal
-            </h1>
-            <p className="mt-1.5 text-muted-foreground text-sm">
-              Generate trackable event referral links, drive brand sponsors and earn commission on closed deals.
-            </p>
-          </div>
-          <button
-            onClick={() => setPickerOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-md bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-soft hover:-translate-y-0.5 transition-all self-start sm:self-auto cursor-pointer"
-          >
-            <Plus className="h-4 w-4" /> Generate link
-          </button>
-        </div>
+      <div className="space-y-8">
+        <DashboardHeader
+          title="Referral partner workspace"
+          subtitle="Generate trackable Vouch Links, refer sponsors to vetted events, and monitor commission as deals close."
+          action={
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-md bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-soft hover:-translate-y-0.5 transition-all"
+            >
+              <Plus className="h-4 w-4" /> Generate link
+            </button>
+          }
+        />
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard icon={Link2} label="Active Links" value={activeLinks} loading={isLoading} />
-          <StatCard icon={MousePointerClick} label="Total Clicks" value={totalClicks} loading={isLoading} />
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <StatCard icon={Link2} label="Active links" value={activeLinks} loading={isLoading} />
+          <StatCard icon={MousePointerClick} label="Total clicks" value={totalClicks} loading={isLoading} />
           <StatCard icon={TrendingUp} label="Conversions" value={conversions} loading={isLoading} />
-          <StatCard icon={Wallet} label="Earned USD" value={earnedCommission} loading={isLoading} />
+          <StatCard icon={Wallet} label="Earned (USD)" value={earnedCommission} loading={isLoading} />
         </div>
 
         {data?.profile?.igb_partner_badge && (
           <div className="inline-flex items-center gap-2 rounded-full bg-secondary/10 px-3.5 py-1.5 text-xs font-semibold text-secondary-deep">
-            <Award className="h-4 w-4" /> IGB Partner - Premium commission tier activated
+            <Award className="h-4 w-4" /> IGB Partner — premium commission tier
           </div>
         )}
 
-        <div className="border-b border-border">
-          <div className="flex gap-6">
-            <button onClick={() => setActiveTab("links")} className={`pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${activeTab === "links" ? "border-primary text-primary-deep" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-              Referral Links ({activeLinks})
-            </button>
-            <button onClick={() => setActiveTab("deals")} className={`pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${activeTab === "deals" ? "border-primary text-primary-deep" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-              Commission Pipeline
-            </button>
-          </div>
-        </div>
+        <DashboardTabs
+          active={activeTab}
+          onChange={(id) => setActiveTab(id as typeof activeTab)}
+          tabs={[
+            { id: "links", label: "My referrals", count: activeLinks },
+            { id: "deals", label: "Commission pipeline", count: data?.deals?.length ?? 0 },
+          ]}
+        />
 
         {activeTab === "links" ? (
           <div className="rounded-xl border border-border bg-card overflow-hidden">

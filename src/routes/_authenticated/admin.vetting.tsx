@@ -184,7 +184,12 @@ function VettingDrawer({ id, onClose }: { id: string; onClose: () => void }) {
                   <ActionBtn onClick={() => transition.mutate("listed")} variant="primary" icon={ArrowRight} label="List publicly" pending={transition.isPending} />
                 )}
               </div>
-              <Link to="/events/$id" params={{ id }} className="mt-4 inline-block text-xs text-primary hover:underline">View full event editor →</Link>
+              <div className="mt-4 flex flex-wrap gap-4">
+                <Link to="/events/edit/$id" params={{ id }} className="text-xs text-primary hover:underline">View full event editor →</Link>
+                {(data.event.status === "approved" || data.event.status === "listed") && data.event.slug && (
+                  <Link to="/events/$slug" params={{ slug: data.event.slug }} className="text-xs text-primary hover:underline">View public listing →</Link>
+                )}
+              </div>
             </div>
           </>
         )}
