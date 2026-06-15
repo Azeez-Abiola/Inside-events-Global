@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, FormEvent } from "react";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthShell } from "@/components/auth-shell";
 
@@ -83,19 +84,30 @@ function Field({
   value: string;
   onChange: (v: string) => void;
 }) {
+  const [showPassword, setShowPassword] = useState(false);
   return (
     <div>
       <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
         {label}
       </label>
-      <input
-        type="password"
-        required
-        minLength={8}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-md border border-border bg-card px-3 py-2.5 text-sm focus:border-primary focus:outline-none"
-      />
+      <div className="relative">
+        <input
+          type={showPassword ? "text" : "password"}
+          required
+          minLength={8}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full rounded-md border border-border bg-card pl-3 pr-10 py-2.5 text-sm focus:border-primary focus:outline-none text-foreground"
+        />
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none transition-colors"
+          aria-label={showPassword ? "Hide password" : "Show password"}
+        >
+          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+        </button>
+      </div>
     </div>
   );
 }

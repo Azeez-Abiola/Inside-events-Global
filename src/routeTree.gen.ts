@@ -43,6 +43,7 @@ import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedEventsRouteImport } from './routes/_authenticated/events'
 import { Route as AuthenticatedDealsRouteImport } from './routes/_authenticated/deals'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedEventsIndexRouteImport } from './routes/_authenticated/events.index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as ApiPublicWaitlistNotifyRouteImport } from './routes/api/public/waitlist-notify'
 import { Route as ApiPublicContactRouteImport } from './routes/api/public/contact'
@@ -227,6 +228,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedEventsIndexRoute =
+  AuthenticatedEventsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedEventsRoute,
+  } as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
   path: '/lovable/email/suppression',
@@ -346,6 +353,7 @@ export interface FileRoutesByFullPath {
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/waitlist-notify': typeof ApiPublicWaitlistNotifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/events/': typeof AuthenticatedEventsIndexRoute
   '/api/public/webhooks/paystack': typeof ApiPublicWebhooksPaystackRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -379,7 +387,6 @@ export interface FileRoutesByTo {
   '/welcome': typeof WelcomeRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/deals': typeof AuthenticatedDealsRoute
-  '/events': typeof AuthenticatedEventsRouteWithChildren
   '/messages': typeof AuthenticatedMessagesRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/referrals': typeof AuthenticatedReferralsRoute
@@ -395,6 +402,7 @@ export interface FileRoutesByTo {
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/waitlist-notify': typeof ApiPublicWaitlistNotifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/events': typeof AuthenticatedEventsIndexRoute
   '/api/public/webhooks/paystack': typeof ApiPublicWebhooksPaystackRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -446,6 +454,7 @@ export interface FileRoutesById {
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/waitlist-notify': typeof ApiPublicWaitlistNotifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/_authenticated/events/': typeof AuthenticatedEventsIndexRoute
   '/api/public/webhooks/paystack': typeof ApiPublicWebhooksPaystackRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -497,6 +506,7 @@ export interface FileRouteTypes {
     | '/api/public/contact'
     | '/api/public/waitlist-notify'
     | '/lovable/email/suppression'
+    | '/events/'
     | '/api/public/webhooks/paystack'
     | '/api/public/webhooks/stripe'
     | '/lovable/email/auth/preview'
@@ -530,7 +540,6 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/dashboard'
     | '/deals'
-    | '/events'
     | '/messages'
     | '/pipeline'
     | '/referrals'
@@ -546,6 +555,7 @@ export interface FileRouteTypes {
     | '/api/public/contact'
     | '/api/public/waitlist-notify'
     | '/lovable/email/suppression'
+    | '/events'
     | '/api/public/webhooks/paystack'
     | '/api/public/webhooks/stripe'
     | '/lovable/email/auth/preview'
@@ -596,6 +606,7 @@ export interface FileRouteTypes {
     | '/api/public/contact'
     | '/api/public/waitlist-notify'
     | '/lovable/email/suppression'
+    | '/_authenticated/events/'
     | '/api/public/webhooks/paystack'
     | '/api/public/webhooks/stripe'
     | '/lovable/email/auth/preview'
@@ -884,6 +895,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/events/': {
+      id: '/_authenticated/events/'
+      path: '/'
+      fullPath: '/events/'
+      preLoaderRoute: typeof AuthenticatedEventsIndexRouteImport
+      parentRoute: typeof AuthenticatedEventsRoute
+    }
     '/lovable/email/suppression': {
       id: '/lovable/email/suppression'
       path: '/lovable/email/suppression'
@@ -987,10 +1005,12 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedEventsRouteChildren {
   AuthenticatedEventsIdRoute: typeof AuthenticatedEventsIdRoute
+  AuthenticatedEventsIndexRoute: typeof AuthenticatedEventsIndexRoute
 }
 
 const AuthenticatedEventsRouteChildren: AuthenticatedEventsRouteChildren = {
   AuthenticatedEventsIdRoute: AuthenticatedEventsIdRoute,
+  AuthenticatedEventsIndexRoute: AuthenticatedEventsIndexRoute,
 }
 
 const AuthenticatedEventsRouteWithChildren =
@@ -1079,3 +1099,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

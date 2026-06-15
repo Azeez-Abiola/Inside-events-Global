@@ -14,10 +14,10 @@ export const adminGetRevenue = createServerFn({ method: "GET" })
     const admin = roles?.some((r) => r.role === "abw_admin" || r.role === "super_admin");
     if (!admin) throw new Error("Forbidden");
 
-    const [{ data: deals }, { data: partners }, { data: configs }, { data: flags }] = await Promise.all([
+    const [{ data: deals }, { data: partners }, { data: configs }, { data: flags }, { data: forms }] = await Promise.all([
       supabaseAdmin
         .from("deals")
-        .select("id, event_id, organiser_id, sponsor_user_id, referral_partner_id, status, deal_value_native, deal_currency, deal_value_usd, abw_commission_usd, abw_commission_native, referral_commission_usd, referral_commission_native, referral_commission_paid, created_at, updated_at, paid_at")
+        .select("id, commitment_form_id, event_id, organiser_id, sponsor_user_id, referral_partner_id, status, deal_value_native, deal_currency, deal_value_usd, abw_commission_usd, abw_commission_native, referral_commission_usd, referral_commission_native, referral_commission_paid, created_at, updated_at, paid_at")
         .order("updated_at", { ascending: false }),
       supabaseAdmin
         .from("referral_partner_profiles")
@@ -27,9 +27,19 @@ export const adminGetRevenue = createServerFn({ method: "GET" })
         .select("event_type_category, standard_rate, premium_rate, abw_platform_rate")
         .order("event_type_category"),
       supabaseAdmin.from("fraud_flags").select("id, status").eq("status", "open"),
+      supabaseAdmin
+        .from("commitment_forms")
+        .select("id, event_id, company_name, contact_name, currency, budget_range_min, budget_range_max, referral_partner_id, partnership_type, fraud_flags, created_at")
+        .order("created_at", { ascending: false }),
     ]);
 
-    const eventIds = Array.from(new Set((deals ?? []).map((d) => d.event_id)));
+    // Inquiries that have not yet been converted into a deal.
+    const dealtFormIds = new Set((deals ?? []).map((d) => d.commitment_form_id).filter(Boolean));
+    const inquiries = (forms ?? []).filter((f) => !dealtFormIds.has(f.id));
+
+    const eventIds = Array.from(
+      new Set([...(deals ?? []).map((d) => d.event_id), ...inquiries.map((f) => f.event_id)].filter(Boolean)),
+    );
     let eventMap: Record<string, any> = {};
     if (eventIds.length) {
       const { data: evs } = await supabaseAdmin
@@ -64,6 +74,7 @@ export const adminGetRevenue = createServerFn({ method: "GET" })
 
     return {
       deals: deals ?? [],
+      inquiries,
       events: eventMap,
       partners: (partners ?? []).map((p) => ({
         ...p,
@@ -305,8 +316,8 @@ export const adminListFraudFlags = createServerFn({ method: "GET" })
 
 export const adminResolveFraudFlag = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string; status: "resolved" | "dismissed" }) =>
-    z.object({ id: z.string().uuid(), status: z.enum(["resolved", "dismissed"]) }).parse(d),
+  .inputValidator((d: { id: string; status: "actioned" | "dismissed" }) =>
+    z.object({ id: z.string().uuid(), status: z.enum(["actioned", "dismissed"]) }).parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;

@@ -6,6 +6,7 @@ import { listMarketplaceEvents, getCurrentRates } from "@/lib/marketplace.functi
 import { fmtDual } from "@/lib/currency";
 import { EVENT_TYPES, PRIMARY_SECTORS as SECTORS, COUNTRIES } from "@/lib/event-taxonomy";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
+import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { Search, SlidersHorizontal, MapPin, Calendar, Users, ShieldCheck, X } from "lucide-react";
 
 export const Route = createFileRoute("/marketplace")({
@@ -38,6 +39,9 @@ function MarketplacePage() {
   });
   const [open, setOpen] = useState(false);
 
+  const headerRef = useScrollReveal() as React.RefObject<HTMLElement>;
+  const gridRef = useScrollReveal() as React.RefObject<HTMLElement>;
+
   const params = useMemo(
     () => ({ q: q || undefined, ...filters, per_page: 12 }),
     [q, filters],
@@ -62,46 +66,49 @@ function MarketplacePage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main className="mx-auto max-w-7xl px-6 py-10">
-        <div className="mb-6 flex items-end justify-between gap-4">
-          <div>
-            <h1 className="font-display text-3xl font-bold tracking-tight">Marketplace</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{total.toLocaleString()} vetted events seeking sponsors</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <select
-              value={filters.sort}
-              onChange={(e) => toggle("sort", e.target.value)}
-              className="rounded-md border border-border bg-card px-3 py-2 text-sm"
-            >
-              <option value="newest">Newest</option>
-              <option value="soonest">Event date (soonest)</option>
-              <option value="audience">Audience (largest)</option>
-            </select>
-            <button onClick={() => setOpen(true)} className="md:hidden inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-sm">
-              <SlidersHorizontal className="h-4 w-4" /> Filters
-            </button>
-          </div>
-        </div>
-
-        <div className="mb-4 relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search by name, theme, city, sector…"
-            className="w-full rounded-lg border border-border bg-card py-3 pl-10 pr-4 text-sm focus:border-primary focus:outline-none"
-          />
-        </div>
-
-        {activeChips.length > 0 && (
-          <div className="mb-4 flex flex-wrap gap-2">
-            {activeChips.map((c) => (
-              <button key={c.key} onClick={c.onRemove} className="inline-flex items-center gap-1 rounded-full bg-brand-soft px-3 py-1 text-xs font-medium text-primary-deep hover:bg-primary/20">
-                {c.label} <X className="h-3 w-3" />
+        {/* Header + search — scroll-reveal */}
+        <div ref={headerRef as any}>
+          <div data-reveal className="mb-6 flex items-end justify-between gap-4">
+            <div>
+              <h1 className="font-display text-3xl font-bold tracking-tight">Marketplace</h1>
+              <p className="mt-1 text-sm text-muted-foreground">{total.toLocaleString()} vetted events seeking sponsors</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <select
+                value={filters.sort}
+                onChange={(e) => toggle("sort", e.target.value)}
+                className="rounded-md border border-border bg-card px-3 py-2 text-sm"
+              >
+                <option value="newest">Newest</option>
+                <option value="soonest">Event date (soonest)</option>
+                <option value="audience">Audience (largest)</option>
+              </select>
+              <button onClick={() => setOpen(true)} className="md:hidden inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-sm">
+                <SlidersHorizontal className="h-4 w-4" /> Filters
               </button>
-            ))}
+            </div>
           </div>
-        )}
+
+          <div data-reveal data-delay="1" className="mb-4 relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search by name, theme, city, sector…"
+              className="w-full rounded-lg border border-border bg-card py-3 pl-10 pr-4 text-sm focus:border-primary focus:outline-none"
+            />
+          </div>
+
+          {activeChips.length > 0 && (
+            <div data-reveal data-delay="2" className="mb-4 flex flex-wrap gap-2">
+              {activeChips.map((c) => (
+                <button key={c.key} onClick={c.onRemove} className="inline-flex items-center gap-1 rounded-full bg-brand-soft px-3 py-1 text-xs font-medium text-primary-deep hover:bg-primary/20">
+                  {c.label} <X className="h-3 w-3" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 gap-8 md:grid-cols-[260px_1fr]">
           <aside className={`${open ? "fixed inset-0 z-50 overflow-auto bg-background p-6 md:relative md:p-0" : "hidden"} md:block`}>
@@ -138,7 +145,8 @@ function MarketplacePage() {
             </FilterGroup>
           </aside>
 
-          <div>
+          {/* Event grid — each card reveals individually */}
+          <div ref={gridRef as any}>
             {isLoading ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 6 }).map((_, i) => (
@@ -146,7 +154,7 @@ function MarketplacePage() {
                 ))}
               </div>
             ) : events.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center">
+              <div data-reveal className="rounded-xl border border-dashed border-border bg-card p-10 text-center">
                 <h3 className="font-display text-xl font-bold">No events match your filters</h3>
                 <p className="mt-1 text-sm text-muted-foreground">Try broadening your search.</p>
                 <button onClick={() => setFilters({ event_types: [], sectors: [], countries: [], format: "all", vetted_only: false, decision_makers: false, sort: "newest", page: 1 })} className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
@@ -155,8 +163,10 @@ function MarketplacePage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {events.map((e: any) => (
-                  <EventCard key={e.id} event={e} />
+                {events.map((e: any, i: number) => (
+                  <div key={e.id} data-reveal data-delay={String(Math.min((i % 3) + 1, 3))}>
+                    <EventCard event={e} />
+                  </div>
                 ))}
               </div>
             )}
@@ -204,7 +214,7 @@ function EventCard({ event }: { event: any }) {
     <Link
       to="/events/$slug"
       params={{ slug: event.slug }}
-      className="group block overflow-hidden rounded-xl border border-border bg-card transition-all hover:-translate-y-0.5 hover:shadow-lg"
+      className="group block overflow-hidden rounded-xl border border-border bg-card transition-all hover:-translate-y-0.5 hover:shadow-lg h-full"
       style={{ borderLeft: "4px solid hsl(var(--primary))" }}
     >
       <div className="relative aspect-video bg-muted">

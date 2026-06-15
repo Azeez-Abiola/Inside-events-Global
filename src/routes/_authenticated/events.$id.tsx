@@ -77,7 +77,7 @@ function EventEditor() {
       toast.success("Submitted for vetting");
       qc.invalidateQueries({ queryKey: ["event", id] });
       qc.invalidateQueries({ queryKey: ["events", "mine"] });
-      navigate({ to: "/events" });
+      navigate({ to: "/dashboard" });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -90,7 +90,7 @@ function EventEditor() {
     <AppShell>
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <Link to="/events" className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"><ArrowLeft className="h-3 w-3" /> Back to events</Link>
+          <Link to="/dashboard" className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"><ArrowLeft className="h-3 w-3" /> Back to dashboard</Link>
           <h1 className="mt-1 truncate font-display text-2xl font-bold tracking-tight">{form.name || "Untitled event"}</h1>
         </div>
         <div className="flex items-center gap-3">

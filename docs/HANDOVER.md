@@ -7,7 +7,7 @@ Inside Global Events MVP. AlexBoyo World.
 - **Frontend / SSR**: TanStack Start v1 (React 19, Vite 7) deployed as Cloudflare Worker
 - **Backend logic**: TanStack server functions (`createServerFn`) under `src/lib/*.functions.ts`
 - **Public HTTP routes** (webhooks): `src/routes/api/public/*`
-- **Database / Auth / Storage**: Lovable Cloud (Supabase) — project ref `uaoidyzkdluibifxideb`
+- **Database / Auth / Storage**: Lovable Cloud (Supabase) — project ref `behwdpsrczmqsyaysidv`
 - **Payments**: BYOK Stripe + Paystack (organisers connect their own keys)
 - **Referrals**: Internal short-link engine (`/r/$code`)
 - **Calendar**: Cal.com embed on event pages (`cal_booking_url` per event)

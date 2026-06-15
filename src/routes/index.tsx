@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
   ShieldCheck,
@@ -9,12 +11,16 @@ import {
   Users,
   CheckCircle2,
   TrendingUp,
+  MapPin,
+  Calendar,
 } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
+import { listMarketplaceEvents } from "@/lib/marketplace.functions";
+import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import ogImage from "@/assets/og-image.jpg";
 import featuredImg from "@/assets/featured-itsekiri.png";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/")(({
   head: () => ({
     meta: [
       { title: "IGE — Event Sponsorship Marketplace | Find Sponsors & Sponsor B2B Events" },
@@ -44,7 +50,7 @@ export const Route = createFileRoute("/")({
   }),
 
   component: Landing,
-});
+} as any));
 
 function Landing() {
   return (
@@ -53,6 +59,7 @@ function Landing() {
       <main>
         <Hero />
         <Stats />
+        <MarketplacePreview />
         <ThreeSides />
         <HowItWorks />
         <Trust />
@@ -63,11 +70,103 @@ function Landing() {
   );
 }
 
+function MarketplacePreview() {
+  const fetchEvents = useServerFn(listMarketplaceEvents);
+  const { data, isLoading } = useQuery({
+    queryKey: ["marketplace-preview"],
+    queryFn: () => fetchEvents({ data: { vetted_only: false, sort: "newest", per_page: 6 } }),
+  });
+  const events = data?.events ?? [];
+  const ref = useScrollReveal() as React.RefObject<HTMLElement>;
+
+  return (
+    <section ref={ref as any} className="border-t border-border/60 bg-muted/20 py-20">
+      <div className="mx-auto max-w-7xl px-6">
+        <div data-reveal className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold text-primary-deep">
+              <ShieldCheck className="h-3.5 w-3.5" /> The Marketplace
+            </span>
+            <h2 className="mt-4 font-display text-3xl font-bold tracking-tight md:text-4xl">
+              Vetted events looking for your brand.
+            </h2>
+            <p className="mt-2 max-w-xl text-muted-foreground">
+              Browse IGE-vetted sponsorship opportunities. Filter by sector, audience, and budget — no login needed.
+            </p>
+          </div>
+          <Link
+            to="/marketplace"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-4 py-2.5 text-sm font-semibold hover:bg-muted"
+          >
+            View full marketplace <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+
+        <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {isLoading
+            ? Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-72 animate-pulse rounded-xl bg-muted" />
+              ))
+            : events.slice(0, 6).map((e: any, i: number) => (
+                <Link
+                  key={e.id}
+                  to="/events/$slug"
+                  params={{ slug: e.slug }}
+                  data-reveal
+                  data-delay={String(Math.min(i + 1, 6))}
+                  className="group block overflow-hidden rounded-xl border border-border bg-card transition-all hover:-translate-y-0.5 hover:shadow-lg"
+                  style={{ borderLeft: "4px solid hsl(var(--primary))" }}
+                >
+                  <div className="relative aspect-video bg-muted">
+                    {e.banner_image_url ? (
+                      <img loading="lazy" src={e.banner_image_url} alt={e.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-soft to-muted text-muted-foreground">
+                        <Calendar className="h-10 w-10" />
+                      </div>
+                    )}
+                    {e.ige_vetted && (
+                      <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2 py-1 text-[10px] font-bold uppercase text-white shadow">
+                        <ShieldCheck className="h-3 w-3" /> Vetted
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <div className="mb-2 inline-flex rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-semibold text-primary-deep">
+                      {e.event_type ?? "Event"}
+                    </div>
+                    <h3 className="line-clamp-2 font-display text-base font-bold leading-tight">{e.name}</h3>
+                    <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+                      <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{e.city ?? "-"}, {e.country ?? "-"}</span>
+                      {e.start_date && <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(e.start_date).toLocaleDateString()}</span>}
+                    </div>
+                    {e.attendance_size && (
+                      <div className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        <Users className="h-3 w-3" />{Number(e.attendance_size).toLocaleString()}+ attendees
+                      </div>
+                    )}
+                  </div>
+                </Link>
+              ))}
+        </div>
+
+        {!isLoading && events.length === 0 && (
+          <div className="mt-10 rounded-xl border border-dashed border-border bg-card p-10 text-center text-muted-foreground">
+            No events listed yet. Check back soon — or <Link to="/signup" className="text-primary hover:underline">list yours</Link>.
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 /* ---------------- Hero ---------------- */
 
 function Hero() {
+  const ref = useScrollReveal() as React.RefObject<HTMLElement>;
+
   return (
-    <section className="relative overflow-hidden">
+    <section ref={ref as any} className="relative overflow-hidden">
       {/* ambient gradient orbs */}
       <div
         aria-hidden
@@ -86,25 +185,25 @@ function Hero() {
       <div className="relative mx-auto max-w-7xl px-6 pt-20 pb-24 md:pt-28 md:pb-32">
         <div className="grid gap-16 lg:grid-cols-12 lg:gap-12">
           <div className="lg:col-span-7">
-            <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
+            <span data-reveal data-delay="1" className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
               <Sparkles className="h-3.5 w-3.5 text-primary" />
               Now live · Vetted events · Verified sponsors
             </span>
 
-            <h1 className="mt-6 font-display text-5xl font-bold leading-[1.05] tracking-tight md:text-7xl">
+            <h1 data-reveal data-delay="2" className="mt-6 font-display text-5xl font-bold leading-[1.05] tracking-tight md:text-7xl">
               Where B2B events
               <br />
               <span className="text-brand-gradient">actually get sponsored.</span>
             </h1>
 
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
+            <p data-reveal data-delay="3" className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
               IGE is the vetted marketplace connecting event organisers, brand
               sponsors, and trusted referral partners. List your event, find your
               audience, get paid, without the spreadsheets, cold inbound, or
               broker noise.
             </p>
 
-            <div className="mt-9 flex flex-wrap items-center gap-3">
+            <div data-reveal data-delay="4" className="mt-9 flex flex-wrap items-center gap-3">
               <Link
                 to="/signup"
                 className="group inline-flex items-center gap-2 rounded-md bg-brand-gradient px-6 py-3.5 text-sm font-semibold text-white shadow-brand transition-transform hover:-translate-y-0.5"
@@ -120,8 +219,7 @@ function Hero() {
               </Link>
             </div>
 
-
-            <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
+            <div data-reveal data-delay="5" className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
               <Badge icon={ShieldCheck}>Every event IGE-vetted</Badge>
               <Badge icon={Globe2}>Global · 40+ markets</Badge>
               <Badge icon={Handshake}>Commission only, no listing fees</Badge>
@@ -129,7 +227,7 @@ function Hero() {
           </div>
 
           {/* Visual card cluster */}
-          <div className="relative lg:col-span-5">
+          <div data-reveal data-delay="3" className="relative lg:col-span-5">
             <HeroVisual />
           </div>
         </div>
@@ -221,16 +319,17 @@ function HeroVisual() {
 /* ---------------- Stats ---------------- */
 
 function Stats() {
+  const ref = useScrollReveal() as React.RefObject<HTMLElement>;
   const stats = [
     { v: "100%", l: "of events vetted before going live" },
     { v: "40+", l: "markets, from Paris to Dubai to Singapore" },
     { v: "Zero", l: "listing fees, we earn when you do" },
   ];
   return (
-    <section className="border-y border-border bg-muted/30">
+    <section ref={ref as any} className="border-y border-border bg-muted/30">
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-6 py-12 md:grid-cols-3">
-        {stats.map((s) => (
-          <div key={s.l}>
+        {stats.map((s, i) => (
+          <div key={s.l} data-reveal data-delay={String(i + 1)}>
             <div className="font-display text-3xl font-bold text-brand-gradient md:text-4xl">
               {s.v}
             </div>
@@ -245,6 +344,7 @@ function Stats() {
 /* ---------------- Three sides ---------------- */
 
 function ThreeSides() {
+  const ref = useScrollReveal() as React.RefObject<HTMLElement>;
   const sides = [
     {
       id: "organisers",
@@ -293,10 +393,9 @@ function ThreeSides() {
     },
   ];
 
-
   return (
-    <section className="mx-auto max-w-7xl px-6 py-24 md:py-32">
-      <div className="max-w-2xl">
+    <section ref={ref as any} className="mx-auto max-w-7xl px-6 py-24 md:py-32">
+      <div data-reveal className="max-w-2xl">
         <div className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary-deep">
           Built for three sides
         </div>
@@ -311,10 +410,12 @@ function ThreeSides() {
       </div>
 
       <div className="mt-14 grid gap-6 lg:grid-cols-3">
-        {sides.map((s) => (
+        {sides.map((s, i) => (
           <article
             key={s.id}
             id={s.id}
+            data-reveal
+            data-delay={String(i + 1)}
             className="group relative flex flex-col rounded-2xl border border-border bg-card p-7 transition-shadow hover:shadow-soft"
           >
             <div className="flex items-center gap-3">
@@ -349,7 +450,6 @@ function ThreeSides() {
               {s.cta}
               <ArrowRight className="h-4 w-4" />
             </Link>
-
           </article>
         ))}
       </div>
@@ -360,6 +460,7 @@ function ThreeSides() {
 /* ---------------- How it works ---------------- */
 
 function HowItWorks() {
+  const ref = useScrollReveal() as React.RefObject<HTMLElement>;
   const steps = [
     {
       n: "01",
@@ -387,9 +488,9 @@ function HowItWorks() {
     },
   ];
   return (
-    <section id="how" className="border-t border-border bg-muted/30">
+    <section ref={ref as any} id="how" className="border-t border-border bg-muted/30">
       <div className="mx-auto max-w-7xl px-6 py-24 md:py-32">
-        <div className="max-w-2xl">
+        <div data-reveal className="max-w-2xl">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary-deep">
             How it works
           </div>
@@ -399,9 +500,11 @@ function HowItWorks() {
         </div>
 
         <ol className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {steps.map((s) => (
+          {steps.map((s, i) => (
             <li
               key={s.n}
+              data-reveal
+              data-delay={String(i + 1)}
               className="relative rounded-2xl border border-border bg-card p-7"
             >
               <div className="font-display text-sm font-bold text-brand-gradient">
@@ -422,10 +525,11 @@ function HowItWorks() {
 /* ---------------- Trust ---------------- */
 
 function Trust() {
+  const ref = useScrollReveal() as React.RefObject<HTMLElement>;
   return (
-    <section className="mx-auto max-w-7xl px-6 py-24 md:py-32">
+    <section ref={ref as any} className="mx-auto max-w-7xl px-6 py-24 md:py-32">
       <div className="grid items-center gap-12 lg:grid-cols-2">
-        <div>
+        <div data-reveal>
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary-deep">
             Trust by design
           </div>
@@ -446,8 +550,8 @@ function Trust() {
               "Sponsor accounts verified via business email + LinkedIn",
               "Referral partners scored on track record and disclosure",
               "Fraud signals monitored continuously, bad actors removed",
-            ].map((t) => (
-              <li key={t} className="flex gap-3">
+            ].map((t, i) => (
+              <li key={t} data-reveal data-delay={String(i + 1)} className="flex gap-3">
                 <ShieldCheck className="mt-0.5 h-5 w-5 flex-shrink-0 text-secondary" />
                 <span className="text-foreground/85">{t}</span>
               </li>
@@ -455,7 +559,7 @@ function Trust() {
           </ul>
         </div>
 
-        <div className="relative">
+        <div data-reveal data-delay="2" className="relative">
           <div className="rounded-2xl border border-border bg-card p-8 shadow-soft">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-gradient text-white">
@@ -498,9 +602,10 @@ function Trust() {
 /* ---------------- Final CTA ---------------- */
 
 function FinalCta() {
+  const ref = useScrollReveal() as React.RefObject<HTMLElement>;
   return (
-    <section className="px-6 pb-24">
-      <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-brand-gradient-diag px-8 py-16 text-white shadow-brand md:px-16 md:py-20">
+    <section ref={ref as any} className="px-6 pb-24">
+      <div data-reveal className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-brand-gradient-diag px-8 py-16 text-white shadow-brand md:px-16 md:py-20">
         <div
           aria-hidden
           className="absolute inset-0 opacity-30"
@@ -532,7 +637,6 @@ function FinalCta() {
               Talk to the team
             </a>
           </div>
-
         </div>
       </div>
     </section>

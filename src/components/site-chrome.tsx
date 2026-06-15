@@ -17,9 +17,8 @@ export function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
-          <Link to="/organisers" className="transition-colors hover:text-foreground">For Organisers</Link>
-          <Link to="/sponsors" className="transition-colors hover:text-foreground">For Sponsors</Link>
-          <Link to="/partners" className="transition-colors hover:text-foreground">Referral Partners</Link>
+          <Link to="/marketplace" className="transition-colors hover:text-foreground">Marketplace</Link>
+          <Link to="/about" className="transition-colors hover:text-foreground">About</Link>
           <Link to="/how-it-works" className="transition-colors hover:text-foreground">How it works</Link>
         </nav>
 
@@ -31,10 +30,10 @@ export function SiteHeader() {
             Sign in
           </Link>
           <Link
-            to="/waitlist"
+            to="/signup"
             className="inline-flex items-center justify-center rounded-md bg-brand-gradient px-4 py-2 text-sm font-semibold text-white shadow-soft transition-transform hover:-translate-y-0.5"
           >
-            Join waitlist
+            Sign up
           </Link>
         </div>
 

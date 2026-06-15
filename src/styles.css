@@ -1,8 +1,7 @@
 @import "tailwindcss" source(none);
-@source "../src";
 @import "tw-animate-css";
 
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap");
+@source "../src";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -207,3 +206,61 @@
     font-family: var(--font-display);
   }
 }
+
+/* ─── Scroll-reveal animations ──────────────────────────────────────── */
+
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(36px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes reveal-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Base hidden state — every [data-reveal] starts invisible */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(36px);
+  transition: none;
+}
+
+/* When the observer fires it adds data-visible="true" */
+[data-reveal][data-visible="true"] {
+  animation: reveal-up 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Staggered delay variants — add data-delay="1" … "5" to children */
+[data-reveal][data-delay="1"][data-visible="true"] { animation-delay: 80ms;  }
+[data-reveal][data-delay="2"][data-visible="true"] { animation-delay: 160ms; }
+[data-reveal][data-delay="3"][data-visible="true"] { animation-delay: 240ms; }
+[data-reveal][data-delay="4"][data-visible="true"] { animation-delay: 320ms; }
+[data-reveal][data-delay="5"][data-visible="true"] { animation-delay: 400ms; }
+[data-reveal][data-delay="6"][data-visible="true"] { animation-delay: 480ms; }
+
+/* Fade-only variant — add data-reveal="fade" */
+[data-reveal="fade"] {
+  opacity: 0;
+  transform: none;
+}
+[data-reveal="fade"][data-visible="true"] {
+  animation: reveal-fade 0.7s ease forwards;
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal],
+  [data-reveal][data-visible="true"] {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+

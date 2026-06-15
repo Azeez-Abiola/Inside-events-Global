@@ -1,6 +1,52 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
 import logo from "@/assets/ige-logo.jpeg";
+
+// Slideshow images (served from /public/events). Itsekiri banner intentionally excluded.
+const SLIDES = [
+  "/events/portrait-young-handsome-african-american-businessman-suit-near-new-year-tree-decorations.jpg",
+  "/events/stylish-african-american-gentleman-elegant-black-jacket-glasses-holding-retro-walking-stick-as-cane-flask-tippling-cane-with-golden-diamond-ball-handle-speaking-mobile-phone.jpg",
+  "/events/bellboy-providing-coffee-cup-guest-sitting-lounge-area-hotel-offering-excellent-luxury-services-with-drink-from-bar-woman-tourist-receiving-beverage-lobby-handheld-shot.jpg",
+  "/events/dentistry-students-team-doing-research-with-plastic-human-jaw-model.jpg",
+  "/events/young-man-having-fun-party.jpg",
+  "/events/signin.jpg",
+];
+
+export function AuthSlideshow() {
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setIndex((i) => (i + 1) % SLIDES.length);
+    }, 5000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  return (
+    <div aria-hidden className="absolute inset-0">
+      {SLIDES.map((src, i) => (
+        <div
+          key={src}
+          className="absolute inset-0 transition-all duration-[1200ms] ease-in-out"
+          style={{
+            backgroundImage: `url("${src}")`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            opacity: i === index ? 1 : 0,
+            transform: i === index ? "translateX(0) scale(1.05)" : "translateX(6%) scale(1)",
+          }}
+        />
+      ))}
+      {/* Purple brand gradient sits ON TOP of the photos */}
+      <div className="absolute inset-0 bg-brand-gradient-diag opacity-80" />
+      {/* Bottom vignette for text legibility */}
+      <div
+        className="absolute inset-0"
+        style={{ background: "linear-gradient(to top, rgba(26,16,40,0.65) 0%, transparent 55%)" }}
+      />
+    </div>
+  );
+}
 
 export function AuthShell({
   title,
@@ -16,40 +62,40 @@ export function AuthShell({
   return (
     <div className="min-h-screen bg-background">
       <div className="grid min-h-screen lg:grid-cols-2">
-        {/* Left: brand panel */}
-        <div className="relative hidden overflow-hidden bg-brand-gradient-diag p-12 text-white lg:flex lg:flex-col">
-          <Link to="/" className="flex items-center gap-3" aria-label="Inside Global Events 2026 — Home">
+        {/* Left: brand panel with photo slideshow behind the gradient */}
+        <div className="relative hidden overflow-hidden p-12 text-white lg:flex lg:flex-col">
+          <AuthSlideshow />
+
+          <Link to="/" className="relative z-10 flex items-center gap-3" aria-label="Inside Global Events 2026 — Home">
             <img src={logo} alt="" aria-hidden="true" className="h-10 w-10 rounded-md object-cover" />
             <div className="uppercase tracking-[0.18em] opacity-90 text-lg font-sans font-extrabold">
               Inside Global Events 2026
             </div>
           </Link>
 
-          <div className="mt-auto">
-            <blockquote className="font-display text-3xl font-bold leading-tight">
+          <div className="relative z-10 mt-auto">
+            <blockquote className="font-display text-3xl font-bold leading-tight drop-shadow-lg">
               “The first marketplace where B2B sponsorships is vetted.”
             </blockquote>
-            <div className="mt-6 text-sm opacity-80">
+            <div className="mt-6 text-sm opacity-90">
               Inside Global Events 2026
             </div>
           </div>
-
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -bottom-32 -right-32 h-[420px] w-[420px] rounded-full opacity-30 blur-3xl"
-            style={{
-              background:
-                "radial-gradient(circle, oklch(0.55 0.14 162 / 0.9), transparent 70%)",
-            }}
-          />
         </div>
 
         {/* Right: form */}
-        <div className="flex flex-col px-6 py-10 sm:px-12">
-          <Link to="/" className="flex items-center gap-2.5 lg:hidden" aria-label="Inside Global Events 2026 — Home">
-            <img src={logo} alt="" aria-hidden="true" className="h-9 w-9 rounded-md object-cover" />
-            <span className="font-display text-base font-bold">Inside Global Events 2026</span>
-          </Link>
+        <div className="relative flex flex-col px-6 pt-20 pb-10 sm:px-12 sm:pt-24">
+          {/* Back arrow — top left of the form viewport */}
+          <div className="absolute left-6 top-6 sm:left-12 sm:top-10">
+            <Link
+              to="/"
+              aria-label="Back to homepage"
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-200"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back to home</span>
+            </Link>
+          </div>
 
           <div className="m-auto w-full max-w-md">
             <h1 className="font-display text-3xl font-bold tracking-tight">

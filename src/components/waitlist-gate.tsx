@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { DEV_AUTH_ENABLED, getDevRoles } from "@/lib/dev-auth";
 
 // Gate the entire site behind /waitlist until launch.
 // Signed-in users (admins / team) bypass so they can still manage the platform.
@@ -28,6 +29,16 @@ export function WaitlistGate({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     async function run() {
+      // Test phase: site is publicly open (marketplace is the landing page).
+      // Re-enable the waitlist gate before a gated launch by removing this block.
+      if (!cancelled) { setAllowed(true); setChecked(true); }
+      return;
+
+      // DEV impersonation bypasses the gate.
+      if (DEV_AUTH_ENABLED && getDevRoles()) {
+        if (!cancelled) { setAllowed(true); setChecked(true); }
+        return;
+      }
       if (Date.now() >= LAUNCH) {
         if (!cancelled) { setAllowed(true); setChecked(true); }
         return;

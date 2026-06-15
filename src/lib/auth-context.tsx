@@ -3,6 +3,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { DEV_AUTH_ENABLED, DEV_USER, getDevRoles, onDevRolesChange, setDevRoles } from "@/lib/dev-auth";
 
 type Role =
   | "organiser"
@@ -35,7 +36,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const queryClient = useQueryClient();
 
+  // DEV-only: impersonated roles from the floating role switcher.
+  const [devRoles, setDevRolesState] = useState<Role[] | null>(null);
   useEffect(() => {
+    if (!DEV_AUTH_ENABLED) return;
+    const sync = () => setDevRolesState(getDevRoles() as Role[] | null);
+    sync();
+    return onDevRolesChange(sync);
+  }, []);
+  const devActive = DEV_AUTH_ENABLED && devRoles != null;
+
+  useEffect(() => {
+    // In dev impersonation mode, bypass Supabase entirely.
+    if (devActive) {
+      setLoading(false);
+      return;
+    }
     // 1) Listener FIRST (don't await inside)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
@@ -75,19 +91,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [router, queryClient]);
+  }, [router, queryClient, devActive]);
 
   const signOut = async () => {
+    if (devActive) {
+      setDevRoles(null);
+      router.invalidate();
+      return;
+    }
     await supabase.auth.signOut();
   };
+
+  const mockUser = devActive ? (DEV_USER as unknown as User) : null;
 
   return (
     <Ctx.Provider
       value={{
-        session,
-        user: session?.user ?? null,
-        roles,
-        loading,
+        session: devActive ? ({ user: mockUser } as unknown as Session) : session,
+        user: devActive ? mockUser : session?.user ?? null,
+        roles: devActive ? (devRoles as Role[]) : roles,
+        loading: devActive ? false : loading,
         signOut,
       }}
     >

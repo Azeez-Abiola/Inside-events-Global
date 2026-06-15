@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { getPublicEventBySlug, submitCommitmentForm, getCurrentRates } from "@/lib/marketplace.functions";
+import { getPublicEventBySlug, submitCommitmentForm, getCurrentRates, toggleSaveEvent } from "@/lib/marketplace.functions";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
-import { Calendar, MapPin, Users, ShieldCheck, Globe, CheckCircle2, AlertCircle, CalendarPlus, Download, Sparkles } from "lucide-react";
+import { Calendar, MapPin, Users, ShieldCheck, Globe, CheckCircle2, AlertCircle, CalendarPlus, Download, Sparkles, Bookmark, BookmarkCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import { fmtDual } from "@/lib/currency";
 import { z } from "zod";
@@ -186,6 +187,7 @@ function EventDetail() {
               >
                 Submit a Commitment Form
               </button>
+              <SaveEventButton eventId={event.id} />
               <p className="mt-2 text-xs text-muted-foreground">Commitment forms are verified by IGE before reaching the organiser.</p>
               {search.ref && (
                 <div className="mt-3 rounded-md bg-secondary/10 px-3 py-2 text-xs text-secondary-deep">
@@ -393,6 +395,61 @@ function CommitmentDialog({
       </div>
       <style>{`.input{display:block;width:100%;border-radius:.375rem;border:1px solid hsl(var(--border,0 0% 90%));background:transparent;padding:.5rem .75rem;font-size:.875rem;outline:none}.input:focus{border-color:hsl(var(--primary,221 83% 53%))}`}</style>
     </div>
+  );
+}
+
+function SaveEventButton({ eventId }: { eventId: string }) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const toggle = useServerFn(toggleSaveEvent);
+
+  const { data: saved } = useQuery({
+    queryKey: ["event-saved", eventId, user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("event_saves")
+        .select("id")
+        .eq("event_id", eventId)
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!user,
+  });
+
+  const mut = useMutation({
+    mutationFn: () => toggle({ data: { event_id: eventId } }),
+    onSuccess: (res: any) => {
+      qc.invalidateQueries({ queryKey: ["event-saved", eventId] });
+      qc.invalidateQueries({ queryKey: ["sponsor-dash"] });
+      toast.success(res.saved ? "Saved to your list" : "Removed from saved");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  if (!user) {
+    return (
+      <Link
+        to="/login"
+        search={{ redirect: typeof window !== "undefined" ? window.location.pathname : undefined }}
+        className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted"
+      >
+        <Bookmark className="h-4 w-4" /> Sign in to save
+      </Link>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => mut.mutate()}
+      disabled={mut.isPending}
+      className={`mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-60 ${
+        saved ? "border-secondary/40 bg-secondary/10 text-secondary-deep" : "border-border hover:bg-muted"
+      }`}
+    >
+      {saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
+      {saved ? "Saved" : "Save event"}
+    </button>
   );
 }
 

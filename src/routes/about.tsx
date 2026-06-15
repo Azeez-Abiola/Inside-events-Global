@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Globe2, Handshake, ShieldCheck, Sparkles, TrendingUp } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
+import { useScrollReveal } from "@/hooks/use-scroll-reveal";
+import { AuthSlideshow } from "@/components/auth-shell";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -18,6 +20,11 @@ export const Route = createFileRoute("/about")({
 });
 
 function AboutPage() {
+  const heroRef = useScrollReveal() as React.RefObject<HTMLElement>;
+  const pillarsRef = useScrollReveal() as React.RefObject<HTMLElement>;
+  const missionRef = useScrollReveal() as React.RefObject<HTMLElement>;
+  const ctaRef = useScrollReveal() as React.RefObject<HTMLElement>;
+
   const pillars = [
     {
       icon: Globe2,
@@ -49,22 +56,19 @@ function AboutPage() {
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
       <main>
-        <section className="relative overflow-hidden border-b border-border">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -top-32 -left-32 h-[420px] w-[420px] rounded-full opacity-30 blur-3xl"
-            style={{ background: "var(--gradient-brand-diag)" }}
-          />
-          <div className="relative mx-auto max-w-5xl px-6 py-20 md:py-28">
-            <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
+        {/* ── Hero ── */}
+        <section ref={heroRef as any} className="relative overflow-hidden border-b border-border bg-slate-950 text-white">
+          <AuthSlideshow />
+          <div className="relative mx-auto max-w-5xl px-6 py-24 md:py-32 z-10">
+            <span data-reveal className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-zinc-300 backdrop-blur">
+              <Sparkles className="h-3.5 w-3.5 text-secondary" />
               About IGE
             </span>
-            <h1 className="mt-6 font-display text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl">
+            <h1 data-reveal data-delay="1" className="mt-6 font-display text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl text-white">
               Commercial infrastructure for the{" "}
               <span className="text-brand-gradient">global events economy.</span>
             </h1>
-            <p className="mt-6 max-w-3xl text-lg leading-relaxed text-muted-foreground">
+            <p data-reveal data-delay="2" className="mt-6 max-w-3xl text-lg leading-relaxed text-zinc-200">
               I.G.E (Inside Global Events 2026) is a vertically integrated event
               intelligence and sponsorship marketplace platform built for the
               Africa to Europe corridor and the global events economy. It is not
@@ -78,8 +82,9 @@ function AboutPage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-6xl px-6 py-20 md:py-24">
-          <div className="max-w-2xl">
+        {/* ── Four pillars ── */}
+        <section ref={pillarsRef as any} className="mx-auto max-w-6xl px-6 py-20 md:py-24">
+          <div data-reveal className="max-w-2xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary-deep">
               What we are
             </div>
@@ -88,10 +93,12 @@ function AboutPage() {
             </h2>
           </div>
           <div className="mt-12 grid gap-6 md:grid-cols-2">
-            {pillars.map((p) => (
+            {pillars.map((p, i) => (
               <article
                 key={p.title}
-                className="rounded-2xl border border-border bg-card p-7"
+                data-reveal
+                data-delay={String(i + 1)}
+                className="rounded-2xl border border-border bg-card p-7 transition-shadow hover:shadow-soft"
               >
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-soft">
                   <p.icon className="h-5 w-5 text-primary" />
@@ -105,9 +112,10 @@ function AboutPage() {
           </div>
         </section>
 
-        <section className="border-t border-border bg-muted/30">
+        {/* ── Mission + Who we serve ── */}
+        <section ref={missionRef as any} className="border-t border-border bg-muted/30">
           <div className="mx-auto grid max-w-6xl gap-12 px-6 py-20 md:grid-cols-2 md:py-24">
-            <div>
+            <div data-reveal>
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary-deep">
                 Our mission
               </div>
@@ -121,39 +129,40 @@ function AboutPage() {
                 sponsor verified, every partner accountable, every deal tracked.
               </p>
             </div>
-            <div>
+            <div data-reveal data-delay="2">
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary-deep">
                 Who we serve
               </div>
               <ul className="mt-5 space-y-4 text-base">
-                <li>
-                  <span className="font-semibold">Event organisers</span>
-                  <span className="block text-sm text-muted-foreground">
-                    From cultural homecomings to global summits, list once and
-                    reach the sponsors that actually fit your audience.
-                  </span>
-                </li>
-                <li>
-                  <span className="font-semibold">Brand sponsors</span>
-                  <span className="block text-sm text-muted-foreground">
-                    Discover vetted events your buyers attend, compare tiers,
-                    and commit with confidence.
-                  </span>
-                </li>
-                <li>
-                  <span className="font-semibold">Referral partners</span>
-                  <span className="block text-sm text-muted-foreground">
-                    Turn your network into recurring commission with trackable
-                    referral links and transparent payouts.
-                  </span>
-                </li>
+                {[
+                  {
+                    title: "Event organisers",
+                    desc: "From cultural homecomings to global summits, list once and reach the sponsors that actually fit your audience.",
+                  },
+                  {
+                    title: "Brand sponsors",
+                    desc: "Discover vetted events your buyers attend, compare tiers, and commit with confidence.",
+                  },
+                  {
+                    title: "Referral partners",
+                    desc: "Turn your network into recurring commission with trackable referral links and transparent payouts.",
+                  },
+                ].map((item, i) => (
+                  <li key={item.title} data-reveal data-delay={String(i + 1)}>
+                    <span className="font-semibold">{item.title}</span>
+                    <span className="block text-sm text-muted-foreground">
+                      {item.desc}
+                    </span>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
         </section>
 
-        <section className="px-6 py-20 md:py-24">
-          <div className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl bg-brand-gradient-diag px-8 py-14 text-white shadow-brand md:px-14 md:py-16">
+        {/* ── CTA ── */}
+        <section ref={ctaRef as any} className="px-6 py-20 md:py-24">
+          <div data-reveal className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl bg-brand-gradient-diag px-8 py-14 text-white shadow-brand md:px-14 md:py-16">
             <h2 className="font-display text-3xl font-bold leading-tight tracking-tight md:text-4xl">
               Join the marketplace.
             </h2>

@@ -74,7 +74,7 @@ function OrganiserPipeline() {
 
       {!isLoading && !data?.events?.length && (
         <div className="mt-12 rounded-xl border border-dashed border-border p-12 text-center">
-          <p className="text-muted-foreground">No events yet. <Link to="/events" className="text-primary hover:underline">Create your first event</Link>.</p>
+          <p className="text-muted-foreground">No events yet. <Link to="/dashboard" className="text-primary hover:underline">Create your first event</Link>.</p>
         </div>
       )}
     </AppShell>
