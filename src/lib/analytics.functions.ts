@@ -194,7 +194,7 @@ export const getMediaAnalytics = createServerFn({ method: "GET" })
     await requireRole(userId, ["media_partner", "abw_admin", "super_admin"]);
 
     const [{ data: requests }, { data: saves }] = await Promise.all([
-      supabaseAdmin.from("media_requests").select("status, created_at, event_id").eq("media_partner_id", userId),
+      (supabaseAdmin as any).from("media_requests").select("status, created_at, event_id").eq("media_partner_id", userId),
       supabaseAdmin.from("event_saves").select("event_id").eq("user_id", userId),
     ]);
 

@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { CalendarDays, Bookmark, Newspaper, Loader2, Calendar, Send, BarChart3 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { ensureAccessToken, isAuthError } from "@/lib/auth-session";
 import { demoLoginSearch } from "@/lib/demo-accounts";

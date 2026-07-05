@@ -16,7 +16,7 @@ export function WorkspacePage({
   return (
     <AppShell>
       <div className="space-y-8">
-        <DashboardHeader title={title} subtitle={subtitle} action={action} />
+        <DashboardHeader title={title} subtitle={subtitle ?? ""} action={action} />
         {children}
       </div>
     </AppShell>
