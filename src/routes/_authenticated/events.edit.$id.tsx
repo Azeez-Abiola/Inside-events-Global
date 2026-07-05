@@ -492,6 +492,30 @@ function getSubmitBlockers(form: Record<string, any>, tierCount: number) {
 
 function StepReview({ form, update, tierCount, onSubmit, submitting, editable }: any) {
   const blockers = getSubmitBlockers(form, tierCount);
+
+  // Already through submission — can't re-submit.
+  if (!editable) {
+    const label = (form.status ?? "").replace(/_/g, " ");
+    return (
+      <div className="rounded-xl border border-secondary/30 bg-secondary/5 p-6 text-center">
+        <div className="font-display text-lg font-bold text-secondary-deep capitalize">
+          This event is {label || "submitted"}
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">
+          It has already been submitted for vetting and can't be edited or re-submitted.
+          {form.status === "approved" || form.status === "listed"
+            ? " It's live — you can view it on the marketplace."
+            : " You'll be notified when the IGE team completes the review."}
+        </p>
+        {form.slug && (form.status === "approved" || form.status === "listed") && (
+          <a href={`/events/${form.slug}`} className="mt-4 inline-block rounded-md bg-brand-gradient px-4 py-2 text-sm font-semibold text-white">
+            View public listing →
+          </a>
+        )}
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="grid gap-4 sm:grid-cols-2">
