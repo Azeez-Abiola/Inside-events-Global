@@ -7,11 +7,12 @@ import { AppShell } from "@/components/app-shell";
 import { StatCard } from "@/components/dashboards/shared";
 import { DashboardEmpty, DashboardHeader, DashboardTabs } from "@/components/dashboards/dashboard-shell";
 import { SponsorAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
+import { SponsorBudgetPanel } from "@/components/dashboards/sponsor-budget-panel";
 import { getSponsorDashboard } from "@/lib/deals.functions";
 import { fmtMoney } from "@/lib/currency";
 
 export function SponsorDashboard() {
-  const [activeTab, setActiveTab] = useState<"commitments" | "saved" | "fresh" | "analytics">("commitments");
+  const [activeTab, setActiveTab] = useState<"commitments" | "saved" | "fresh" | "budget" | "analytics">("commitments");
   const fetch = useServerFn(getSponsorDashboard);
   const { data, isLoading } = useQuery({ queryKey: ["sponsor-dash"], queryFn: () => fetch() });
 
@@ -47,11 +48,14 @@ export function SponsorDashboard() {
             { id: "commitments", label: "My commitments", count: commitmentsCount },
             { id: "saved", label: "Saved events", count: savedEventsCount },
             { id: "fresh", label: "Discover", count: data?.freshEvents?.length ?? 0 },
+            { id: "budget", label: "Budget" },
             { id: "analytics", label: "Analytics" },
           ]}
         />
 
-        {activeTab === "analytics" ? (
+        {activeTab === "budget" ? (
+          <SponsorBudgetPanel />
+        ) : activeTab === "analytics" ? (
           <SponsorAnalyticsPanel />
         ) : activeTab === "commitments" ? (
           <div className="rounded-xl border border-border bg-card overflow-hidden">
