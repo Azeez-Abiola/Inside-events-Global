@@ -5,9 +5,27 @@ import { Inbox, Bookmark, CalendarDays, Loader2, Calendar } from "lucide-react";
 import { StatCard } from "@/components/dashboards/shared";
 import { DashboardEmpty } from "@/components/dashboards/dashboard-shell";
 import { SponsorAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
+import { SponsorBudgetPanel } from "@/components/dashboards/sponsor-budget-panel";
+import { SponsorPipelinePanel } from "@/components/dashboards/sponsor-pipeline-panel";
 import { WorkspacePage } from "@/components/dashboards/workspace-page";
 import { getSponsorDashboard } from "@/lib/deals.functions";
 import { fmtMoney } from "@/lib/currency";
+
+export function SponsorPipelinePage() {
+  return (
+    <WorkspacePage title="Deal pipeline" subtitle="Every event you're watching, negotiating, or sponsoring — from first look to signed deal.">
+      <SponsorPipelinePanel />
+    </WorkspacePage>
+  );
+}
+
+export function SponsorBudgetPage() {
+  return (
+    <WorkspacePage title="Sponsorship budget" subtitle="Plan by market; committed and paid update from your live deals. Portfolio shown in USD.">
+      <SponsorBudgetPanel />
+    </WorkspacePage>
+  );
+}
 
 function useSponsorData() {
   const fetch = useServerFn(getSponsorDashboard);
@@ -33,6 +51,8 @@ export function SponsorOverviewPage() {
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[
+          { to: "/dashboard/pipeline", label: "Pipeline", desc: "Watching → signed, at a glance" },
+          { to: "/dashboard/budget", label: "Budget", desc: "Committed, paid & remaining" },
           { to: "/dashboard/commitments", label: "My commitments", desc: "Track submitted forms" },
           { to: "/dashboard/saved", label: "Saved events", desc: "Your shortlist" },
           { to: "/dashboard/discover", label: "Discover", desc: "Fresh marketplace listings" },

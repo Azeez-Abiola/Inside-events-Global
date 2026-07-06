@@ -8,11 +8,12 @@ import { StatCard } from "@/components/dashboards/shared";
 import { DashboardEmpty, DashboardHeader, DashboardTabs } from "@/components/dashboards/dashboard-shell";
 import { SponsorAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
 import { SponsorBudgetPanel } from "@/components/dashboards/sponsor-budget-panel";
+import { SponsorPipelinePanel } from "@/components/dashboards/sponsor-pipeline-panel";
 import { getSponsorDashboard } from "@/lib/deals.functions";
 import { fmtMoney } from "@/lib/currency";
 
 export function SponsorDashboard() {
-  const [activeTab, setActiveTab] = useState<"commitments" | "saved" | "fresh" | "budget" | "analytics">("commitments");
+  const [activeTab, setActiveTab] = useState<"commitments" | "pipeline" | "saved" | "fresh" | "budget" | "analytics">("commitments");
   const fetch = useServerFn(getSponsorDashboard);
   const { data, isLoading } = useQuery({ queryKey: ["sponsor-dash"], queryFn: () => fetch() });
 
@@ -46,6 +47,7 @@ export function SponsorDashboard() {
           onChange={(id) => setActiveTab(id as typeof activeTab)}
           tabs={[
             { id: "commitments", label: "My commitments", count: commitmentsCount },
+            { id: "pipeline", label: "Pipeline" },
             { id: "saved", label: "Saved events", count: savedEventsCount },
             { id: "fresh", label: "Discover", count: data?.freshEvents?.length ?? 0 },
             { id: "budget", label: "Budget" },
@@ -53,7 +55,9 @@ export function SponsorDashboard() {
           ]}
         />
 
-        {activeTab === "budget" ? (
+        {activeTab === "pipeline" ? (
+          <SponsorPipelinePanel />
+        ) : activeTab === "budget" ? (
           <SponsorBudgetPanel />
         ) : activeTab === "analytics" ? (
           <SponsorAnalyticsPanel />

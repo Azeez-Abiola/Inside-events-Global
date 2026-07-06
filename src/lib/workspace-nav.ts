@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard, CalendarRange, Inbox, Bookmark, Compass, BarChart3, MessageSquare,
-  ShieldCheck, Users, DollarSign, SlidersHorizontal, Handshake, TrendingUp, Newspaper, Send,
+  ShieldCheck, Users, DollarSign, SlidersHorizontal, Handshake, TrendingUp, Newspaper, Send, Wallet,
 } from "lucide-react";
 
 export type WorkspaceNavItem = {
@@ -33,6 +33,8 @@ export function getWorkspaceNav(roles: string[]): WorkspaceNavItem[] {
   } else if (r.has("sponsor")) {
     items.push(
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/dashboard/pipeline", label: "Pipeline", icon: TrendingUp },
+      { to: "/dashboard/budget", label: "Budget", icon: Wallet },
       { to: "/dashboard/commitments", label: "My commitments", icon: Inbox },
       { to: "/dashboard/saved", label: "Saved events", icon: Bookmark },
       { to: "/dashboard/discover", label: "Discover", icon: Compass },

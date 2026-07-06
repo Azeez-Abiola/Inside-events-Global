@@ -61,6 +61,7 @@ import { Route as AuthenticatedDashboardDiscoverRouteImport } from './routes/_au
 import { Route as AuthenticatedDashboardDealsRouteImport } from './routes/_authenticated/dashboard.deals'
 import { Route as AuthenticatedDashboardControlsRouteImport } from './routes/_authenticated/dashboard.controls'
 import { Route as AuthenticatedDashboardCommitmentsRouteImport } from './routes/_authenticated/dashboard.commitments'
+import { Route as AuthenticatedDashboardBudgetRouteImport } from './routes/_authenticated/dashboard.budget'
 import { Route as AuthenticatedDashboardAnalyticsRouteImport } from './routes/_authenticated/dashboard.analytics'
 import { Route as AuthenticatedAdminVettingRouteImport } from './routes/_authenticated/admin.vetting'
 import { Route as AuthenticatedAdminSubmissionsRouteImport } from './routes/_authenticated/admin.submissions'
@@ -347,6 +348,12 @@ const AuthenticatedDashboardCommitmentsRoute =
     path: '/commitments',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardBudgetRoute =
+  AuthenticatedDashboardBudgetRouteImport.update({
+    id: '/budget',
+    path: '/budget',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedDashboardAnalyticsRoute =
   AuthenticatedDashboardAnalyticsRouteImport.update({
     id: '/analytics',
@@ -456,6 +463,7 @@ export interface FileRoutesByFullPath {
   '/admin/submissions': typeof AuthenticatedAdminSubmissionsRoute
   '/admin/vetting': typeof AuthenticatedAdminVettingRoute
   '/dashboard/analytics': typeof AuthenticatedDashboardAnalyticsRoute
+  '/dashboard/budget': typeof AuthenticatedDashboardBudgetRoute
   '/dashboard/commitments': typeof AuthenticatedDashboardCommitmentsRoute
   '/dashboard/controls': typeof AuthenticatedDashboardControlsRoute
   '/dashboard/deals': typeof AuthenticatedDashboardDealsRoute
@@ -519,6 +527,7 @@ export interface FileRoutesByTo {
   '/admin/submissions': typeof AuthenticatedAdminSubmissionsRoute
   '/admin/vetting': typeof AuthenticatedAdminVettingRoute
   '/dashboard/analytics': typeof AuthenticatedDashboardAnalyticsRoute
+  '/dashboard/budget': typeof AuthenticatedDashboardBudgetRoute
   '/dashboard/commitments': typeof AuthenticatedDashboardCommitmentsRoute
   '/dashboard/controls': typeof AuthenticatedDashboardControlsRoute
   '/dashboard/deals': typeof AuthenticatedDashboardDealsRoute
@@ -586,6 +595,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/submissions': typeof AuthenticatedAdminSubmissionsRoute
   '/_authenticated/admin/vetting': typeof AuthenticatedAdminVettingRoute
   '/_authenticated/dashboard/analytics': typeof AuthenticatedDashboardAnalyticsRoute
+  '/_authenticated/dashboard/budget': typeof AuthenticatedDashboardBudgetRoute
   '/_authenticated/dashboard/commitments': typeof AuthenticatedDashboardCommitmentsRoute
   '/_authenticated/dashboard/controls': typeof AuthenticatedDashboardControlsRoute
   '/_authenticated/dashboard/deals': typeof AuthenticatedDashboardDealsRoute
@@ -653,6 +663,7 @@ export interface FileRouteTypes {
     | '/admin/submissions'
     | '/admin/vetting'
     | '/dashboard/analytics'
+    | '/dashboard/budget'
     | '/dashboard/commitments'
     | '/dashboard/controls'
     | '/dashboard/deals'
@@ -716,6 +727,7 @@ export interface FileRouteTypes {
     | '/admin/submissions'
     | '/admin/vetting'
     | '/dashboard/analytics'
+    | '/dashboard/budget'
     | '/dashboard/commitments'
     | '/dashboard/controls'
     | '/dashboard/deals'
@@ -782,6 +794,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/submissions'
     | '/_authenticated/admin/vetting'
     | '/_authenticated/dashboard/analytics'
+    | '/_authenticated/dashboard/budget'
     | '/_authenticated/dashboard/commitments'
     | '/_authenticated/dashboard/controls'
     | '/_authenticated/dashboard/deals'
@@ -1215,6 +1228,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardCommitmentsRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/budget': {
+      id: '/_authenticated/dashboard/budget'
+      path: '/budget'
+      fullPath: '/dashboard/budget'
+      preLoaderRoute: typeof AuthenticatedDashboardBudgetRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/dashboard/analytics': {
       id: '/_authenticated/dashboard/analytics'
       path: '/analytics'
@@ -1304,6 +1324,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardAnalyticsRoute: typeof AuthenticatedDashboardAnalyticsRoute
+  AuthenticatedDashboardBudgetRoute: typeof AuthenticatedDashboardBudgetRoute
   AuthenticatedDashboardCommitmentsRoute: typeof AuthenticatedDashboardCommitmentsRoute
   AuthenticatedDashboardControlsRoute: typeof AuthenticatedDashboardControlsRoute
   AuthenticatedDashboardDealsRoute: typeof AuthenticatedDashboardDealsRoute
@@ -1322,6 +1343,7 @@ interface AuthenticatedDashboardRouteChildren {
 const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
   {
     AuthenticatedDashboardAnalyticsRoute: AuthenticatedDashboardAnalyticsRoute,
+    AuthenticatedDashboardBudgetRoute: AuthenticatedDashboardBudgetRoute,
     AuthenticatedDashboardCommitmentsRoute:
       AuthenticatedDashboardCommitmentsRoute,
     AuthenticatedDashboardControlsRoute: AuthenticatedDashboardControlsRoute,

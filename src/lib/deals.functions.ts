@@ -397,3 +397,89 @@ export const getSponsorDashboard = createServerFn({ method: "GET" })
     }
     return { forms: forms ?? [], saves: saves ?? [], freshEvents: fresh ?? [], eventMap: evMap };
   });
+
+// ───────────────────────────────────────────────────────────────
+// Sponsor Live Deal Pipeline (PRD v3.4 §08.1 Module 2) — Kanban.
+// Derived from saved events + commitment forms + deals.
+// ───────────────────────────────────────────────────────────────
+const DEAL_STAGE_COLUMN: Record<string, string> = {
+  inquiry_received: "in_conversation",
+  vetting: "in_conversation",
+  intro_made: "in_conversation",
+  in_negotiation: "proposal",
+  verbal_commitment: "proposal",
+  contract_sent: "proposal",
+  contract_signed: "committed",
+  payment_received: "paid_active",
+  closed_lost: "closed",
+  cancelled: "closed",
+};
+
+export const getSponsorPipeline = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+
+    const [{ data: saves }, { data: forms }, { data: deals }] = await Promise.all([
+      supabaseAdmin.from("event_saves").select("event_id, created_at").eq("user_id", userId),
+      supabaseAdmin
+        .from("commitment_forms")
+        .select("id, event_id, company_name, currency, budget_range_min, budget_range_max, created_at")
+        .eq("sponsor_user_id", userId),
+      supabaseAdmin
+        .from("deals")
+        .select("id, commitment_form_id, event_id, status, deal_value_native, deal_currency, deal_value_usd, updated_at")
+        .eq("sponsor_user_id", userId),
+    ]);
+
+    const eventIds = Array.from(
+      new Set([
+        ...(saves ?? []).map((s) => s.event_id),
+        ...(forms ?? []).map((f) => f.event_id),
+        ...(deals ?? []).map((d) => d.event_id),
+      ].filter(Boolean)),
+    );
+    const eventMap: Record<string, any> = {};
+    if (eventIds.length) {
+      const { data: evs } = await supabaseAdmin
+        .from("events")
+        .select("id, name, slug, city, country, start_date")
+        .in("id", eventIds);
+      for (const e of evs ?? []) eventMap[e.id] = e;
+    }
+
+    const dealByForm: Record<string, any> = {};
+    for (const d of deals ?? []) if (d.commitment_form_id) dealByForm[d.commitment_form_id] = d;
+    const formEventIds = new Set((forms ?? []).map((f) => f.event_id));
+
+    const cards: any[] = [];
+
+    // Watching: saved events with no commitment yet.
+    for (const s of saves ?? []) {
+      if (formEventIds.has(s.event_id)) continue;
+      const ev = eventMap[s.event_id];
+      if (!ev) continue;
+      cards.push({ key: `save-${s.event_id}`, column: "watching", ev, label: "Saved" });
+    }
+
+    // Commitment forms → In Conversation, or advanced by their deal's stage.
+    for (const f of forms ?? []) {
+      const ev = eventMap[f.event_id];
+      if (!ev) continue;
+      const deal = dealByForm[f.id];
+      const column = deal ? DEAL_STAGE_COLUMN[deal.status] ?? "in_conversation" : "in_conversation";
+      cards.push({
+        key: `form-${f.id}`,
+        column,
+        ev,
+        company: f.company_name,
+        currency: deal?.deal_currency ?? f.currency,
+        value: deal?.deal_value_native ?? null,
+        budgetMin: f.budget_range_min,
+        budgetMax: f.budget_range_max,
+        status: deal?.status ?? null,
+      });
+    }
+
+    return { cards };
+  });

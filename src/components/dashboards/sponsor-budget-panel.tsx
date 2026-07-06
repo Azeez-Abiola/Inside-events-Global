@@ -30,11 +30,7 @@ export function SponsorBudgetPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-display text-lg font-bold">Annual sponsorship budget</h2>
-          <p className="text-sm text-muted-foreground">Plan by market; committed and paid update from your live deals. Portfolio shown in USD.</p>
-        </div>
+      <div className="flex justify-end">
         <button
           onClick={() => { setEditing(null); setOpen(true); }}
           className="inline-flex items-center gap-1.5 rounded-md bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-soft hover:-translate-y-0.5 transition-all"
