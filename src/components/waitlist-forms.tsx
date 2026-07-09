@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
+import type { WaitlistAudience } from "@/lib/waitlist-audiences";
 import { toast } from "sonner";
 
 /* -------------------- shared primitives -------------------- */
@@ -90,10 +91,10 @@ export function YesNo({
 
 const COMMON_KEYS = new Set([
   "full_name", "email", "phone", "company", "role_title", "country",
-  "notes", "referral_source", "referred_by", "consent",
+  "notes", "referral_source", "referred_by", "consent", "launch_updates",
 ]);
 
-async function submitForm(audience: "organiser" | "sponsor" | "referral_partner", el: HTMLFormElement) {
+async function submitForm(audience: WaitlistAudience, el: HTMLFormElement) {
   const fd = new FormData(el);
   const all: Record<string, string | string[]> = {};
   for (const key of new Set(Array.from(fd.keys()))) {
@@ -130,7 +131,10 @@ async function submitForm(audience: "organiser" | "sponsor" | "referral_partner"
     form_data,
   });
   if (error) {
-    toast.error(error.message);
+    const msg = error.message.includes("idx_waitlist_signups_email_audience")
+      ? "You're already on the waitlist for this role with that email."
+      : error.message;
+    toast.error(msg);
     return false;
   }
   // Notify ops — fire-and-forget; don't block success on email failure.
@@ -158,7 +162,7 @@ async function submitForm(audience: "organiser" | "sponsor" | "referral_partner"
 
 function FormShell({
   audience, onDone, children,
-}: { audience: "organiser" | "sponsor" | "referral_partner"; onDone: () => void; children: React.ReactNode }) {
+}: { audience: WaitlistAudience; onDone: () => void; children: React.ReactNode }) {
   const [submitting, setSubmitting] = useState(false);
   return (
     <form
@@ -176,9 +180,13 @@ function FormShell({
     >
       {children}
       <div className="flex flex-col items-center gap-3 pt-2">
-        <label className="flex items-start gap-2 text-sm">
+        <label className="flex max-w-lg items-start gap-2 text-sm">
           <input type="checkbox" name="consent" required className="mt-1 h-4 w-4" />
           <span>I agree to the I.G.Events <a href="/terms" className="underline">Terms</a> and <a href="/privacy" className="underline">Privacy Policy</a>.</span>
+        </label>
+        <label className="flex max-w-lg items-start gap-2 text-sm text-muted-foreground">
+          <input type="checkbox" name="launch_updates" defaultChecked className="mt-1 h-4 w-4" />
+          <span>Email me about the IGE launch, founding-member access, and product updates.</span>
         </label>
         <Button type="submit" disabled={submitting} size="lg" className="w-full md:w-auto">
           {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
@@ -189,15 +197,23 @@ function FormShell({
   );
 }
 
-export function DonePanel({ onAddAnother }: { onAddAnother: () => void }) {
+export function DonePanel({
+  onAddAnother,
+  audienceLabel,
+}: {
+  onAddAnother: () => void;
+  audienceLabel?: string;
+}) {
   return (
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-border/60 bg-card p-10 text-center shadow-soft">
       <CheckCircle2 className="h-10 w-10 text-primary" />
-      <h3 className="font-display text-xl font-bold">You're on the list.</h3>
+      <h3 className="font-display text-xl font-bold">You&apos;re on the list.</h3>
       <p className="max-w-sm text-sm text-muted-foreground">
-        We'll be in touch before 1 July with your founding-member access and next steps.
+        {audienceLabel
+          ? `Thanks for joining as a ${audienceLabel.toLowerCase()}. We'll email you before launch with founding-member access and next steps.`
+          : "We'll be in touch before launch with your founding-member access and next steps."}
       </p>
-      <Button type="button" variant="outline" onClick={onAddAnother}>Add another</Button>
+      <Button type="button" variant="outline" onClick={onAddAnother}>Submit another</Button>
     </div>
   );
 }
@@ -612,6 +628,88 @@ export function AffiliateWaitlistForm({ onDone }: { onDone: () => void }) {
         <Field id="notes" label="Anything else you'd like us to know?">
           <Textarea id="notes" name="notes" rows={3} maxLength={1000} />
         </Field>
+      </Section>
+    </FormShell>
+  );
+}
+
+/* ============================================================
+   MEDIA PARTNER
+============================================================ */
+
+const MEDIA_OUTLET_TYPES = ["Newsletter", "Podcast", "Magazine / publication", "Blog", "TV / Radio", "Social creator", "Agency", "Other"];
+const MEDIA_REACH = ["Under 5k", "5k–25k", "25k–100k", "100k–500k", "500k+", "Varies by channel"];
+const MEDIA_REQUEST_TYPES = ["Event coverage", "Speaker interviews", "Cross-promotion", "Documentary / film", "Social amplification", "Newsletter feature", "Podcast episode"];
+const CONTENT_FOCUS = ["Business & finance", "Culture & lifestyle", "Tech", "Fashion & beauty", "Sports", "Government & policy", "Diaspora", "Entertainment", "Other"];
+
+export function MediaWaitlistForm({ onDone }: { onDone: () => void }) {
+  return (
+    <FormShell audience="media_partner" onDone={onDone}>
+      <Section letter="A" title="Outlet & contact">
+        <Row>
+          <Field id="full_name" label="Full name" required><Input id="full_name" name="full_name" required maxLength={100} /></Field>
+          <Field id="role_title" label="Job title / role" required><Input id="role_title" name="role_title" required maxLength={150} /></Field>
+        </Row>
+        <Row>
+          <Field id="company" label="Outlet / publication name" required><Input id="company" name="company" required maxLength={150} /></Field>
+          <Field id="email" label="Email address" required><Input id="email" name="email" type="email" required maxLength={255} /></Field>
+        </Row>
+        <Row>
+          <Field id="phone" label="Phone number"><Input id="phone" name="phone" type="tel" maxLength={40} /></Field>
+          <Field id="country" label="Primary country" required><SelectField id="country" name="country" required options={COUNTRIES} /></Field>
+        </Row>
+        <Row>
+          <Field id="outlet_type" label="Outlet type" required><SelectField id="outlet_type" name="outlet_type" required options={MEDIA_OUTLET_TYPES} /></Field>
+          <Field id="audience_reach" label="Typical audience reach" required><SelectField id="audience_reach" name="audience_reach" required options={MEDIA_REACH} /></Field>
+        </Row>
+        <Row>
+          <Field id="website" label="Website URL"><Input id="website" name="website" type="url" placeholder="https://" /></Field>
+          <Field id="social_url" label="Primary social / channel URL"><Input id="social_url" name="social_url" type="url" placeholder="https://" /></Field>
+        </Row>
+      </Section>
+
+      <Section letter="B" title="Coverage focus">
+        <Field id="content_focus" label="Content focus / sectors" required>
+          <MultiCheck name="content_focus" options={CONTENT_FOCUS} columns={3} />
+        </Field>
+        <Field id="geographies_covered" label="Geographies you cover" required>
+          <MultiCheck name="geographies_covered" options={COUNTRIES} columns={3} />
+        </Field>
+        <Field id="event_types_interest" label="Event types you want to cover" required>
+          <MultiCheck name="event_types_interest" options={EVENT_TYPES} columns={3} />
+        </Field>
+        <Field id="partnership_types" label="Partnership formats you offer" required>
+          <MultiCheck name="partnership_types" options={MEDIA_REQUEST_TYPES} columns={2} />
+        </Field>
+        <Field id="prior_event_media" label="Have you partnered with events before?" required>
+          <YesNo name="prior_event_media" options={["Yes", "No", "Occasionally"]} required />
+        </Field>
+        <Field id="recent_event_coverage" label="If yes — most recent event covered">
+          <Input id="recent_event_coverage" name="recent_event_coverage" maxLength={200} />
+        </Field>
+      </Section>
+
+      <Section letter="C" title="Goals with I.G.E">
+        <Field id="events_per_quarter" label="Events you could cover per quarter">
+          <SelectField id="events_per_quarter" name="events_per_quarter" options={["1–2", "3–5", "6–10", "10+"]} />
+        </Field>
+        <Field id="documentary_interest" label="Interested in I.G.Events documentary collaborations?">
+          <YesNo name="documentary_interest" options={["Yes", "No", "Tell me more"]} />
+        </Field>
+        <Field id="notes" label="Anything else you'd like us to know?">
+          <Textarea id="notes" name="notes" rows={3} maxLength={1000} />
+        </Field>
+      </Section>
+
+      <Section letter="D" title="Referral">
+        <Row>
+          <Field id="referral_source" label="How did you hear about I.G.Events?">
+            <SelectField id="referral_source" name="referral_source" options={REFERRAL_SOURCES} />
+          </Field>
+          <Field id="referred_by" label="Who referred you?">
+            <Input id="referred_by" name="referred_by" maxLength={150} />
+          </Field>
+        </Row>
       </Section>
     </FormShell>
   );

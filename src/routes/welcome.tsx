@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import {
   Calendar,
   Instagram,
   Mail,
-
+  Newspaper,
   Sparkles,
   Globe2,
   Handshake,
@@ -25,7 +26,9 @@ import {
   Drama,
 } from "lucide-react";
 import { SiteFooter } from "@/components/site-chrome";
+import { WaitlistIntake } from "@/components/waitlist-intake";
 import { trackEvent } from "@/lib/analytics";
+import type { WaitlistAudience } from "@/lib/waitlist-audiences";
 import botbCover from "@/assets/battle-of-the-bots-2026.jpg.asset.json";
 import homecomingCover from "@/assets/itsekiri-homecoming-2026.png.asset.json";
 import projectXCover from "@/assets/project-x-almost-famous.jpg.asset.json";
@@ -39,13 +42,13 @@ export const Route = createFileRoute("/welcome")({
       {
         name: "description",
         content:
-          "Inside Global Events 2026 (IGE) connects event organisers, brand sponsors, and partnerships professionals across the Africa–Europe corridor. Waitlist launching soon.",
+          "Join the IGE founding waitlist. Role-specific intake for organisers, sponsors, referral partners, and media partners across the Africa–Europe corridor.",
       },
       { property: "og:title", content: "Welcome to Inside Global Events 2026" },
       {
         property: "og:description",
         content:
-          "Event intelligence + sponsorship marketplace. Waitlist launching soon — featuring the Itsekiri Global Homecoming.",
+          "Event intelligence + sponsorship marketplace. Join the founding waitlist — featuring the Itsekiri Global Homecoming.",
       },
     ],
   }),
@@ -58,6 +61,13 @@ const IG_URL = "https://www.instagram.com/insideglobalevents";
 
 
 function WelcomePage() {
+  const [waitlistAudience, setWaitlistAudience] = useState<WaitlistAudience>("organiser");
+
+  function scrollToWaitlist(audience?: WaitlistAudience) {
+    if (audience) setWaitlistAudience(audience);
+    document.getElementById("join-waitlist")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Lightweight header (no nav — gate page) */}
@@ -102,7 +112,7 @@ function WelcomePage() {
           <div className="relative mx-auto max-w-5xl px-6 py-20 md:py-28">
             <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
               <Sparkles className="h-3.5 w-3.5 text-primary" />
-              Waitlist launching soon
+              Founding waitlist open
             </span>
             <h1 className="mt-6 font-display text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl">
               Commercial infrastructure for the{" "}
@@ -115,13 +125,17 @@ function WelcomePage() {
               a distributed network of partnerships professionals.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <a
-                href={`mailto:${HI_EMAIL}?subject=Interested%20in%20IGE`}
+              <button
+                type="button"
+                onClick={() => {
+                  trackEvent("waitlist_cta_click", { source: "welcome_hero" });
+                  scrollToWaitlist();
+                }}
                 className="inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow transition-transform hover:-translate-y-0.5"
               >
                 <Mail className="h-4 w-4" />
-                Email us at {HI_EMAIL}
-              </a>
+                Join the founding waitlist
+              </button>
               <a
                 href={IG_URL}
                 target="_blank"
@@ -146,30 +160,44 @@ function WelcomePage() {
               Who it's for
             </div>
             <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">
-              Built for the three sides of every sponsorship deal.
+              Built for every side of the sponsorship economy.
             </h2>
           </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
-            {[
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {([
               {
                 icon: Megaphone,
                 title: "Event organisers",
+                audience: "organiser" as const,
                 desc: "From cultural homecomings to global summits — list once and reach sponsors that actually fit your audience.",
               },
               {
                 icon: Globe2,
                 title: "Brand sponsors",
+                audience: "sponsor" as const,
                 desc: "Discover vetted events your buyers attend, compare tiers, and commit with confidence and clean data.",
               },
               {
                 icon: Handshake,
                 title: "Referral partners",
+                audience: "referral_partner" as const,
                 desc: "Turn your network into recurring commission with trackable referral links and transparent payouts.",
               },
-            ].map((p) => (
-              <article
+              {
+                icon: Newspaper,
+                title: "Media partners",
+                audience: "media_partner" as const,
+                desc: "Cross-promote with vetted events — coverage, interviews, newsletters, and documentary collaborations.",
+              },
+            ]).map((p) => (
+              <button
                 key={p.title}
-                className="rounded-2xl border border-border bg-card p-7"
+                type="button"
+                onClick={() => {
+                  trackEvent("waitlist_role_select", { role: p.audience, source: "welcome_card" });
+                  scrollToWaitlist(p.audience);
+                }}
+                className="rounded-2xl border border-border bg-card p-7 text-left transition-colors hover:border-primary/40 hover:bg-muted/30"
               >
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-soft">
                   <p.icon className="h-5 w-5 text-primary" />
@@ -178,7 +206,10 @@ function WelcomePage() {
                 <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                   {p.desc}
                 </p>
-              </article>
+                <span className="mt-4 inline-block text-xs font-semibold text-primary">
+                  Join as {p.title.toLowerCase()} →
+                </span>
+              </button>
             ))}
           </div>
         </section>
@@ -765,25 +796,57 @@ function WelcomePage() {
           </div>
         </section>
 
+        {/* WAITLIST */}
+        <section id="join-waitlist" className="border-t border-border bg-muted/20 px-6 py-20 md:py-24 scroll-mt-20">
+          <div className="mx-auto max-w-4xl">
+            <div className="max-w-2xl">
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary-deep">
+                Founding waitlist
+              </div>
+              <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">
+                Tell us your role. We&apos;ll collect the right details.
+              </h2>
+              <p className="mt-4 text-muted-foreground">
+                Choose your role from the dropdown — the form adapts with questions tailored to
+                organisers, sponsors, referral partners, or media partners. Your answers are saved
+                securely so we can notify you at launch and segment founding-member outreach.
+              </p>
+            </div>
+            <div className="mt-10">
+              <WaitlistIntake
+                key={waitlistAudience}
+                initialAudience={waitlistAudience}
+                onAudienceChange={setWaitlistAudience}
+              />
+            </div>
+            <p className="mt-8 text-center text-sm text-muted-foreground">
+              Prefer email? Reach us at{" "}
+              <a href={`mailto:${HI_EMAIL}`} className="font-medium text-primary hover:underline">
+                {HI_EMAIL}
+              </a>
+            </p>
+          </div>
+        </section>
+
         {/* CTA */}
         <section className="px-6 py-20 md:py-24">
           <div className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl bg-brand-gradient-diag px-8 py-14 text-white shadow-brand md:px-14 md:py-16">
             <h2 className="font-display text-3xl font-bold leading-tight tracking-tight md:text-4xl">
-              The waitlist is launching soon.
+              Be first when IGE opens.
             </h2>
             <p className="mt-4 max-w-2xl text-base opacity-90 md:text-lg">
-              While we finish polishing the platform, the best way to get on the
-              founding list is to reach out directly or follow along on
-              Instagram.
+              Founding members get early access, locked-in rates, and priority matching.
+              Complete the waitlist above or follow along on Instagram for launch updates.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <a
-                href={`mailto:${HI_EMAIL}?subject=IGE%20—%20Add%20me%20to%20the%20founding%20list`}
+              <button
+                type="button"
+                onClick={() => scrollToWaitlist()}
                 className="inline-flex items-center gap-2 rounded-md bg-white px-6 py-3.5 text-sm font-semibold text-primary-deep transition-transform hover:-translate-y-0.5"
               >
                 <Mail className="h-4 w-4" />
-                {HI_EMAIL}
-              </a>
+                Join the waitlist
+              </button>
               <a
                 href={IG_URL}
                 target="_blank"
