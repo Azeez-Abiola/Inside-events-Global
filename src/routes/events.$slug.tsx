@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useSearch } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -18,7 +18,15 @@ const searchSchema = z.object({ ref: z.string().max(20).optional() });
 const FORM_INPUT =
   "w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-shadow focus:ring-2 focus:ring-ring";
 
+import { MARKETPLACE_PUBLIC } from "@/lib/marketplace-visibility";
+
 export const Route = createFileRoute("/events/$slug")({
+  beforeLoad: async () => {
+    if (!MARKETPLACE_PUBLIC) {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) throw redirect({ to: "/welcome" });
+    }
+  },
   validateSearch: searchSchema,
   head: ({ params }) => ({
     meta: [{ title: `${params.slug} · IGE` }],

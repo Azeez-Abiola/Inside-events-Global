@@ -49,7 +49,7 @@ export const getOrganiserAnalytics = createServerFn({ method: "GET" })
     if (eventIds.length) {
       const [f, d] = await Promise.all([
         supabaseAdmin.from("commitment_forms").select("submitted_at, created_at").in("event_id", eventIds),
-        supabaseAdmin.from("deals").select("status, updated_at").in("event_id", eventIds),
+        supabaseAdmin.from("deals").select("status, updated_at, deal_value_usd").in("event_id", eventIds),
       ]);
       forms = f.data ?? [];
       deals = d.data ?? [];
@@ -58,12 +58,20 @@ export const getOrganiserAnalytics = createServerFn({ method: "GET" })
     const dealStatusCounts: Record<string, number> = {};
     for (const d of deals) dealStatusCounts[d.status] = (dealStatusCounts[d.status] ?? 0) + 1;
 
+    const totalViews = (events ?? []).reduce((s, e) => s + (e.view_count ?? 0), 0);
+    const totalInquiries = (events ?? []).reduce((s, e) => s + (e.inquiry_count ?? 0), 0);
+    const closedDealValue = deals
+      .filter((d) => d.status === "payment_received")
+      .reduce((s, d) => s + Number(d.deal_value_usd ?? 0), 0);
+
     return {
       summary: {
-        totalViews: (events ?? []).reduce((s, e) => s + (e.view_count ?? 0), 0),
+        totalViews,
         totalSaves: (events ?? []).reduce((s, e) => s + (e.save_count ?? 0), 0),
-        totalInquiries: (events ?? []).reduce((s, e) => s + (e.inquiry_count ?? 0), 0),
+        totalInquiries,
         closedDeals: deals.filter((d) => d.status === "payment_received").length,
+        closedDealValueUsd: closedDealValue,
+        conversionRate: totalViews > 0 ? Math.round((totalInquiries / totalViews) * 1000) / 10 : 0,
         totalEvents: events?.length ?? 0,
         vettedEvents: (events ?? []).filter((e) => e.ige_vetted).length,
       },

@@ -6,12 +6,15 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ShieldCheck, Users, DollarSign, Loader2, ArrowRight, CheckCircle2, Pencil, XCircle, Award, Wallet, Inbox,
-  AlertTriangle, Check, X, SlidersHorizontal, BarChart3,
+  AlertTriangle, Check, X, SlidersHorizontal, BarChart3, TrendingUp, UserCheck,
 } from "lucide-react";
 import { AppShell, StatusBadge } from "@/components/app-shell";
-import { StatCard } from "@/components/dashboards/shared";
-import { DashboardHeader } from "@/components/dashboards/dashboard-shell";
+import { StatCard, StatusPill } from "@/components/dashboards/shared";
+import { DashboardHeader, DashboardTabs, DashboardPanel, DashboardTable, DashboardTableHead } from "@/components/dashboards/dashboard-shell";
 import { AdminAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
+import { AdminOverviewPanel } from "@/components/dashboards/admin-overview";
+import { getAdminSectionMeta, greetingName } from "@/lib/dashboard-meta";
+import { useAuth } from "@/lib/auth-context";
 import { listEventsForVetting, setEventVettingStatus, getEventForAdmin } from "@/lib/admin.functions";
 import { adminGetRevenue, adminListFraudFlags, adminResolveFraudFlag, adminUpsertCommissionConfig, adminCreateDeal, adminUpdateDealStatus, adminMarkCommissionPaid } from "@/lib/deals.functions";
 import { fmtMoney } from "@/lib/currency";
@@ -22,10 +25,13 @@ const DEAL_STATUSES = [
   "payment_received", "closed_lost", "cancelled",
 ];
 
-export function AdminDashboard({ section = "overview" }: { section?: "overview" | "vetting" | "submissions" | "revenue" | "controls" | "analytics" }) {
+export function AdminDashboard({ section = "overview" }: { section?: "overview" | "vetting" | "submissions" | "revenue" | "controls" | "analytics" | "partners" }) {
   const [activeSubTab, setActiveSubTab] = useState<"waitlist" | "contact">("waitlist");
   const [drawerOpen, setDrawerOpen] = useState<string | null>(null);
   const qc = useQueryClient();
+  const { user } = useAuth();
+  const meta = getAdminSectionMeta(section);
+  const greeting = section === "overview" ? greetingName(user?.email, user?.user_metadata) : undefined;
 
   const fetchVetting = useServerFn(listEventsForVetting);
   const fetchRevenue = useServerFn(adminGetRevenue);
@@ -117,42 +123,40 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
   const vettingCount = vettingData?.events?.length ?? 0;
   const waitlistCount = waitlist.data?.length ?? 0;
   const adminGmv = `$${(revenueData?.totals.gmv ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  const recentVetting = (vettingData?.events ?? []).filter((e: any) => ["submitted", "under_review", "revision_requested"].includes(e.status));
+  const pendingInquiries = revenueData?.inquiries?.length ?? 0;
 
   return (
     <AppShell>
-      <div className="space-y-8">
+      <div className="space-y-6">
         <DashboardHeader
-          title="Admin control center"
-          subtitle="Vet submitted events, manage inbound signups, and track platform revenue and referral commissions."
+          title={meta.title}
+          subtitle={meta.subtitle}
+          breadcrumbs={meta.breadcrumbs}
+          greeting={greeting}
         />
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <StatCard icon={ShieldCheck} label="Vetting queue" value={vettingCount} loading={vettingLoading} />
-          <StatCard icon={Users} label="Waitlist signups" value={waitlistCount} loading={waitlist.isLoading} />
-          <StatCard icon={DollarSign} label="Deal volume (GMV)" value={adminGmv} loading={revenueLoading} />
-        </div>
-
-        {section === "overview" && (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {[
-              { to: "/dashboard/vetting", label: "Event queue", desc: "Review submitted listings" },
-              { to: "/dashboard/submissions", label: "Submissions", desc: "Waitlist & contact inbox" },
-              { to: "/dashboard/revenue", label: "Revenue & deals", desc: "GMV, deals & payouts" },
-              { to: "/dashboard/controls", label: "Fraud & rates", desc: "Flags & commission config" },
-              { to: "/dashboard/analytics", label: "Analytics", desc: "Platform metrics" },
-            ].map((item) => (
-              <Link key={item.to} to={item.to} className="rounded-xl border border-border bg-card p-5 hover:border-primary hover:shadow-soft transition-all">
-                <div className="font-semibold">{item.label}</div>
-                <div className="mt-1 text-sm text-muted-foreground">{item.desc}</div>
-              </Link>
-            ))}
-          </div>
-        )}
-
-        {section === "analytics" ? (
-          <AdminAnalyticsPanel />
+        {section === "overview" ? (
+          <AdminOverviewPanel
+            vettingCount={vettingCount}
+            waitlistCount={waitlistCount}
+            adminGmv={adminGmv}
+            openDeals={revenueData?.totals.open ?? 0}
+            fraudFlags={revenueData?.fraudFlagsOpen ?? 0}
+            pendingInquiries={pendingInquiries}
+            recentVetting={recentVetting}
+            onVettingClick={setDrawerOpen}
+            vettingLoading={vettingLoading}
+            revenueLoading={revenueLoading}
+          />
         ) : section === "vetting" ? (
-          vettingLoading ? (
+          <>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <StatCard icon={ShieldCheck} label="In queue" value={vettingCount} loading={vettingLoading} />
+              <StatCard icon={Users} label="New submissions" value={groupedVetting.submitted?.length ?? 0} loading={vettingLoading} />
+              <StatCard icon={Pencil} label="Under review" value={groupedVetting.under_review?.length ?? 0} loading={vettingLoading} />
+            </div>
+            {vettingLoading ? (
             <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
           ) : (
             <div className="grid gap-4 xl:grid-cols-5 md:grid-cols-3 sm:grid-cols-2 grid-cols-1">
@@ -163,37 +167,45 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                 { key: "approved", label: "Approved" },
                 { key: "rejected", label: "Rejected" },
               ].map((c) => (
-                <div key={c.key} className="rounded-xl border border-border bg-muted/20 p-3">
+                <div key={c.key} className="rounded-2xl border border-border/70 bg-card p-4 shadow-soft">
                   <div className="mb-3 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     <span>{c.label}</span>
-                    <span className="rounded-full bg-card px-2 py-0.5 border border-border text-[10px] font-bold">{groupedVetting[c.key]?.length ?? 0}</span>
+                    <span className="rounded-full bg-brand-soft px-2.5 py-0.5 text-[10px] font-bold text-primary-deep">{groupedVetting[c.key]?.length ?? 0}</span>
                   </div>
                   <div className="space-y-2">
                     {(groupedVetting[c.key] ?? []).map((e: any) => (
-                      <button type="button" key={e.id} onClick={() => setDrawerOpen(e.id)} className="block w-full rounded-lg border border-border bg-card p-3 text-left text-sm hover:border-primary hover:shadow-soft transition-all cursor-pointer">
+                      <button type="button" key={e.id} onClick={() => setDrawerOpen(e.id)} className="block w-full rounded-xl border border-border/60 bg-muted/20 p-3 text-left text-sm transition-all hover:border-primary/30 hover:bg-card hover:shadow-soft cursor-pointer">
                         <div className="font-semibold text-foreground truncate">{e.name || "Untitled"}</div>
                         <div className="mt-1 text-xs text-muted-foreground truncate">{[e.event_type, e.city, e.country].filter(Boolean).join(" · ") || "-"}</div>
-                        <div className="mt-1.5 text-[10px] font-mono text-muted-foreground/80 truncate border-t border-border/50 pt-1">{e.organiser_email}</div>
+                        <div className="mt-1.5 truncate border-t border-border/50 pt-1 text-[10px] font-mono text-muted-foreground/80">{e.organiser_email}</div>
                       </button>
                     ))}
                     {groupedVetting[c.key]?.length === 0 && (
-                      <p className="rounded-md border border-dashed border-border p-3 text-center text-xs text-muted-foreground italic">Empty</p>
+                      <p className="rounded-xl border border-dashed border-border p-3 text-center text-xs text-muted-foreground italic">Empty</p>
                     )}
                   </div>
                 </div>
               ))}
             </div>
-          )
+            )}
+          </>
+        ) : section === "analytics" ? (
+          <AdminAnalyticsPanel />
         ) : section === "submissions" ? (
-          <div className="space-y-4">
-            <div className="flex gap-4 border-b border-border/60 pb-2">
-              <button onClick={() => setActiveSubTab("waitlist")} className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${activeSubTab === "waitlist" ? "bg-primary text-white" : "text-muted-foreground hover:bg-muted"}`}>
-                Waitlist ({waitlistCount})
-              </button>
-              <button onClick={() => setActiveSubTab("contact")} className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${activeSubTab === "contact" ? "bg-primary text-white" : "text-muted-foreground hover:bg-muted"}`}>
-                Contact Messages ({contact.data?.length ?? 0})
-              </button>
+          <>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <StatCard icon={Users} label="Waitlist signups" value={waitlistCount} loading={waitlist.isLoading} />
+              <StatCard icon={Inbox} label="Contact messages" value={contact.data?.length ?? 0} loading={contact.isLoading} />
             </div>
+
+            <DashboardTabs
+              tabs={[
+                { id: "waitlist", label: "Waitlist", count: waitlistCount },
+                { id: "contact", label: "Contact messages", count: contact.data?.length ?? 0 },
+              ]}
+              active={activeSubTab}
+              onChange={(id) => setActiveSubTab(id as "waitlist" | "contact")}
+            />
 
             {activeSubTab === "waitlist" ? (
               waitlist.isLoading ? (
@@ -201,65 +213,61 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
               ) : !waitlist.data?.length ? (
                 <div className="p-8 text-center text-muted-foreground">No waitlist signups.</div>
               ) : (
-                <div className="rounded-xl border border-border bg-card overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm min-w-[800px]">
-                      <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide border-b border-border text-muted-foreground">
-                        <tr>
-                          <th className="px-4 py-3">When</th><th className="px-4 py-3">Audience</th><th className="px-4 py-3">Name</th>
-                          <th className="px-4 py-3">Email</th><th className="px-4 py-3">Company</th><th className="px-4 py-3">Role</th><th className="px-4 py-3">Country</th>
+                <DashboardPanel title="Waitlist signups" bodyClassName="p-0">
+                  <DashboardTable>
+                    <DashboardTableHead>
+                      <tr>
+                        <th className="px-4 py-3">When</th><th className="px-4 py-3">Audience</th><th className="px-4 py-3">Name</th>
+                        <th className="px-4 py-3">Email</th><th className="px-4 py-3">Company</th><th className="px-4 py-3">Role</th><th className="px-4 py-3">Country</th>
+                      </tr>
+                    </DashboardTableHead>
+                    <tbody className="divide-y divide-border/60">
+                      {waitlist.data.map((r: any) => (
+                        <tr key={r.id} className="transition-colors hover:bg-muted/10">
+                          <td className="px-4 py-3 text-xs whitespace-nowrap text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
+                          <td className="px-4 py-3"><StatusPill status={r.audience} /></td>
+                          <td className="px-4 py-3 font-medium text-foreground">{r.full_name}</td>
+                          <td className="px-4 py-3"><a href={`mailto:${r.email}`} className="font-medium text-primary hover:underline">{r.email}</a></td>
+                          <td className="px-4 py-3 text-muted-foreground">{r.company ?? "—"}</td>
+                          <td className="px-4 py-3 text-muted-foreground">{r.role_title ?? "—"}</td>
+                          <td className="px-4 py-3 text-muted-foreground">{r.country ?? "—"}</td>
                         </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border">
-                        {waitlist.data.map((r: any) => (
-                          <tr key={r.id} className="hover:bg-muted/10">
-                            <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{new Date(r.created_at).toLocaleString()}</td>
-                            <td className="px-4 py-3"><span className="rounded bg-muted px-2 py-0.5 text-xs font-medium border border-border">{r.audience}</span></td>
-                            <td className="px-4 py-3 font-medium text-foreground">{r.full_name}</td>
-                            <td className="px-4 py-3"><a href={`mailto:${r.email}`} className="text-primary hover:underline font-medium">{r.email}</a></td>
-                            <td className="px-4 py-3 text-muted-foreground">{r.company ?? "—"}</td>
-                            <td className="px-4 py-3 text-muted-foreground">{r.role_title ?? "—"}</td>
-                            <td className="px-4 py-3 text-muted-foreground">{r.country ?? "—"}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                      ))}
+                    </tbody>
+                  </DashboardTable>
+                </DashboardPanel>
               )
             ) : contact.isLoading ? (
               <div className="p-8 text-center text-muted-foreground">Loading…</div>
             ) : !contact.data?.length ? (
               <div className="p-8 text-center text-muted-foreground">No contact messages.</div>
             ) : (
-              <div className="rounded-xl border border-border bg-card overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm min-w-[800px]">
-                    <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide border-b border-border text-muted-foreground">
-                      <tr>
-                        <th className="px-4 py-3">When</th><th className="px-4 py-3">From</th><th className="px-4 py-3">Subject</th><th className="px-4 py-3">Message</th><th className="px-4 py-3">Status</th>
+              <DashboardPanel title="Contact messages" bodyClassName="p-0">
+                <DashboardTable>
+                  <DashboardTableHead>
+                    <tr>
+                      <th className="px-4 py-3">When</th><th className="px-4 py-3">From</th><th className="px-4 py-3">Subject</th><th className="px-4 py-3">Message</th><th className="px-4 py-3">Status</th>
+                    </tr>
+                  </DashboardTableHead>
+                  <tbody className="divide-y divide-border/60">
+                    {contact.data.map((r: any) => (
+                      <tr key={r.id} className="transition-colors hover:bg-muted/10">
+                        <td className="px-4 py-3 text-xs whitespace-nowrap text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <div className="font-semibold text-foreground">{r.name}</div>
+                          <a href={`mailto:${r.email}`} className="text-xs text-primary hover:underline">{r.email}</a>
+                          {r.company && <div className="text-[11px] text-muted-foreground">{r.company}</div>}
+                        </td>
+                        <td className="max-w-[150px] truncate px-4 py-3 font-medium text-foreground" title={r.subject}>{r.subject}</td>
+                        <td className="max-w-[400px] px-4 py-3 text-xs whitespace-pre-wrap text-muted-foreground">{r.message}</td>
+                        <td className="px-4 py-3"><StatusPill status={r.status} /></td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {contact.data.map((r: any) => (
-                        <tr key={r.id} className="hover:bg-muted/10">
-                          <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{new Date(r.created_at).toLocaleString()}</td>
-                          <td className="px-4 py-3 text-sm">
-                            <div className="font-semibold text-foreground">{r.name}</div>
-                            <a href={`mailto:${r.email}`} className="text-xs text-primary hover:underline">{r.email}</a>
-                            {r.company && <div className="text-[11px] text-muted-foreground">{r.company}</div>}
-                          </td>
-                          <td className="px-4 py-3 font-medium text-foreground max-w-[150px] truncate" title={r.subject}>{r.subject}</td>
-                          <td className="px-4 py-3 text-muted-foreground text-xs whitespace-pre-wrap max-w-[400px]">{r.message}</td>
-                          <td className="px-4 py-3"><span className="rounded bg-muted px-2 py-0.5 text-xs font-semibold">{r.status}</span></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                    ))}
+                  </tbody>
+                </DashboardTable>
+              </DashboardPanel>
             )}
-          </div>
+          </>
         ) : section === "controls" ? (
           <div className="space-y-8">
             {/* Fraud flags */}
@@ -331,17 +339,58 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
               </div>
             </section>
           </div>
+        ) : section === "partners" ? (
+          <>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <StatCard icon={UserCheck} label="Partners" value={revenueData?.partners?.length ?? 0} loading={revenueLoading} />
+              <StatCard icon={Wallet} label="Total owed" value={`$${Number(revenueData?.totals.refOwed ?? 0).toLocaleString()}`} loading={revenueLoading} />
+              <StatCard icon={TrendingUp} label="Open deals" value={revenueData?.totals.open ?? 0} loading={revenueLoading} />
+            </div>
+            {revenueLoading ? (
+              <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+            ) : (
+              <DashboardPanel title="Referral partner management" description="Active links, conversion rates, and commissions owed per partner." bodyClassName="p-0">
+                <DashboardTable className="min-w-[800px]">
+                  <DashboardTableHead>
+                    <tr>
+                      <th className="px-4 py-3">Partner</th><th className="px-4 py-3">Tier</th><th className="px-4 py-3">Deals closed</th>
+                      <th className="px-4 py-3">Active links</th><th className="px-4 py-3">Clicks</th><th className="px-4 py-3">Conversions</th>
+                      <th className="px-4 py-3">Owed (USD)</th><th className="px-4 py-3">Paid (USD)</th>
+                    </tr>
+                  </DashboardTableHead>
+                  <tbody className="divide-y divide-border/60">
+                    {(revenueData?.partners ?? []).map((p: any) => (
+                      <tr key={p.user_id} className="transition-colors hover:bg-muted/10">
+                        <td className="px-4 py-3 font-semibold text-foreground">{p.full_name ?? "—"}</td>
+                        <td className="px-4 py-3"><StatusPill status={p.commission_tier ?? "standard"} /></td>
+                        <td className="px-4 py-3">{p.deals_closed ?? 0}</td>
+                        <td className="px-4 py-3">{p.active_links ?? 0}</td>
+                        <td className="px-4 py-3">{p.total_clicks ?? 0}</td>
+                        <td className="px-4 py-3">{p.conversions ?? 0}</td>
+                        <td className="px-4 py-3 font-mono text-xs text-amber-800">${Number(p.owed_usd ?? 0).toLocaleString()}</td>
+                        <td className="px-4 py-3 font-mono text-xs text-emerald-800">${Number(p.paid_usd_running ?? 0).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                    {!(revenueData?.partners ?? []).length && (
+                      <tr><td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">No referral partners registered yet.</td></tr>
+                    )}
+                  </tbody>
+                </DashboardTable>
+              </DashboardPanel>
+            )}
+          </>
         ) : section === "revenue" ? (
           revenueLoading ? (
-          <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-        ) : (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard icon={DollarSign} label="Deal GMV (Total)" value={`$${Number(revenueData?.totals.gmv ?? 0).toLocaleString()}`} />
-              <StatCard icon={Award} label="IGE Commission (Total)" value={`$${Number(revenueData?.totals.abw ?? 0).toLocaleString()}`} />
-              <StatCard icon={Wallet} label="Partner Owed" value={`$${Number(revenueData?.totals.refOwed ?? 0).toLocaleString()}`} />
-              <StatCard icon={Inbox} label="Open Deals" value={revenueData?.totals.open ?? 0} />
-            </div>
+            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+          ) : (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                <StatCard icon={DollarSign} label="Deal GMV (Total)" value={`$${Number(revenueData?.totals.gmv ?? 0).toLocaleString()}`} />
+                <StatCard icon={Award} label="IGE Commission (Total)" value={`$${Number(revenueData?.totals.abw ?? 0).toLocaleString()}`} />
+                <StatCard icon={Wallet} label="Partner Owed" value={`$${Number(revenueData?.totals.refOwed ?? 0).toLocaleString()}`} />
+                <StatCard icon={Inbox} label="Open Deals" value={revenueData?.totals.open ?? 0} />
+                <StatCard icon={TrendingUp} label="Pipeline forecast" value={`$${Number(revenueData?.totals.forecast ?? 0).toLocaleString()}`} />
+              </div>
 
             {/* Pending inquiries → convert to deal */}
             {(revenueData?.inquiries ?? []).length > 0 && (

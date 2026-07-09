@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -14,7 +14,12 @@ const FORMAT_LABELS: Record<string, string> = {
   hybrid: "Hybrid",
 };
 
+import { MARKETPLACE_PUBLIC } from "@/lib/marketplace-visibility";
+
 export const Route = createFileRoute("/marketplace")({
+  beforeLoad: () => {
+    if (!MARKETPLACE_PUBLIC) throw redirect({ to: "/welcome" });
+  },
   head: () => ({
     meta: [
       { title: "Event Sponsorship Marketplace — Browse Vetted B2B Events | IGE" },

@@ -124,6 +124,8 @@
   );
   --shadow-brand: 0 20px 60px -20px oklch(0.44 0.17 305 / 0.45);
   --shadow-soft: 0 8px 30px -12px oklch(0.30 0.14 305 / 0.18);
+  --shadow-card: 0 2px 16px -4px oklch(0.30 0.14 305 / 0.10);
+  --dashboard-canvas: oklch(0.97 0.006 305);
 }
 
 .dark {
@@ -201,6 +203,12 @@
   }
   .shadow-soft {
     box-shadow: var(--shadow-soft);
+  }
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  .bg-dashboard-canvas {
+    background-color: var(--dashboard-canvas);
   }
   .font-display {
     font-family: var(--font-display);

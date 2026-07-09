@@ -56,11 +56,14 @@ import { Route as AuthenticatedDashboardRevenueRouteImport } from './routes/_aut
 import { Route as AuthenticatedDashboardRequestsRouteImport } from './routes/_authenticated/dashboard.requests'
 import { Route as AuthenticatedDashboardReferralsRouteImport } from './routes/_authenticated/dashboard.referrals'
 import { Route as AuthenticatedDashboardPipelineRouteImport } from './routes/_authenticated/dashboard.pipeline'
+import { Route as AuthenticatedDashboardPartnersRouteImport } from './routes/_authenticated/dashboard.partners'
 import { Route as AuthenticatedDashboardExploreRouteImport } from './routes/_authenticated/dashboard.explore'
+import { Route as AuthenticatedDashboardDocumentsRouteImport } from './routes/_authenticated/dashboard.documents'
 import { Route as AuthenticatedDashboardDiscoverRouteImport } from './routes/_authenticated/dashboard.discover'
 import { Route as AuthenticatedDashboardDealsRouteImport } from './routes/_authenticated/dashboard.deals'
 import { Route as AuthenticatedDashboardControlsRouteImport } from './routes/_authenticated/dashboard.controls'
 import { Route as AuthenticatedDashboardCommitmentsRouteImport } from './routes/_authenticated/dashboard.commitments'
+import { Route as AuthenticatedDashboardCommissionsRouteImport } from './routes/_authenticated/dashboard.commissions'
 import { Route as AuthenticatedDashboardBudgetRouteImport } from './routes/_authenticated/dashboard.budget'
 import { Route as AuthenticatedDashboardAnalyticsRouteImport } from './routes/_authenticated/dashboard.analytics'
 import { Route as AuthenticatedAdminVettingRouteImport } from './routes/_authenticated/admin.vetting'
@@ -318,10 +321,22 @@ const AuthenticatedDashboardPipelineRoute =
     path: '/pipeline',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardPartnersRoute =
+  AuthenticatedDashboardPartnersRouteImport.update({
+    id: '/partners',
+    path: '/partners',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedDashboardExploreRoute =
   AuthenticatedDashboardExploreRouteImport.update({
     id: '/explore',
     path: '/explore',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardDocumentsRoute =
+  AuthenticatedDashboardDocumentsRouteImport.update({
+    id: '/documents',
+    path: '/documents',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
 const AuthenticatedDashboardDiscoverRoute =
@@ -346,6 +361,12 @@ const AuthenticatedDashboardCommitmentsRoute =
   AuthenticatedDashboardCommitmentsRouteImport.update({
     id: '/commitments',
     path: '/commitments',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardCommissionsRoute =
+  AuthenticatedDashboardCommissionsRouteImport.update({
+    id: '/commissions',
+    path: '/commissions',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
 const AuthenticatedDashboardBudgetRoute =
@@ -464,11 +485,14 @@ export interface FileRoutesByFullPath {
   '/admin/vetting': typeof AuthenticatedAdminVettingRoute
   '/dashboard/analytics': typeof AuthenticatedDashboardAnalyticsRoute
   '/dashboard/budget': typeof AuthenticatedDashboardBudgetRoute
+  '/dashboard/commissions': typeof AuthenticatedDashboardCommissionsRoute
   '/dashboard/commitments': typeof AuthenticatedDashboardCommitmentsRoute
   '/dashboard/controls': typeof AuthenticatedDashboardControlsRoute
   '/dashboard/deals': typeof AuthenticatedDashboardDealsRoute
   '/dashboard/discover': typeof AuthenticatedDashboardDiscoverRoute
+  '/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/dashboard/explore': typeof AuthenticatedDashboardExploreRoute
+  '/dashboard/partners': typeof AuthenticatedDashboardPartnersRoute
   '/dashboard/pipeline': typeof AuthenticatedDashboardPipelineRoute
   '/dashboard/referrals': typeof AuthenticatedDashboardReferralsRoute
   '/dashboard/requests': typeof AuthenticatedDashboardRequestsRoute
@@ -528,11 +552,14 @@ export interface FileRoutesByTo {
   '/admin/vetting': typeof AuthenticatedAdminVettingRoute
   '/dashboard/analytics': typeof AuthenticatedDashboardAnalyticsRoute
   '/dashboard/budget': typeof AuthenticatedDashboardBudgetRoute
+  '/dashboard/commissions': typeof AuthenticatedDashboardCommissionsRoute
   '/dashboard/commitments': typeof AuthenticatedDashboardCommitmentsRoute
   '/dashboard/controls': typeof AuthenticatedDashboardControlsRoute
   '/dashboard/deals': typeof AuthenticatedDashboardDealsRoute
   '/dashboard/discover': typeof AuthenticatedDashboardDiscoverRoute
+  '/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/dashboard/explore': typeof AuthenticatedDashboardExploreRoute
+  '/dashboard/partners': typeof AuthenticatedDashboardPartnersRoute
   '/dashboard/pipeline': typeof AuthenticatedDashboardPipelineRoute
   '/dashboard/referrals': typeof AuthenticatedDashboardReferralsRoute
   '/dashboard/requests': typeof AuthenticatedDashboardRequestsRoute
@@ -596,11 +623,14 @@ export interface FileRoutesById {
   '/_authenticated/admin/vetting': typeof AuthenticatedAdminVettingRoute
   '/_authenticated/dashboard/analytics': typeof AuthenticatedDashboardAnalyticsRoute
   '/_authenticated/dashboard/budget': typeof AuthenticatedDashboardBudgetRoute
+  '/_authenticated/dashboard/commissions': typeof AuthenticatedDashboardCommissionsRoute
   '/_authenticated/dashboard/commitments': typeof AuthenticatedDashboardCommitmentsRoute
   '/_authenticated/dashboard/controls': typeof AuthenticatedDashboardControlsRoute
   '/_authenticated/dashboard/deals': typeof AuthenticatedDashboardDealsRoute
   '/_authenticated/dashboard/discover': typeof AuthenticatedDashboardDiscoverRoute
+  '/_authenticated/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/_authenticated/dashboard/explore': typeof AuthenticatedDashboardExploreRoute
+  '/_authenticated/dashboard/partners': typeof AuthenticatedDashboardPartnersRoute
   '/_authenticated/dashboard/pipeline': typeof AuthenticatedDashboardPipelineRoute
   '/_authenticated/dashboard/referrals': typeof AuthenticatedDashboardReferralsRoute
   '/_authenticated/dashboard/requests': typeof AuthenticatedDashboardRequestsRoute
@@ -664,11 +694,14 @@ export interface FileRouteTypes {
     | '/admin/vetting'
     | '/dashboard/analytics'
     | '/dashboard/budget'
+    | '/dashboard/commissions'
     | '/dashboard/commitments'
     | '/dashboard/controls'
     | '/dashboard/deals'
     | '/dashboard/discover'
+    | '/dashboard/documents'
     | '/dashboard/explore'
+    | '/dashboard/partners'
     | '/dashboard/pipeline'
     | '/dashboard/referrals'
     | '/dashboard/requests'
@@ -728,11 +761,14 @@ export interface FileRouteTypes {
     | '/admin/vetting'
     | '/dashboard/analytics'
     | '/dashboard/budget'
+    | '/dashboard/commissions'
     | '/dashboard/commitments'
     | '/dashboard/controls'
     | '/dashboard/deals'
     | '/dashboard/discover'
+    | '/dashboard/documents'
     | '/dashboard/explore'
+    | '/dashboard/partners'
     | '/dashboard/pipeline'
     | '/dashboard/referrals'
     | '/dashboard/requests'
@@ -795,11 +831,14 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/vetting'
     | '/_authenticated/dashboard/analytics'
     | '/_authenticated/dashboard/budget'
+    | '/_authenticated/dashboard/commissions'
     | '/_authenticated/dashboard/commitments'
     | '/_authenticated/dashboard/controls'
     | '/_authenticated/dashboard/deals'
     | '/_authenticated/dashboard/discover'
+    | '/_authenticated/dashboard/documents'
     | '/_authenticated/dashboard/explore'
+    | '/_authenticated/dashboard/partners'
     | '/_authenticated/dashboard/pipeline'
     | '/_authenticated/dashboard/referrals'
     | '/_authenticated/dashboard/requests'
@@ -1193,11 +1232,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardPipelineRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/partners': {
+      id: '/_authenticated/dashboard/partners'
+      path: '/partners'
+      fullPath: '/dashboard/partners'
+      preLoaderRoute: typeof AuthenticatedDashboardPartnersRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/dashboard/explore': {
       id: '/_authenticated/dashboard/explore'
       path: '/explore'
       fullPath: '/dashboard/explore'
       preLoaderRoute: typeof AuthenticatedDashboardExploreRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/documents': {
+      id: '/_authenticated/dashboard/documents'
+      path: '/documents'
+      fullPath: '/dashboard/documents'
+      preLoaderRoute: typeof AuthenticatedDashboardDocumentsRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
     '/_authenticated/dashboard/discover': {
@@ -1226,6 +1279,13 @@ declare module '@tanstack/react-router' {
       path: '/commitments'
       fullPath: '/dashboard/commitments'
       preLoaderRoute: typeof AuthenticatedDashboardCommitmentsRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/commissions': {
+      id: '/_authenticated/dashboard/commissions'
+      path: '/commissions'
+      fullPath: '/dashboard/commissions'
+      preLoaderRoute: typeof AuthenticatedDashboardCommissionsRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
     '/_authenticated/dashboard/budget': {
@@ -1325,11 +1385,14 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardAnalyticsRoute: typeof AuthenticatedDashboardAnalyticsRoute
   AuthenticatedDashboardBudgetRoute: typeof AuthenticatedDashboardBudgetRoute
+  AuthenticatedDashboardCommissionsRoute: typeof AuthenticatedDashboardCommissionsRoute
   AuthenticatedDashboardCommitmentsRoute: typeof AuthenticatedDashboardCommitmentsRoute
   AuthenticatedDashboardControlsRoute: typeof AuthenticatedDashboardControlsRoute
   AuthenticatedDashboardDealsRoute: typeof AuthenticatedDashboardDealsRoute
   AuthenticatedDashboardDiscoverRoute: typeof AuthenticatedDashboardDiscoverRoute
+  AuthenticatedDashboardDocumentsRoute: typeof AuthenticatedDashboardDocumentsRoute
   AuthenticatedDashboardExploreRoute: typeof AuthenticatedDashboardExploreRoute
+  AuthenticatedDashboardPartnersRoute: typeof AuthenticatedDashboardPartnersRoute
   AuthenticatedDashboardPipelineRoute: typeof AuthenticatedDashboardPipelineRoute
   AuthenticatedDashboardReferralsRoute: typeof AuthenticatedDashboardReferralsRoute
   AuthenticatedDashboardRequestsRoute: typeof AuthenticatedDashboardRequestsRoute
@@ -1344,12 +1407,16 @@ const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
   {
     AuthenticatedDashboardAnalyticsRoute: AuthenticatedDashboardAnalyticsRoute,
     AuthenticatedDashboardBudgetRoute: AuthenticatedDashboardBudgetRoute,
+    AuthenticatedDashboardCommissionsRoute:
+      AuthenticatedDashboardCommissionsRoute,
     AuthenticatedDashboardCommitmentsRoute:
       AuthenticatedDashboardCommitmentsRoute,
     AuthenticatedDashboardControlsRoute: AuthenticatedDashboardControlsRoute,
     AuthenticatedDashboardDealsRoute: AuthenticatedDashboardDealsRoute,
     AuthenticatedDashboardDiscoverRoute: AuthenticatedDashboardDiscoverRoute,
+    AuthenticatedDashboardDocumentsRoute: AuthenticatedDashboardDocumentsRoute,
     AuthenticatedDashboardExploreRoute: AuthenticatedDashboardExploreRoute,
+    AuthenticatedDashboardPartnersRoute: AuthenticatedDashboardPartnersRoute,
     AuthenticatedDashboardPipelineRoute: AuthenticatedDashboardPipelineRoute,
     AuthenticatedDashboardReferralsRoute: AuthenticatedDashboardReferralsRoute,
     AuthenticatedDashboardRequestsRoute: AuthenticatedDashboardRequestsRoute,

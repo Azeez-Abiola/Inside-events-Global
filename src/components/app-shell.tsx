@@ -1,13 +1,16 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { LogOut, Bell, Loader2 } from "lucide-react";
+import { LogOut, Bell, Loader2, Menu, Search, Settings } from "lucide-react";
 import { toast } from "sonner";
 import logo from "@/assets/ige-logo.jpeg";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { getWorkspaceNav } from "@/lib/workspace-nav";
+import { greetingName, roleLabel } from "@/lib/dashboard-meta";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,12 +22,21 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+function isNavActive(pathname: string, to: string) {
+  if (to === "/marketplace") return pathname === "/marketplace" || pathname.startsWith("/marketplace/");
+  if (to === "/dashboard") return pathname === "/dashboard";
+  return pathname === to || pathname.startsWith(to + "/");
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, roles, signOut } = useAuth();
   const loc = useLocation();
   const nav = getWorkspaceNav(roles);
   const [signOutOpen, setSignOutOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => setMobileOpen(false), [loc.pathname]);
 
   async function confirmSignOut() {
     setSigningOut(true);
@@ -36,89 +48,148 @@ export function AppShell({ children }: { children: ReactNode }) {
     }
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-white/10 bg-brand-gradient-diag text-white shadow-soft">
-        <div className="mx-auto grid h-16 max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-4 px-4 sm:px-6">
-          <Link to="/dashboard" className="flex items-center gap-2.5 shrink-0">
-            <img src={logo} alt="IGE" className="h-8 w-8 rounded-md object-cover ring-1 ring-white/20" />
-            <span className="font-display text-base font-bold hidden sm:inline">IGE</span>
-          </Link>
+  const sidebar = (
+    <aside className="flex h-full w-[248px] shrink-0 flex-col bg-card">
+      {/* Voom: logo row */}
+      <div className="flex h-[72px] items-center gap-3 px-6">
+        <img src={logo} alt="IGE" className="h-9 w-9 rounded-xl object-cover" />
+        <span className="font-display text-[15px] font-bold text-foreground">Inside Global Events</span>
+      </div>
 
-          <nav className="hidden lg:flex items-center justify-center gap-0.5 flex-wrap">
-            {nav.map((n) => {
-              const active = loc.pathname === n.to || (n.to !== "/dashboard" && loc.pathname.startsWith(n.to + "/")) || (n.to === "/dashboard" && loc.pathname === "/dashboard");
-              return (
-                <Link
-                  key={n.to}
-                  to={n.to}
-                  className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors whitespace-nowrap ${
-                    active ? "bg-white/20 text-white shadow-sm" : "text-white/75 hover:bg-white/10 hover:text-white"
-                  }`}
-                >
-                  <n.icon className="h-3.5 w-3.5 shrink-0" />
-                  {n.label}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div className="flex items-center justify-end gap-2 text-sm shrink-0">
-            <NotificationsBell />
-            <ThemeToggle />
-            <span className="hidden text-white/80 md:inline max-w-[140px] truncate text-xs">{user?.email}</span>
-            <button
-              onClick={() => setSignOutOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-md border border-white/20 bg-white/10 px-2.5 py-1.5 text-sm font-medium text-white hover:bg-white/20 transition-colors"
+      {/* Voom: flat nav + left accent bar on active item */}
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">
+        {nav.map((n) => {
+          const active = isNavActive(loc.pathname, n.to);
+          return (
+            <Link
+              key={n.to}
+              to={n.to}
+              className={cn(
+                "relative flex items-center gap-3 rounded-lg py-2.5 pl-5 pr-3 text-[13px] font-medium transition-colors",
+                active
+                  ? "font-semibold text-primary"
+                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+              )}
             >
-              <LogOut className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Sign out</span>
-            </button>
-          </div>
+              {active && (
+                <span className="absolute left-0 top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-r-full bg-primary" />
+              )}
+              <n.icon className={cn("h-[18px] w-[18px] shrink-0", active ? "text-primary" : "text-muted-foreground")} />
+              {n.label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Voom: marketplace CTA card + sign out */}
+      <div className="space-y-2 p-4">
+        <div className="rounded-2xl bg-brand-soft p-4">
+          <p className="text-xs font-semibold text-primary-deep">Join the waitlist</p>
+          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">Be first to know when the IGE marketplace opens.</p>
+          <Link
+            to="/waitlist"
+            className="mt-3 inline-flex w-full items-center justify-center rounded-xl bg-brand-gradient py-2 text-xs font-bold text-white"
+          >
+            Join waitlist
+          </Link>
         </div>
+        <button
+          onClick={() => setSignOutOpen(true)}
+          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+        >
+          <LogOut className="h-4 w-4" />
+          Sign out
+        </button>
+      </div>
+    </aside>
+  );
 
-        <AlertDialog open={signOutOpen} onOpenChange={setSignOutOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Sign out?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to sign out? You will be returned to the login screen.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={signingOut}>No</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={(e) => {
-                  e.preventDefault();
-                  void confirmSignOut();
-                }}
-                disabled={signingOut}
-              >
-                {signingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : "Yes, sign out"}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+  const displayName = greetingName(user?.email, user?.user_metadata);
+  const initials = displayName.slice(0, 2).toUpperCase();
 
-        {/* Mobile nav scroll */}
-        <nav className="flex lg:hidden gap-1 overflow-x-auto border-t border-white/10 px-4 py-2 scrollbar-none">
-          {nav.map((n) => {
-            const active = loc.pathname === n.to || (n.to !== "/dashboard" && loc.pathname.startsWith(n.to + "/")) || (n.to === "/dashboard" && loc.pathname === "/dashboard");
-            return (
-              <Link
-                key={n.to}
-                to={n.to}
-                className={`inline-flex shrink-0 items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium ${
-                  active ? "bg-white/20 text-white" : "text-white/75"
-                }`}
+  return (
+    <div className="min-h-screen bg-dashboard-canvas">
+      {mobileOpen && (
+        <div className="fixed inset-0 z-40 flex md:hidden">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
+          <div className="relative z-50 h-full shadow-2xl">{sidebar}</div>
+        </div>
+      )}
+
+      <div className="flex min-h-screen">
+        <div className="hidden md:block sticky top-0 h-screen border-r border-border/50">{sidebar}</div>
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          {/* Voom: white top bar — centered search, utilities right */}
+          <header className="sticky top-0 z-30 flex h-[72px] items-center gap-4 border-b border-border/50 bg-card px-4 sm:px-6">
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/60 md:hidden"
+              aria-label="Open menu"
+            >
+              <Menu className="h-4 w-4" />
+            </button>
+
+            <div className="mx-auto flex w-full max-w-lg flex-1 items-center">
+              <div className="relative w-full">
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="search"
+                  placeholder="Search anything…"
+                  className="h-11 w-full rounded-full border border-border/60 bg-muted/40 pl-11 pr-4 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/30 focus:bg-card focus:ring-2 focus:ring-primary/10"
+                />
+              </div>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2">
+              <NotificationsBell />
+              <ThemeToggle />
+              <button
+                type="button"
+                className="hidden h-10 w-10 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition-colors hover:bg-muted/60 sm:inline-flex"
+                aria-label="Settings"
               >
-                <n.icon className="h-3 w-3" />
-                {n.label}
-              </Link>
-            );
-          })}
-        </nav>
-      </header>
-      <main className="mx-auto max-w-7xl px-6 py-10">{children}</main>
+                <Settings className="h-4 w-4" />
+              </button>
+              <div className="ml-1 flex items-center gap-2.5 pl-2">
+                <Avatar className="h-9 w-9 ring-2 ring-primary/10">
+                  <AvatarFallback className="bg-brand-soft text-xs font-bold text-primary-deep">{initials}</AvatarFallback>
+                </Avatar>
+                <div className="hidden min-w-0 lg:block">
+                  <div className="truncate text-sm font-semibold text-foreground">{displayName}</div>
+                  <div className="truncate text-[11px] text-muted-foreground">{roleLabel(roles)}</div>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+        </div>
+      </div>
+
+      <AlertDialog open={signOutOpen} onOpenChange={setSignOutOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign out?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to sign out? You will be returned to the login screen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={signingOut}>No</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                void confirmSignOut();
+              }}
+              disabled={signingOut}
+            >
+              {signingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : "Yes, sign out"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -191,12 +262,12 @@ function NotificationsBell() {
     <div className="relative">
       <button
         onClick={() => { setOpen((o) => !o); if (!open && unread) markAllRead(); }}
-        className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors"
+        className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition-colors hover:bg-muted/60"
         aria-label="Notifications"
       >
         <Bell className="h-4 w-4" />
         {unread > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+          <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
@@ -204,7 +275,7 @@ function NotificationsBell() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-xl border border-border bg-card text-foreground shadow-2xl">
+          <div className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-2xl border border-border bg-card text-foreground shadow-2xl">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <span className="text-sm font-bold">Notifications</span>
               {unread > 0 && <button onClick={markAllRead} className="text-xs text-primary hover:underline">Mark all read</button>}
@@ -244,18 +315,18 @@ function NotificationsBell() {
 export function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
     draft: "bg-muted text-muted-foreground",
-    submitted: "bg-muted text-foreground",
+    submitted: "bg-primary/10 text-primary-deep",
     under_review: "bg-amber-100 text-amber-900",
     revision_requested: "bg-red-100 text-red-900",
-    approved: "bg-emerald-100 text-emerald-900",
-    listed: "bg-emerald-100 text-emerald-900",
+    approved: "bg-secondary/15 text-secondary-deep",
+    listed: "bg-secondary/15 text-secondary-deep",
     rejected: "bg-red-100 text-red-900",
     closed: "bg-foreground/10 text-foreground",
     archived: "bg-foreground/10 text-foreground",
   };
   const label = status.replace(/_/g, " ");
   return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${map[status] ?? "bg-muted"}`}>
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold capitalize ${map[status] ?? "bg-muted"}`}>
       {label}
     </span>
   );

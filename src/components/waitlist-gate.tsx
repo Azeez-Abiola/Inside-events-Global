@@ -20,21 +20,21 @@ const ALLOWED_PREFIXES = [
   "/r/",
 ];
 
+// Public site is waitlist-only until marketplace launch. Signed-in users reach the dashboard.
+const SITE_GATE_DISABLED = false;
+
 export function WaitlistGate({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const isServer = typeof window === "undefined";
-  const [checked, setChecked] = useState(isServer);
-  const [allowed, setAllowed] = useState(isServer);
+  // SSR-safe: server and client must start with the same initial state.
+  const [checked, setChecked] = useState(SITE_GATE_DISABLED);
+  const [allowed, setAllowed] = useState(SITE_GATE_DISABLED);
 
   useEffect(() => {
+    if (SITE_GATE_DISABLED) return;
+
     let cancelled = false;
     async function run() {
-      // Test phase: site is publicly open (marketplace is the landing page).
-      // Re-enable the waitlist gate before a gated launch by removing this block.
-      if (!cancelled) { setAllowed(true); setChecked(true); }
-      return;
-
       // DEV impersonation bypasses the gate.
       if (DEV_AUTH_ENABLED && getDevRoles()) {
         if (!cancelled) { setAllowed(true); setChecked(true); }

@@ -3,17 +3,69 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Plus, Link2, MousePointerClick, TrendingUp, Wallet, Award, Copy, MessageCircle, Share2, Mail, BarChart3 } from "lucide-react";
-import { AppShell } from "@/components/app-shell";
+import {
+  Plus, Link2, MousePointerClick, TrendingUp, Wallet, Award, Copy, MessageCircle, Share2, Mail, Download,
+} from "lucide-react";
 import { StatCard } from "@/components/dashboards/shared";
-import { DashboardHeader } from "@/components/dashboards/dashboard-shell";
+import { WorkspacePage } from "@/components/dashboards/workspace-page";
 import { ReferralAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
 import { getReferralDashboard, generateReferralLink } from "@/lib/referrals.functions";
 import { listMarketplaceEvents } from "@/lib/marketplace.functions";
 import { fmtMoney } from "@/lib/currency";
 
-export function ReferralDashboard({ section = "links" }: { section?: "overview" | "links" | "deals" | "analytics" }) {
+type ReferralSection = "overview" | "links" | "deals" | "analytics" | "commissions";
+
+function exportPayoutCsv(deals: any[], events: Record<string, any>) {
+  const rows = [
+    ["Event", "Status", "Deal value", "Commission USD", "Payout status", "Paid at"],
+    ...deals.map((d) => {
+      const ev = events[d.event_id];
+      return [
+        ev?.name ?? d.event_id,
+        d.status,
+        d.deal_value_native ? `${d.deal_currency} ${d.deal_value_native}` : "",
+        d.referral_commission_usd ?? "",
+        d.referral_commission_paid ? "Paid" : "Pending",
+        d.referral_commission_paid_at ?? "",
+      ];
+    }),
+  ];
+  const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `ige-payout-history-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+const SECTION_META: Record<ReferralSection, { title: string; subtitle: string }> = {
+  overview: {
+    title: "Referral partner workspace",
+    subtitle: "Generate trackable Vouch Links, refer sponsors to vetted events, and monitor commission as deals close.",
+  },
+  links: {
+    title: "My referrals",
+    subtitle: "Vouch links, click tracking, and sharing tools.",
+  },
+  deals: {
+    title: "Deal pipeline",
+    subtitle: "Attributed deals and commission status.",
+  },
+  commissions: {
+    title: "Commission tracker",
+    subtitle: "Earned, pending, and paid commissions with payout export.",
+  },
+  analytics: {
+    title: "Analytics",
+    subtitle: "Clicks, conversions, and earnings over time.",
+  },
+};
+
+export function ReferralDashboard({ section = "links" }: { section?: ReferralSection }) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  const meta = SECTION_META[section];
 
   const fetch = useServerFn(getReferralDashboard);
   const { data, isLoading } = useQuery({ queryKey: ["referral-dash"], queryFn: () => fetch() });
@@ -28,118 +80,76 @@ export function ReferralDashboard({ section = "links" }: { section?: "overview" 
     toast.success("Referral link copied!");
   };
 
-  return (
-    <AppShell>
-      <div className="space-y-8">
-        <DashboardHeader
-          title="Referral partner workspace"
-          subtitle="Generate trackable Vouch Links, refer sponsors to vetted events, and monitor commission as deals close."
-          action={
-            <button
-              type="button"
-              onClick={() => setPickerOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-md bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-soft hover:-translate-y-0.5 transition-all"
-            >
-              <Plus className="h-4 w-4" /> Generate link
-            </button>
-          }
-        />
+  const generateAction = section === "links" || section === "overview" ? (
+    <button
+      type="button"
+      onClick={() => setPickerOpen(true)}
+      className="inline-flex items-center gap-1.5 rounded-md bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-soft hover:-translate-y-0.5 transition-all"
+    >
+      <Plus className="h-4 w-4" /> Generate link
+    </button>
+  ) : section === "commissions" ? (
+    <button
+      type="button"
+      onClick={() => exportPayoutCsv(data?.deals ?? [], data?.events ?? {})}
+      disabled={!data?.deals?.length}
+      className="inline-flex items-center gap-1.5 rounded-md border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted transition-colors disabled:opacity-50"
+    >
+      <Download className="h-4 w-4" /> Export payout history
+    </button>
+  ) : undefined;
 
+  return (
+    <WorkspacePage title={meta.title} subtitle={meta.subtitle} action={generateAction} showGreeting={section === "overview"}>
+      {(section === "overview" || section === "links") && (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <StatCard icon={Link2} label="Active links" value={activeLinks} loading={isLoading} />
           <StatCard icon={MousePointerClick} label="Total clicks" value={totalClicks} loading={isLoading} />
           <StatCard icon={TrendingUp} label="Conversions" value={conversions} loading={isLoading} />
           <StatCard icon={Wallet} label="Earned (USD)" value={earnedCommission} loading={isLoading} />
         </div>
+      )}
 
-        {data?.profile?.igb_partner_badge && (
-          <div className="inline-flex items-center gap-2 rounded-full bg-secondary/10 px-3.5 py-1.5 text-xs font-semibold text-secondary-deep">
-            <Award className="h-4 w-4" /> IGB Partner — premium commission tier
+      {data?.profile?.igb_partner_badge && (section === "overview" || section === "links") && (
+        <div className="inline-flex items-center gap-2 rounded-full bg-secondary/10 px-3.5 py-1.5 text-xs font-semibold text-secondary-deep">
+          <Award className="h-4 w-4" /> IGE Partner — premium commission tier
+        </div>
+      )}
+
+      {section === "overview" && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {[
+            { to: "/marketplace", label: "Marketplace", desc: "Browse vetted events" },
+            { to: "/dashboard/referrals", label: "My referrals", desc: "Vouch links & sharing" },
+            { to: "/dashboard/commissions", label: "Commission tracker", desc: "Earned, pending & paid" },
+            { to: "/dashboard/deals", label: "Deal pipeline", desc: "Attributed deals" },
+            { to: "/dashboard/analytics", label: "Analytics", desc: "Clicks & earnings" },
+          ].map((item) => (
+            <Link key={item.to} to={item.to} className="rounded-xl border border-border bg-card p-5 hover:border-primary hover:shadow-soft transition-all">
+              <div className="font-semibold">{item.label}</div>
+              <div className="mt-1 text-sm text-muted-foreground">{item.desc}</div>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {section === "commissions" && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <StatCard icon={Wallet} label="Earned (USD)" value={`$${(data?.totals.earned ?? 0).toFixed(0)}`} loading={isLoading} />
+            <StatCard icon={TrendingUp} label="Pending (USD)" value={`$${(data?.totals.pending ?? 0).toFixed(0)}`} loading={isLoading} />
+            <StatCard icon={Award} label="Paid (USD)" value={`$${(data?.totals.paid ?? 0).toFixed(0)}`} loading={isLoading} />
           </div>
-        )}
-
-        {section === "overview" && (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {[
-              { to: "/dashboard/referrals", label: "My referrals", desc: "Vouch links & sharing" },
-              { to: "/dashboard/deals", label: "Commission pipeline", desc: "Attributed deals" },
-              { to: "/dashboard/analytics", label: "Analytics", desc: "Clicks & earnings" },
-            ].map((item) => (
-              <Link key={item.to} to={item.to} className="rounded-xl border border-border bg-card p-5 hover:border-primary hover:shadow-soft transition-all">
-                <div className="font-semibold">{item.label}</div>
-                <div className="mt-1 text-sm text-muted-foreground">{item.desc}</div>
-              </Link>
-            ))}
-          </div>
-        )}
-
-        {section === "analytics" ? (
-          <ReferralAnalyticsPanel />
-        ) : section === "links" ? (
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm min-w-[700px]">
                 <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
                   <tr>
                     <th className="px-5 py-3">Event</th>
-                    <th className="px-5 py-3">Referral Link</th>
-                    <th className="px-5 py-3">Clicks</th>
-                    <th className="px-5 py-3">Commission Rate</th>
-                    <th className="px-5 py-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {(data?.links ?? []).map((l: any) => {
-                    const ev = data!.events[l.event_id];
-                    const url = typeof window !== "undefined" ? `${window.location.origin}/r/${l.short_code}` : `/r/${l.short_code}`;
-                    const shareText = `Sponsor ${ev?.name ?? "this event"} via IGE: ${url}`;
-                    return (
-                      <tr key={l.id} className="hover:bg-muted/10 transition-colors">
-                        <td className="px-5 py-3.5 font-medium text-foreground">{ev?.name ?? "-"}</td>
-                        <td className="px-5 py-3.5">
-                          <div className="flex items-center gap-1.5">
-                            <button onClick={() => handleCopy(url)} className="inline-flex items-center gap-1.5 rounded-md bg-muted/80 hover:bg-muted px-2.5 py-1.5 font-mono text-xs text-primary transition-all cursor-pointer border border-border">
-                              /r/{l.short_code} <Copy className="h-3 w-3" />
-                            </button>
-                            <a href={`https://wa.me/?text=${encodeURIComponent(shareText)}`} target="_blank" rel="noreferrer" title="Share on WhatsApp" className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-muted hover:text-emerald-600 transition-colors">
-                              <MessageCircle className="h-3.5 w-3.5" />
-                            </a>
-                            <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`} target="_blank" rel="noreferrer" title="Share on LinkedIn" className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-muted hover:text-primary transition-colors">
-                              <Share2 className="h-3.5 w-3.5" />
-                            </a>
-                            <a href={`mailto:?subject=${encodeURIComponent("Sponsorship opportunity on IGE")}&body=${encodeURIComponent(shareText)}`} title="Share via email" className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-muted hover:text-primary transition-colors">
-                              <Mail className="h-3.5 w-3.5" />
-                            </a>
-                          </div>
-                        </td>
-                        <td className="px-5 py-3.5 font-semibold text-foreground">{l.click_count}</td>
-                        <td className="px-5 py-3.5 font-medium">{(Number(l.commission_rate) * 100).toFixed(1)}%</td>
-                        <td className="px-5 py-3.5">
-                          <span className="inline-flex rounded-full bg-secondary/10 px-2 py-0.5 text-xs font-semibold text-secondary-deep capitalize">{l.status}</span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {!isLoading && !data?.links?.length && (
-                    <tr>
-                      <td colSpan={5} className="px-5 py-12 text-center text-muted-foreground">No referral links yet. Generate one to start sharing.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ) : section === "deals" ? (
-          <div className="rounded-xl border border-border bg-card overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[700px]">
-                <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
-                  <tr>
-                    <th className="px-5 py-3">Event</th>
-                    <th className="px-5 py-3">Status</th>
-                    <th className="px-5 py-3">Deal Value</th>
-                    <th className="px-5 py-3">Your Commission</th>
+                    <th className="px-5 py-3">Deal status</th>
+                    <th className="px-5 py-3">Commission</th>
                     <th className="px-5 py-3">Payout</th>
+                    <th className="px-5 py-3">Paid at</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -149,9 +159,6 @@ export function ReferralDashboard({ section = "links" }: { section?: "overview" 
                       <tr key={d.id} className="hover:bg-muted/10 transition-colors">
                         <td className="px-5 py-3.5 font-medium text-foreground">{ev?.name ?? "-"}</td>
                         <td className="px-5 py-3.5 capitalize text-muted-foreground">{d.status.replace(/_/g, " ")}</td>
-                        <td className="px-5 py-3.5 text-xs font-semibold">
-                          {d.deal_value_native ? `${d.deal_currency} ${Number(d.deal_value_native).toLocaleString()}` : "-"}
-                        </td>
                         <td className="px-5 py-3.5 text-xs font-semibold text-primary-deep">
                           {d.referral_commission_usd ? `$${Number(d.referral_commission_usd).toFixed(0)}` : "-"}
                         </td>
@@ -162,23 +169,129 @@ export function ReferralDashboard({ section = "links" }: { section?: "overview" 
                             <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">Pending</span>
                           )}
                         </td>
+                        <td className="px-5 py-3.5 text-xs text-muted-foreground">
+                          {d.referral_commission_paid_at ? new Date(d.referral_commission_paid_at).toLocaleDateString() : "—"}
+                        </td>
                       </tr>
                     );
                   })}
                   {!isLoading && !data?.deals?.length && (
                     <tr>
-                      <td colSpan={5} className="px-5 py-12 text-center text-muted-foreground italic">No referred deals in pipeline yet.</td>
+                      <td colSpan={5} className="px-5 py-12 text-center text-muted-foreground italic">No commission history yet.</td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
           </div>
-        ) : null}
+        </div>
+      )}
 
-        {pickerOpen && <EventPicker onClose={() => setPickerOpen(false)} />}
-      </div>
-    </AppShell>
+      {section === "analytics" ? (
+        <ReferralAnalyticsPanel />
+      ) : section === "links" ? (
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[700px]">
+              <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
+                <tr>
+                  <th className="px-5 py-3">Event</th>
+                  <th className="px-5 py-3">Referral Link</th>
+                  <th className="px-5 py-3">Clicks</th>
+                  <th className="px-5 py-3">Commission Rate</th>
+                  <th className="px-5 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {(data?.links ?? []).map((l: any) => {
+                  const ev = data!.events[l.event_id];
+                  const url = typeof window !== "undefined" ? `${window.location.origin}/r/${l.short_code}` : `/r/${l.short_code}`;
+                  const shareText = `Sponsor ${ev?.name ?? "this event"} via IGE: ${url}`;
+                  return (
+                    <tr key={l.id} className="hover:bg-muted/10 transition-colors">
+                      <td className="px-5 py-3.5 font-medium text-foreground">{ev?.name ?? "-"}</td>
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-1.5">
+                          <button onClick={() => handleCopy(url)} className="inline-flex items-center gap-1.5 rounded-md bg-muted/80 hover:bg-muted px-2.5 py-1.5 font-mono text-xs text-primary transition-all cursor-pointer border border-border">
+                            /r/{l.short_code} <Copy className="h-3 w-3" />
+                          </button>
+                          <a href={`https://wa.me/?text=${encodeURIComponent(shareText)}`} target="_blank" rel="noreferrer" title="Share on WhatsApp" className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-muted hover:text-emerald-600 transition-colors">
+                            <MessageCircle className="h-3.5 w-3.5" />
+                          </a>
+                          <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`} target="_blank" rel="noreferrer" title="Share on LinkedIn" className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-muted hover:text-primary transition-colors">
+                            <Share2 className="h-3.5 w-3.5" />
+                          </a>
+                          <a href={`mailto:?subject=${encodeURIComponent("Sponsorship opportunity on IGE")}&body=${encodeURIComponent(shareText)}`} title="Share via email" className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-muted hover:text-primary transition-colors">
+                            <Mail className="h-3.5 w-3.5" />
+                          </a>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5 font-semibold text-foreground">{l.click_count}</td>
+                      <td className="px-5 py-3.5 font-medium">{(Number(l.commission_rate) * 100).toFixed(1)}%</td>
+                      <td className="px-5 py-3.5">
+                        <span className="inline-flex rounded-full bg-secondary/10 px-2 py-0.5 text-xs font-semibold text-secondary-deep capitalize">{l.status}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {!isLoading && !data?.links?.length && (
+                  <tr>
+                    <td colSpan={5} className="px-5 py-12 text-center text-muted-foreground">No referral links yet. Generate one to start sharing.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : section === "deals" ? (
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[700px]">
+              <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
+                <tr>
+                  <th className="px-5 py-3">Event</th>
+                  <th className="px-5 py-3">Status</th>
+                  <th className="px-5 py-3">Deal Value</th>
+                  <th className="px-5 py-3">Your Commission</th>
+                  <th className="px-5 py-3">Payout</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {(data?.deals ?? []).map((d: any) => {
+                  const ev = data!.events[d.event_id];
+                  return (
+                    <tr key={d.id} className="hover:bg-muted/10 transition-colors">
+                      <td className="px-5 py-3.5 font-medium text-foreground">{ev?.name ?? "-"}</td>
+                      <td className="px-5 py-3.5 capitalize text-muted-foreground">{d.status.replace(/_/g, " ")}</td>
+                      <td className="px-5 py-3.5 text-xs font-semibold">
+                        {d.deal_value_native ? `${d.deal_currency} ${Number(d.deal_value_native).toLocaleString()}` : "-"}
+                      </td>
+                      <td className="px-5 py-3.5 text-xs font-semibold text-primary-deep">
+                        {d.referral_commission_usd ? `$${Number(d.referral_commission_usd).toFixed(0)}` : "-"}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        {d.referral_commission_paid ? (
+                          <span className="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">Paid</span>
+                        ) : (
+                          <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">Pending</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {!isLoading && !data?.deals?.length && (
+                  <tr>
+                    <td colSpan={5} className="px-5 py-12 text-center text-muted-foreground italic">No referred deals in pipeline yet.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : null}
+
+      {pickerOpen && <EventPicker onClose={() => setPickerOpen(false)} />}
+    </WorkspacePage>
   );
 }
 

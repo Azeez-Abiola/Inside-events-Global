@@ -5,7 +5,7 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-        <Link to="/" className="flex items-center gap-2.5">
+        <Link to="/welcome" className="flex items-center gap-2.5">
           <img
             src={logo}
             alt="IGE"
@@ -17,7 +17,7 @@ export function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
-          <Link to="/marketplace" className="transition-colors hover:text-foreground">Marketplace</Link>
+          <Link to="/waitlist" className="transition-colors hover:text-foreground">Join waitlist</Link>
           <Link to="/about" className="transition-colors hover:text-foreground">About</Link>
           <Link to="/how-it-works" className="transition-colors hover:text-foreground">How it works</Link>
           <Link to="/knowledge-base" className="transition-colors hover:text-foreground">Knowledge base</Link>

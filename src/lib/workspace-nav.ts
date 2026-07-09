@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard, CalendarRange, Inbox, Bookmark, Compass, BarChart3, MessageSquare,
   ShieldCheck, Users, DollarSign, SlidersHorizontal, Handshake, TrendingUp, Newspaper, Send, Wallet,
+  FileText, Coins, UserCheck,
 } from "lucide-react";
 
 export type WorkspaceNavItem = {
@@ -21,6 +22,7 @@ export function getWorkspaceNav(roles: string[]): WorkspaceNavItem[] {
       { to: "/dashboard/vetting", label: "Event queue", icon: ShieldCheck },
       { to: "/dashboard/submissions", label: "Submissions", icon: Users },
       { to: "/dashboard/revenue", label: "Revenue & deals", icon: DollarSign },
+      { to: "/dashboard/partners", label: "Referral partners", icon: UserCheck },
       { to: "/dashboard/controls", label: "Fraud & rates", icon: SlidersHorizontal },
       { to: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
     );
@@ -28,23 +30,25 @@ export function getWorkspaceNav(roles: string[]): WorkspaceNavItem[] {
     items.push(
       { to: "/dashboard", label: "My events", icon: CalendarRange },
       { to: "/dashboard/pipeline", label: "Pipeline", icon: TrendingUp },
+      { to: "/dashboard/documents", label: "Documents", icon: FileText },
       { to: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
     );
   } else if (r.has("sponsor")) {
     items.push(
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/dashboard/pipeline", label: "Pipeline", icon: TrendingUp },
-      { to: "/dashboard/budget", label: "Budget", icon: Wallet },
-      { to: "/dashboard/commitments", label: "My commitments", icon: Inbox },
-      { to: "/dashboard/saved", label: "Saved events", icon: Bookmark },
       { to: "/dashboard/discover", label: "Discover", icon: Compass },
+      { to: "/dashboard/pipeline", label: "My deals", icon: TrendingUp },
+      { to: "/dashboard/budget", label: "Budget", icon: Wallet },
+      { to: "/dashboard/commitments", label: "Commitments", icon: Inbox },
+      { to: "/dashboard/saved", label: "Saved events", icon: Bookmark },
       { to: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
     );
   } else if (r.has("referral_partner")) {
     items.push(
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/dashboard/referrals", label: "My referrals", icon: Handshake },
-      { to: "/dashboard/deals", label: "Commission pipeline", icon: TrendingUp },
+      { to: "/dashboard/commissions", label: "Commission tracker", icon: Coins },
+      { to: "/dashboard/deals", label: "Deal pipeline", icon: TrendingUp },
       { to: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
     );
   } else if (r.has("media_partner")) {

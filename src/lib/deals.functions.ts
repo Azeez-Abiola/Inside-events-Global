@@ -14,7 +14,7 @@ export const adminGetRevenue = createServerFn({ method: "GET" })
     const admin = roles?.some((r) => r.role === "abw_admin" || r.role === "super_admin");
     if (!admin) throw new Error("Forbidden");
 
-    const [{ data: deals }, { data: partners }, { data: configs }, { data: flags }, { data: forms }] = await Promise.all([
+    const [{ data: deals }, { data: partners }, { data: configs }, { data: flags }, { data: forms }, { data: allLinks }] = await Promise.all([
       supabaseAdmin
         .from("deals")
         .select("id, commitment_form_id, event_id, organiser_id, sponsor_user_id, referral_partner_id, status, deal_value_native, deal_currency, deal_value_usd, abw_commission_usd, abw_commission_native, referral_commission_usd, referral_commission_native, referral_commission_paid, created_at, updated_at, paid_at")
@@ -31,6 +31,9 @@ export const adminGetRevenue = createServerFn({ method: "GET" })
         .from("commitment_forms")
         .select("id, event_id, company_name, contact_name, currency, budget_range_min, budget_range_max, referral_partner_id, partnership_type, fraud_flags, created_at")
         .order("created_at", { ascending: false }),
+      supabaseAdmin
+        .from("referral_links")
+        .select("referral_partner_id, click_count, conversion_count, status"),
     ]);
 
     // Inquiries that have not yet been converted into a deal.
@@ -66,11 +69,23 @@ export const adminGetRevenue = createServerFn({ method: "GET" })
           acc.abw += Number(d.abw_commission_usd ?? 0);
           acc.refOwed += Number(d.referral_commission_usd ?? 0) - (d.referral_commission_paid ? Number(d.referral_commission_usd ?? 0) : 0);
         }
-        if (!["payment_received", "closed_lost", "cancelled"].includes(d.status)) acc.open += 1;
+        if (!["payment_received", "closed_lost", "cancelled"].includes(d.status)) {
+          acc.open += 1;
+          acc.forecast += Number(d.deal_value_usd ?? 0);
+        }
         return acc;
       },
-      { gmv: 0, abw: 0, refOwed: 0, open: 0 },
+      { gmv: 0, abw: 0, refOwed: 0, open: 0, forecast: 0 },
     );
+
+    const linkStats: Record<string, { links: number; clicks: number; conversions: number }> = {};
+    for (const l of allLinks ?? []) {
+      const id = l.referral_partner_id;
+      if (!linkStats[id]) linkStats[id] = { links: 0, clicks: 0, conversions: 0 };
+      linkStats[id].links += 1;
+      linkStats[id].clicks += l.click_count ?? 0;
+      linkStats[id].conversions += l.conversion_count ?? 0;
+    }
 
     return {
       deals: deals ?? [],
@@ -80,6 +95,9 @@ export const adminGetRevenue = createServerFn({ method: "GET" })
         ...p,
         owed_usd: partnerOwed[p.user_id] ?? 0,
         paid_usd_running: partnerPaid[p.user_id] ?? 0,
+        active_links: linkStats[p.user_id]?.links ?? 0,
+        total_clicks: linkStats[p.user_id]?.clicks ?? 0,
+        conversions: linkStats[p.user_id]?.conversions ?? 0,
       })),
       commissionConfig: configs ?? [],
       fraudFlagsOpen: flags?.length ?? 0,
@@ -355,13 +373,26 @@ export const getOrganiserPipeline = createServerFn({ method: "GET" })
           .order("submitted_at", { ascending: false }),
         supabaseAdmin
           .from("deals")
-          .select("id, event_id, commitment_form_id, status, deal_value_native, deal_currency, referral_partner_id, updated_at")
+          .select("id, event_id, commitment_form_id, status, deal_value_native, deal_currency, deal_value_usd, referral_partner_id, updated_at")
           .in("event_id", eventIds),
       ]);
       forms = f.data ?? [];
       deals = d.data ?? [];
     }
-    return { events: events ?? [], forms, deals };
+    const partnerIds = Array.from(new Set([
+      ...forms.map((f) => f.referral_partner_id).filter(Boolean),
+      ...deals.map((d) => d.referral_partner_id).filter(Boolean),
+    ])) as string[];
+    let partnerMap: Record<string, string> = {};
+    if (partnerIds.length) {
+      const { data: profs } = await supabaseAdmin
+        .from("referral_partner_profiles")
+        .select("user_id, full_name")
+        .in("user_id", partnerIds);
+      for (const p of profs ?? []) partnerMap[p.user_id] = p.full_name ?? "Partner";
+    }
+
+    return { events: events ?? [], forms, deals, partnerMap };
   });
 
 // ───────────────────────────────────────────────────────────────
@@ -371,10 +402,10 @@ export const getSponsorDashboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const [{ data: forms }, { data: saves }, { data: fresh }] = await Promise.all([
+    const [{ data: forms }, { data: saves }, { data: fresh }, { data: profile }] = await Promise.all([
       supabaseAdmin
         .from("commitment_forms")
-        .select("id, event_id, currency, budget_range_min, budget_range_max, tier_id, submitted_at")
+        .select("id, event_id, currency, budget_range_min, budget_range_max, tier_id, submitted_at, referral_partner_id")
         .eq("sponsor_user_id", userId)
         .order("submitted_at", { ascending: false }),
       supabaseAdmin.from("event_saves").select("event_id, created_at").eq("user_id", userId),
@@ -384,7 +415,36 @@ export const getSponsorDashboard = createServerFn({ method: "GET" })
         .in("status", ["approved", "listed"])
         .order("created_at", { ascending: false })
         .limit(6),
+      supabaseAdmin
+        .from("sponsor_profiles")
+        .select("sponsorship_sectors, target_geographies")
+        .eq("user_id", userId)
+        .maybeSingle(),
     ]);
+
+    const sectors = (profile?.sponsorship_sectors as string[] | null) ?? [];
+    let recommended: any[] = [];
+    if (sectors.length) {
+      const { data: rec } = await supabaseAdmin
+        .from("events")
+        .select("id, slug, name, banner_image_url, start_date, city, country, primary_sector")
+        .in("status", ["approved", "listed"])
+        .in("primary_sector", sectors)
+        .order("created_at", { ascending: false })
+        .limit(6);
+      recommended = rec ?? [];
+    }
+
+    const referralFormIds = (forms ?? []).filter((f) => f.referral_partner_id).map((f) => f.event_id);
+    let referralShared: any[] = [];
+    if (referralFormIds.length) {
+      const { data: refEv } = await supabaseAdmin
+        .from("events")
+        .select("id, slug, name, banner_image_url, start_date, city, country, primary_sector")
+        .in("id", Array.from(new Set(referralFormIds)))
+        .limit(6);
+      referralShared = refEv ?? [];
+    }
 
     const ids = Array.from(new Set([...(forms ?? []).map((f) => f.event_id), ...(saves ?? []).map((s) => s.event_id)]));
     let evMap: Record<string, any> = {};
@@ -395,7 +455,15 @@ export const getSponsorDashboard = createServerFn({ method: "GET" })
         .in("id", ids);
       for (const e of evs ?? []) evMap[e.id] = e;
     }
-    return { forms: forms ?? [], saves: saves ?? [], freshEvents: fresh ?? [], eventMap: evMap };
+    return {
+      forms: forms ?? [],
+      saves: saves ?? [],
+      freshEvents: fresh ?? [],
+      recommendedEvents: recommended,
+      referralSharedEvents: referralShared,
+      profileSectors: sectors,
+      eventMap: evMap,
+    };
   });
 
 // ───────────────────────────────────────────────────────────────

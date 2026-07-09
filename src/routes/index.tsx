@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -18,10 +18,14 @@ import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { ClientOnly } from "@/components/client-only";
 import { listMarketplaceEvents } from "@/lib/marketplace.functions";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
+import { MARKETPLACE_PUBLIC } from "@/lib/marketplace-visibility";
 import ogImage from "@/assets/og-image.jpg";
 import featuredImg from "@/assets/featured-itsekiri.png";
 
-export const Route = createFileRoute("/")(({
+export const Route = createFileRoute("/")({
+  beforeLoad: () => {
+    if (!MARKETPLACE_PUBLIC) throw redirect({ to: "/welcome" });
+  },
   head: () => ({
     meta: [
       { title: "IGE — Event Sponsorship Marketplace | Find Sponsors & Sponsor B2B Events" },
@@ -51,7 +55,7 @@ export const Route = createFileRoute("/")(({
   }),
 
   component: Landing,
-} as any));
+});
 
 function Landing() {
   return (

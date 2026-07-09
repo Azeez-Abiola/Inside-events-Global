@@ -115,12 +115,50 @@ export function OrganiserPipelinePage() {
         <div className="space-y-6">
           {pipelineData.events.map((ev: any) => (
             <PipelineEventTable key={ev.id} event={ev}
+              partnerMap={pipelineData.partnerMap ?? {}}
               forms={(pipelineData.forms ?? []).filter((f: any) => f.event_id === ev.id)}
               deals={(pipelineData.deals ?? []).filter((d: any) => d.event_id === ev.id)} />
           ))}
         </div>
       )}
     </WorkspacePage>
+  );
+}
+
+export function OrganiserDocumentsPage() {
+  const { events, eventsLoading } = useOrganiserEvents();
+  const docs = events.filter((e: any) => e.sponsorship_deck_url || e.banner_image_url || e.floor_plan_url);
+
+  return (
+    <WorkspacePage title="Documents" subtitle="Sponsorship decks, banners, and floor plans across your events.">
+      {eventsLoading ? <DashboardLoading label="Loading documents…" /> : docs.length === 0 ? (
+        <DashboardEmpty icon={FolderOpen} title="No documents yet" description="Upload decks and assets in the event editor when creating or editing a listing." />
+      ) : (
+        <div className="space-y-4">
+          {docs.map((e: any) => (
+            <DashboardPanel key={e.id} title={e.name || "Untitled event"} description={[e.city, e.country].filter(Boolean).join(", ")}>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <DocLink label="Sponsorship deck" url={e.sponsorship_deck_url} />
+                <DocLink label="Banner image" url={e.banner_image_url} />
+                <DocLink label="Floor plan" url={e.floor_plan_url} />
+              </div>
+              <Link to="/events/edit/$id" params={{ id: e.id }} className="mt-4 inline-flex text-xs font-semibold text-primary hover:underline">
+                Manage in editor →
+              </Link>
+            </DashboardPanel>
+          ))}
+        </div>
+      )}
+    </WorkspacePage>
+  );
+}
+
+function DocLink({ label, url }: { label: string; url?: string | null }) {
+  if (!url) return <div className="rounded-lg border border-dashed border-border px-4 py-3 text-xs text-muted-foreground">{label}: not uploaded</div>;
+  return (
+    <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-lg border border-border bg-muted/20 px-4 py-3 text-sm font-medium text-primary hover:bg-muted transition-colors">
+      <ExternalLink className="h-4 w-4 shrink-0" /> {label}
+    </a>
   );
 }
 
@@ -164,7 +202,7 @@ function EventCard({ event: e, onDelete, showVettingTimeline }: { event: any; on
   );
 }
 
-function PipelineEventTable({ event: ev, forms, deals }: { event: any; forms: any[]; deals: any[] }) {
+function PipelineEventTable({ event: ev, forms, deals, partnerMap }: { event: any; forms: any[]; deals: any[]; partnerMap: Record<string, string> }) {
   const dealByForm: Record<string, any> = {};
   for (const d of deals) if (d.commitment_form_id) dealByForm[d.commitment_form_id] = d;
   return (
@@ -175,26 +213,28 @@ function PipelineEventTable({ event: ev, forms, deals }: { event: any; forms: an
         <span className="inline-flex items-center gap-1"><MessageSquare className="h-3 w-3" /> {ev.inquiry_count ?? 0} inquiries</span>
       </div>
       <div className="overflow-x-auto -mx-5 px-5">
-        <table className="w-full min-w-[700px] text-sm">
+        <table className="w-full min-w-[800px] text-sm">
           <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
-            <tr><th className="px-3 py-3">Company</th><th className="px-3 py-3">Contact</th><th className="px-3 py-3">Budget</th><th className="px-3 py-3">Referral</th><th className="px-3 py-3">Deal stage</th><th className="px-3 py-3">Submitted</th><th className="px-3 py-3"></th></tr>
+            <tr><th className="px-3 py-3">Company</th><th className="px-3 py-3">Contact</th><th className="px-3 py-3">Budget</th><th className="px-3 py-3">Referral</th><th className="px-3 py-3">Deal value</th><th className="px-3 py-3">Deal stage</th><th className="px-3 py-3">Submitted</th><th className="px-3 py-3"></th></tr>
           </thead>
           <tbody className="divide-y divide-border">
             {forms.map((f: any) => {
               const deal = dealByForm[f.id];
+              const partnerName = f.referral_partner_id ? partnerMap[f.referral_partner_id] : null;
               return (
                 <tr key={f.id} className="hover:bg-muted/10">
                   <td className="px-3 py-3 font-medium">{f.company_name}</td>
                   <td className="px-3 py-3 text-muted-foreground">{f.contact_name}</td>
                   <td className="px-3 py-3 text-xs font-semibold">{f.budget_range_min || f.budget_range_max ? `${fmtMoney(f.currency, Number(f.budget_range_min ?? 0))} – ${fmtMoney(f.currency, Number(f.budget_range_max ?? 0))}` : "—"}</td>
-                  <td className="px-3 py-3 text-xs text-muted-foreground">{f.referral_partner_id ? "Partner referred" : "Direct"}</td>
+                  <td className="px-3 py-3 text-xs text-muted-foreground">{partnerName ?? (f.referral_partner_id ? "Partner" : "Direct")}</td>
+                  <td className="px-3 py-3 text-xs font-semibold">{deal?.deal_value_native ? fmtMoney(deal.deal_currency, Number(deal.deal_value_native)) : "—"}</td>
                   <td className="px-3 py-3 capitalize">{deal ? <span className="inline-flex rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary-deep">{deal.status.replace(/_/g, " ")}</span> : <span className="inline-flex rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">Awaiting deal</span>}</td>
                   <td className="px-3 py-3 text-xs text-muted-foreground">{f.submitted_at ? new Date(f.submitted_at).toLocaleDateString() : "—"}</td>
                   <td className="px-3 py-3 text-right">{f.sponsor_user_id && <Link to="/messages" search={{ to: f.sponsor_user_id, event_id: ev.id }} className="text-xs font-semibold text-primary hover:underline">Message →</Link>}</td>
                 </tr>
               );
             })}
-            {!forms.length && <tr><td colSpan={7} className="px-3 py-8 text-center text-sm text-muted-foreground italic">No sponsor inquiries yet.</td></tr>}
+            {!forms.length && <tr><td colSpan={8} className="px-3 py-8 text-center text-sm text-muted-foreground italic">No sponsor inquiries yet.</td></tr>}
           </tbody>
         </table>
       </div>

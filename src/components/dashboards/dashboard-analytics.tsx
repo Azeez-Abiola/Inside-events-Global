@@ -7,7 +7,7 @@ import { DashboardLoading, DashboardPanel } from "@/components/dashboards/dashbo
 import {
   getOrganiserAnalytics, getSponsorAnalytics, getReferralAnalytics, getMediaAnalytics, getAdminAnalytics,
 } from "@/lib/analytics.functions";
-import { Eye, Bookmark, MessageSquare, BarChart3, Inbox, TrendingUp, Wallet, Link2, Newspaper, DollarSign, Users, ShieldCheck } from "lucide-react";
+import { Eye, Bookmark, MessageSquare, BarChart3, Inbox, TrendingUp, Wallet, Link2, Newspaper, DollarSign, Users, ShieldCheck, Percent } from "lucide-react";
 
 const CHART_COLORS = ["hsl(271 45% 44%)", "hsl(160 100% 25%)", "hsl(271 45% 60%)", "hsl(160 60% 40%)", "hsl(220 20% 50%)", "hsl(35 90% 50%)"];
 
@@ -115,7 +115,9 @@ export function OrganiserAnalyticsPanel() {
         <StatCard icon={Eye} label="Total profile views" value={s.totalViews} />
         <StatCard icon={Bookmark} label="Times saved" value={s.totalSaves} />
         <StatCard icon={MessageSquare} label="Commitment inquiries" value={s.totalInquiries} />
+        <StatCard icon={Percent} label="Inquiry conversion" value={`${s.conversionRate}%`} />
         <StatCard icon={BarChart3} label="Closed deals" value={s.closedDeals} />
+        <StatCard icon={DollarSign} label="Closed deal value" value={`$${Number(s.closedDealValueUsd ?? 0).toLocaleString()}`} />
         <StatCard icon={ShieldCheck} label="IGE vetted events" value={s.vettedEvents} />
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
