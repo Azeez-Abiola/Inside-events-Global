@@ -39,6 +39,7 @@ import { Route as EventsSlugRouteImport } from './routes/events.$slug'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedReferralsRouteImport } from './routes/_authenticated/referrals'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedPipelineRouteImport } from './routes/_authenticated/pipeline'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedEventsRouteImport } from './routes/_authenticated/events'
@@ -49,7 +50,9 @@ import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authe
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as ApiPublicWaitlistNotifyRouteImport } from './routes/api/public/waitlist-notify'
 import { Route as ApiPublicContactRouteImport } from './routes/api/public/contact'
+import { Route as AuthenticatedDashboardWaitlistRouteImport } from './routes/_authenticated/dashboard.waitlist'
 import { Route as AuthenticatedDashboardVettingRouteImport } from './routes/_authenticated/dashboard.vetting'
+import { Route as AuthenticatedDashboardUsersRouteImport } from './routes/_authenticated/dashboard.users'
 import { Route as AuthenticatedDashboardSubmissionsRouteImport } from './routes/_authenticated/dashboard.submissions'
 import { Route as AuthenticatedDashboardSavedRouteImport } from './routes/_authenticated/dashboard.saved'
 import { Route as AuthenticatedDashboardRevenueRouteImport } from './routes/_authenticated/dashboard.revenue'
@@ -57,6 +60,7 @@ import { Route as AuthenticatedDashboardRequestsRouteImport } from './routes/_au
 import { Route as AuthenticatedDashboardReferralsRouteImport } from './routes/_authenticated/dashboard.referrals'
 import { Route as AuthenticatedDashboardPipelineRouteImport } from './routes/_authenticated/dashboard.pipeline'
 import { Route as AuthenticatedDashboardPartnersRouteImport } from './routes/_authenticated/dashboard.partners'
+import { Route as AuthenticatedDashboardMediaRequestsRouteImport } from './routes/_authenticated/dashboard.media-requests'
 import { Route as AuthenticatedDashboardExploreRouteImport } from './routes/_authenticated/dashboard.explore'
 import { Route as AuthenticatedDashboardDocumentsRouteImport } from './routes/_authenticated/dashboard.documents'
 import { Route as AuthenticatedDashboardDiscoverRouteImport } from './routes/_authenticated/dashboard.discover'
@@ -227,6 +231,11 @@ const AuthenticatedReferralsRoute = AuthenticatedReferralsRouteImport.update({
   path: '/referrals',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedPipelineRoute = AuthenticatedPipelineRouteImport.update({
   id: '/pipeline',
   path: '/pipeline',
@@ -279,10 +288,22 @@ const ApiPublicContactRoute = ApiPublicContactRouteImport.update({
   path: '/api/public/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedDashboardWaitlistRoute =
+  AuthenticatedDashboardWaitlistRouteImport.update({
+    id: '/waitlist',
+    path: '/waitlist',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedDashboardVettingRoute =
   AuthenticatedDashboardVettingRouteImport.update({
     id: '/vetting',
     path: '/vetting',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardUsersRoute =
+  AuthenticatedDashboardUsersRouteImport.update({
+    id: '/users',
+    path: '/users',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
 const AuthenticatedDashboardSubmissionsRoute =
@@ -325,6 +346,12 @@ const AuthenticatedDashboardPartnersRoute =
   AuthenticatedDashboardPartnersRouteImport.update({
     id: '/partners',
     path: '/partners',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardMediaRequestsRoute =
+  AuthenticatedDashboardMediaRequestsRouteImport.update({
+    id: '/media-requests',
+    path: '/media-requests',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
 const AuthenticatedDashboardExploreRoute =
@@ -474,6 +501,7 @@ export interface FileRoutesByFullPath {
   '/events': typeof AuthenticatedEventsRouteWithChildren
   '/messages': typeof AuthenticatedMessagesRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/referrals': typeof AuthenticatedReferralsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -492,6 +520,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/discover': typeof AuthenticatedDashboardDiscoverRoute
   '/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/dashboard/explore': typeof AuthenticatedDashboardExploreRoute
+  '/dashboard/media-requests': typeof AuthenticatedDashboardMediaRequestsRoute
   '/dashboard/partners': typeof AuthenticatedDashboardPartnersRoute
   '/dashboard/pipeline': typeof AuthenticatedDashboardPipelineRoute
   '/dashboard/referrals': typeof AuthenticatedDashboardReferralsRoute
@@ -499,7 +528,9 @@ export interface FileRoutesByFullPath {
   '/dashboard/revenue': typeof AuthenticatedDashboardRevenueRoute
   '/dashboard/saved': typeof AuthenticatedDashboardSavedRoute
   '/dashboard/submissions': typeof AuthenticatedDashboardSubmissionsRoute
+  '/dashboard/users': typeof AuthenticatedDashboardUsersRoute
   '/dashboard/vetting': typeof AuthenticatedDashboardVettingRoute
+  '/dashboard/waitlist': typeof AuthenticatedDashboardWaitlistRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/waitlist-notify': typeof ApiPublicWaitlistNotifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -541,6 +572,7 @@ export interface FileRoutesByTo {
   '/deals': typeof AuthenticatedDealsRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/referrals': typeof AuthenticatedReferralsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -559,6 +591,7 @@ export interface FileRoutesByTo {
   '/dashboard/discover': typeof AuthenticatedDashboardDiscoverRoute
   '/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/dashboard/explore': typeof AuthenticatedDashboardExploreRoute
+  '/dashboard/media-requests': typeof AuthenticatedDashboardMediaRequestsRoute
   '/dashboard/partners': typeof AuthenticatedDashboardPartnersRoute
   '/dashboard/pipeline': typeof AuthenticatedDashboardPipelineRoute
   '/dashboard/referrals': typeof AuthenticatedDashboardReferralsRoute
@@ -566,7 +599,9 @@ export interface FileRoutesByTo {
   '/dashboard/revenue': typeof AuthenticatedDashboardRevenueRoute
   '/dashboard/saved': typeof AuthenticatedDashboardSavedRoute
   '/dashboard/submissions': typeof AuthenticatedDashboardSubmissionsRoute
+  '/dashboard/users': typeof AuthenticatedDashboardUsersRoute
   '/dashboard/vetting': typeof AuthenticatedDashboardVettingRoute
+  '/dashboard/waitlist': typeof AuthenticatedDashboardWaitlistRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/waitlist-notify': typeof ApiPublicWaitlistNotifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -612,6 +647,7 @@ export interface FileRoutesById {
   '/_authenticated/events': typeof AuthenticatedEventsRouteWithChildren
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/pipeline': typeof AuthenticatedPipelineRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/referrals': typeof AuthenticatedReferralsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -630,6 +666,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/discover': typeof AuthenticatedDashboardDiscoverRoute
   '/_authenticated/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/_authenticated/dashboard/explore': typeof AuthenticatedDashboardExploreRoute
+  '/_authenticated/dashboard/media-requests': typeof AuthenticatedDashboardMediaRequestsRoute
   '/_authenticated/dashboard/partners': typeof AuthenticatedDashboardPartnersRoute
   '/_authenticated/dashboard/pipeline': typeof AuthenticatedDashboardPipelineRoute
   '/_authenticated/dashboard/referrals': typeof AuthenticatedDashboardReferralsRoute
@@ -637,7 +674,9 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/revenue': typeof AuthenticatedDashboardRevenueRoute
   '/_authenticated/dashboard/saved': typeof AuthenticatedDashboardSavedRoute
   '/_authenticated/dashboard/submissions': typeof AuthenticatedDashboardSubmissionsRoute
+  '/_authenticated/dashboard/users': typeof AuthenticatedDashboardUsersRoute
   '/_authenticated/dashboard/vetting': typeof AuthenticatedDashboardVettingRoute
+  '/_authenticated/dashboard/waitlist': typeof AuthenticatedDashboardWaitlistRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/waitlist-notify': typeof ApiPublicWaitlistNotifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -683,6 +722,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/messages'
     | '/pipeline'
+    | '/profile'
     | '/referrals'
     | '/settings'
     | '/email/unsubscribe'
@@ -701,6 +741,7 @@ export interface FileRouteTypes {
     | '/dashboard/discover'
     | '/dashboard/documents'
     | '/dashboard/explore'
+    | '/dashboard/media-requests'
     | '/dashboard/partners'
     | '/dashboard/pipeline'
     | '/dashboard/referrals'
@@ -708,7 +749,9 @@ export interface FileRouteTypes {
     | '/dashboard/revenue'
     | '/dashboard/saved'
     | '/dashboard/submissions'
+    | '/dashboard/users'
     | '/dashboard/vetting'
+    | '/dashboard/waitlist'
     | '/api/public/contact'
     | '/api/public/waitlist-notify'
     | '/lovable/email/suppression'
@@ -750,6 +793,7 @@ export interface FileRouteTypes {
     | '/deals'
     | '/messages'
     | '/pipeline'
+    | '/profile'
     | '/referrals'
     | '/settings'
     | '/email/unsubscribe'
@@ -768,6 +812,7 @@ export interface FileRouteTypes {
     | '/dashboard/discover'
     | '/dashboard/documents'
     | '/dashboard/explore'
+    | '/dashboard/media-requests'
     | '/dashboard/partners'
     | '/dashboard/pipeline'
     | '/dashboard/referrals'
@@ -775,7 +820,9 @@ export interface FileRouteTypes {
     | '/dashboard/revenue'
     | '/dashboard/saved'
     | '/dashboard/submissions'
+    | '/dashboard/users'
     | '/dashboard/vetting'
+    | '/dashboard/waitlist'
     | '/api/public/contact'
     | '/api/public/waitlist-notify'
     | '/lovable/email/suppression'
@@ -820,6 +867,7 @@ export interface FileRouteTypes {
     | '/_authenticated/events'
     | '/_authenticated/messages'
     | '/_authenticated/pipeline'
+    | '/_authenticated/profile'
     | '/_authenticated/referrals'
     | '/_authenticated/settings'
     | '/email/unsubscribe'
@@ -838,6 +886,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/discover'
     | '/_authenticated/dashboard/documents'
     | '/_authenticated/dashboard/explore'
+    | '/_authenticated/dashboard/media-requests'
     | '/_authenticated/dashboard/partners'
     | '/_authenticated/dashboard/pipeline'
     | '/_authenticated/dashboard/referrals'
@@ -845,7 +894,9 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/revenue'
     | '/_authenticated/dashboard/saved'
     | '/_authenticated/dashboard/submissions'
+    | '/_authenticated/dashboard/users'
     | '/_authenticated/dashboard/vetting'
+    | '/_authenticated/dashboard/waitlist'
     | '/api/public/contact'
     | '/api/public/waitlist-notify'
     | '/lovable/email/suppression'
@@ -1113,6 +1164,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReferralsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/pipeline': {
       id: '/_authenticated/pipeline'
       path: '/pipeline'
@@ -1183,11 +1241,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicContactRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/dashboard/waitlist': {
+      id: '/_authenticated/dashboard/waitlist'
+      path: '/waitlist'
+      fullPath: '/dashboard/waitlist'
+      preLoaderRoute: typeof AuthenticatedDashboardWaitlistRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/dashboard/vetting': {
       id: '/_authenticated/dashboard/vetting'
       path: '/vetting'
       fullPath: '/dashboard/vetting'
       preLoaderRoute: typeof AuthenticatedDashboardVettingRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/users': {
+      id: '/_authenticated/dashboard/users'
+      path: '/users'
+      fullPath: '/dashboard/users'
+      preLoaderRoute: typeof AuthenticatedDashboardUsersRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
     '/_authenticated/dashboard/submissions': {
@@ -1237,6 +1309,13 @@ declare module '@tanstack/react-router' {
       path: '/partners'
       fullPath: '/dashboard/partners'
       preLoaderRoute: typeof AuthenticatedDashboardPartnersRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/media-requests': {
+      id: '/_authenticated/dashboard/media-requests'
+      path: '/media-requests'
+      fullPath: '/dashboard/media-requests'
+      preLoaderRoute: typeof AuthenticatedDashboardMediaRequestsRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
     '/_authenticated/dashboard/explore': {
@@ -1392,6 +1471,7 @@ interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardDiscoverRoute: typeof AuthenticatedDashboardDiscoverRoute
   AuthenticatedDashboardDocumentsRoute: typeof AuthenticatedDashboardDocumentsRoute
   AuthenticatedDashboardExploreRoute: typeof AuthenticatedDashboardExploreRoute
+  AuthenticatedDashboardMediaRequestsRoute: typeof AuthenticatedDashboardMediaRequestsRoute
   AuthenticatedDashboardPartnersRoute: typeof AuthenticatedDashboardPartnersRoute
   AuthenticatedDashboardPipelineRoute: typeof AuthenticatedDashboardPipelineRoute
   AuthenticatedDashboardReferralsRoute: typeof AuthenticatedDashboardReferralsRoute
@@ -1399,7 +1479,9 @@ interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardRevenueRoute: typeof AuthenticatedDashboardRevenueRoute
   AuthenticatedDashboardSavedRoute: typeof AuthenticatedDashboardSavedRoute
   AuthenticatedDashboardSubmissionsRoute: typeof AuthenticatedDashboardSubmissionsRoute
+  AuthenticatedDashboardUsersRoute: typeof AuthenticatedDashboardUsersRoute
   AuthenticatedDashboardVettingRoute: typeof AuthenticatedDashboardVettingRoute
+  AuthenticatedDashboardWaitlistRoute: typeof AuthenticatedDashboardWaitlistRoute
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
 }
 
@@ -1416,6 +1498,8 @@ const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
     AuthenticatedDashboardDiscoverRoute: AuthenticatedDashboardDiscoverRoute,
     AuthenticatedDashboardDocumentsRoute: AuthenticatedDashboardDocumentsRoute,
     AuthenticatedDashboardExploreRoute: AuthenticatedDashboardExploreRoute,
+    AuthenticatedDashboardMediaRequestsRoute:
+      AuthenticatedDashboardMediaRequestsRoute,
     AuthenticatedDashboardPartnersRoute: AuthenticatedDashboardPartnersRoute,
     AuthenticatedDashboardPipelineRoute: AuthenticatedDashboardPipelineRoute,
     AuthenticatedDashboardReferralsRoute: AuthenticatedDashboardReferralsRoute,
@@ -1424,7 +1508,9 @@ const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
     AuthenticatedDashboardSavedRoute: AuthenticatedDashboardSavedRoute,
     AuthenticatedDashboardSubmissionsRoute:
       AuthenticatedDashboardSubmissionsRoute,
+    AuthenticatedDashboardUsersRoute: AuthenticatedDashboardUsersRoute,
     AuthenticatedDashboardVettingRoute: AuthenticatedDashboardVettingRoute,
+    AuthenticatedDashboardWaitlistRoute: AuthenticatedDashboardWaitlistRoute,
     AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
   }
 
@@ -1452,6 +1538,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedEventsRoute: typeof AuthenticatedEventsRouteWithChildren
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedPipelineRoute: typeof AuthenticatedPipelineRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedReferralsRoute: typeof AuthenticatedReferralsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedAdminRevenueRoute: typeof AuthenticatedAdminRevenueRoute
@@ -1465,6 +1552,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedEventsRoute: AuthenticatedEventsRouteWithChildren,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedPipelineRoute: AuthenticatedPipelineRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedReferralsRoute: AuthenticatedReferralsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedAdminRevenueRoute: AuthenticatedAdminRevenueRoute,

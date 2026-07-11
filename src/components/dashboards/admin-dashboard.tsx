@@ -1,32 +1,45 @@
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ShieldCheck, Users, DollarSign, Loader2, ArrowRight, CheckCircle2, Pencil, XCircle, Award, Wallet, Inbox,
-  AlertTriangle, Check, X, SlidersHorizontal, BarChart3, TrendingUp, UserCheck,
+  AlertTriangle, Check, X, SlidersHorizontal, BarChart3, TrendingUp, UserCheck, FileText,
 } from "lucide-react";
 import { AppShell, StatusBadge } from "@/components/app-shell";
 import { StatCard, StatusPill } from "@/components/dashboards/shared";
 import { DashboardHeader, DashboardTabs, DashboardPanel, DashboardTable, DashboardTableHead } from "@/components/dashboards/dashboard-shell";
 import { AdminAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
 import { AdminOverviewPanel } from "@/components/dashboards/admin-overview";
+import { AdminWaitlistPanel } from "@/components/dashboards/admin-waitlist-panel";
+import { AdminMediaRequestsPanel } from "@/components/dashboards/admin-media-requests-panel";
+import { AdminUsersPanel } from "@/components/dashboards/admin-users-panel";
 import { getAdminSectionMeta, greetingName } from "@/lib/dashboard-meta";
 import { useAuth } from "@/lib/auth-context";
 import { listEventsForVetting, setEventVettingStatus, getEventForAdmin } from "@/lib/admin.functions";
-import { adminGetRevenue, adminListFraudFlags, adminResolveFraudFlag, adminUpsertCommissionConfig, adminCreateDeal, adminUpdateDealStatus, adminMarkCommissionPaid } from "@/lib/deals.functions";
+import { adminGetRevenue, adminListFraudFlags, adminResolveFraudFlag, adminUpsertCommissionConfig, adminCreateDeal, adminUpdateDealStatus, adminMarkCommissionPaid, adminUpdateRates, adminAssignDeal } from "@/lib/deals.functions";
+import { generateDealPaymentLink } from "@/lib/payments.functions";
+import { generateDealContract } from "@/lib/contracts.functions";
+import { adminUpdateCustomPackageStatus } from "@/lib/custom-package.functions";
+import { getCurrentRates } from "@/lib/marketplace.functions";
 import { fmtMoney } from "@/lib/currency";
 
 const DEAL_STATUSES = [
-  "inquiry_received", "vetting", "intro_made", "in_negotiation",
-  "verbal_commitment", "contract_sent", "contract_signed",
-  "payment_received", "closed_lost", "cancelled",
+  "inquiry_received",
+  "qualification_call_scheduled",
+  "proposal_sent",
+  "negotiation",
+  "contract_sent",
+  "contract_signed",
+  "payment_received",
+  "deal_closed",
+  "deal_lost",
+  "cancelled",
 ];
 
-export function AdminDashboard({ section = "overview" }: { section?: "overview" | "vetting" | "submissions" | "revenue" | "controls" | "analytics" | "partners" }) {
-  const [activeSubTab, setActiveSubTab] = useState<"waitlist" | "contact">("waitlist");
+export function AdminDashboard({ section = "overview" }: { section?: "overview" | "vetting" | "submissions" | "waitlist" | "revenue" | "controls" | "analytics" | "partners" | "media-requests" | "users" }) {
   const [drawerOpen, setDrawerOpen] = useState<string | null>(null);
   const qc = useQueryClient();
   const { user } = useAuth();
@@ -38,6 +51,32 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
   const fetchFraud = useServerFn(adminListFraudFlags);
   const resolveFlag = useServerFn(adminResolveFraudFlag);
   const upsertConfig = useServerFn(adminUpsertCommissionConfig);
+  const updateRates = useServerFn(adminUpdateRates);
+  const fetchRates = useServerFn(getCurrentRates);
+  const genPaymentLink = useServerFn(generateDealPaymentLink);
+  const genContract = useServerFn(generateDealContract);
+
+  const paymentLinkMut = useMutation({
+    mutationFn: (deal_id: string) => genPaymentLink({ data: { deal_id } }),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ["admin", "revenue"] });
+      navigator.clipboard.writeText(res.url);
+      toast.success("Payment link generated and copied");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const contractMut = useMutation({
+    mutationFn: (deal_id: string) => genContract({ data: { deal_id } }),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ["admin", "revenue"] });
+      if (res.url) window.open(res.url, "_blank");
+      toast.success("Contract generated — opens in new tab");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const ratesQuery = useQuery({ queryKey: ["fx-rates"], queryFn: () => fetchRates() });
 
   const fraud = useQuery({ queryKey: ["admin", "fraud"], queryFn: () => fetchFraud() });
 
@@ -57,9 +96,17 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
     onError: (e: any) => toast.error(e.message),
   });
 
+  const ratesMut = useMutation({
+    mutationFn: (v: { ngn_rate: number; gbp_rate: number; eur_rate: number }) => updateRates({ data: v }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["fx-rates"] }); toast.success("Exchange rates updated"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const createDeal = useServerFn(adminCreateDeal);
   const updateDeal = useServerFn(adminUpdateDealStatus);
   const markPaid = useServerFn(adminMarkCommissionPaid);
+  const assignDeal = useServerFn(adminAssignDeal);
+  const updateCustomPkg = useServerFn(adminUpdateCustomPackageStatus);
 
   const createDealMut = useMutation({
     mutationFn: (commitment_form_id: string) => createDeal({ data: { commitment_form_id } }),
@@ -75,6 +122,17 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
     mutationFn: (deal_id: string) => markPaid({ data: { deal_id } }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin", "revenue"] }); toast.success("Commission marked paid"); },
     onError: (e: any) => toast.error(e.message),
+  });
+  const assignMut = useMutation({
+    mutationFn: (v: { deal_id: string; assigned_to: string | null }) => assignDeal({ data: v }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin", "revenue"] }); toast.success("Deal assigned"); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const customPkgMut = useMutation({
+    mutationFn: (v: { id: string; status: "pending" | "reviewed" | "converted" | "declined" }) =>
+      updateCustomPkg({ data: v }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin", "revenue"] }); toast.success("Custom package updated"); },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const { data: vettingData, isLoading: vettingLoading } = useQuery({
@@ -189,55 +247,19 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
             </div>
             )}
           </>
-        ) : section === "analytics" ? (
-          <AdminAnalyticsPanel />
+        ) : section === "waitlist" ? (
+          <AdminWaitlistPanel />
+        ) : section === "media-requests" ? (
+          <AdminMediaRequestsPanel />
+        ) : section === "users" ? (
+          <AdminUsersPanel />
         ) : section === "submissions" ? (
           <>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <StatCard icon={Users} label="Waitlist signups" value={waitlistCount} loading={waitlist.isLoading} />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 max-w-xs">
               <StatCard icon={Inbox} label="Contact messages" value={contact.data?.length ?? 0} loading={contact.isLoading} />
             </div>
 
-            <DashboardTabs
-              tabs={[
-                { id: "waitlist", label: "Waitlist", count: waitlistCount },
-                { id: "contact", label: "Contact messages", count: contact.data?.length ?? 0 },
-              ]}
-              active={activeSubTab}
-              onChange={(id) => setActiveSubTab(id as "waitlist" | "contact")}
-            />
-
-            {activeSubTab === "waitlist" ? (
-              waitlist.isLoading ? (
-                <div className="p-8 text-center text-muted-foreground">Loading…</div>
-              ) : !waitlist.data?.length ? (
-                <div className="p-8 text-center text-muted-foreground">No waitlist signups.</div>
-              ) : (
-                <DashboardPanel title="Waitlist signups" bodyClassName="p-0">
-                  <DashboardTable>
-                    <DashboardTableHead>
-                      <tr>
-                        <th className="px-4 py-3">When</th><th className="px-4 py-3">Audience</th><th className="px-4 py-3">Name</th>
-                        <th className="px-4 py-3">Email</th><th className="px-4 py-3">Company</th><th className="px-4 py-3">Role</th><th className="px-4 py-3">Country</th>
-                      </tr>
-                    </DashboardTableHead>
-                    <tbody className="divide-y divide-border/60">
-                      {waitlist.data.map((r: any) => (
-                        <tr key={r.id} className="transition-colors hover:bg-muted/10">
-                          <td className="px-4 py-3 text-xs whitespace-nowrap text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
-                          <td className="px-4 py-3"><StatusPill status={r.audience} /></td>
-                          <td className="px-4 py-3 font-medium text-foreground">{r.full_name}</td>
-                          <td className="px-4 py-3"><a href={`mailto:${r.email}`} className="font-medium text-primary hover:underline">{r.email}</a></td>
-                          <td className="px-4 py-3 text-muted-foreground">{r.company ?? "—"}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{r.role_title ?? "—"}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{r.country ?? "—"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </DashboardTable>
-                </DashboardPanel>
-              )
-            ) : contact.isLoading ? (
+            {contact.isLoading ? (
               <div className="p-8 text-center text-muted-foreground">Loading…</div>
             ) : !contact.data?.length ? (
               <div className="p-8 text-center text-muted-foreground">No contact messages.</div>
@@ -253,13 +275,12 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                     {contact.data.map((r: any) => (
                       <tr key={r.id} className="transition-colors hover:bg-muted/10">
                         <td className="px-4 py-3 text-xs whitespace-nowrap text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
-                        <td className="px-4 py-3 text-sm">
-                          <div className="font-semibold text-foreground">{r.name}</div>
+                        <td className="px-4 py-3">
+                          <div className="font-medium text-foreground">{r.name}</div>
                           <a href={`mailto:${r.email}`} className="text-xs text-primary hover:underline">{r.email}</a>
-                          {r.company && <div className="text-[11px] text-muted-foreground">{r.company}</div>}
                         </td>
-                        <td className="max-w-[150px] truncate px-4 py-3 font-medium text-foreground" title={r.subject}>{r.subject}</td>
-                        <td className="max-w-[400px] px-4 py-3 text-xs whitespace-pre-wrap text-muted-foreground">{r.message}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{r.subject ?? "—"}</td>
+                        <td className="px-4 py-3 max-w-md text-sm text-muted-foreground line-clamp-3">{r.message}</td>
                         <td className="px-4 py-3"><StatusPill status={r.status} /></td>
                       </tr>
                     ))}
@@ -268,6 +289,8 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
               </DashboardPanel>
             )}
           </>
+        ) : section === "analytics" ? (
+          <AdminAnalyticsPanel />
         ) : section === "controls" ? (
           <div className="space-y-8">
             {/* Fraud flags */}
@@ -338,6 +361,13 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                 </table>
               </div>
             </section>
+
+            <FxRatesSection
+              rates={ratesQuery.data?.rates}
+              loading={ratesQuery.isLoading}
+              saving={ratesMut.isPending}
+              onSave={(v) => ratesMut.mutate(v)}
+            />
           </div>
         ) : section === "partners" ? (
           <>
@@ -445,6 +475,60 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
               </div>
             )}
 
+            {/* Custom package requests */}
+            {(revenueData?.customPackages ?? []).length > 0 && (
+              <div className="rounded-xl border border-border bg-card overflow-hidden">
+                <div className="bg-muted/20 px-5 py-4 border-b border-border">
+                  <h3 className="font-display font-semibold text-base text-foreground">Custom package requests</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Bespoke sponsorship briefs — separate from standard commitment forms.</p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm min-w-[800px]">
+                    <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide border-b border-border text-muted-foreground">
+                      <tr>
+                        <th className="px-4 py-3">Event</th>
+                        <th className="px-4 py-3">Company</th>
+                        <th className="px-4 py-3">Budget</th>
+                        <th className="px-4 py-3">Brief</th>
+                        <th className="px-4 py-3">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {(revenueData?.customPackages ?? []).filter((r: any) => r.status === "pending" || r.status === "reviewed").map((r: any) => {
+                        const ev = revenueData!.events[r.event_id];
+                        return (
+                          <tr key={r.id} className="hover:bg-muted/10 align-top">
+                            <td className="px-4 py-3 font-medium">{ev?.name ?? "—"}</td>
+                            <td className="px-4 py-3">
+                              <div>{r.company_name}</div>
+                              <div className="text-xs text-muted-foreground">{r.contact_name}</div>
+                            </td>
+                            <td className="px-4 py-3 text-xs">
+                              {r.budget_range_min || r.budget_range_max
+                                ? `${fmtMoney(r.currency, Number(r.budget_range_min ?? 0))} – ${fmtMoney(r.currency, Number(r.budget_range_max ?? 0))}`
+                                : "—"}
+                            </td>
+                            <td className="px-4 py-3 text-xs text-muted-foreground max-w-xs line-clamp-3">{r.package_brief}</td>
+                            <td className="px-4 py-3">
+                              <select
+                                value={r.status}
+                                onChange={(e) => customPkgMut.mutate({ id: r.id, status: e.target.value as any })}
+                                className="rounded border border-border bg-transparent px-2 py-1 text-xs capitalize"
+                              >
+                                {["pending", "reviewed", "converted", "declined"].map((s) => (
+                                  <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
+                                ))}
+                              </select>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
             {/* Deal pipeline — editable */}
             <div className="rounded-xl border border-border bg-card overflow-hidden">
               <div className="bg-muted/20 px-5 py-4 border-b border-border">
@@ -455,7 +539,7 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                 <table className="w-full text-sm min-w-[920px]">
                   <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide border-b border-border text-muted-foreground">
                     <tr>
-                      <th className="px-4 py-3">Event</th><th className="px-4 py-3">Value</th><th className="px-4 py-3">USD</th><th className="px-4 py-3">IGE</th><th className="px-4 py-3">Partner</th><th className="px-4 py-3">Stage</th><th className="px-4 py-3">Payout</th>
+                      <th className="px-4 py-3">Event</th><th className="px-4 py-3">Value</th><th className="px-4 py-3">USD</th><th className="px-4 py-3">IGE</th><th className="px-4 py-3">Partner</th><th className="px-4 py-3">Assigned</th><th className="px-4 py-3">Stage</th><th className="px-4 py-3">Contract</th><th className="px-4 py-3">Payment</th><th className="px-4 py-3">Payout</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -491,12 +575,84 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                           </td>
                           <td className="px-4 py-3">
                             <select
+                              value={d.assigned_to ?? ""}
+                              onChange={(e) =>
+                                assignMut.mutate({
+                                  deal_id: d.id,
+                                  assigned_to: e.target.value || null,
+                                })
+                              }
+                              className="max-w-[140px] rounded border border-border bg-transparent px-2 py-1 text-xs"
+                            >
+                              <option value="">Unassigned</option>
+                              {(revenueData?.staff ?? []).map((s: any) => (
+                                <option key={s.user_id} value={s.user_id}>
+                                  {s.display_name || s.email?.split("@")[0] || s.user_id.slice(0, 8)}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="px-4 py-3">
+                            <select
                               value={d.status}
                               onChange={(e) => statusMut.mutate({ id: d.id, status: e.target.value })}
                               className="rounded border border-border bg-transparent px-2 py-1 text-xs capitalize"
                             >
                               {DEAL_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, " ")}</option>)}
                             </select>
+                          </td>
+                          <td className="px-4 py-3">
+                            {d.contract_url ? (
+                              <div className="space-y-1">
+                                <a href={d.contract_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
+                                  <FileText className="h-3 w-3" /> View
+                                </a>
+                                <button
+                                  type="button"
+                                  onClick={() => contractMut.mutate(d.id)}
+                                  disabled={contractMut.isPending}
+                                  className="block text-[10px] text-muted-foreground hover:text-foreground"
+                                >
+                                  Regenerate
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => contractMut.mutate(d.id)}
+                                disabled={contractMut.isPending}
+                                className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-xs font-semibold text-foreground hover:bg-muted disabled:opacity-40"
+                              >
+                                <FileText className="h-3 w-3" /> Generate
+                              </button>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            {d.status === "payment_received" ? (
+                              <span className="text-xs font-semibold text-emerald-700">Paid</span>
+                            ) : d.payment_link_url ? (
+                              <div className="space-y-1">
+                                <a href={d.payment_link_url} target="_blank" rel="noreferrer" className="text-xs font-semibold text-primary hover:underline">
+                                  Open link
+                                </a>
+                                <button
+                                  type="button"
+                                  onClick={() => { navigator.clipboard.writeText(d.payment_link_url); toast.success("Copied"); }}
+                                  className="block text-[10px] text-muted-foreground hover:text-foreground"
+                                >
+                                  Copy
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => paymentLinkMut.mutate(d.id)}
+                                disabled={paymentLinkMut.isPending || !d.deal_value_native}
+                                className="rounded border border-primary/40 px-2 py-1 text-xs font-semibold text-primary hover:bg-brand-soft disabled:opacity-40"
+                              >
+                                Generate link
+                              </button>
+                            )}
                           </td>
                           <td className="px-4 py-3">
                             {d.referral_partner_id && d.status === "payment_received" && !d.referral_commission_paid ? (
@@ -509,7 +665,7 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                       );
                     })}
                     {!(revenueData?.deals ?? []).length && (
-                      <tr><td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">No deals yet. Convert a pending inquiry above to start the pipeline.</td></tr>
+                      <tr><td colSpan={10} className="px-4 py-10 text-center text-muted-foreground">No deals yet. Convert a pending inquiry above to start the pipeline.</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -666,6 +822,87 @@ function CommissionRow({ config, onSave, saving }: { config: any; onSave: (v: an
         </button>
       </td>
     </tr>
+  );
+}
+
+function FxRatesSection({
+  rates,
+  loading,
+  saving,
+  onSave,
+}: {
+  rates?: { ngn_rate: number; gbp_rate: number; eur_rate: number; fetched_at?: string } | null;
+  loading: boolean;
+  saving: boolean;
+  onSave: (v: { ngn_rate: number; gbp_rate: number; eur_rate: number }) => void;
+}) {
+  const [form, setForm] = useState({
+    ngn_rate: rates?.ngn_rate != null ? String(rates.ngn_rate) : "",
+    gbp_rate: rates?.gbp_rate != null ? String(rates.gbp_rate) : "",
+    eur_rate: rates?.eur_rate != null ? String(rates.eur_rate) : "",
+  });
+
+  useEffect(() => {
+    if (rates) {
+      setForm({
+        ngn_rate: String(rates.ngn_rate),
+        gbp_rate: String(rates.gbp_rate),
+        eur_rate: String(rates.eur_rate),
+      });
+    }
+  }, [rates?.ngn_rate, rates?.gbp_rate, rates?.eur_rate]);
+
+  const inputCls = "w-full rounded-md border border-input bg-background px-3 py-2 text-sm";
+
+  return (
+    <section>
+      <h3 className="font-display text-base font-bold text-foreground flex items-center gap-2">
+        <DollarSign className="h-4 w-4 text-primary" /> FX rates (USD base)
+      </h3>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Manual refresh for dual-currency display. Last updated:{" "}
+        {loading ? "…" : rates?.fetched_at ? new Date(rates.fetched_at).toLocaleString() : "never"}
+      </p>
+      <form
+        className="mt-4 grid max-w-xl gap-4 rounded-xl border border-border bg-card p-6 sm:grid-cols-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          onSave({
+            ngn_rate: Number(form.ngn_rate),
+            gbp_rate: Number(form.gbp_rate),
+            eur_rate: Number(form.eur_rate),
+          });
+        }}
+      >
+        {[
+          { key: "ngn_rate" as const, label: "1 USD → NGN" },
+          { key: "gbp_rate" as const, label: "1 USD → GBP" },
+          { key: "eur_rate" as const, label: "1 USD → EUR" },
+        ].map((f) => (
+          <label key={f.key} className="block text-sm">
+            <span className="mb-1 block font-medium">{f.label}</span>
+            <input
+              type="number"
+              step="any"
+              min={0}
+              required
+              value={form[f.key]}
+              onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+              className={inputCls}
+            />
+          </label>
+        ))}
+        <div className="sm:col-span-3">
+          <button
+            type="submit"
+            disabled={saving || loading}
+            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+          >
+            {saving ? "Saving…" : "Publish new rates"}
+          </button>
+        </div>
+      </form>
+    </section>
   );
 }
 

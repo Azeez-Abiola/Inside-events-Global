@@ -80,7 +80,11 @@ export function SponsorOverviewPage() {
                 <h3 className="font-display text-sm font-bold text-foreground">
                   {data?.recommendedEvents?.length ? "Recommended for you" : "All events"}
                 </h3>
-                <p className="text-xs text-muted-foreground">Vetted listings on the marketplace</p>
+                <p className="text-xs text-muted-foreground">
+                  {data?.recommendedEvents?.length
+                    ? `Ranked by sector, geography, budget fit${data?.profileComplete != null ? ` · profile ${data.profileComplete}%` : ""}`
+                    : "Vetted listings on the marketplace"}
+                </p>
               </div>
               <Link to="/dashboard/discover" className="text-xs font-semibold text-primary hover:underline">
                 View all →
@@ -173,6 +177,7 @@ function EventPreviewCard({ event: e, compact }: { event: any; compact?: boolean
           <div className="truncate font-semibold text-foreground group-hover:text-primary-deep transition-colors">{e.name}</div>
           <div className="mt-0.5 truncate text-xs text-muted-foreground">
             {e.primary_sector} · {[e.city, e.country].filter(Boolean).join(", ")}
+            {e.matchScore != null && <span className="ml-1 font-semibold text-primary-deep">· {e.matchScore}%</span>}
           </div>
         </div>
       </Link>
@@ -195,6 +200,7 @@ function EventPreviewCard({ event: e, compact }: { event: any; compact?: boolean
         <div className="truncate font-semibold text-foreground group-hover:text-primary-deep transition-colors">{e.name}</div>
         <div className="mt-1 truncate text-xs text-muted-foreground">
           {e.primary_sector} · {[e.city, e.country].filter(Boolean).join(", ")}
+          {e.matchScore != null && <span className="ml-1 font-semibold text-primary-deep">· {e.matchScore}% match</span>}
         </div>
       </div>
     </Link>
@@ -326,9 +332,10 @@ export function SponsorDiscoverPage() {
         <div className="space-y-8">
           {(data?.recommendedEvents?.length ?? 0) > 0 && (
             <section>
-              <h2 className="font-display text-lg font-bold">Recommended for your sectors</h2>
+              <h2 className="font-display text-lg font-bold">Recommended for your profile</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Matched to: {(data?.profileSectors ?? []).join(", ") || "your profile"}
+                Weighted match on sectors, geography, budget, and profile completeness
+                {data?.profileComplete != null ? ` (your profile: ${data.profileComplete}%)` : ""}.
               </p>
               <div className="mt-4"><EventGrid events={data?.recommendedEvents ?? []} empty="" /></div>
             </section>

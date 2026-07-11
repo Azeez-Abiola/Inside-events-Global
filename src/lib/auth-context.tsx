@@ -107,14 +107,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setSession(data.session);
       if (data.session?.user) {
-        supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", data.session.user.id)
-          .then(({ data: rolesData }) => {
-            setRoles((rolesData ?? []).map((r) => r.role as Role));
-            setLoading(false);
-          });
+        const uid = data.session.user.id;
+        const [{ data: rolesData }, { data: profile }] = await Promise.all([
+          supabase.from("user_roles").select("role").eq("user_id", uid),
+          supabase.from("profiles").select("is_suspended").eq("id", uid).maybeSingle(),
+        ]);
+        if (profile?.is_suspended) {
+          await supabase.auth.signOut({ scope: "local" });
+          setSession(null);
+          setRoles([]);
+          setLoading(false);
+          return;
+        }
+        setRoles((rolesData ?? []).map((r) => r.role as Role));
+        setLoading(false);
       } else {
         setLoading(false);
       }

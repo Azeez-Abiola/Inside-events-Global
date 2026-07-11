@@ -2,6 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { notifyDealParties } from "@/lib/email/deal-notify";
+import { sendTransactionalEmailServer } from "@/lib/email/server-send";
+import { rankEventsForSponsor } from "@/lib/event-recommendations";
+
+const SITE_URL = process.env.VITE_SITE_URL || "https://www.insideglobalevents.com";
 
 // ───────────────────────────────────────────────────────────────
 // Admin: deals pipeline + revenue dashboard
@@ -14,10 +19,10 @@ export const adminGetRevenue = createServerFn({ method: "GET" })
     const admin = roles?.some((r) => r.role === "abw_admin" || r.role === "super_admin");
     if (!admin) throw new Error("Forbidden");
 
-    const [{ data: deals }, { data: partners }, { data: configs }, { data: flags }, { data: forms }, { data: allLinks }] = await Promise.all([
+    const [{ data: deals }, { data: partners }, { data: configs }, { data: flags }, { data: forms }, { data: allLinks }, { data: customPackages }, { data: staffRoles }] = await Promise.all([
       supabaseAdmin
         .from("deals")
-        .select("id, commitment_form_id, event_id, organiser_id, sponsor_user_id, referral_partner_id, status, deal_value_native, deal_currency, deal_value_usd, abw_commission_usd, abw_commission_native, referral_commission_usd, referral_commission_native, referral_commission_paid, created_at, updated_at, paid_at")
+        .select("id, commitment_form_id, event_id, organiser_id, sponsor_user_id, referral_partner_id, assigned_to, status, deal_value_native, deal_currency, deal_value_usd, abw_commission_usd, abw_commission_native, referral_commission_usd, referral_commission_native, referral_commission_paid, payment_link_url, payment_link_provider, payment_link_created_at, contract_url, contract_generated_at, created_at, updated_at, paid_at")
         .order("updated_at", { ascending: false }),
       supabaseAdmin
         .from("referral_partner_profiles")
@@ -34,6 +39,11 @@ export const adminGetRevenue = createServerFn({ method: "GET" })
       supabaseAdmin
         .from("referral_links")
         .select("referral_partner_id, click_count, conversion_count, status"),
+      supabaseAdmin
+        .from("custom_package_requests" as never)
+        .select("id, event_id, company_name, contact_name, currency, budget_range_min, budget_range_max, package_brief, status, created_at")
+        .order("created_at", { ascending: false }),
+      supabaseAdmin.from("user_roles").select("user_id, role").in("role", ["abw_admin", "super_admin"]),
     ]);
 
     // Inquiries that have not yet been converted into a deal.
@@ -41,7 +51,11 @@ export const adminGetRevenue = createServerFn({ method: "GET" })
     const inquiries = (forms ?? []).filter((f) => !dealtFormIds.has(f.id));
 
     const eventIds = Array.from(
-      new Set([...(deals ?? []).map((d) => d.event_id), ...inquiries.map((f) => f.event_id)].filter(Boolean)),
+      new Set([
+        ...(deals ?? []).map((d) => d.event_id),
+        ...inquiries.map((f) => f.event_id),
+        ...(customPackages ?? []).map((c: any) => c.event_id),
+      ].filter(Boolean)),
     );
     let eventMap: Record<string, any> = {};
     if (eventIds.length) {
@@ -69,7 +83,7 @@ export const adminGetRevenue = createServerFn({ method: "GET" })
           acc.abw += Number(d.abw_commission_usd ?? 0);
           acc.refOwed += Number(d.referral_commission_usd ?? 0) - (d.referral_commission_paid ? Number(d.referral_commission_usd ?? 0) : 0);
         }
-        if (!["payment_received", "closed_lost", "cancelled"].includes(d.status)) {
+        if (!["payment_received", "deal_lost", "deal_closed", "cancelled"].includes(d.status)) {
           acc.open += 1;
           acc.forecast += Number(d.deal_value_usd ?? 0);
         }
@@ -87,10 +101,26 @@ export const adminGetRevenue = createServerFn({ method: "GET" })
       linkStats[id].conversions += l.conversion_count ?? 0;
     }
 
+    const staffIds = Array.from(new Set((staffRoles ?? []).map((r) => r.user_id)));
+    let staffMap: Record<string, { email: string; display_name: string | null }> = {};
+    if (staffIds.length) {
+      const { data: profs } = await supabaseAdmin
+        .from("profiles")
+        .select("id, email, display_name")
+        .in("id", staffIds);
+      for (const p of profs ?? []) staffMap[p.id] = { email: p.email ?? "", display_name: p.display_name };
+    }
+
     return {
       deals: deals ?? [],
       inquiries,
+      customPackages: customPackages ?? [],
       events: eventMap,
+      staff: (staffRoles ?? []).map((r) => ({
+        user_id: r.user_id,
+        role: r.role,
+        ...staffMap[r.user_id],
+      })),
       partners: (partners ?? []).map((p) => ({
         ...p,
         owed_usd: partnerOwed[p.user_id] ?? 0,
@@ -125,7 +155,7 @@ export const adminCreateDeal = createServerFn({ method: "POST" })
 
     const { data: ev } = await supabaseAdmin
       .from("events")
-      .select("organiser_id")
+      .select("organiser_id, name")
       .eq("id", cf.event_id)
       .single();
 
@@ -150,6 +180,14 @@ export const adminCreateDeal = createServerFn({ method: "POST" })
       to_status: "inquiry_received",
       changed_by: userId,
     });
+
+    await notifyDealParties({
+      dealId: deal.id,
+      eventName: ev?.name ?? "Event",
+      fromStatus: null,
+      toStatus: "inquiry_received",
+      userIds: [ev!.organiser_id as string, cf.sponsor_user_id, cf.referral_partner_id].filter(Boolean) as string[],
+    }).catch((e) => console.error("[adminCreateDeal] notify", e));
 
     return { id: deal.id };
   });
@@ -222,7 +260,7 @@ export const adminUpdateDealStatus = createServerFn({ method: "POST" })
       note: data.note,
     });
 
-    // Notify parties
+    // Notify parties (in-app + email)
     const recipients = [deal.organiser_id, deal.sponsor_user_id, deal.referral_partner_id].filter(Boolean) as string[];
     if (recipients.length) {
       await supabaseAdmin.from("notifications").insert(
@@ -234,6 +272,17 @@ export const adminUpdateDealStatus = createServerFn({ method: "POST" })
           data: { deal_id: data.id },
         })),
       );
+    }
+    if (data.status !== deal.status) {
+      const { data: ev } = await supabaseAdmin.from("events").select("name").eq("id", deal.event_id).single();
+      await notifyDealParties({
+        dealId: data.id,
+        eventName: ev?.name ?? "Event",
+        fromStatus: deal.status,
+        toStatus: data.status,
+        note: data.note,
+        userIds: recipients,
+      }).catch((e) => console.error("[adminUpdateDealStatus] notify", e));
     }
 
     return { ok: true };
@@ -252,7 +301,7 @@ export const adminMarkCommissionPaid = createServerFn({ method: "POST" })
 
     const { data: deal } = await supabaseAdmin
       .from("deals")
-      .select("referral_partner_id, referral_commission_native, deal_currency")
+      .select("referral_partner_id, referral_commission_native, referral_commission_usd, deal_currency, event_id")
       .eq("id", data.deal_id)
       .single();
     if (!deal?.referral_partner_id) throw new Error("Deal has no referral partner");
@@ -262,14 +311,65 @@ export const adminMarkCommissionPaid = createServerFn({ method: "POST" })
       .update({ referral_commission_paid: true, referral_commission_paid_at: new Date().toISOString() })
       .eq("id", data.deal_id);
 
+    const { data: ev } = await supabaseAdmin.from("events").select("name").eq("id", deal.event_id).single();
+    const amount = Number(deal.referral_commission_native ?? 0);
+
     await supabaseAdmin.from("notifications").insert({
       user_id: deal.referral_partner_id,
       type: "commission_paid",
       title: "Your commission has been paid",
-      body: `${deal.deal_currency} ${Number(deal.referral_commission_native ?? 0).toLocaleString()}`,
+      body: `${deal.deal_currency} ${amount.toLocaleString()}`,
       data: { deal_id: data.deal_id },
     });
 
+    const { data: refProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("email, display_name")
+      .eq("id", deal.referral_partner_id)
+      .maybeSingle();
+    if (refProfile?.email) {
+      await sendTransactionalEmailServer({
+        templateName: "commission-paid",
+        recipientEmail: refProfile.email,
+        idempotencyKey: `commission-paid-${data.deal_id}`,
+        templateData: {
+          name: refProfile.display_name ?? refProfile.email.split("@")[0],
+          eventName: ev?.name ?? "Your referred event",
+          amount: amount.toLocaleString(),
+          currency: deal.deal_currency ?? "USD",
+          dashboardUrl: `${SITE_URL}/dashboard/commissions`,
+        },
+      }).catch((e) => console.error("[adminMarkCommissionPaid] email", e));
+    }
+
+    return { ok: true };
+  });
+
+export const adminAssignDeal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ deal_id: z.string().uuid(), assigned_to: z.string().uuid().nullable() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    if (!roles?.some((r) => r.role === "abw_admin" || r.role === "super_admin")) throw new Error("Forbidden");
+
+    if (data.assigned_to) {
+      const { data: staff } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", data.assigned_to);
+      if (!staff?.some((r) => r.role === "abw_admin" || r.role === "super_admin")) {
+        throw new Error("Assignee must be IGE staff");
+      }
+    }
+
+    const { error } = await supabaseAdmin
+      .from("deals")
+      .update({ assigned_to: data.assigned_to, updated_at: new Date().toISOString() } as never)
+      .eq("id", data.deal_id);
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 
@@ -373,7 +473,7 @@ export const getOrganiserPipeline = createServerFn({ method: "GET" })
           .order("submitted_at", { ascending: false }),
         supabaseAdmin
           .from("deals")
-          .select("id, event_id, commitment_form_id, status, deal_value_native, deal_currency, deal_value_usd, referral_partner_id, updated_at")
+          .select("id, event_id, commitment_form_id, status, deal_value_native, deal_currency, deal_value_usd, referral_partner_id, contract_url, payment_link_url, updated_at")
           .in("event_id", eventIds),
       ]);
       forms = f.data ?? [];
@@ -402,7 +502,7 @@ export const getSponsorDashboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const [{ data: forms }, { data: saves }, { data: fresh }, { data: profile }] = await Promise.all([
+    const [{ data: forms }, { data: saves }, { data: fresh }, { data: profile }, { data: baseProfile }] = await Promise.all([
       supabaseAdmin
         .from("commitment_forms")
         .select("id, event_id, currency, budget_range_min, budget_range_max, tier_id, submitted_at, referral_partner_id")
@@ -411,28 +511,55 @@ export const getSponsorDashboard = createServerFn({ method: "GET" })
       supabaseAdmin.from("event_saves").select("event_id, created_at").eq("user_id", userId),
       supabaseAdmin
         .from("events")
-        .select("id, slug, name, banner_image_url, start_date, city, country, primary_sector")
+        .select("id, slug, name, banner_image_url, start_date, city, country, primary_sector, organiser_id, attendance_size, created_at")
         .in("status", ["approved", "listed"])
         .order("created_at", { ascending: false })
         .limit(6),
       supabaseAdmin
         .from("sponsor_profiles")
-        .select("sponsorship_sectors, target_geographies")
+        .select("sponsorship_sectors, target_geographies, budget_range_min, budget_range_max, preferred_currency")
         .eq("user_id", userId)
         .maybeSingle(),
+      supabaseAdmin.from("profiles").select("profile_complete").eq("id", userId).maybeSingle(),
     ]);
 
     const sectors = (profile?.sponsorship_sectors as string[] | null) ?? [];
+    const geos = (profile?.target_geographies as string[] | null) ?? [];
+    const matchCtx = {
+      sponsorship_sectors: sectors,
+      target_geographies: geos,
+      budget_range_min: profile?.budget_range_min != null ? Number(profile.budget_range_min) : null,
+      budget_range_max: profile?.budget_range_max != null ? Number(profile.budget_range_max) : null,
+      preferred_currency: profile?.preferred_currency ?? "USD",
+      profile_complete: Number(baseProfile?.profile_complete ?? 0),
+    };
+
     let recommended: any[] = [];
-    if (sectors.length) {
-      const { data: rec } = await supabaseAdmin
-        .from("events")
-        .select("id, slug, name, banner_image_url, start_date, city, country, primary_sector")
-        .in("status", ["approved", "listed"])
-        .in("primary_sector", sectors)
-        .order("created_at", { ascending: false })
-        .limit(6);
-      recommended = rec ?? [];
+    const { data: pool } = await supabaseAdmin
+      .from("events")
+      .select("id, slug, name, banner_image_url, start_date, city, country, primary_sector, organiser_id, attendance_size, created_at")
+      .in("status", ["approved", "listed"])
+      .order("created_at", { ascending: false })
+      .limit(36);
+
+    if ((pool ?? []).length) {
+      const ids = (pool ?? []).map((e) => e.id);
+      const organiserIds = Array.from(new Set((pool ?? []).map((e) => e.organiser_id).filter(Boolean))) as string[];
+      const [{ data: tiers }, { data: orgProfiles }] = await Promise.all([
+        supabaseAdmin.from("event_sponsorship_tiers").select("event_id, price, currency").in("event_id", ids).order("price", { ascending: true }),
+        organiserIds.length
+          ? supabaseAdmin.from("profiles").select("id, profile_complete").in("id", organiserIds)
+          : Promise.resolve({ data: [] as { id: string; profile_complete: number }[] }),
+      ]);
+      const priceMap: Record<string, { price: number; currency: string }> = {};
+      for (const t of tiers ?? []) {
+        if (!priceMap[t.event_id]) priceMap[t.event_id] = { price: Number(t.price), currency: t.currency };
+      }
+      const orgComplete: Record<string, number> = {};
+      for (const p of orgProfiles ?? []) orgComplete[p.id] = Number(p.profile_complete ?? 0);
+
+      const withPrices = (pool ?? []).map((e) => ({ ...e, starting: priceMap[e.id] ?? null }));
+      recommended = rankEventsForSponsor(withPrices, matchCtx, orgComplete).slice(0, 12);
     }
 
     const referralFormIds = (forms ?? []).filter((f) => f.referral_partner_id).map((f) => f.event_id);
@@ -462,6 +589,7 @@ export const getSponsorDashboard = createServerFn({ method: "GET" })
       recommendedEvents: recommended,
       referralSharedEvents: referralShared,
       profileSectors: sectors,
+      profileComplete: matchCtx.profile_complete,
       eventMap: evMap,
     };
   });
@@ -472,14 +600,14 @@ export const getSponsorDashboard = createServerFn({ method: "GET" })
 // ───────────────────────────────────────────────────────────────
 const DEAL_STAGE_COLUMN: Record<string, string> = {
   inquiry_received: "in_conversation",
-  vetting: "in_conversation",
-  intro_made: "in_conversation",
-  in_negotiation: "proposal",
-  verbal_commitment: "proposal",
+  qualification_call_scheduled: "in_conversation",
+  proposal_sent: "proposal",
+  negotiation: "proposal",
   contract_sent: "proposal",
   contract_signed: "committed",
   payment_received: "paid_active",
-  closed_lost: "closed",
+  deal_closed: "closed",
+  deal_lost: "closed",
   cancelled: "closed",
 };
 
@@ -496,7 +624,7 @@ export const getSponsorPipeline = createServerFn({ method: "GET" })
         .eq("sponsor_user_id", userId),
       supabaseAdmin
         .from("deals")
-        .select("id, commitment_form_id, event_id, status, deal_value_native, deal_currency, deal_value_usd, updated_at")
+        .select("id, commitment_form_id, event_id, status, deal_value_native, deal_currency, deal_value_usd, payment_link_url, payment_link_provider, contract_url, updated_at")
         .eq("sponsor_user_id", userId),
     ]);
 
@@ -546,6 +674,8 @@ export const getSponsorPipeline = createServerFn({ method: "GET" })
         budgetMin: f.budget_range_min,
         budgetMax: f.budget_range_max,
         status: deal?.status ?? null,
+        paymentLinkUrl: deal?.payment_link_url ?? null,
+        contractUrl: deal?.contract_url ?? null,
       });
     }
 

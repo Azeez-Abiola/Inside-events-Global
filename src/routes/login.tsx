@@ -4,9 +4,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
-import { getSiteUrl } from "@/lib/site-url";
-import { AuthShell, GoogleButton, Divider } from "@/components/auth-shell";
+import { AuthShell } from "@/components/auth-shell";
 
 const search = z.object({
   redirect: z.string().optional(),
@@ -28,7 +26,6 @@ function LoginPage() {
   const [email, setEmail] = useState(emailParam ?? "");
   const [password, setPassword] = useState(passwordParam ?? "");
   const [submitting, setSubmitting] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
   const demoPrefill = !!(emailParam && passwordParam);
 
   useEffect(() => {
@@ -49,20 +46,6 @@ function LoginPage() {
     navigate({ to: redirect ?? "/dashboard" });
   }
 
-  async function handleGoogle() {
-    setGoogleLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: getSiteUrl(),
-    });
-    if (result.error) {
-      setGoogleLoading(false);
-      toast.error("Google sign-in failed");
-      return;
-    }
-    if (result.redirected) return;
-    navigate({ to: redirect ?? "/dashboard" });
-  }
-
   return (
     <AuthShell
       title="Welcome back"
@@ -79,8 +62,6 @@ function LoginPage() {
         </>
       }
     >
-      <GoogleButton onClick={handleGoogle} loading={googleLoading} label="Sign in with Google" />
-      <Divider />
       {demoPrefill && (
         <p className="rounded-lg border border-primary/20 bg-brand-soft px-3 py-2 text-xs text-primary-deep">
           Demo credentials filled in — click Sign in to open this workspace.
@@ -88,7 +69,7 @@ function LoginPage() {
       )}
       <form onSubmit={handlePassword} className="space-y-4">
         <Field
-          label="Work email"
+          label="Email"
           type="email"
           autoComplete="email"
           required

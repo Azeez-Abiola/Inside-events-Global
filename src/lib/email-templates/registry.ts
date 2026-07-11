@@ -12,13 +12,23 @@ export interface TemplateEntry {
 import { template as contactConfirmation } from './contact-confirmation'
 import { template as contactInternal } from './contact-internal'
 import { template as waitlistInternal } from './waitlist-internal'
+import { template as waitlistInvite } from './waitlist-invite'
 import { template as welcome } from './welcome'
 import { template as newMessage } from './new-message'
+import { template as paymentLink } from './payment-link'
+import { template as commissionPaid } from './commission-paid'
+import { template as dealStatus } from './deal-status'
+import { template as vettingStatus } from './vetting-status'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'contact-confirmation': contactConfirmation,
   'contact-internal': contactInternal,
   'waitlist-internal': waitlistInternal,
+  'waitlist-invite': waitlistInvite,
   welcome,
   'new-message': newMessage,
+  'vetting-status': vettingStatus,
+  'payment-link': paymentLink,
+  'deal-status': dealStatus,
+  'commission-paid': commissionPaid,
 }

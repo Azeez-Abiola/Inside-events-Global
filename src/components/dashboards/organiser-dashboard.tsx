@@ -353,9 +353,21 @@ function PipelineEventTable({
                   </td>
                   <td className="px-3 py-3 capitalize">
                     {deal ? (
-                      <span className="inline-flex rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary-deep">
-                        {deal.status.replace(/_/g, " ")}
-                      </span>
+                      <div className="space-y-1">
+                        <span className="inline-flex rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary-deep">
+                          {deal.status.replace(/_/g, " ")}
+                        </span>
+                        {deal.contract_url && (
+                          <a
+                            href={deal.contract_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="block text-[11px] font-semibold text-primary hover:underline"
+                          >
+                            View contract →
+                          </a>
+                        )}
+                      </div>
                     ) : (
                       <span className="inline-flex rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
                         Awaiting deal

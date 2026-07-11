@@ -263,7 +263,7 @@ export const getAdminAnalytics = createServerFn({ method: "GET" })
       summary: {
         totalEvents: events?.length ?? 0,
         liveEvents: (events ?? []).filter((e) => e.status === "listed").length,
-        openDeals: (deals ?? []).filter((d) => !["payment_received", "closed_lost", "cancelled"].includes(d.status)).length,
+        openDeals: (deals ?? []).filter((d) => !["payment_received", "deal_lost", "deal_closed", "cancelled"].includes(d.status)).length,
         waitlist: waitlist?.length ?? 0,
         gmv: (deals ?? []).filter((d) => d.status === "payment_received").reduce((s, d) => s + Number(d.deal_value_usd ?? 0), 0),
       },

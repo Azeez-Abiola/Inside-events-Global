@@ -79,6 +79,28 @@ function PipelineCard({ card }: { card: any }) {
           {card.status.replace(/_/g, " ")}
         </div>
       )}
+      {card.contractUrl && (
+        <a
+          href={card.contractUrl}
+          target="_blank"
+          rel="noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="mt-2 inline-flex w-full items-center justify-center gap-1 rounded-md border border-primary/40 bg-card px-2 py-1.5 text-[11px] font-bold text-primary-deep hover:bg-brand-soft"
+        >
+          <FileText className="h-3 w-3" /> View contract
+        </a>
+      )}
+      {card.paymentLinkUrl && card.status !== "payment_received" && (
+        <a
+          href={card.paymentLinkUrl}
+          target="_blank"
+          rel="noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="mt-2 inline-flex w-full items-center justify-center rounded-md bg-brand-gradient px-2 py-1.5 text-[11px] font-bold text-white"
+        >
+          Pay now
+        </a>
+      )}
     </>
   );
   const cls = "block rounded-lg border border-border bg-card p-3 text-left hover:border-primary hover:shadow-soft transition-all";

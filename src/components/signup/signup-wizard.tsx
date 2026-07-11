@@ -3,9 +3,8 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { getSiteUrl } from "@/lib/site-url";
-import { AuthShell, GoogleButton, Divider } from "@/components/auth-shell";
+import { AuthShell } from "@/components/auth-shell";
 import { SignupProfileStep } from "@/components/signup/profile-step";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -34,7 +33,6 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
   const [emailConfirmPending, setEmailConfirmPending] = useState(false);
 
   const signupRole = (roles[0] as SignupRole | undefined) ?? role;
@@ -147,22 +145,6 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
     }
     setEmailConfirmPending(true);
     toast.success("Check your inbox to confirm your email, then sign in to finish your profile.");
-  }
-
-  async function handleGoogle() {
-    stashSignupRole(role);
-    setGoogleLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${getSiteUrl()}/signup?step=profile`,
-    });
-    if (result.error) {
-      setGoogleLoading(false);
-      toast.error("Google sign-in failed");
-      return;
-    }
-    if (result.redirected) return;
-    setGoogleLoading(false);
-    goToStep("profile");
   }
 
   if (loading || bootstrapping) {
@@ -282,12 +264,9 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
               </Link>
             </div>
           ) : (
-            <>
-              <GoogleButton onClick={handleGoogle} loading={googleLoading} label="Sign up with Google" />
-              <Divider />
-              <form onSubmit={handlePassword} className="space-y-4">
-                <AccountField
-                  label="Work email"
+            <form onSubmit={handlePassword} className="space-y-4">
+              <AccountField
+                label="Email"
                   type="email"
                   autoComplete="email"
                   required
@@ -313,7 +292,6 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
                   By continuing you agree to IGE's Terms and Privacy Policy.
                 </p>
               </form>
-            </>
           )}
             </>
           )}

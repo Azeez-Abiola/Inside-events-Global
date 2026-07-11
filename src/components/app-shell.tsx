@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { LogOut, Bell, Loader2, Menu, Search, Settings } from "lucide-react";
+import { LogOut, Bell, Loader2, Menu, Search } from "lucide-react";
 import { toast } from "sonner";
 import logo from "@/assets/ige-logo.jpeg";
 import { useAuth } from "@/lib/auth-context";
@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getWorkspaceNav } from "@/lib/workspace-nav";
 import { greetingName, roleLabel } from "@/lib/dashboard-meta";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -104,7 +104,24 @@ export function AppShell({ children }: { children: ReactNode }) {
     </aside>
   );
 
-  const displayName = greetingName(user?.email, user?.user_metadata);
+  const { data: headerProfile } = useQuery({
+    queryKey: ["header-profile", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, avatar_url")
+        .eq("id", user!.id)
+        .single();
+      return data;
+    },
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+
+  const displayName =
+    headerProfile?.display_name?.trim() ||
+    greetingName(user?.email, user?.user_metadata);
+  const avatarUrl = headerProfile?.avatar_url ?? null;
   const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
@@ -145,22 +162,19 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="flex shrink-0 items-center gap-2">
               <NotificationsBell />
               <ThemeToggle />
-              <button
-                type="button"
-                className="hidden h-10 w-10 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition-colors hover:bg-muted/60 sm:inline-flex"
-                aria-label="Settings"
+              <Link
+                to="/profile"
+                className="ml-1 flex items-center gap-2.5 rounded-xl py-1 pl-1 pr-2 transition-colors hover:bg-muted/60"
               >
-                <Settings className="h-4 w-4" />
-              </button>
-              <div className="ml-1 flex items-center gap-2.5 pl-2">
                 <Avatar className="h-9 w-9 ring-2 ring-primary/10">
+                  {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
                   <AvatarFallback className="bg-brand-soft text-xs font-bold text-primary-deep">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="hidden min-w-0 lg:block">
                   <div className="truncate text-sm font-semibold text-foreground">{displayName}</div>
                   <div className="truncate text-[11px] text-muted-foreground">{roleLabel(roles)}</div>
                 </div>
-              </div>
+              </Link>
             </div>
           </header>
 

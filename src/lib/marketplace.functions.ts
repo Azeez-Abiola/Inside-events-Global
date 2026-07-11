@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin, supabasePublic } from "@/integrations/supabase/client.server";
+import { applyOrganiserDiscoverability, rankEventsForSponsor } from "@/lib/event-recommendations";
 
 // ───────────────────────────────────────────────────────────────
 // Public marketplace listing - anon client (RLS: public view live events)
@@ -19,7 +20,7 @@ const FilterInput = z.object({
   audience_max: z.number().int().min(0).optional(),
   vetted_only: z.boolean().default(true),
   decision_makers: z.boolean().default(false),
-  sort: z.enum(["newest", "soonest", "audience"]).default("newest"),
+  sort: z.enum(["newest", "soonest", "audience", "best_match"]).default("newest"),
   page: z.number().int().min(1).default(1),
   per_page: z.number().int().min(1).max(48).default(12),
 });
@@ -90,7 +91,7 @@ export const listMarketplaceEvents = createServerFn({ method: "POST" })
     let q = supabasePublic
       .from("events")
       .select(
-        "id, slug, name, event_type, format, start_date, end_date, city, country, primary_sector, attendance_size, decision_makers_pct, banner_image_url, ige_vetted, currency, created_at",
+        "id, slug, name, event_type, format, start_date, end_date, city, country, primary_sector, attendance_size, decision_makers_pct, banner_image_url, ige_vetted, currency, created_at, organiser_id",
         { count: "exact" },
       )
       .in("status", ["approved", "listed"]);
@@ -115,10 +116,12 @@ export const listMarketplaceEvents = createServerFn({ method: "POST" })
 
     if (data.sort === "newest") q = q.order("created_at", { ascending: false });
     else if (data.sort === "soonest") q = q.order("start_date", { ascending: true, nullsFirst: false });
-    else q = q.order("attendance_size", { ascending: false, nullsFirst: false });
+    else if (data.sort === "audience") q = q.order("attendance_size", { ascending: false, nullsFirst: false });
+    else q = q.order("created_at", { ascending: false });
 
-    const from = (data.page - 1) * data.per_page;
-    q = q.range(from, from + data.per_page - 1);
+    const fetchPerPage = data.sort === "best_match" ? Math.min(48, data.per_page * 3) : data.per_page;
+    const from = data.sort === "best_match" ? 0 : (data.page - 1) * data.per_page;
+    q = q.range(from, from + fetchPerPage - 1);
 
     const { data: events, error, count } = await q;
     if (error) throw new Error(error.message);
@@ -137,8 +140,24 @@ export const listMarketplaceEvents = createServerFn({ method: "POST" })
       }
     }
 
+    const organiserIds = Array.from(new Set((events ?? []).map((e) => e.organiser_id).filter(Boolean))) as string[];
+    let organiserCompleteMap: Record<string, number> = {};
+    if (organiserIds.length) {
+      const { data: orgProfiles } = await supabaseAdmin
+        .from("profiles")
+        .select("id, profile_complete")
+        .in("id", organiserIds);
+      for (const p of orgProfiles ?? []) organiserCompleteMap[p.id] = Number(p.profile_complete ?? 0);
+    }
+
+    let mapped = (events ?? []).map((e) => ({ ...e, starting: priceMap[e.id] ?? null }));
+
+    if (data.sort !== "best_match") {
+      mapped = applyOrganiserDiscoverability(mapped, organiserCompleteMap);
+    }
+
     return {
-      events: (events ?? []).map((e) => ({ ...e, starting: priceMap[e.id] ?? null })),
+      events: mapped,
       total: count ?? 0,
       page: data.page,
       per_page: data.per_page,
@@ -146,6 +165,97 @@ export const listMarketplaceEvents = createServerFn({ method: "POST" })
     } catch (e) {
       console.error("[listMarketplaceEvents]", e);
       return { events: [], total: 0, page: data.page, per_page: data.per_page };
+    }
+  });
+
+export const listMarketplaceEventsForSponsor = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => FilterInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    try {
+      let q = supabasePublic
+        .from("events")
+        .select(
+          "id, slug, name, event_type, format, start_date, end_date, city, country, primary_sector, attendance_size, decision_makers_pct, banner_image_url, ige_vetted, currency, created_at, organiser_id",
+          { count: "exact" },
+        )
+        .in("status", ["approved", "listed"]);
+
+      if (data.vetted_only) q = q.eq("ige_vetted", true);
+      if (data.decision_makers) q = q.gte("decision_makers_pct", 30);
+      if (data.event_types?.length) q = q.in("event_type", data.event_types);
+      if (data.sectors?.length) q = q.in("primary_sector", data.sectors);
+      if (data.countries?.length) q = q.in("country", data.countries);
+      if (data.city) q = q.ilike("city", `%${data.city}%`);
+      if (data.format !== "all") q = q.eq("format", data.format);
+      if (data.date_from) q = q.gte("start_date", data.date_from);
+      if (data.date_to) q = q.lte("start_date", data.date_to);
+      if (data.audience_min !== undefined) q = q.gte("attendance_size", data.audience_min);
+      if (data.audience_max !== undefined) q = q.lte("attendance_size", data.audience_max);
+      if (data.q) {
+        const term = data.q.replace(/[%_]/g, " ");
+        q = q.or(
+          `name.ilike.%${term}%,event_theme.ilike.%${term}%,city.ilike.%${term}%,primary_sector.ilike.%${term}%`,
+        );
+      }
+      q = q.order("created_at", { ascending: false }).limit(48);
+
+      const { data: events, error, count } = await q;
+      if (error) throw new Error(error.message);
+
+      const ids = (events ?? []).map((e) => e.id);
+      let priceMap: Record<string, { price: number; currency: string } | null> = {};
+      if (ids.length) {
+        const { data: tiers } = await supabasePublic
+          .from("event_sponsorship_tiers")
+          .select("event_id, price, currency")
+          .in("event_id", ids)
+          .order("price", { ascending: true });
+        for (const t of tiers ?? []) {
+          if (!priceMap[t.event_id]) priceMap[t.event_id] = { price: Number(t.price), currency: t.currency };
+        }
+      }
+
+      const [{ data: sp }, { data: bp }] = await Promise.all([
+        supabaseAdmin
+          .from("sponsor_profiles")
+          .select("sponsorship_sectors, target_geographies, budget_range_min, budget_range_max, preferred_currency")
+          .eq("user_id", userId)
+          .maybeSingle(),
+        supabaseAdmin.from("profiles").select("profile_complete").eq("id", userId).maybeSingle(),
+      ]);
+
+      const matchCtx = {
+        sponsorship_sectors: (sp?.sponsorship_sectors as string[]) ?? [],
+        target_geographies: (sp?.target_geographies as string[]) ?? [],
+        budget_range_min: sp?.budget_range_min != null ? Number(sp.budget_range_min) : null,
+        budget_range_max: sp?.budget_range_max != null ? Number(sp.budget_range_max) : null,
+        preferred_currency: sp?.preferred_currency ?? "USD",
+        profile_complete: Number(bp?.profile_complete ?? 0),
+      };
+
+      const organiserIds = Array.from(new Set((events ?? []).map((e) => e.organiser_id).filter(Boolean))) as string[];
+      let organiserCompleteMap: Record<string, number> = {};
+      if (organiserIds.length) {
+        const { data: orgProfiles } = await supabaseAdmin.from("profiles").select("id, profile_complete").in("id", organiserIds);
+        for (const p of orgProfiles ?? []) organiserCompleteMap[p.id] = Number(p.profile_complete ?? 0);
+      }
+
+      const withMeta = (events ?? []).map((e) => ({ ...e, starting: priceMap[e.id] ?? null }));
+      const ranked = rankEventsForSponsor(withMeta, matchCtx, organiserCompleteMap);
+      const from = (data.page - 1) * data.per_page;
+
+      return {
+        events: ranked.slice(from, from + data.per_page),
+        total: count ?? ranked.length,
+        page: data.page,
+        per_page: data.per_page,
+        profileComplete: matchCtx.profile_complete,
+      };
+    } catch (e) {
+      console.error("[listMarketplaceEventsForSponsor]", e);
+      return { events: [], total: 0, page: data.page, per_page: data.per_page, profileComplete: 0 };
     }
   });
 

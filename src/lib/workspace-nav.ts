@@ -2,7 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard, CalendarRange, Inbox, Bookmark, Compass, BarChart3, MessageSquare,
   ShieldCheck, Users, DollarSign, SlidersHorizontal, Handshake, TrendingUp, Newspaper, Send, Wallet,
-  FileText, Coins, UserCheck,
+  ClipboardList, FileText, Coins, UserCheck, UserCircle, Radio,
 } from "lucide-react";
 
 export type WorkspaceNavItem = {
@@ -20,10 +20,13 @@ export function getWorkspaceNav(roles: string[]): WorkspaceNavItem[] {
     items.push(
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/dashboard/vetting", label: "Event queue", icon: ShieldCheck },
-      { to: "/dashboard/submissions", label: "Submissions", icon: Users },
+      { to: "/dashboard/waitlist", label: "Waitlist", icon: ClipboardList },
+      { to: "/dashboard/users", label: "Users", icon: Users },
+      { to: "/dashboard/submissions", label: "Contact", icon: Users },
       { to: "/dashboard/revenue", label: "Revenue & deals", icon: DollarSign },
       { to: "/dashboard/partners", label: "Referral partners", icon: UserCheck },
       { to: "/dashboard/controls", label: "Fraud & rates", icon: SlidersHorizontal },
+      { to: "/dashboard/media-requests", label: "Media requests", icon: Radio },
       { to: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
     );
   } else if (r.has("organiser")) {
@@ -64,5 +67,6 @@ export function getWorkspaceNav(roles: string[]): WorkspaceNavItem[] {
   }
 
   items.push({ to: "/messages", label: "Messages", icon: MessageSquare });
+  items.push({ to: "/profile", label: "Profile", icon: UserCircle });
   return items;
 }

@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { sendWelcomeEmailForUser } from "@/lib/email/welcome";
+import { computeProfileComplete, completenessHint } from "@/lib/profile-completeness";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const OrganiserInput = z.object({
   org_name: z.string().trim().min(1).max(160),
@@ -23,7 +25,8 @@ export const upsertOrganiserProfile = createServerFn({ method: "POST" })
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
     const role = roles?.[0]?.role;
     if (role) await sendWelcomeEmailForUser(userId, role).catch(() => {});
-    return { ok: true };
+    const profile_complete = await syncProfileCompleteness(userId).catch(() => null);
+    return { ok: true, profile_complete };
   });
 
 const SponsorInput = z.object({
@@ -52,7 +55,8 @@ export const upsertSponsorProfile = createServerFn({ method: "POST" })
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
     const role = roles?.[0]?.role;
     if (role) await sendWelcomeEmailForUser(userId, role).catch(() => {});
-    return { ok: true };
+    const profile_complete = await syncProfileCompleteness(userId).catch(() => null);
+    return { ok: true, profile_complete };
   });
 
 const ReferralInput = z.object({
@@ -91,7 +95,8 @@ export const upsertReferralProfile = createServerFn({ method: "POST" })
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
     const role = roles?.[0]?.role;
     if (role) await sendWelcomeEmailForUser(userId, role).catch(() => {});
-    return { ok: true };
+    const profile_complete = await syncProfileCompleteness(userId).catch(() => null);
+    return { ok: true, profile_complete };
   });
 
 export const sendWelcomeEmail = createServerFn({ method: "POST" })
@@ -105,11 +110,82 @@ export const sendWelcomeEmail = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+const BaseProfileInput = z.object({
+  display_name: z.string().trim().max(120).optional().nullable(),
+  phone: z.string().trim().max(40).optional().nullable(),
+  linkedin_url: z
+    .string()
+    .trim()
+    .url()
+    .max(300)
+    .optional()
+    .nullable()
+    .or(z.literal("").transform(() => null)),
+  avatar_url: z.string().trim().max(500).optional().nullable(),
+});
+
+export const updateBaseProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => BaseProfileInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase.from("profiles").update(data as never).eq("id", userId);
+    if (error) throw new Error(error.message);
+    const profile_complete = await syncProfileCompleteness(userId).catch(() => null);
+    return { ok: true, profile_complete };
+  });
+
+const MediaInput = z.object({
+  outlet_name: z.string().trim().min(1).max(160),
+  outlet_type: z.string().trim().max(80).optional().nullable(),
+  beat_sectors: z.array(z.string()).max(20).default([]),
+  portfolio_url: z
+    .string()
+    .trim()
+    .url()
+    .max(300)
+    .optional()
+    .nullable()
+    .or(z.literal("").transform(() => null)),
+  bio: z.string().trim().max(1500).optional().nullable(),
+});
+
+async function syncProfileCompleteness(userId: string) {
+  const [{ data: profile }, { data: roles }, { data: org }, { data: sp }, { data: ref }, { data: media }] =
+    await Promise.all([
+      supabaseAdmin.from("profiles").select("*").eq("id", userId).single(),
+      supabaseAdmin.from("user_roles").select("role").eq("user_id", userId),
+      supabaseAdmin.from("organiser_profiles").select("*").eq("user_id", userId).maybeSingle(),
+      supabaseAdmin.from("sponsor_profiles").select("*").eq("user_id", userId).maybeSingle(),
+      supabaseAdmin.from("referral_partner_profiles").select("*").eq("user_id", userId).maybeSingle(),
+      supabaseAdmin.from("media_partner_profiles" as never).select("*").eq("user_id", userId).maybeSingle(),
+    ]);
+  const role = roles?.[0]?.role ?? "sponsor";
+  const roleData =
+    role === "organiser" ? org : role === "sponsor" ? sp : role === "referral_partner" ? ref : role === "media_partner" ? media : null;
+  const score = computeProfileComplete(role, profile ?? undefined, (roleData ?? undefined) as Record<string, unknown>);
+  await supabaseAdmin.from("profiles").update({ profile_complete: score } as never).eq("id", userId);
+  return score;
+}
+
+export const upsertMediaPartnerProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => MediaInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("media_partner_profiles" as never)
+      .upsert({ user_id: userId, ...data } as never, { onConflict: "user_id" });
+    if (error) throw new Error(error.message);
+    const profile_complete = await syncProfileCompleteness(userId).catch(() => null);
+    return { ok: true, profile_complete };
+  });
+
 export const getMyProfileSummary = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const [{ data: profile }, { data: roles }, { data: org }, { data: sp }, { data: ref }] =
+    const [{ data: profile }, { data: roles }, { data: org }, { data: sp }, { data: ref }, { data: media }] =
       await Promise.all([
         supabase.from("profiles").select("*").eq("id", userId).single(),
         supabase.from("user_roles").select("role").eq("user_id", userId),
@@ -120,12 +196,20 @@ export const getMyProfileSummary = createServerFn({ method: "GET" })
           .select("*")
           .eq("user_id", userId)
           .maybeSingle(),
+        supabase.from("media_partner_profiles" as never).select("*").eq("user_id", userId).maybeSingle(),
       ]);
+    const role = (roles ?? [])[0]?.role ?? "sponsor";
+    const roleData =
+      role === "organiser" ? org : role === "sponsor" ? sp : role === "referral_partner" ? ref : role === "media_partner" ? media : null;
+    const profileComplete = computeProfileComplete(role, profile ?? undefined, (roleData ?? undefined) as Record<string, unknown>);
     return {
       profile,
       roles: (roles ?? []).map((r: any) => r.role),
       organiser: org,
       sponsor: sp,
       referral: ref,
+      media,
+      profileComplete,
+      completenessHint: completenessHint(role, profileComplete),
     };
   });

@@ -1,11 +1,13 @@
-import { createFileRoute, Link, redirect, useSearch } from "@tanstack/react-router";
+import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { getPublicEventBySlug, submitCommitmentForm, getCurrentRates, toggleSaveEvent } from "@/lib/marketplace.functions";
+import { submitCustomPackageRequest } from "@/lib/custom-package.functions";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { AppShell } from "@/components/app-shell";
-import { Calendar, MapPin, Users, ShieldCheck, Globe, CheckCircle2, AlertCircle, CalendarPlus, Download, Sparkles, Bookmark, BookmarkCheck, Pencil, ChevronLeft, Newspaper } from "lucide-react";
+import { Calendar, MapPin, Users, ShieldCheck, Globe, CheckCircle2, AlertCircle, CalendarPlus, Download, Sparkles, Bookmark, BookmarkCheck, Pencil, ChevronLeft, Newspaper, Link2, Copy, Loader2 } from "lucide-react";
+import { generateReferralLink } from "@/lib/referrals.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
@@ -18,15 +20,10 @@ const searchSchema = z.object({ ref: z.string().max(20).optional() });
 const FORM_INPUT =
   "w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-shadow focus:ring-2 focus:ring-ring";
 
-import { MARKETPLACE_PUBLIC } from "@/lib/marketplace-visibility";
+import { ensureMarketplaceAccess } from "@/lib/marketplace-visibility";
 
 export const Route = createFileRoute("/events/$slug")({
-  beforeLoad: async () => {
-    if (!MARKETPLACE_PUBLIC) {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) throw redirect({ to: "/welcome" });
-    }
-  },
+  beforeLoad: () => ensureMarketplaceAccess(),
   validateSearch: searchSchema,
   head: ({ params }) => ({
     meta: [{ title: `${params.slug} · IGE` }],
@@ -59,6 +56,7 @@ function EventDetail() {
   const rates = ratesData?.rates;
 
   const [showForm, setShowForm] = useState(false);
+  const [showCustomPackage, setShowCustomPackage] = useState(false);
   const [showSponsor, setShowSponsor] = useState(false);
   const [showMediaRequest, setShowMediaRequest] = useState(false);
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
@@ -88,7 +86,9 @@ function EventDetail() {
 
   const isOwner = !!user && user.id === event.organiser_id;
   const isMediaPartner = roles.includes("media_partner");
-  const canEngageAsSponsor = !isOwner && !isAdmin && !isMediaPartner;
+  const isReferralPartner = roles.includes("referral_partner");
+  const canEngageAsSponsor = !isOwner && !isAdmin && !isMediaPartner && !isReferralPartner;
+  const canReferEvent = isReferralPartner && ["approved", "listed"].includes(event.status);
 
   return (
     <EventPageLayout>
@@ -206,9 +206,11 @@ function EventDetail() {
             isAdmin={isAdmin}
             isOwner={isOwner}
             isMediaPartner={isMediaPartner}
+            canReferEvent={canReferEvent}
             canEngageAsSponsor={canEngageAsSponsor}
             onSponsor={() => { setSelectedTier(null); setShowSponsor(true); }}
             onCommitment={() => setShowForm(true)}
+            onCustomPackage={() => setShowCustomPackage(true)}
             onMediaRequest={() => setShowMediaRequest(true)}
           />
         </div>
@@ -230,6 +232,15 @@ function EventDetail() {
           tierId={selectedTier}
           refCode={search.ref ?? null}
           onClose={() => setShowForm(false)}
+        />
+      )}
+
+      {showCustomPackage && (
+        <CustomPackageDialog
+          eventId={event.id}
+          eventCurrency={event.currency ?? "USD"}
+          refCode={search.ref ?? null}
+          onClose={() => setShowCustomPackage(false)}
         />
       )}
 
@@ -263,15 +274,76 @@ function EventPageLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ReferThisEventPanel({ eventId, eventName }: { eventId: string; eventName: string }) {
+  const generate = useServerFn(generateReferralLink);
+  const [linkUrl, setLinkUrl] = useState<string | null>(null);
+  const [commissionRate, setCommissionRate] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const actionBtn =
+    "inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted transition-colors";
+
+  async function handleGenerate() {
+    setLoading(true);
+    try {
+      const res = await generate({ data: { event_id: eventId } });
+      const full = `${window.location.origin}${res.link.vouch_link_url}`;
+      setLinkUrl(full);
+      setCommissionRate(Number(res.link.commission_rate ?? 0));
+      if (!res.reused) toast.success("Vouch Link created");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not generate link");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-secondary/30 bg-secondary/5 p-6">
+      <div className="text-xs font-semibold uppercase tracking-wide text-secondary-deep">Referral partner</div>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Generate a trackable Vouch Link for <strong className="text-foreground">{eventName}</strong> and share with sponsors.
+        {commissionRate != null && commissionRate > 0 && (
+          <span className="mt-1 block text-xs font-semibold text-secondary-deep">
+            Est. commission: {(commissionRate * 100).toFixed(1)}% of deal value when payment is received
+          </span>
+        )}
+      </p>
+      <div className="mt-4 space-y-2">
+        <button type="button" onClick={() => void handleGenerate()} disabled={loading} className={`${actionBtn} border-secondary/40`}>
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
+          {linkUrl ? "Regenerate link" : "Refer this event"}
+        </button>
+        {linkUrl && (
+          <div className="rounded-md border border-border bg-card p-3">
+            <div className="break-all font-mono text-xs text-foreground">{linkUrl}</div>
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(linkUrl);
+                toast.success("Link copied");
+              }}
+              className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+            >
+              <Copy className="h-3 w-3" /> Copy link
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function GetInvolvedAside({
   event,
   refCode,
   isAdmin,
   isOwner,
   isMediaPartner,
+  canReferEvent,
   canEngageAsSponsor,
   onSponsor,
   onCommitment,
+  onCustomPackage,
   onMediaRequest,
 }: {
   event: any;
@@ -279,9 +351,11 @@ function GetInvolvedAside({
   isAdmin: boolean;
   isOwner: boolean;
   isMediaPartner: boolean;
+  canReferEvent: boolean;
   canEngageAsSponsor: boolean;
   onSponsor: () => void;
   onCommitment: () => void;
+  onCustomPackage: () => void;
   onMediaRequest: () => void;
 }) {
   const actionBtn = "inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted transition-colors";
@@ -326,6 +400,10 @@ function GetInvolvedAside({
         </div>
       )}
 
+      {canReferEvent && (
+        <ReferThisEventPanel eventId={event.id} eventName={event.name} />
+      )}
+
       {isMediaPartner && (
         <div className="rounded-xl border border-border bg-card p-6">
           <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Media partner</div>
@@ -351,6 +429,9 @@ function GetInvolvedAside({
           </button>
           <button type="button" onClick={onCommitment} className={`mt-2 ${actionBtn}`}>
             Submit a Commitment Form
+          </button>
+          <button type="button" onClick={onCustomPackage} className={`mt-2 ${actionBtn}`}>
+            Request custom package
           </button>
           <SaveEventButton eventId={event.id} />
           <p className="mt-2 text-xs text-muted-foreground">Commitment forms are verified by IGE before reaching the organiser.</p>
@@ -531,6 +612,150 @@ function CommitmentDialog({
                 className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
                 {mutation.isPending ? "Submitting…" : "Submit commitment"}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CustomPackageDialog({
+  eventId,
+  eventCurrency,
+  refCode,
+  onClose,
+}: {
+  eventId: string;
+  eventCurrency: string;
+  refCode: string | null;
+  onClose: () => void;
+}) {
+  const submit = useServerFn(submitCustomPackageRequest);
+  const [form, setForm] = useState({
+    contact_name: "",
+    contact_title: "",
+    company_name: "",
+    company_linkedin_url: "",
+    currency: eventCurrency,
+    budget_range_min: "",
+    budget_range_max: "",
+    package_brief: "",
+    deliverables_wanted: "",
+    timeline: "",
+  });
+
+  const mutation = useMutation({
+    mutationFn: async () =>
+      submit({
+        data: {
+          event_id: eventId,
+          contact_name: form.contact_name,
+          contact_title: form.contact_title || null,
+          company_name: form.company_name,
+          company_linkedin_url: form.company_linkedin_url || null,
+          currency: form.currency as "NGN" | "USD" | "GBP" | "EUR",
+          budget_range_min: form.budget_range_min ? Number(form.budget_range_min) : null,
+          budget_range_max: form.budget_range_max ? Number(form.budget_range_max) : null,
+          package_brief: form.package_brief,
+          deliverables_wanted: form.deliverables_wanted || null,
+          timeline: form.timeline || null,
+          referral_short_code: refCode,
+        },
+      }),
+  });
+
+  const submitted = mutation.isSuccess;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-card shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        {submitted ? (
+          <div className="p-10 text-center">
+            <CheckCircle2 className="mx-auto h-12 w-12 text-secondary" />
+            <h2 className="mt-4 font-display text-2xl font-bold">Custom package request sent</h2>
+            <p className="mt-2 text-muted-foreground">
+              IGE will review your brief and work with the organiser on a bespoke sponsorship package.
+            </p>
+            <button onClick={onClose} className="mt-6 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">Close</button>
+          </div>
+        ) : (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (form.package_brief.trim().length < 20) {
+                toast.error("Please describe your package needs (at least 20 characters).");
+                return;
+              }
+              mutation.mutate();
+            }}
+            className="space-y-5 p-8"
+          >
+            <div>
+              <h2 className="font-display text-2xl font-bold">Request a custom package</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Tell us what you need beyond standard tiers. IGE reviews bespoke requests before sharing with the organiser.
+              </p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Your name *">
+                <input required value={form.contact_name} onChange={(e) => setForm({ ...form, contact_name: e.target.value })} className={FORM_INPUT} />
+              </Field>
+              <Field label="Your title">
+                <input value={form.contact_title} onChange={(e) => setForm({ ...form, contact_title: e.target.value })} className={FORM_INPUT} />
+              </Field>
+              <Field label="Company name *">
+                <input required value={form.company_name} onChange={(e) => setForm({ ...form, company_name: e.target.value })} className={FORM_INPUT} />
+              </Field>
+              <Field label="Company LinkedIn URL">
+                <input type="url" placeholder="https://linkedin.com/company/…" value={form.company_linkedin_url} onChange={(e) => setForm({ ...form, company_linkedin_url: e.target.value })} className={FORM_INPUT} />
+              </Field>
+              <Field label="Currency *">
+                <select value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} className={FORM_INPUT}>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="GBP">GBP</option>
+                  <option value="NGN">NGN</option>
+                </select>
+              </Field>
+              <Field label="Target timeline">
+                <input placeholder="e.g. Q3 2026" value={form.timeline} onChange={(e) => setForm({ ...form, timeline: e.target.value })} className={FORM_INPUT} />
+              </Field>
+              <Field label="Budget min">
+                <input type="number" min={0} value={form.budget_range_min} onChange={(e) => setForm({ ...form, budget_range_min: e.target.value })} className={FORM_INPUT} />
+              </Field>
+              <Field label="Budget max">
+                <input type="number" min={0} value={form.budget_range_max} onChange={(e) => setForm({ ...form, budget_range_max: e.target.value })} className={FORM_INPUT} />
+              </Field>
+            </div>
+            <Field label="Package brief *">
+              <textarea
+                required
+                rows={4}
+                placeholder="Describe the sponsorship activation, audience goals, and deliverables you need…"
+                value={form.package_brief}
+                onChange={(e) => setForm({ ...form, package_brief: e.target.value })}
+                className={FORM_INPUT}
+              />
+            </Field>
+            <Field label="Desired deliverables">
+              <textarea rows={3} value={form.deliverables_wanted} onChange={(e) => setForm({ ...form, deliverables_wanted: e.target.value })} className={FORM_INPUT} />
+            </Field>
+            {mutation.error && (
+              <div className="flex items-start gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                <AlertCircle className="mt-0.5 h-4 w-4" />
+                {(mutation.error as Error).message}
+              </div>
+            )}
+            <div className="flex justify-end gap-3 pt-2">
+              <button type="button" onClick={onClose} className="rounded-md px-4 py-2 text-sm font-medium hover:bg-muted">Cancel</button>
+              <button
+                type="submit"
+                disabled={mutation.isPending}
+                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {mutation.isPending ? "Submitting…" : "Submit custom request"}
               </button>
             </div>
           </form>

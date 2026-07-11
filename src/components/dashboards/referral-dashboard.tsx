@@ -5,8 +5,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   Plus, Link2, MousePointerClick, TrendingUp, Wallet, Award, Copy, MessageCircle, Share2, Mail, Download,
+  BarChart3,
 } from "lucide-react";
-import { StatCard } from "@/components/dashboards/shared";
+import { KpiTile, DonutBreakdown, FeaturedHeroCard, AgendaList } from "@/components/dashboards/voom-primitives";
+import { QuickLinkCard } from "@/components/dashboards/shared";
 import { WorkspacePage } from "@/components/dashboards/workspace-page";
 import { ReferralAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
 import { getReferralDashboard, generateReferralLink } from "@/lib/referrals.functions";
@@ -101,44 +103,146 @@ export function ReferralDashboard({ section = "links" }: { section?: ReferralSec
 
   return (
     <WorkspacePage title={meta.title} subtitle={meta.subtitle} action={generateAction} showGreeting={section === "overview"}>
-      {(section === "overview" || section === "links") && (
+      {section === "links" && (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <StatCard icon={Link2} label="Active links" value={activeLinks} loading={isLoading} />
-          <StatCard icon={MousePointerClick} label="Total clicks" value={totalClicks} loading={isLoading} />
-          <StatCard icon={TrendingUp} label="Conversions" value={conversions} loading={isLoading} />
-          <StatCard icon={Wallet} label="Earned (USD)" value={earnedCommission} loading={isLoading} />
+          <KpiTile icon={Link2} label="Active links" value={activeLinks} loading={isLoading} />
+          <KpiTile icon={MousePointerClick} label="Total clicks" value={totalClicks} loading={isLoading} />
+          <KpiTile icon={TrendingUp} label="Conversions" value={conversions} loading={isLoading} />
+          <KpiTile icon={Wallet} label="Earned (USD)" value={earnedCommission} loading={isLoading} />
         </div>
       )}
 
-      {data?.profile?.igb_partner_badge && (section === "overview" || section === "links") && (
+      {data?.profile?.igb_partner_badge && section === "links" && (
         <div className="inline-flex items-center gap-2 rounded-full bg-secondary/10 px-3.5 py-1.5 text-xs font-semibold text-secondary-deep">
           <Award className="h-4 w-4" /> IGE Partner — premium commission tier
         </div>
       )}
 
       {section === "overview" && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[
-            { to: "/marketplace", label: "Marketplace", desc: "Browse vetted events" },
-            { to: "/dashboard/referrals", label: "My referrals", desc: "Vouch links & sharing" },
-            { to: "/dashboard/commissions", label: "Commission tracker", desc: "Earned, pending & paid" },
-            { to: "/dashboard/deals", label: "Deal pipeline", desc: "Attributed deals" },
-            { to: "/dashboard/analytics", label: "Analytics", desc: "Clicks & earnings" },
-          ].map((item) => (
-            <Link key={item.to} to={item.to} className="rounded-xl border border-border bg-card p-5 hover:border-primary hover:shadow-soft transition-all">
-              <div className="font-semibold">{item.label}</div>
-              <div className="mt-1 text-sm text-muted-foreground">{item.desc}</div>
-            </Link>
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <KpiTile icon={Link2} label="Active links" value={activeLinks} loading={isLoading} />
+            <KpiTile icon={MousePointerClick} label="Total clicks" value={totalClicks} loading={isLoading} trend={conversions ? `${conversions} conversions` : undefined} />
+            <KpiTile icon={Wallet} label="Earned (USD)" value={earnedCommission} loading={isLoading} />
+          </div>
+
+          {data?.profile?.igb_partner_badge && (
+            <div className="inline-flex items-center gap-2 rounded-full bg-secondary/10 px-3.5 py-1.5 text-xs font-semibold text-secondary-deep">
+              <Award className="h-4 w-4" /> IGE Partner — premium commission tier
+            </div>
+          )}
+
+          <div className="grid gap-5 xl:grid-cols-3">
+            <div className="space-y-5 xl:col-span-2">
+              {(() => {
+                const statusData = [
+                  { status: "Active", count: (data?.links ?? []).filter((l: any) => l.status === "active").length },
+                  { status: "Paused", count: (data?.links ?? []).filter((l: any) => l.status !== "active").length },
+                ].filter((d) => d.count > 0);
+                return statusData.length ? (
+                  <DonutBreakdown
+                    title="Link activity"
+                    description="Active vs paused referral links"
+                    data={statusData}
+                    nameKey="status"
+                    valueKey="count"
+                    centerLabel="Links"
+                    centerValue={activeLinks}
+                  />
+                ) : null;
+              })()}
+
+              <div className="rounded-2xl bg-card shadow-card">
+                <div className="flex items-center justify-between border-b border-border/50 px-5 py-4">
+                  <h3 className="font-display text-sm font-bold text-foreground">Recent referral links</h3>
+                  <Link to="/dashboard/referrals" className="text-xs font-semibold text-primary hover:underline">
+                    View all →
+                  </Link>
+                </div>
+                <div className="divide-y divide-border/40">
+                  {(data?.links ?? []).slice(0, 5).map((l: any) => {
+                    const ev = data?.events?.[l.event_id];
+                    return (
+                      <div key={l.id} className="flex items-center gap-4 px-5 py-4">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                          <Link2 className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate font-semibold text-foreground">{ev?.name ?? "Event"}</div>
+                          <div className="truncate font-mono text-xs text-muted-foreground">/r/{l.short_code}</div>
+                        </div>
+                        <div className="text-right text-xs">
+                          <div className="font-bold text-foreground">{l.click_count}</div>
+                          <div className="text-muted-foreground">clicks</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {!isLoading && !data?.links?.length && (
+                    <p className="px-5 py-10 text-center text-sm text-muted-foreground italic">No referral links yet. Generate one to start sharing.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-5">
+              {(() => {
+                const topLink = [...(data?.links ?? [])].sort((a: any, b: any) => b.click_count - a.click_count)[0];
+                const topEv = topLink ? data?.events?.[topLink.event_id] : null;
+                return topLink && topEv ? (
+                  <FeaturedHeroCard
+                    imageUrl={topEv.banner_image_url}
+                    badge="Top performer"
+                    title={topEv.name}
+                    meta={`${topLink.click_count} clicks · ${(Number(topLink.commission_rate) * 100).toFixed(1)}% commission`}
+                    description="Your highest-traffic Vouch Link — share again to drive more sponsor introductions."
+                    ctaLabel="Manage links"
+                    ctaTo="/dashboard/referrals"
+                  />
+                ) : (
+                  <FeaturedHeroCard
+                    badge="Referral partner"
+                    title="Generate your first Vouch Link"
+                    meta="IGE referral engine"
+                    description="Pick a vetted event, share your trackable link, and earn commission when deals close."
+                    ctaLabel="Browse events"
+                    ctaTo="/marketplace"
+                  />
+                );
+              })()}
+
+              <AgendaList
+                title="Recent deal activity"
+                items={(data?.deals ?? []).slice(0, 4).map((d: any) => ({
+                  id: d.id,
+                  date: d.updated_at ?? d.created_at ?? new Date().toISOString(),
+                  title: data?.events?.[d.event_id]?.name ?? "Deal",
+                  subtitle: d.status?.replace(/_/g, " "),
+                  badge: d.referral_commission_paid ? "Paid" : "Pending",
+                }))}
+                empty="No attributed deals yet."
+              />
+
+              <div className="space-y-2">
+                {[
+                  { to: "/dashboard/referrals", label: "My referrals", desc: "Vouch links & sharing", icon: Link2 },
+                  { to: "/dashboard/commissions", label: "Commission tracker", desc: "Earned, pending & paid", icon: Wallet },
+                  { to: "/dashboard/analytics", label: "Analytics", desc: "Clicks & earnings", icon: BarChart3 },
+                ].map((item) => (
+                  <QuickLinkCard key={item.to} {...item} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
       )}
 
       {section === "commissions" && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <StatCard icon={Wallet} label="Earned (USD)" value={`$${(data?.totals.earned ?? 0).toFixed(0)}`} loading={isLoading} />
-            <StatCard icon={TrendingUp} label="Pending (USD)" value={`$${(data?.totals.pending ?? 0).toFixed(0)}`} loading={isLoading} />
-            <StatCard icon={Award} label="Paid (USD)" value={`$${(data?.totals.paid ?? 0).toFixed(0)}`} loading={isLoading} />
+            <KpiTile icon={Wallet} label="Earned (USD)" value={`$${(data?.totals.earned ?? 0).toFixed(0)}`} loading={isLoading} />
+            <KpiTile icon={TrendingUp} label="Pending (USD)" value={`$${(data?.totals.pending ?? 0).toFixed(0)}`} loading={isLoading} />
+            <KpiTile icon={Award} label="Paid (USD)" value={`$${(data?.totals.paid ?? 0).toFixed(0)}`} loading={isLoading} />
           </div>
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             <div className="overflow-x-auto">

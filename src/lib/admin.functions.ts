@@ -1,6 +1,20 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { sendTransactionalEmailServer } from "@/lib/email/server-send";
+
+const SITE_URL = process.env.VITE_SITE_URL || "https://www.insideglobalevents.com";
+
+const STATUS_LABELS: Record<string, string> = {
+  under_review: "Under review",
+  revision_requested: "Revisions requested",
+  approved: "Approved",
+  rejected: "Rejected",
+  listed: "Listed on marketplace",
+  closed: "Closed",
+  archived: "Archived",
+};
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   draft: ["submitted"],
@@ -100,7 +114,7 @@ export const setEventVettingStatus = createServerFn({ method: "POST" })
 
     const { data: ev, error } = await supabase
       .from("events")
-      .select("id, status")
+      .select("id, status, name, organiser_id")
       .eq("id", data.id)
       .single();
     if (error) throw new Error(error.message);
@@ -130,5 +144,115 @@ export const setEventVettingStatus = createServerFn({ method: "POST" })
     const { error: upErr } = await supabase.from("events").update(patch as never).eq("id", data.id);
     if (upErr) throw new Error(upErr.message);
 
+    // Notify organiser by email (best effort)
+    try {
+      if (ev.organiser_id && ["revision_requested", "approved", "rejected", "listed"].includes(data.to_status)) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("email")
+          .eq("id", ev.organiser_id)
+          .single();
+        if (profile?.email) {
+          await sendTransactionalEmailServer({
+            templateName: "vetting-status",
+            recipientEmail: profile.email,
+            idempotencyKey: `vetting-${data.id}-${data.to_status}`,
+            templateData: {
+              eventName: ev.name,
+              statusLabel: STATUS_LABELS[data.to_status] ?? data.to_status,
+              note: data.note ?? undefined,
+              dashboardUrl: `${SITE_URL}/dashboard`,
+            },
+          });
+        }
+      }
+    } catch (emailErr) {
+      console.error("[setEventVettingStatus] email failed", emailErr);
+    }
+
+    // In-app notification for organiser
+    if (ev.organiser_id && ["revision_requested", "approved", "rejected", "listed", "under_review"].includes(data.to_status)) {
+      try {
+        await supabaseAdmin.from("notifications").insert({
+          user_id: ev.organiser_id,
+          type: "vetting_status",
+          title: `Event vetting: ${STATUS_LABELS[data.to_status] ?? data.to_status}`,
+          body: data.note ?? `Your event "${ev.name}" was updated.`,
+          data: { event_id: data.id, status: data.to_status },
+        });
+      } catch (notifyErr) {
+        console.error("[setEventVettingStatus] notify failed", notifyErr);
+      }
+    }
+
     return { ok: true, status: data.to_status };
+  });
+
+const SuspendInput = z.object({
+  user_id: z.string().uuid(),
+  suspended: z.boolean(),
+  reason: z.string().max(500).optional().nullable(),
+});
+
+export const listPlatformUsers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await ensureAdmin(supabase, userId);
+
+    const { data: profiles, error } = await supabaseAdmin
+      .from("profiles")
+      .select("id, email, display_name, is_suspended, suspension_reason, is_active, created_at, last_login_at")
+      .order("created_at", { ascending: false })
+      .limit(300);
+    if (error) throw new Error(error.message);
+
+    const ids = (profiles ?? []).map((p) => p.id);
+    const { data: roles } = await supabaseAdmin.from("user_roles").select("user_id, role").in("user_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
+    const roleMap = new Map<string, string[]>();
+    for (const r of roles ?? []) {
+      const arr = roleMap.get(r.user_id) ?? [];
+      arr.push(r.role);
+      roleMap.set(r.user_id, arr);
+    }
+
+    return {
+      users: (profiles ?? []).map((p) => ({
+        ...p,
+        roles: roleMap.get(p.id) ?? [],
+      })),
+    };
+  });
+
+export const setUserSuspended = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => SuspendInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await ensureAdmin(supabase, userId);
+    if (data.user_id === userId) throw new Error("You cannot suspend your own account");
+
+    const { data: targetRoles } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", data.user_id);
+    if (targetRoles?.some((r) => r.role === "super_admin")) throw new Error("Cannot suspend a super admin");
+
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({
+        is_suspended: data.suspended,
+        suspension_reason: data.suspended ? (data.reason ?? "Suspended by admin") : null,
+      } as never)
+      .eq("id", data.user_id);
+    if (error) throw new Error(error.message);
+
+    if (data.suspended) {
+      await supabaseAdmin.from("notifications").insert({
+        user_id: data.user_id,
+        type: "account_suspended",
+        title: "Account suspended",
+        body: data.reason ?? "Your IGE account has been suspended. Contact support if you believe this is an error.",
+        data: {},
+      });
+    }
+
+    return { ok: true };
   });

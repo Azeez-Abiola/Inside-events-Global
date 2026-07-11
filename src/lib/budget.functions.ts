@@ -16,7 +16,7 @@ function toUsd(n: number, currency: string, rate: any) {
 }
 
 // Committed = signed but not yet paid. Paid = payment received.
-const COMMITTED_STATUSES = ["verbal_commitment", "contract_sent", "contract_signed"];
+const COMMITTED_STATUSES = ["contract_sent", "contract_signed"];
 
 export const getSponsorBudgets = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

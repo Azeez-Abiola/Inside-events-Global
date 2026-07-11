@@ -5,10 +5,11 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   Plus, Loader2, Trash2, CalendarDays, MapPin, Eye, Bookmark, MessageSquare,
-  ShieldCheck, FolderOpen, ExternalLink,
+  ShieldCheck, FolderOpen, ExternalLink, BarChart3, TrendingUp,
 } from "lucide-react";
 import { StatusBadge } from "@/components/app-shell";
-import { StatCard, fmtDateRange } from "@/components/dashboards/shared";
+import { QuickLinkCard, fmtDateRange } from "@/components/dashboards/shared";
+import { KpiTile, DonutBreakdown, FeaturedHeroCard, AgendaList } from "@/components/dashboards/voom-primitives";
 import {
   DashboardEmpty, DashboardLoading, DashboardPanel, DashboardTabs, VettingTimeline,
 } from "@/components/dashboards/dashboard-shell";
@@ -65,27 +66,131 @@ export function OrganiserEventsPage() {
   const { events, counts, buckets, eventsLoading, createBtn, del } = useOrganiserEvents();
   const filteredEvents = useMemo(() => filterEventsByGroup(events, statusFilter), [events, statusFilter]);
   const activeEventsCount = counts.approved + counts.live;
+  const featured =
+    buckets.revision[0] ??
+    buckets.pending[0] ??
+    buckets.live[0] ??
+    buckets.approved[0] ??
+    events[0];
+  const statusDonut = [
+    { status: "Live", count: counts.live },
+    { status: "Pending", count: counts.pending },
+    { status: "Approved", count: counts.approved },
+    { status: "Draft", count: counts.draft },
+    { status: "Revision", count: counts.revision },
+  ].filter((d) => d.count > 0);
+  const agendaItems = [...events]
+    .filter((e: any) => e.start_date)
+    .sort((a: any, b: any) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
+    .slice(0, 4)
+    .map((e: any) => ({
+      id: e.id,
+      date: e.start_date,
+      title: e.name || "Untitled event",
+      subtitle: [e.city, e.country].filter(Boolean).join(", "),
+      badge: e.status?.replace(/_/g, " "),
+    }));
 
   return (
-    <WorkspacePage title="Organiser workspace" subtitle="Manage listings, track vetting, and monitor sponsor inquiries." action={createBtn}>
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard icon={CalendarDays} label="Active listings" value={activeEventsCount} loading={eventsLoading} />
-        <StatCard icon={ShieldCheck} label="Pending vetting" value={counts.pending} loading={eventsLoading} />
-        <StatCard icon={Eye} label="Profile views" value={events.reduce((a: number, e: any) => a + (e.view_count ?? 0), 0)} loading={eventsLoading} />
-        <StatCard icon={MessageSquare} label="Sponsor inquiries" value={events.reduce((a: number, e: any) => a + (e.inquiry_count ?? 0), 0)} loading={eventsLoading} />
+    <WorkspacePage
+      title="Organiser workspace"
+      subtitle="Manage listings, track vetting, and monitor sponsor inquiries."
+      action={createBtn}
+      showGreeting
+    >
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <KpiTile icon={CalendarDays} label="Active listings" value={activeEventsCount} loading={eventsLoading} trend={`${counts.live} live`} />
+        <KpiTile icon={ShieldCheck} label="Pending vetting" value={counts.pending} loading={eventsLoading} />
+        <KpiTile icon={MessageSquare} label="Sponsor inquiries" value={events.reduce((a: number, e: any) => a + (e.inquiry_count ?? 0), 0)} loading={eventsLoading} />
       </div>
-      <DashboardTabs active={statusFilter} onChange={(id) => setStatusFilter(id as EventStatusGroup)} tabs={EVENT_TABS.map((t) => ({ id: t.id, label: t.label, count: counts[t.id] }))} />
-      {statusFilter !== "all" && <p className="text-sm text-muted-foreground">{EVENT_STATUS_GROUPS[statusFilter as Exclude<EventStatusGroup, "all">]?.description}</p>}
-      {eventsLoading ? <DashboardLoading label="Loading your events…" /> : filteredEvents.length === 0 ? (
-        <DashboardEmpty icon={FolderOpen} title="No events yet" description="Create your first event draft to start the IGE vetting flow." action={createBtn} />
-      ) : (
-        <div className="grid gap-4">
-          {filteredEvents.map((e: any) => (
-            <EventCard key={e.id} event={e} onDelete={() => { if (confirm("Delete this draft?")) del.mutate(e.id); }}
-              showVettingTimeline={["submitted", "under_review", "approved", "revision_requested", "rejected"].includes(e.status)} />
-          ))}
+
+      <div className="grid gap-5 xl:grid-cols-3">
+        <div className="space-y-5 xl:col-span-2">
+          {statusDonut.length > 0 && (
+            <DonutBreakdown
+              title="Portfolio by status"
+              description="How your events are distributed"
+              data={statusDonut}
+              nameKey="status"
+              valueKey="count"
+              centerLabel="Events"
+              centerValue={events.length}
+            />
+          )}
+
+          <div className="rounded-2xl bg-card shadow-card">
+            <div className="flex items-center justify-between border-b border-border/50 px-5 py-4">
+              <div>
+                <h3 className="font-display text-sm font-bold text-foreground">My events</h3>
+                <p className="text-xs text-muted-foreground">All listings in your workspace</p>
+              </div>
+            </div>
+            <div className="p-5">
+              <DashboardTabs active={statusFilter} onChange={(id) => setStatusFilter(id as EventStatusGroup)} tabs={EVENT_TABS.map((t) => ({ id: t.id, label: t.label, count: counts[t.id] }))} />
+              {statusFilter !== "all" && (
+                <p className="mt-3 text-sm text-muted-foreground">{EVENT_STATUS_GROUPS[statusFilter as Exclude<EventStatusGroup, "all">]?.description}</p>
+              )}
+              {eventsLoading ? (
+                <DashboardLoading label="Loading your events…" />
+              ) : filteredEvents.length === 0 ? (
+                <DashboardEmpty icon={FolderOpen} title="No events yet" description="Create your first event draft to start the IGE vetting flow." action={createBtn} />
+              ) : (
+                <div className="mt-4 grid gap-4">
+                  {filteredEvents.map((e: any) => (
+                    <EventCard
+                      key={e.id}
+                      event={e}
+                      onDelete={() => { if (confirm("Delete this draft?")) del.mutate(e.id); }}
+                      showVettingTimeline={["submitted", "under_review", "approved", "revision_requested", "rejected"].includes(e.status)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      )}
+
+        <div className="space-y-5">
+          {featured ? (
+            <FeaturedHeroCard
+              imageUrl={featured.banner_image_url}
+              badge={featured.status === "revision_requested" ? "Action needed" : featured.status?.replace(/_/g, " ")}
+              title={featured.name || "Untitled event"}
+              meta={[featured.city, featured.country].filter(Boolean).join(", ")}
+              description={
+                featured.status === "revision_requested"
+                  ? "IGE requested updates — open the editor and resubmit when ready."
+                  : `${featured.view_count ?? 0} views · ${featured.inquiry_count ?? 0} inquiries`
+              }
+              ctaLabel={featured.status === "revision_requested" ? "Continue editing" : "Open editor"}
+              ctaTo="/events/edit/$id"
+              ctaParams={{ id: featured.id }}
+            />
+          ) : (
+            <FeaturedHeroCard
+              badge="Organiser"
+              title="Create your first event"
+              meta="IGE vetting flow"
+              description="List a B2B event, pass vetting, and reach verified sponsors on the marketplace."
+              ctaLabel="Get started"
+              ctaTo="/dashboard"
+            />
+          )}
+
+          <AgendaList title="Upcoming start dates" items={agendaItems} empty="No scheduled events yet." />
+
+          <div className="space-y-2">
+            {[
+              { to: "/dashboard/pipeline", label: "Sponsorship pipeline", desc: "Inquiries & deal stages", icon: TrendingUp },
+              { to: "/dashboard/documents", label: "Documents", desc: "Decks & assets", icon: FolderOpen },
+              { to: "/dashboard/analytics", label: "Analytics", desc: "Views & conversions", icon: BarChart3 },
+            ].map((item) => (
+              <QuickLinkCard key={item.to} {...item} />
+            ))}
+          </div>
+        </div>
+      </div>
+
       {counts.revision > 0 && statusFilter !== "revision" && (
         <DashboardPanel title="Action needed" description="Events sent back for revision">
           <div className="space-y-3">
@@ -228,7 +333,20 @@ function PipelineEventTable({ event: ev, forms, deals, partnerMap }: { event: an
                   <td className="px-3 py-3 text-xs font-semibold">{f.budget_range_min || f.budget_range_max ? `${fmtMoney(f.currency, Number(f.budget_range_min ?? 0))} – ${fmtMoney(f.currency, Number(f.budget_range_max ?? 0))}` : "—"}</td>
                   <td className="px-3 py-3 text-xs text-muted-foreground">{partnerName ?? (f.referral_partner_id ? "Partner" : "Direct")}</td>
                   <td className="px-3 py-3 text-xs font-semibold">{deal?.deal_value_native ? fmtMoney(deal.deal_currency, Number(deal.deal_value_native)) : "—"}</td>
-                  <td className="px-3 py-3 capitalize">{deal ? <span className="inline-flex rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary-deep">{deal.status.replace(/_/g, " ")}</span> : <span className="inline-flex rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">Awaiting deal</span>}</td>
+                  <td className="px-3 py-3 capitalize">
+                    {deal ? (
+                      <div className="space-y-1">
+                        <span className="inline-flex rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary-deep">{deal.status.replace(/_/g, " ")}</span>
+                        {deal.contract_url && (
+                          <a href={deal.contract_url} target="_blank" rel="noreferrer" className="block text-[11px] font-semibold text-primary hover:underline">
+                            View contract →
+                          </a>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="inline-flex rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">Awaiting deal</span>
+                    )}
+                  </td>
                   <td className="px-3 py-3 text-xs text-muted-foreground">{f.submitted_at ? new Date(f.submitted_at).toLocaleDateString() : "—"}</td>
                   <td className="px-3 py-3 text-right">{f.sponsor_user_id && <Link to="/messages" search={{ to: f.sponsor_user_id, event_id: ev.id }} className="text-xs font-semibold text-primary hover:underline">Message →</Link>}</td>
                 </tr>

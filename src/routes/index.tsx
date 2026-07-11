@@ -487,7 +487,7 @@ function HowItWorks() {
       n: "01",
       title: "Sign up & verify",
       desc:
-        "Pick your side, organiser, sponsor, or referral partner. Verify with your work email or LinkedIn so the marketplace stays clean.",
+        "Pick your side, organiser, sponsor, or referral partner. Create your account with email and complete your profile so the marketplace stays trusted.",
     },
     {
       n: "02",
@@ -568,7 +568,7 @@ function Trust() {
           <ul className="mt-8 space-y-4">
             {[
               "Every event manually reviewed by IGE before going live",
-              "Sponsor accounts verified via business email + LinkedIn",
+              "Sponsor accounts verified via email signup and profile completion",
               "Referral partners scored on track record and disclosure",
               "Fraud signals monitored continuously, bad actors removed",
             ].map((t, i) => (

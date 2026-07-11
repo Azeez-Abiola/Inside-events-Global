@@ -238,6 +238,8 @@ export type Database = {
           abw_notes: string | null
           assigned_to: string | null
           commitment_form_id: string
+          contract_generated_at: string | null
+          contract_url: string | null
           created_at: string
           deal_currency: string
           deal_value_native: number | null
@@ -247,6 +249,10 @@ export type Database = {
           organiser_id: string
           organiser_payout_native: number | null
           paid_at: string | null
+          payment_link_created_at: string | null
+          payment_link_expires_at: string | null
+          payment_link_provider: string | null
+          payment_link_url: string | null
           paystack_reference: string | null
           referral_commission_native: number | null
           referral_commission_paid: boolean
@@ -266,6 +272,8 @@ export type Database = {
           abw_notes?: string | null
           assigned_to?: string | null
           commitment_form_id: string
+          contract_generated_at?: string | null
+          contract_url?: string | null
           created_at?: string
           deal_currency: string
           deal_value_native?: number | null
@@ -294,6 +302,8 @@ export type Database = {
           abw_notes?: string | null
           assigned_to?: string | null
           commitment_form_id?: string
+          contract_generated_at?: string | null
+          contract_url?: string | null
           created_at?: string
           deal_currency?: string
           deal_value_native?: number | null
@@ -890,7 +900,9 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string
+          display_name: string | null
           email: string | null
           email_domain: string | null
           google_id: string | null
@@ -901,12 +913,15 @@ export type Database = {
           linkedin_employer: string | null
           linkedin_id: string | null
           linkedin_url: string | null
+          phone: string | null
           profile_complete: number
           suspension_reason: string | null
           updated_at: string
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
+          display_name?: string | null
           email?: string | null
           email_domain?: string | null
           google_id?: string | null
@@ -917,12 +932,15 @@ export type Database = {
           linkedin_employer?: string | null
           linkedin_id?: string | null
           linkedin_url?: string | null
+          phone?: string | null
           profile_complete?: number
           suspension_reason?: string | null
           updated_at?: string
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
+          display_name?: string | null
           email?: string | null
           email_domain?: string | null
           google_id?: string | null
@@ -933,6 +951,7 @@ export type Database = {
           linkedin_employer?: string | null
           linkedin_id?: string | null
           linkedin_url?: string | null
+          phone?: string | null
           profile_complete?: number
           suspension_reason?: string | null
           updated_at?: string

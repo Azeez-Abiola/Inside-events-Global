@@ -31,7 +31,7 @@ function HowItWorksPage() {
       n: "01",
       title: "Sign up & verify",
       desc:
-        "Pick your side: organiser, sponsor, or referral partner. Verify with your work email or LinkedIn so the marketplace stays clean.",
+        "Pick your side: organiser, sponsor, or referral partner. Sign up with email, complete your profile, and start browsing vetted opportunities.",
     },
     {
       n: "02",

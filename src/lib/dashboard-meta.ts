@@ -16,9 +16,14 @@ const ADMIN_SECTIONS: Record<string, DashboardMeta> = {
     breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Event queue" }],
   },
   submissions: {
-    title: "Submissions",
-    subtitle: "Waitlist signups and inbound contact messages.",
-    breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Submissions" }],
+    title: "Contact messages",
+    subtitle: "Inbound contact form submissions from the public site.",
+    breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Contact" }],
+  },
+  waitlist: {
+    title: "Waitlist",
+    subtitle: "Monitor founding waitlist signups by role. Click any row for full intake details.",
+    breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Waitlist" }],
   },
   revenue: {
     title: "Revenue & deals",
@@ -40,6 +45,16 @@ const ADMIN_SECTIONS: Record<string, DashboardMeta> = {
     subtitle: "Platform metrics, GMV trends, and pipeline breakdowns.",
     breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Analytics" }],
   },
+  "media-requests": {
+    title: "Media requests",
+    subtitle: "Review coverage and press credential requests from media partners.",
+    breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Media requests" }],
+  },
+  users: {
+    title: "User management",
+    subtitle: "View platform accounts, roles, and suspend users who breach standards.",
+    breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Users" }],
+  },
 };
 
 const PATH_META: Record<string, DashboardMeta> = {
@@ -49,11 +64,19 @@ const PATH_META: Record<string, DashboardMeta> = {
     breadcrumbs: [{ label: "Dashboard" }],
   },
   "/dashboard/vetting": ADMIN_SECTIONS.vetting,
+  "/dashboard/waitlist": ADMIN_SECTIONS.waitlist,
   "/dashboard/submissions": ADMIN_SECTIONS.submissions,
   "/dashboard/revenue": ADMIN_SECTIONS.revenue,
   "/dashboard/partners": ADMIN_SECTIONS.partners,
   "/dashboard/controls": ADMIN_SECTIONS.controls,
   "/dashboard/analytics": ADMIN_SECTIONS.analytics,
+  "/dashboard/media-requests": ADMIN_SECTIONS["media-requests"],
+  "/dashboard/users": ADMIN_SECTIONS.users,
+  "/profile": {
+    title: "Profile",
+    subtitle: "Account details, role profile, and security.",
+    breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Profile" }],
+  },
   "/dashboard/documents": {
     title: "Documents",
     subtitle: "Sponsorship decks, banners, and floor plans.",

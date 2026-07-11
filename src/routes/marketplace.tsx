@@ -1,11 +1,12 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { listMarketplaceEvents, getMarketplaceFilterOptions, getCurrentRates } from "@/lib/marketplace.functions";
+import { listMarketplaceEvents, listMarketplaceEventsForSponsor, getMarketplaceFilterOptions, getCurrentRates } from "@/lib/marketplace.functions";
 import { fmtDual } from "@/lib/currency";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
+import { useAuth } from "@/lib/auth-context";
 import { Search, SlidersHorizontal, MapPin, Calendar, Users, ShieldCheck, X } from "lucide-react";
 
 const FORMAT_LABELS: Record<string, string> = {
@@ -14,12 +15,10 @@ const FORMAT_LABELS: Record<string, string> = {
   hybrid: "Hybrid",
 };
 
-import { MARKETPLACE_PUBLIC } from "@/lib/marketplace-visibility";
+import { ensureMarketplaceAccess } from "@/lib/marketplace-visibility";
 
 export const Route = createFileRoute("/marketplace")({
-  beforeLoad: () => {
-    if (!MARKETPLACE_PUBLIC) throw redirect({ to: "/welcome" });
-  },
+  beforeLoad: () => ensureMarketplaceAccess(),
   head: () => ({
     meta: [
       { title: "Event Sponsorship Marketplace — Browse Vetted B2B Events | IGE" },
@@ -35,7 +34,10 @@ export const Route = createFileRoute("/marketplace")({
 });
 
 function MarketplacePage() {
+  const { roles } = useAuth();
+  const isSponsor = roles.includes("sponsor");
   const fetchEvents = useServerFn(listMarketplaceEvents);
+  const fetchSponsorEvents = useServerFn(listMarketplaceEventsForSponsor);
   const fetchFacets = useServerFn(getMarketplaceFilterOptions);
   const [q, setQ] = useState("");
   const [filters, setFilters] = useState({
@@ -45,10 +47,14 @@ function MarketplacePage() {
     format: "all" as "all" | "in_person" | "virtual" | "hybrid",
     vetted_only: true,
     decision_makers: false,
-    sort: "newest" as "newest" | "soonest" | "audience",
+    sort: (isSponsor ? "best_match" : "newest") as "newest" | "soonest" | "audience" | "best_match",
     page: 1,
   });
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (isSponsor) setFilters((f) => (f.sort === "newest" ? { ...f, sort: "best_match" } : f));
+  }, [isSponsor]);
 
   const headerRef = useScrollReveal() as React.RefObject<HTMLElement>;
   const gridRef = useScrollReveal() as React.RefObject<HTMLElement>;
@@ -68,8 +74,11 @@ function MarketplacePage() {
     [q, filters],
   );
   const { data, isLoading } = useQuery({
-    queryKey: ["marketplace", params],
-    queryFn: () => fetchEvents({ data: params }),
+    queryKey: ["marketplace", params, isSponsor],
+    queryFn: () =>
+      isSponsor && filters.sort === "best_match"
+        ? fetchSponsorEvents({ data: params })
+        : fetchEvents({ data: params }),
   });
 
   const events = data?.events ?? [];
@@ -134,6 +143,7 @@ function MarketplacePage() {
                 className="rounded-md border border-border bg-card px-3 py-2 text-sm"
               >
                 <option value="newest">Newest</option>
+                {isSponsor && <option value="best_match">Best match for you</option>}
                 <option value="soonest">Event date (soonest)</option>
                 <option value="audience">Audience (largest)</option>
               </select>

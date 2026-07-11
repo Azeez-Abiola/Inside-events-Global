@@ -129,3 +129,62 @@ export const getMediaPartnerSaves = createServerFn({ method: "GET" })
     }
     return { saves: saves ?? [], eventMap };
   });
+
+// Admin: list all media coverage requests
+export const adminListMediaRequests = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    if (!roles?.some((r) => r.role === "abw_admin" || r.role === "super_admin")) throw new Error("Forbidden");
+
+    const { data: reqs, error } = await supabaseAdmin
+      .from("media_requests" as any)
+      .select("id, event_id, media_partner_id, request_type, message, status, created_at, updated_at")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) {
+      if (error.message.includes("media_requests") || error.code === "42P01") return { requests: [], events: {}, partners: {} };
+      throw new Error(error.message);
+    }
+
+    const eventIds = Array.from(new Set((reqs ?? []).map((r: any) => r.event_id)));
+    const partnerIds = Array.from(new Set((reqs ?? []).map((r: any) => r.media_partner_id)));
+    const events: Record<string, any> = {};
+    const partners: Record<string, any> = {};
+
+    if (eventIds.length) {
+      const { data: evs } = await supabaseAdmin.from("events").select("id, name, slug, city, country").in("id", eventIds);
+      for (const e of evs ?? []) events[e.id] = e;
+    }
+    if (partnerIds.length) {
+      const [{ data: profiles }, { data: mp }] = await Promise.all([
+        supabaseAdmin.from("profiles").select("id, email, display_name").in("id", partnerIds),
+        supabaseAdmin.from("media_partner_profiles" as any).select("user_id, outlet_name").in("user_id", partnerIds),
+      ]);
+      for (const p of profiles ?? []) partners[p.id] = { ...partners[p.id], ...p };
+      for (const m of mp ?? []) partners[m.user_id] = { ...partners[m.user_id], outlet_name: m.outlet_name };
+    }
+
+    return { requests: reqs ?? [], events, partners };
+  });
+
+export const adminUpdateMediaRequestStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      id: z.string().uuid(),
+      status: z.enum(["pending", "approved", "declined", "completed"]),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    if (!roles?.some((r) => r.role === "abw_admin" || r.role === "super_admin")) throw new Error("Forbidden");
+    const { error } = await supabaseAdmin
+      .from("media_requests" as any)
+      .update({ status: data.status } as never)
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

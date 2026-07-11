@@ -79,10 +79,20 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
       throw new Error('Unauthorized: No user ID found in token');
     }
 
+    const userId = data.claims.sub as string;
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_suspended')
+      .eq('id', userId)
+      .maybeSingle();
+    if (profile?.is_suspended) {
+      throw new Error('Account suspended. Contact IGE support.');
+    }
+
     return next({
       context: {
         supabase,
-        userId: data.claims.sub,
+        userId,
         claims: data.claims,
       },
     });
