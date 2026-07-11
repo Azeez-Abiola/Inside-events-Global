@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   Calendar,
   Instagram,
@@ -25,8 +25,7 @@ import { BrandLogo } from "@/components/brand-logo";
 import { WaitlistIntake } from "@/components/waitlist-intake";
 import { trackEvent } from "@/lib/analytics";
 import type { WaitlistAudience } from "@/lib/waitlist-audiences";
-import homecomingCover from "@/assets/itsekiri-homecoming-2026.png.asset.json";
-import projectXCover from "@/assets/project-x-almost-famous.jpg.asset.json";
+import { FEATURED_EVENT_IMAGES } from "@/lib/featured-event-images";
 
 
 export const Route = createFileRoute("/welcome")({
@@ -261,12 +260,12 @@ function WelcomePage() {
             style={{ backgroundColor: "#5C1410", color: "#FBEFE2" }}
           >
             {/* Cover image */}
-            <div className="relative">
+            <div className="relative aspect-[21/9] min-h-[220px] w-full overflow-hidden bg-[#3a0d0a]">
               <img
-                src={homecomingCover.url}
+                src={FEATURED_EVENT_IMAGES.itsekiriHomecoming}
                 alt="Itsekiri Global HomeComing 2026 — Reconnecting Heritage, Rebuilding Home · August 17–21, 2026 · Warri Kingdom, Delta State, Nigeria"
-                className="h-auto w-full object-cover"
-                loading="lazy"
+                className="absolute inset-0 h-full w-full object-cover object-center"
+                loading="eager"
               />
             </div>
 
@@ -390,21 +389,34 @@ function WelcomePage() {
             className="mt-10 overflow-hidden rounded-3xl shadow-brand"
             style={{ backgroundColor: "#2a0b5a", color: "#FFF7E6" }}
           >
-            <div className="relative">
-              <img
-                src={projectXCover.url}
-                alt="Project X ... Almost Famous — A Play by The MECT Company"
-                className="mx-auto h-auto w-full max-w-md object-contain"
-                loading="lazy"
-              />
-              <span
-                className="absolute left-6 top-6 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] backdrop-blur"
-                style={{ backgroundColor: "rgba(255,193,7,0.95)", color: "#2a0b5a" }}
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                Also featured this month
-              </span>
-            </div>
+            <FeaturedEventCover
+              src={FEATURED_EVENT_IMAGES.projectXAlmostFamous}
+              alt="Project X ... Almost Famous — A Play by The MECT Company"
+              badge={
+                <span
+                  className="absolute left-6 top-6 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] backdrop-blur"
+                  style={{ backgroundColor: "rgba(255,193,7,0.95)", color: "#2a0b5a" }}
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Also featured this month
+                </span>
+              }
+              fallback={
+                <div
+                  className="flex min-h-[320px] flex-col items-center justify-center px-8 py-16 text-center"
+                  style={{ background: "linear-gradient(135deg, #1a0538 0%, #2a0b5a 45%, #4a1480 100%)" }}
+                >
+                  <Drama className="h-14 w-14" style={{ color: "#FFC107" }} />
+                  <p className="mt-6 font-display text-3xl font-bold md:text-4xl" style={{ color: "#FFF7E6" }}>
+                    Project X <span style={{ color: "#FFC107" }}>…Almost Famous</span>
+                  </p>
+                  <p className="mt-3 text-sm" style={{ color: "rgba(255,247,230,0.75)" }}>
+                    The MECT Company · Lagos · July 2026
+                  </p>
+                </div>
+              }
+              imgClassName="mx-auto h-auto w-full max-w-md object-contain"
+            />
 
             <div className="grid gap-10 p-8 md:grid-cols-5 md:gap-12 md:p-12">
               <div className="md:col-span-3">
@@ -684,6 +696,39 @@ function WelcomePage() {
         </section>
       </main>
       <SiteFooter />
+    </div>
+  );
+}
+
+function FeaturedEventCover({
+  src,
+  alt,
+  fallback,
+  imgClassName,
+  badge,
+}: {
+  src: string;
+  alt: string;
+  fallback: ReactNode;
+  imgClassName?: string;
+  badge?: ReactNode;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  return (
+    <div className="relative">
+      {!failed ? (
+        <img
+          src={src}
+          alt={alt}
+          className={imgClassName}
+          loading="lazy"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        fallback
+      )}
+      {badge}
     </div>
   );
 }
