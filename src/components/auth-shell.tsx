@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
-import logo from "@/assets/ige-logo.jpeg";
+import { BrandLogo } from "@/components/brand-logo";
 
 // Slideshow images (served from /public/events). Itsekiri banner intentionally excluded.
 const SLIDES = [
@@ -67,7 +67,7 @@ export function AuthShell({
           <AuthSlideshow />
 
           <Link to="/" className="relative z-10 flex items-center gap-3" aria-label="Inside Global Events 2026 — Home">
-            <img src={logo} alt="" aria-hidden="true" className="h-10 w-10 rounded-md object-cover" />
+            <BrandLogo size="lg" className="rounded-md bg-white/95 p-1 mix-blend-normal dark:mix-blend-normal" aria-hidden="true" />
             <div className="uppercase tracking-[0.18em] opacity-90 text-lg font-sans font-extrabold">
               Inside Global Events 2026
             </div>

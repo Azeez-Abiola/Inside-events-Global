@@ -3,7 +3,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LogOut, Bell, Loader2, Menu, Search } from "lucide-react";
 import { toast } from "sonner";
-import logo from "@/assets/ige-logo.jpeg";
+import { BrandLogo } from "@/components/brand-logo";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { getWorkspaceNav } from "@/lib/workspace-nav";
@@ -52,7 +52,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <aside className="flex h-full w-[248px] shrink-0 flex-col bg-card">
       {/* Voom: logo row */}
       <div className="flex h-[72px] items-center gap-3 px-6">
-        <img src={logo} alt="IGE" className="h-9 w-9 rounded-xl object-cover" />
+        <BrandLogo />
         <span className="font-display text-[15px] font-bold text-foreground">Inside Global Events</span>
       </div>
 

@@ -21,12 +21,12 @@ import {
   Drama,
 } from "lucide-react";
 import { SiteFooter } from "@/components/site-chrome";
+import { BrandLogo } from "@/components/brand-logo";
 import { WaitlistIntake } from "@/components/waitlist-intake";
 import { trackEvent } from "@/lib/analytics";
 import type { WaitlistAudience } from "@/lib/waitlist-audiences";
 import homecomingCover from "@/assets/itsekiri-homecoming-2026.png.asset.json";
 import projectXCover from "@/assets/project-x-almost-famous.jpg.asset.json";
-import igeLogo from "@/assets/ige-logo.png.asset.json";
 
 
 export const Route = createFileRoute("/welcome")({
@@ -68,12 +68,7 @@ function WelcomePage() {
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
           <Link to="/welcome" className="flex items-center gap-3">
-            <img
-              src={igeLogo.url}
-              alt="Inside Global Events logo"
-              className="h-10 w-10 object-contain mix-blend-multiply dark:mix-blend-screen"
-              loading="eager"
-            />
+            <BrandLogo size="lg" />
             <span className="font-display text-lg font-bold tracking-tight">
               Inside Global Events 2026
             </span>
