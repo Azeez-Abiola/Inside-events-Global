@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { z } from "zod";
 import { CheckCircle2, Sparkles, MessageSquare } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
@@ -68,41 +68,10 @@ const benefits: Record<WaitlistAudience, { title: string; desc: string }[]> = {
   ],
 };
 
-const LAUNCH_TS = new Date("2026-07-01T00:00:00Z").getTime();
-
-function useCountdown(target: number) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, []);
-  const diff = Math.max(0, target - now);
-  return {
-    days: Math.floor(diff / 86400000),
-    hours: Math.floor((diff % 86400000) / 3600000),
-    minutes: Math.floor((diff % 3600000) / 60000),
-    seconds: Math.floor((diff % 60000) / 1000),
-  };
-}
-
-function CountdownCell({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="rounded-2xl border border-border/60 bg-card/70 px-4 py-5 text-center backdrop-blur md:px-7 md:py-7">
-      <div className="font-display text-4xl font-bold tabular-nums text-brand-gradient md:text-6xl">
-        {value.toString().padStart(2, "0")}
-      </div>
-      <div className="mt-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground md:text-xs">
-        {label}
-      </div>
-    </div>
-  );
-}
-
 function WaitlistPage() {
   const search = Route.useSearch();
   const initialAudience = isWaitlistAudience(search.audience) ? search.audience : "organiser";
   const [audience, setAudience] = useState<WaitlistAudience>(initialAudience);
-  const { days, hours, minutes, seconds } = useCountdown(LAUNCH_TS);
   const audienceMeta = WAITLIST_AUDIENCES.find((a) => a.id === audience);
 
   return (
@@ -126,16 +95,7 @@ function WaitlistPage() {
               Pick your role, answer a few tailored questions, and we&apos;ll save your details for
               founding-member access and launch notifications.
             </p>
-            <div className="mt-10 grid grid-cols-4 gap-3 md:gap-4">
-              <CountdownCell value={days} label="Days" />
-              <CountdownCell value={hours} label="Hours" />
-              <CountdownCell value={minutes} label="Minutes" />
-              <CountdownCell value={seconds} label="Seconds" />
-            </div>
-            <div className="mt-3 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-              Public launch · 1 July
-            </div>
-            <div className="mt-6">
+            <div className="mt-8">
               <Link
                 to="/contact"
                 className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-4 py-2 text-sm font-medium text-foreground backdrop-blur transition-colors hover:bg-muted"
