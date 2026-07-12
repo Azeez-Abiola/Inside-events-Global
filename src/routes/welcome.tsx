@@ -20,7 +20,7 @@ import {
   Film,
   Drama,
 } from "lucide-react";
-import { SiteFooter } from "@/components/site-chrome";
+import { SiteFooter, SITE_BRAND_NAME } from "@/components/site-chrome";
 import { BrandLogo } from "@/components/brand-logo";
 import { WaitlistIntake } from "@/components/waitlist-intake";
 import { trackEvent } from "@/lib/analytics";
@@ -69,7 +69,7 @@ function WelcomePage() {
           <Link to="/welcome" className="flex items-center gap-3">
             <BrandLogo size="lg" />
             <span className="font-display text-lg font-bold tracking-tight">
-              Inside Global Events 2026
+              {SITE_BRAND_NAME}
             </span>
           </Link>
           <a
