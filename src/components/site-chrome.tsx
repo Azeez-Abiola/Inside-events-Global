@@ -1,5 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { BrandLogo } from "@/components/brand-logo";
+import { SiteFooter } from "@/components/site-footer";
+
+export { SiteFooter };
 
 export const SITE_BRAND_NAME = "Inside Global Events";
 
@@ -41,49 +44,3 @@ export function SiteHeader({ showAuthLinks = false }: { showAuthLinks?: boolean 
   );
 }
 
-export function SiteFooter() {
-  return (
-    <footer className="border-t border-border/60 bg-muted/30">
-      <div className="mx-auto grid max-w-7xl gap-10 px-6 py-14 md:grid-cols-4">
-        <div className="md:col-span-2">
-          <div className="flex items-center gap-2.5">
-            <BrandLogo size="sm" alt="" aria-hidden="true" />
-            <span className="font-display text-base font-bold tracking-tight">{SITE_BRAND_NAME}</span>
-          </div>
-          <p className="mt-4 max-w-sm text-sm text-muted-foreground">
-            The vetted marketplace where B2B event organisers, sponsors, and trusted
-            referral partners actually close deals, not just exchange brochures.
-          </p>
-          <p className="mt-6 text-xs text-muted-foreground">
-            {SITE_BRAND_NAME}
-          </p>
-        </div>
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-foreground">
-            Platform
-          </div>
-          <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-            <li><Link to="/organisers" className="hover:text-foreground">For Organisers</Link></li>
-            <li><Link to="/sponsors" className="hover:text-foreground">For Sponsors</Link></li>
-            <li><Link to="/partners" className="hover:text-foreground">Referral Partners</Link></li>
-            <li><Link to="/how-it-works" className="hover:text-foreground">How it works</Link></li>
-            <li><Link to="/pricing" className="hover:text-foreground">Pricing</Link></li>
-          </ul>
-        </div>
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-foreground">
-            Company
-          </div>
-          <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-            <li><Link to="/about" className="hover:text-foreground">About IGE</Link></li>
-            <li><Link to="/trust-vetting" className="hover:text-foreground">Trust &amp; vetting</Link></li>
-            <li><Link to="/faq" className="hover:text-foreground">FAQ</Link></li>
-            <li><Link to="/waitlist" className="hover:text-foreground">Join the waitlist</Link></li>
-            <li><Link to="/privacy" className="hover:text-foreground">Privacy</Link></li>
-            <li><Link to="/terms" className="hover:text-foreground">Terms</Link></li>
-          </ul>
-        </div>
-      </div>
-    </footer>
-  );
-}
