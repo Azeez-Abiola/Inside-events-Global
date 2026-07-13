@@ -22,9 +22,6 @@ export const upsertOrganiserProfile = createServerFn({ method: "POST" })
       .from("organiser_profiles")
       .upsert({ user_id: userId, ...data } as never, { onConflict: "user_id" });
     if (error) throw new Error(error.message);
-    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-    const role = roles?.[0]?.role;
-    if (role) await sendWelcomeEmailForUser(userId, role).catch(() => {});
     const profile_complete = await syncProfileCompleteness(userId).catch(() => null);
     return { ok: true, profile_complete };
   });
@@ -52,9 +49,6 @@ export const upsertSponsorProfile = createServerFn({ method: "POST" })
       .from("sponsor_profiles")
       .upsert({ user_id: userId, ...data } as never, { onConflict: "user_id" });
     if (error) throw new Error(error.message);
-    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-    const role = roles?.[0]?.role;
-    if (role) await sendWelcomeEmailForUser(userId, role).catch(() => {});
     const profile_complete = await syncProfileCompleteness(userId).catch(() => null);
     return { ok: true, profile_complete };
   });
@@ -92,19 +86,21 @@ export const upsertReferralProfile = createServerFn({ method: "POST" })
     ]);
     if (pErr) throw new Error(pErr.message);
     if (rErr) throw new Error(rErr.message);
-    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-    const role = roles?.[0]?.role;
-    if (role) await sendWelcomeEmailForUser(userId, role).catch(() => {});
     const profile_complete = await syncProfileCompleteness(userId).catch(() => null);
     return { ok: true, profile_complete };
   });
 
 export const sendWelcomeEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d) => z.object({ role: z.string().optional() }).optional().parse(d))
+  .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-    const role = roles?.[0]?.role;
+    const { data: authUser } = await supabase.auth.getUser();
+    const role =
+      data?.role ||
+      roles?.[0]?.role ||
+      (authUser.user?.user_metadata?.role as string | undefined);
     if (!role) return { ok: false };
     await sendWelcomeEmailForUser(userId, role);
     return { ok: true };

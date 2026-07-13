@@ -10,20 +10,23 @@ import {
   Text,
 } from "@react-email/components";
 import type { TemplateEntry } from "./registry";
+import { EmailBrandHeader } from "@/lib/email-templates/email-brand-header";
 
 interface Props {
   eventName: string;
   amount: string;
   paymentUrl: string;
   dashboardUrl: string;
+  siteUrl?: string;
 }
 
-const PaymentLinkEmail = ({ eventName, amount, paymentUrl, dashboardUrl }: Props) => (
+const PaymentLinkEmail = ({ eventName, amount, paymentUrl, dashboardUrl, siteUrl = "https://www.insideglobalevents.com" }: Props) => (
   <Html lang="en" dir="ltr">
     <Head />
     <Preview>Payment link for {eventName}</Preview>
     <Body style={main}>
       <Container style={container}>
+        <EmailBrandHeader siteUrl={siteUrl} />
         <Heading style={h1}>Complete your sponsorship payment</Heading>
         <Text style={text}>
           Your payment link for <strong>{eventName}</strong> is ready.

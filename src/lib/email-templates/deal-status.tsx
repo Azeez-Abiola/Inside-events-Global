@@ -10,6 +10,7 @@ import {
   Text,
 } from "@react-email/components";
 import type { TemplateEntry } from "./registry";
+import { EmailBrandHeader } from "@/lib/email-templates/email-brand-header";
 
 interface Props {
   name: string;
@@ -18,14 +19,16 @@ interface Props {
   previousStatus?: string | null;
   note?: string;
   dashboardUrl: string;
+  siteUrl?: string;
 }
 
-const DealStatusEmail = ({ name, eventName, statusLabel, previousStatus, note, dashboardUrl }: Props) => (
+const DealStatusEmail = ({ name, eventName, statusLabel, previousStatus, note, dashboardUrl, siteUrl = "https://www.insideglobalevents.com" }: Props) => (
   <Html lang="en" dir="ltr">
     <Head />
     <Preview>Deal update: {eventName} — {statusLabel}</Preview>
     <Body style={main}>
       <Container style={container}>
+        <EmailBrandHeader siteUrl={siteUrl} />
         <Heading style={h1}>Deal status update</Heading>
         <Text style={text}>Hi {name},</Text>
         <Text style={text}>

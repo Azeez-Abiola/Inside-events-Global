@@ -10,20 +10,23 @@ import {
   Text,
 } from "@react-email/components";
 import type { TemplateEntry } from "./registry";
+import { EmailBrandHeader } from "@/lib/email-templates/email-brand-header";
 
 interface Props {
   eventName: string;
   statusLabel: string;
   note?: string;
   dashboardUrl: string;
+  siteUrl?: string;
 }
 
-const VettingStatusEmail = ({ eventName, statusLabel, note, dashboardUrl }: Props) => (
+const VettingStatusEmail = ({ eventName, statusLabel, note, dashboardUrl, siteUrl = "https://www.insideglobalevents.com" }: Props) => (
   <Html lang="en" dir="ltr">
     <Head />
     <Preview>Your event "{eventName}" — {statusLabel}</Preview>
     <Body style={main}>
       <Container style={container}>
+        <EmailBrandHeader siteUrl={siteUrl} />
         <Heading style={h1}>Event vetting update</Heading>
         <Text style={text}>
           Your listing <strong>{eventName}</strong> has been updated to: <strong>{statusLabel}</strong>.

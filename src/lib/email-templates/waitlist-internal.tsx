@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { Body, Container, Head, Heading, Hr, Html, Preview, Text } from '@react-email/components'
 import type { TemplateEntry } from './registry'
+import { EmailBrandHeader } from '@/lib/email-templates/email-brand-header'
 
 interface Props {
   audience?: string
@@ -11,14 +12,16 @@ interface Props {
   country?: string
   phone?: string
   notes?: string
+  siteUrl?: string
 }
 
-const WaitlistInternalEmail = ({ audience, name, email, company, role, country, phone, notes }: Props) => (
+const WaitlistInternalEmail = ({ audience, name, email, company, role, country, phone, notes, siteUrl = 'https://www.insideglobalevents.com' }: Props) => (
   <Html lang="en" dir="ltr">
     <Head />
     <Preview>New waitlist signup{name ? ` — ${name}` : ''}</Preview>
     <Body style={main}>
       <Container style={container}>
+        <EmailBrandHeader siteUrl={siteUrl} />
         <Heading style={h1}>New waitlist signup</Heading>
         <Text style={kv}><b>Audience:</b> {audience ?? '—'}</Text>
         <Text style={kv}><b>Name:</b> {name ?? '—'}</Text>
@@ -37,11 +40,11 @@ export const template = {
   component: WaitlistInternalEmail,
   subject: (d: Record<string, any>) => `Waitlist: ${d.audience ?? 'signup'} — ${d.name ?? d.email ?? ''}`,
   displayName: 'Waitlist — internal',
-  previewData: { audience: 'organiser', name: 'Jane', email: 'jane@brand.com', company: 'Acme', role: 'Founder', country: 'Nigeria' },
+  previewData: { audience: 'organiser', name: 'Jane', email: 'jane@brand.com', company: 'Acme', role: 'Founder', country: 'Nigeria', siteUrl: 'https://www.insideglobalevents.com' },
 } satisfies TemplateEntry
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Inter, Arial, sans-serif' }
-const container = { padding: '32px 28px', maxWidth: '560px' }
+const main = { backgroundColor: '#f4f0fa', fontFamily: 'Inter, Arial, sans-serif' }
+const container = { margin: '0 auto', padding: '32px 28px', maxWidth: '560px' }
 const h1 = { fontSize: '20px', fontWeight: 700, color: '#0a0a0a', margin: '0 0 18px' }
 const kv = { fontSize: '14px', color: '#27272a', margin: '0 0 6px' }
 const body = { fontSize: '14px', color: '#3f3f46', lineHeight: '1.6', whiteSpace: 'pre-wrap' as const }

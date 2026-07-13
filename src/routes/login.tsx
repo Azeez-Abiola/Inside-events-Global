@@ -4,12 +4,13 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { AuthShell } from "@/components/auth-shell";
+import { isEmailNotConfirmedError } from "@/lib/auth-email";
 
 const search = z.object({
   redirect: z.string().optional(),
   email: z.string().max(200).optional(),
   password: z.string().optional(),
+  unconfirmed: z.enum(["1"]).optional(),
 });
 
 export const Route = createFileRoute("/login")({
@@ -22,7 +23,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { redirect, email: emailParam, password: passwordParam } = useSearch({ from: "/login" });
+  const { redirect, email: emailParam, password: passwordParam, unconfirmed } = useSearch({ from: "/login" });
   const [email, setEmail] = useState(emailParam ?? "");
   const [password, setPassword] = useState(passwordParam ?? "");
   const [submitting, setSubmitting] = useState(false);
@@ -39,7 +40,11 @@ function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setSubmitting(false);
     if (error) {
-      toast.error(error.message);
+      if (isEmailNotConfirmedError(error.message)) {
+        toast.error("Confirm your email first — enter the 6-digit code from your inbox on the signup page.");
+      } else {
+        toast.error(error.message);
+      }
       return;
     }
     toast.success("Welcome back");
@@ -62,6 +67,15 @@ function LoginPage() {
         </>
       }
     >
+      {unconfirmed === "1" && (
+        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-foreground">
+          Your email isn&apos;t confirmed yet. Enter the 6-digit code from your verification email on the{" "}
+          <Link to="/signup" search={{ step: "verify" }} className="font-semibold text-primary">
+            signup page
+          </Link>
+          , then sign in here.
+        </p>
+      )}
       {demoPrefill && (
         <p className="rounded-lg border border-primary/20 bg-brand-soft px-3 py-2 text-xs text-primary-deep">
           Demo credentials filled in — click Sign in to open this workspace.

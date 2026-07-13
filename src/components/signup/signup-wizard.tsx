@@ -1,11 +1,14 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getSiteUrl } from "@/lib/site-url";
+import { isEmailConfirmed } from "@/lib/auth-email";
+import { sendWelcomeEmail } from "@/lib/profile.functions";
 import { AuthShell } from "@/components/auth-shell";
 import { SignupProfileStep } from "@/components/signup/profile-step";
+import { SignupOtpStep } from "@/components/signup/signup-otp-step";
 import { useAuth } from "@/lib/auth-context";
 import {
   SIGNUP_ROLES,
@@ -21,19 +24,20 @@ import {
 const STEPS: { key: SignupStep; label: string }[] = [
   { key: "role", label: "Role" },
   { key: "account", label: "Account" },
+  { key: "verify", label: "Verify" },
   { key: "profile", label: "Profile" },
 ];
 
 export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
   const navigate = useNavigate();
   const { user, roles, loading, refreshRoles } = useAuth();
+  const sendWelcome = useServerFn(sendWelcomeEmail);
   const [step, setStep] = useState<SignupStep>(initialStep ?? "role");
   const [role, setRole] = useState<SignupRole>("sponsor");
   const [bootstrapping, setBootstrapping] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [emailConfirmPending, setEmailConfirmPending] = useState(false);
 
   const signupRole = (roles[0] as SignupRole | undefined) ?? role;
   const roleMeta = SIGNUP_ROLES.find((r) => r.key === signupRole)!;
@@ -51,8 +55,15 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
       if (!user) {
         const stored = readSignupRole();
         if (stored) setRole(stored);
-        if (initialStep === "profile") goToStep("account");
+        if (initialStep === "profile" || initialStep === "verify") goToStep("account");
         else if (initialStep && initialStep !== "role") setStep(initialStep);
+        setBootstrapping(false);
+        return;
+      }
+
+      if (!isEmailConfirmed(user)) {
+        setEmail(user.email ?? "");
+        goToStep("verify");
         setBootstrapping(false);
         return;
       }
@@ -67,8 +78,8 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
           clearSignupRole();
           setRole(storedRole);
           goToStep("profile");
-        } catch (e: any) {
-          toast.error(e.message ?? "Could not save your role");
+        } catch (e: unknown) {
+          toast.error(e instanceof Error ? e.message : "Could not save your role");
         }
         setBootstrapping(false);
         return;
@@ -87,7 +98,7 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
       }
 
       if (storedRole) setRole(storedRole);
-      if (initialStep === "profile") goToStep(user ? "role" : "account");
+      if (initialStep === "profile") goToStep("role");
       else if (initialStep && initialStep !== "role") setStep(initialStep);
       setBootstrapping(false);
     })();
@@ -96,15 +107,15 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
 
   async function handleRoleContinue() {
     stashSignupRole(role);
-    if (user) {
+    if (user && isEmailConfirmed(user)) {
       try {
         await applySignupRole(user.id, role);
         await refreshRoles();
         clearSignupRole();
         toast.success("Role set — let's complete your profile");
         goToStep("profile");
-      } catch (e: any) {
-        toast.error(e.message ?? "Could not save your role");
+      } catch (e: unknown) {
+        toast.error(e instanceof Error ? e.message : "Could not save your role");
       }
       return;
     }
@@ -122,7 +133,6 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
       email,
       password,
       options: {
-        emailRedirectTo: `${getSiteUrl()}/signup?step=profile`,
         data: { role },
       },
     });
@@ -131,20 +141,50 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
       toast.error(error.message);
       return;
     }
-    if (data.session?.user) {
+    if (data.session?.user && isEmailConfirmed(data.session.user)) {
       try {
         await applySignupRole(data.session.user.id, role);
         await refreshRoles();
+        await sendWelcome({ data: { role } }).catch(() => {});
         clearSignupRole();
         toast.success("Account created — one more step");
         goToStep("profile");
-      } catch (err: any) {
-        toast.error(err.message ?? "Could not save your role");
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : "Could not save your role");
       }
       return;
     }
-    setEmailConfirmPending(true);
-    toast.success("Check your inbox to confirm your email, then sign in to finish your profile.");
+    toast.success("Check your inbox for your 6-digit verification code.");
+    goToStep("verify");
+  }
+
+  async function handleOtpVerified() {
+    const { data } = await supabase.auth.getUser();
+    const verifiedUser = data.user;
+    if (!verifiedUser) throw new Error("Session missing after verification");
+
+    await applySignupRole(verifiedUser.id, role);
+    await refreshRoles();
+    await sendWelcome({ data: { role } }).catch(() => {});
+    clearSignupRole();
+    toast.success("Email verified — welcome to IGE!");
+    goToStep("profile");
+  }
+
+  async function handleResendOtp() {
+    if (!email.trim()) {
+      toast.error("Enter your email address first.");
+      return;
+    }
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: email.trim(),
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("We sent a new verification code.");
   }
 
   if (loading || bootstrapping) {
@@ -227,7 +267,7 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
 
       {step === "account" && (
         <>
-          {user ? (
+          {user && isEmailConfirmed(user) ? (
             <div className="space-y-4 text-sm">
               <p className="text-muted-foreground">You're already signed in as {user.email}.</p>
               <button type="button" onClick={() => goToStep("role")} className="btn-primary w-full">
@@ -236,12 +276,9 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
             </div>
           ) : (
             <>
-          <p className="mb-4 rounded-lg border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-            Signing up as <span className="font-semibold text-foreground">{roleMeta.title}</span>
-            {!user && (
-              <>
-                {" "}
-                —{" "}
+              <p className="mb-4 rounded-lg border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+                Signing up as <span className="font-semibold text-foreground">{roleMeta.title}</span>
+                {" — "}
                 <button
                   type="button"
                   onClick={() => goToStep("role")}
@@ -249,24 +286,10 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
                 >
                   Change
                 </button>
-              </>
-            )}
-          </p>
-
-          {emailConfirmPending ? (
-            <div className="space-y-4 rounded-xl border border-border bg-card p-4 text-sm">
-              <p className="text-foreground">We sent a confirmation link to <strong>{email}</strong>.</p>
-              <p className="text-muted-foreground">
-                After confirming, sign in and we'll take you straight to your profile step.
               </p>
-              <Link to="/login" className="btn-primary inline-flex w-full justify-center">
-                Go to sign in
-              </Link>
-            </div>
-          ) : (
-            <form onSubmit={handlePassword} className="space-y-4">
-              <AccountField
-                label="Email"
+              <form onSubmit={handlePassword} className="space-y-4">
+                <AccountField
+                  label="Email"
                   type="email"
                   autoComplete="email"
                   required
@@ -292,13 +315,20 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
                   By continuing you agree to IGE's Terms and Privacy Policy.
                 </p>
               </form>
-          )}
             </>
           )}
         </>
       )}
 
-      {step === "profile" && user && (
+      {step === "verify" && (
+        <SignupOtpStep
+          email={email}
+          onVerified={handleOtpVerified}
+          onResend={handleResendOtp}
+        />
+      )}
+
+      {step === "profile" && user && isEmailConfirmed(user) && (
         <SignupProfileStep role={signupRole} onDone={() => navigate({ to: "/dashboard" })} />
       )}
     </AuthShell>
@@ -316,6 +346,12 @@ function stepCopy(step: SignupStep, roleTitle: string) {
     return {
       title: "Create your account",
       subtitle: `Set up access for your ${roleTitle} workspace.`,
+    };
+  }
+  if (step === "verify") {
+    return {
+      title: "Verify your email",
+      subtitle: "Enter the 6-digit code we sent to your inbox.",
     };
   }
   return {

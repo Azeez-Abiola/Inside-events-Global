@@ -11,16 +11,17 @@ import {
   Text,
 } from "@react-email/components";
 import type { TemplateEntry } from "./registry";
-
-const SITE_NAME = "Inside Global Events 2026";
+import { EmailBrandHeader } from "@/lib/email-templates/email-brand-header";
+import { SITE_NAME } from "@/lib/email/config";
 
 interface Props {
   senderName: string;
   preview: string;
   threadUrl: string;
+  siteUrl?: string;
 }
 
-function NewMessageEmail({ senderName, preview, threadUrl }: Props) {
+function NewMessageEmail({ senderName, preview, threadUrl, siteUrl = "https://www.insideglobalevents.com" }: Props) {
   return (
     <Html lang="en" dir="ltr">
       <Head />
@@ -28,6 +29,7 @@ function NewMessageEmail({ senderName, preview, threadUrl }: Props) {
       <Body style={main}>
         <Container style={container}>
           <Section style={hero}>
+            <EmailBrandHeader siteUrl={siteUrl} variant="hero" />
             <Heading style={h1}>New message</Heading>
             <Text style={lead}>
               <strong>{senderName}</strong> sent you a message on {SITE_NAME}.
@@ -60,6 +62,7 @@ export const template = {
     senderName: "Acme Events",
     preview: "Hi — we'd love to discuss a title sponsorship for your Q3 conference.",
     threadUrl: "https://www.insideglobalevents.com/messages?thread=00000000-0000-0000-0000-000000000001",
+    siteUrl: "https://www.insideglobalevents.com",
   },
 } satisfies TemplateEntry;
 

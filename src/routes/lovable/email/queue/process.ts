@@ -1,4 +1,4 @@
-import { sendLovableEmail } from '@lovable.dev/email-js'
+import { sendQueuedEmail, isRateLimited, isForbidden } from '@/lib/email/resend'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { createFileRoute } from '@tanstack/react-router'
 
@@ -8,30 +8,7 @@ const DEFAULT_SEND_DELAY_MS = 200
 const DEFAULT_AUTH_TTL_MINUTES = 15
 const DEFAULT_TRANSACTIONAL_TTL_MINUTES = 60
 
-// Check if an error is a rate-limit (429) response.
-// Uses EmailAPIError.status when available (email-js >=0.x with structured errors),
-// falls back to parsing the error message for older versions.
-function isRateLimited(error: unknown): boolean {
-  if (error && typeof error === 'object' && 'status' in error) {
-    return (error as { status: number }).status === 429
-  }
-  return error instanceof Error && error.message.includes('429')
-}
-
-// Check if an error is a forbidden (403) response. Retrying won't help.
-// Move straight to DLQ.
-function isForbidden(error: unknown): boolean {
-  if (error && typeof error === 'object' && 'status' in error) {
-    return (error as { status: number }).status === 403
-  }
-  return error instanceof Error && error.message.includes('403')
-}
-
-// Extract Retry-After seconds from a structured EmailAPIError, or default to 60s.
-function getRetryAfterSeconds(error: unknown): number {
-  if (error && typeof error === 'object' && 'retryAfterSeconds' in error) {
-    return (error as { retryAfterSeconds: number | null }).retryAfterSeconds ?? 60
-  }
+function getRetryAfterSeconds(): number {
   return 60
 }
 
@@ -64,12 +41,12 @@ export const Route = createFileRoute("/lovable/email/queue/process")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const apiKey = process.env.LOVABLE_API_KEY
+        const resendConfigured = Boolean(process.env.RESEND_API_KEY)
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
         const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-        if (!apiKey || !supabaseUrl || !supabaseServiceKey) {
-          console.error('Missing required environment variables')
+        if (!resendConfigured || !supabaseUrl || !supabaseServiceKey) {
+          console.error('Missing required environment variables (RESEND_API_KEY, Supabase)')
           return Response.json(
             { error: 'Server configuration error' },
             { status: 500 }
@@ -221,23 +198,15 @@ export const Route = createFileRoute("/lovable/email/queue/process")({
             }
 
             try {
-              await sendLovableEmail(
-                {
-                  run_id: payload.run_id,
-                  to: payload.to,
-                  from: payload.from,
-                  sender_domain: payload.sender_domain,
-                  subject: payload.subject,
-                  html: payload.html,
-                  text: payload.text,
-                  purpose: payload.purpose,
-                  label: payload.label,
-                  idempotency_key: payload.idempotency_key,
-                  unsubscribe_token: payload.unsubscribe_token,
-                  message_id: payload.message_id,
-                },
-                { apiKey, sendUrl: process.env.LOVABLE_SEND_URL }
-              )
+              await sendQueuedEmail({
+                to: payload.to,
+                from: payload.from,
+                subject: payload.subject,
+                html: payload.html,
+                text: payload.text,
+                message_id: payload.message_id,
+                idempotency_key: payload.idempotency_key,
+              })
 
               // Log success
               await supabase.from('email_send_log').insert({
@@ -275,7 +244,7 @@ export const Route = createFileRoute("/lovable/email/queue/process")({
                   error_message: errorMsg.slice(0, 1000),
                 })
 
-                const retryAfterSecs = getRetryAfterSeconds(error)
+                const retryAfterSecs = getRetryAfterSeconds()
                 await supabase
                   .from('email_send_state')
                   .update({

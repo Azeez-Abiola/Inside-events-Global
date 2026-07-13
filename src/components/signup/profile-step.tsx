@@ -5,7 +5,6 @@ import {
   upsertOrganiserProfile,
   upsertSponsorProfile,
   upsertReferralProfile,
-  sendWelcomeEmail,
 } from "@/lib/profile.functions";
 import {
   COMPANY_SIZES,
@@ -27,30 +26,13 @@ export function SignupProfileStep({ role, onDone }: { role: SignupRole; onDone: 
 }
 
 function MediaSkipForm({ onDone }: { onDone: () => void }) {
-  const welcome = useServerFn(sendWelcomeEmail);
-  const [loading, setLoading] = useState(false);
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
         Media partner accounts get a custom onboarding from our partnerships team — we'll be in touch.
       </p>
-      <button
-        type="button"
-        disabled={loading}
-        onClick={async () => {
-          setLoading(true);
-          try {
-            await welcome();
-          } catch {
-            /* welcome is best-effort */
-          } finally {
-            setLoading(false);
-            onDone();
-          }
-        }}
-        className="btn-primary w-full"
-      >
-        {loading ? "Finishing…" : "Continue to dashboard"}
+      <button type="button" onClick={onDone} className="btn-primary w-full">
+        Continue to dashboard
       </button>
     </div>
   );

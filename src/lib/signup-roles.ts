@@ -3,7 +3,7 @@ import { Megaphone, Globe2, Handshake, Newspaper } from "lucide-react";
 
 export type SignupRole = "organiser" | "sponsor" | "referral_partner" | "media_partner";
 
-export type SignupStep = "role" | "account" | "profile";
+export type SignupStep = "role" | "account" | "verify" | "profile";
 
 export const SIGNUP_ROLES: {
   key: SignupRole;

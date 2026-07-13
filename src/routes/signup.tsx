@@ -4,7 +4,7 @@ import { SignupWizard } from "@/components/signup/signup-wizard";
 import type { SignupStep } from "@/lib/signup-roles";
 
 const signupSearch = z.object({
-  step: z.enum(["role", "account", "profile"]).optional(),
+  step: z.enum(["role", "account", "verify", "profile"]).optional(),
 });
 
 export const Route = createFileRoute("/signup")({

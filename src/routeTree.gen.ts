@@ -50,6 +50,7 @@ import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authe
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as ApiPublicWaitlistNotifyRouteImport } from './routes/api/public/waitlist-notify'
 import { Route as ApiPublicContactRouteImport } from './routes/api/public/contact'
+import { Route as ApiAuthSendEmailHookRouteImport } from './routes/api/auth/send-email-hook'
 import { Route as AuthenticatedDashboardWaitlistRouteImport } from './routes/_authenticated/dashboard.waitlist'
 import { Route as AuthenticatedDashboardVettingRouteImport } from './routes/_authenticated/dashboard.vetting'
 import { Route as AuthenticatedDashboardUsersRouteImport } from './routes/_authenticated/dashboard.users'
@@ -286,6 +287,11 @@ const ApiPublicWaitlistNotifyRoute = ApiPublicWaitlistNotifyRouteImport.update({
 const ApiPublicContactRoute = ApiPublicContactRouteImport.update({
   id: '/api/public/contact',
   path: '/api/public/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSendEmailHookRoute = ApiAuthSendEmailHookRouteImport.update({
+  id: '/api/auth/send-email-hook',
+  path: '/api/auth/send-email-hook',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedDashboardWaitlistRoute =
@@ -531,6 +537,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/users': typeof AuthenticatedDashboardUsersRoute
   '/dashboard/vetting': typeof AuthenticatedDashboardVettingRoute
   '/dashboard/waitlist': typeof AuthenticatedDashboardWaitlistRoute
+  '/api/auth/send-email-hook': typeof ApiAuthSendEmailHookRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/waitlist-notify': typeof ApiPublicWaitlistNotifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -602,6 +609,7 @@ export interface FileRoutesByTo {
   '/dashboard/users': typeof AuthenticatedDashboardUsersRoute
   '/dashboard/vetting': typeof AuthenticatedDashboardVettingRoute
   '/dashboard/waitlist': typeof AuthenticatedDashboardWaitlistRoute
+  '/api/auth/send-email-hook': typeof ApiAuthSendEmailHookRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/waitlist-notify': typeof ApiPublicWaitlistNotifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -677,6 +685,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/users': typeof AuthenticatedDashboardUsersRoute
   '/_authenticated/dashboard/vetting': typeof AuthenticatedDashboardVettingRoute
   '/_authenticated/dashboard/waitlist': typeof AuthenticatedDashboardWaitlistRoute
+  '/api/auth/send-email-hook': typeof ApiAuthSendEmailHookRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/waitlist-notify': typeof ApiPublicWaitlistNotifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -752,6 +761,7 @@ export interface FileRouteTypes {
     | '/dashboard/users'
     | '/dashboard/vetting'
     | '/dashboard/waitlist'
+    | '/api/auth/send-email-hook'
     | '/api/public/contact'
     | '/api/public/waitlist-notify'
     | '/lovable/email/suppression'
@@ -823,6 +833,7 @@ export interface FileRouteTypes {
     | '/dashboard/users'
     | '/dashboard/vetting'
     | '/dashboard/waitlist'
+    | '/api/auth/send-email-hook'
     | '/api/public/contact'
     | '/api/public/waitlist-notify'
     | '/lovable/email/suppression'
@@ -897,6 +908,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/users'
     | '/_authenticated/dashboard/vetting'
     | '/_authenticated/dashboard/waitlist'
+    | '/api/auth/send-email-hook'
     | '/api/public/contact'
     | '/api/public/waitlist-notify'
     | '/lovable/email/suppression'
@@ -940,6 +952,7 @@ export interface RootRouteChildren {
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   EventsSlugRoute: typeof EventsSlugRoute
   RCodeRoute: typeof RCodeRoute
+  ApiAuthSendEmailHookRoute: typeof ApiAuthSendEmailHookRoute
   ApiPublicContactRoute: typeof ApiPublicContactRoute
   ApiPublicWaitlistNotifyRoute: typeof ApiPublicWaitlistNotifyRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
@@ -1239,6 +1252,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/contact'
       fullPath: '/api/public/contact'
       preLoaderRoute: typeof ApiPublicContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/send-email-hook': {
+      id: '/api/auth/send-email-hook'
+      path: '/api/auth/send-email-hook'
+      fullPath: '/api/auth/send-email-hook'
+      preLoaderRoute: typeof ApiAuthSendEmailHookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/dashboard/waitlist': {
@@ -1604,6 +1624,7 @@ const rootRouteChildren: RootRouteChildren = {
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   EventsSlugRoute: EventsSlugRoute,
   RCodeRoute: RCodeRoute,
+  ApiAuthSendEmailHookRoute: ApiAuthSendEmailHookRoute,
   ApiPublicContactRoute: ApiPublicContactRoute,
   ApiPublicWaitlistNotifyRoute: ApiPublicWaitlistNotifyRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,

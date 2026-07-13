@@ -12,6 +12,7 @@ export interface TemplateEntry {
 import { template as contactConfirmation } from './contact-confirmation'
 import { template as contactInternal } from './contact-internal'
 import { template as waitlistInternal } from './waitlist-internal'
+import { template as waitlistConfirmation } from './waitlist-confirmation'
 import { template as waitlistInvite } from './waitlist-invite'
 import { template as welcome } from './welcome'
 import { template as newMessage } from './new-message'
@@ -24,6 +25,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'contact-confirmation': contactConfirmation,
   'contact-internal': contactInternal,
   'waitlist-internal': waitlistInternal,
+  'waitlist-confirmation': waitlistConfirmation,
   'waitlist-invite': waitlistInvite,
   welcome,
   'new-message': newMessage,

@@ -1,20 +1,22 @@
 import * as React from 'react'
 import { Body, Container, Head, Heading, Html, Preview, Text } from '@react-email/components'
 import type { TemplateEntry } from './registry'
-
-const SITE_NAME = 'Inside Global Events 2026'
+import { EmailBrandHeader } from '@/lib/email-templates/email-brand-header'
+import { SITE_NAME } from '@/lib/email/config'
 
 interface Props {
   name?: string
   subject?: string
+  siteUrl?: string
 }
 
-const ContactConfirmationEmail = ({ name, subject }: Props) => (
+const ContactConfirmationEmail = ({ name, subject, siteUrl = 'https://www.insideglobalevents.com' }: Props) => (
   <Html lang="en" dir="ltr">
     <Head />
     <Preview>We received your message — IGE will be in touch shortly.</Preview>
     <Body style={main}>
       <Container style={container}>
+        <EmailBrandHeader siteUrl={siteUrl} />
         <Heading style={h1}>{name ? `Thanks, ${name}.` : 'Thanks for reaching out.'}</Heading>
         <Text style={text}>
           We've received your message{subject ? ` regarding "${subject}"` : ''} and the {SITE_NAME} team
@@ -33,11 +35,11 @@ export const template = {
   component: ContactConfirmationEmail,
   subject: 'We received your message',
   displayName: 'Contact confirmation',
-  previewData: { name: 'Jane', subject: 'Sponsorship enquiry' },
+  previewData: { name: 'Jane', subject: 'Sponsorship enquiry', siteUrl: 'https://www.insideglobalevents.com' },
 } satisfies TemplateEntry
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Inter, Arial, sans-serif' }
-const container = { padding: '32px 28px', maxWidth: '560px' }
+const main = { backgroundColor: '#f4f0fa', fontFamily: 'Inter, Arial, sans-serif' }
+const container = { margin: '0 auto', padding: '32px 28px', maxWidth: '560px' }
 const h1 = { fontSize: '22px', fontWeight: 700, color: '#0a0a0a', margin: '0 0 18px' }
 const text = { fontSize: '14px', color: '#3f3f46', lineHeight: '1.6', margin: '0 0 16px' }
 const footer = { fontSize: '12px', color: '#71717a', margin: '28px 0 0' }

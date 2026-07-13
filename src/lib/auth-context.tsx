@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { DEV_AUTH_ENABLED, DEV_USER, getDevRoles, onDevRolesChange, setDevRoles } from "@/lib/dev-auth";
+import { isEmailConfirmed } from "@/lib/auth-email";
 
 type Role =
   | "organiser"
@@ -96,8 +97,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       if (data.session) {
-        const { error: userError } = await supabase.auth.getUser();
+        const { error: userError, data: userData } = await supabase.auth.getUser();
         if (userError?.message?.toLowerCase().includes("refresh") || userError?.status === 401) {
+          await supabase.auth.signOut({ scope: "local" });
+          setSession(null);
+          setRoles([]);
+          setLoading(false);
+          return;
+        }
+        if (userData.user && !isEmailConfirmed(userData.user)) {
           await supabase.auth.signOut({ scope: "local" });
           setSession(null);
           setRoles([]);

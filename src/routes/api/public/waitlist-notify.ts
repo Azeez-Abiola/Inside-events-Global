@@ -1,6 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
 import { sendTransactionalEmailServer } from '@/lib/email/server-send'
+import { getPublicSiteUrl } from '@/lib/email/config'
+import { isWaitlistAudience, waitlistAudienceLabel } from '@/lib/waitlist-audiences'
 
 const HI_EMAIL = 'hi@insideglobalevents.com'
 
@@ -26,13 +28,31 @@ export const Route = createFileRoute('/api/public/waitlist-notify')({
         const parsed = Schema.safeParse(body)
         if (!parsed.success) return Response.json({ error: 'Invalid input' }, { status: 400 })
         const d = parsed.data
+        const siteUrl = getPublicSiteUrl()
+        const audienceLabel = isWaitlistAudience(d.audience)
+          ? waitlistAudienceLabel(d.audience)
+          : d.audience
+
         try {
-          await sendTransactionalEmailServer({
-            templateName: 'waitlist-internal',
-            recipientEmail: HI_EMAIL,
-            idempotencyKey: `waitlist-${d.email}-${Date.now()}`,
-            templateData: d,
-          })
+          await Promise.all([
+            sendTransactionalEmailServer({
+              templateName: 'waitlist-internal',
+              recipientEmail: HI_EMAIL,
+              idempotencyKey: `waitlist-internal-${d.email}-${Date.now()}`,
+              templateData: d,
+            }),
+            sendTransactionalEmailServer({
+              templateName: 'waitlist-confirmation',
+              recipientEmail: d.email,
+              idempotencyKey: `waitlist-confirm-${d.email}`,
+              templateData: {
+                name: d.name,
+                audience: d.audience,
+                audienceLabel,
+                siteUrl,
+              },
+            }),
+          ])
         } catch (e) {
           console.error('waitlist email failed', e)
           return Response.json({ success: false }, { status: 200 })

@@ -10,6 +10,7 @@ import {
   Text,
 } from "@react-email/components";
 import type { TemplateEntry } from "./registry";
+import { EmailBrandHeader } from "@/lib/email-templates/email-brand-header";
 
 interface Props {
   name: string;
@@ -17,14 +18,16 @@ interface Props {
   amount: string;
   currency: string;
   dashboardUrl: string;
+  siteUrl?: string;
 }
 
-const CommissionPaidEmail = ({ name, eventName, amount, currency, dashboardUrl }: Props) => (
+const CommissionPaidEmail = ({ name, eventName, amount, currency, dashboardUrl, siteUrl = "https://www.insideglobalevents.com" }: Props) => (
   <Html lang="en" dir="ltr">
     <Head />
     <Preview>Your IGE referral commission has been paid</Preview>
     <Body style={main}>
       <Container style={container}>
+        <EmailBrandHeader siteUrl={siteUrl} />
         <Heading style={h1}>Commission paid</Heading>
         <Text style={text}>Hi {name},</Text>
         <Text style={text}>

@@ -12,8 +12,9 @@ import {
   Text,
 } from "@react-email/components";
 import type { TemplateEntry } from "./registry";
+import { EmailBrandHeader } from "@/lib/email-templates/email-brand-header";
 
-const SITE_NAME = "Inside Global Events 2026";
+const SITE_NAME = "Inside Global Events";
 
 type RoleKey =
   | "organiser"
@@ -99,7 +100,7 @@ function WelcomeEmail({
       <Body style={main}>
         <Container style={container}>
           <Section style={hero}>
-            <Text style={eyebrow}>Inside Global Events 2026</Text>
+            <EmailBrandHeader siteUrl={siteUrl} variant="hero" />
             <Heading style={h1}>{copy.headline}</Heading>
             <Text style={lead}>
               Thanks for joining <strong>{SITE_NAME}</strong> as a{" "}
@@ -168,15 +169,7 @@ const container = { margin: "0 auto", padding: "24px 16px", maxWidth: "560px" };
 const hero = {
   background: "linear-gradient(135deg, #5b2d8e 0%, #7c3aed 55%, #a855f7 100%)",
   borderRadius: "12px 12px 0 0",
-  padding: "28px 24px",
-};
-const eyebrow = {
-  margin: "0 0 8px",
-  fontSize: "11px",
-  fontWeight: 700,
-  letterSpacing: "0.14em",
-  textTransform: "uppercase" as const,
-  color: "rgba(255,255,255,0.85)",
+  padding: "24px 24px 28px",
 };
 const h1 = { margin: "0 0 12px", fontSize: "24px", fontWeight: 700, color: "#ffffff", lineHeight: 1.3 };
 const lead = { margin: 0, fontSize: "14px", color: "rgba(255,255,255,0.92)", lineHeight: 1.6 };

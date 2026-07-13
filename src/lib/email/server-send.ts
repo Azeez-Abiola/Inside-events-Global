@@ -9,9 +9,7 @@ import { render } from '@react-email/components'
 import { supabaseAdmin } from '@/integrations/supabase/client.server'
 import { TEMPLATES } from '@/lib/email-templates/registry'
 
-const SITE_NAME = 'Inside Global Events 2026'
-const SENDER_DOMAIN = 'notify.www.insideglobalevents.com'
-const FROM_DOMAIN = 'notify.www.insideglobalevents.com'
+import { getResendFromAddress, getPublicSiteUrl } from '@/lib/email/config'
 
 function generateToken(): string {
   const bytes = new Uint8Array(32)
@@ -64,7 +62,10 @@ export async function sendTransactionalEmailServer(params: ServerSendParams) {
     if (stored) unsubscribeToken = stored.token
   }
 
-  const element = React.createElement(template.component as any, templateData)
+  const element = React.createElement(template.component as any, {
+    siteUrl: getPublicSiteUrl(),
+    ...templateData,
+  })
   const html = await render(element)
   const text = await render(element, { plainText: true })
   const subject = typeof template.subject === 'function' ? template.subject(templateData) : template.subject
@@ -79,8 +80,7 @@ export async function sendTransactionalEmailServer(params: ServerSendParams) {
     payload: {
       message_id: messageId,
       to: effectiveRecipient,
-      from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-      sender_domain: SENDER_DOMAIN,
+      from: getResendFromAddress(),
       subject,
       html,
       text,

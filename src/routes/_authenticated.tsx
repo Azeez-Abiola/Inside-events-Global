@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { isEmailConfirmed } from "@/lib/auth-email";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
@@ -10,6 +11,13 @@ export const Route = createFileRoute("/_authenticated")({
       throw redirect({
         to: "/login",
         search: { redirect: location.href },
+      });
+    }
+    if (!isEmailConfirmed(data.user)) {
+      await supabase.auth.signOut({ scope: "local" });
+      throw redirect({
+        to: "/login",
+        search: { redirect: location.href, unconfirmed: "1" },
       });
     }
   },
