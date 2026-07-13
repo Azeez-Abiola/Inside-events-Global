@@ -75,9 +75,12 @@ function TrustVettingPage() {
         <div className="mt-12 rounded-2xl bg-brand-gradient p-8 text-white">
           <h3 className="font-display text-2xl font-semibold">Concerned about a listing or partner?</h3>
           <p className="mt-2 text-sm text-white/90">Report it directly to the IGE trust desk.</p>
-          <Link to="/contact" className="mt-4 inline-flex rounded-md bg-white px-5 py-2.5 text-sm font-semibold text-foreground">
-            Contact trust desk
-          </Link>
+          <a
+            href="mailto:hi@insideglobalevents.com"
+            className="mt-4 inline-flex rounded-md bg-white px-5 py-2.5 text-sm font-semibold text-foreground"
+          >
+            Email trust desk
+          </a>
         </div>
       </main>
       <SiteFooter />

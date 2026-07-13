@@ -66,7 +66,11 @@ function FAQPage() {
         <h1 className="mt-6 font-display text-4xl font-bold tracking-tight md:text-5xl">Frequently asked questions</h1>
         <p className="mt-4 text-lg text-muted-foreground">
           Quick answers for organisers, sponsors, and referral partners. Can&apos;t find what you
-          need? <Link to="/contact" className="text-primary hover:underline">Talk to the team</Link>.
+          need?{" "}
+          <a href="mailto:hi@insideglobalevents.com" className="text-primary hover:underline">
+            Email hi@insideglobalevents.com
+          </a>
+          .
         </p>
 
         <div className="mt-12 space-y-12">

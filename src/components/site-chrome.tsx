@@ -79,7 +79,6 @@ export function SiteFooter() {
             <li><Link to="/trust-vetting" className="hover:text-foreground">Trust &amp; vetting</Link></li>
             <li><Link to="/faq" className="hover:text-foreground">FAQ</Link></li>
             <li><Link to="/waitlist" className="hover:text-foreground">Join the waitlist</Link></li>
-            <li><Link to="/contact" className="hover:text-foreground">Contact</Link></li>
             <li><Link to="/privacy" className="hover:text-foreground">Privacy</Link></li>
             <li><Link to="/terms" className="hover:text-foreground">Terms</Link></li>
           </ul>

@@ -96,13 +96,13 @@ function WaitlistPage() {
               founding-member access and launch notifications.
             </p>
             <div className="mt-8">
-              <Link
-                to="/contact"
+              <a
+                href="mailto:hi@insideglobalevents.com"
                 className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-4 py-2 text-sm font-medium text-foreground backdrop-blur transition-colors hover:bg-muted"
               >
                 <MessageSquare className="h-4 w-4" />
-                Talk to the team
-              </Link>
+                Email the team
+              </a>
             </div>
           </div>
         </section>
