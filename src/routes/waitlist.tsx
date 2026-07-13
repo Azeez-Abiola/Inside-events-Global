@@ -1,9 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
 import { CheckCircle2, Sparkles, MessageSquare } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { WaitlistIntake } from "@/components/waitlist-intake";
+import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import {
   WAITLIST_AUDIENCES,
   type WaitlistAudience,
@@ -73,11 +74,12 @@ function WaitlistPage() {
   const initialAudience = isWaitlistAudience(search.audience) ? search.audience : "organiser";
   const [audience, setAudience] = useState<WaitlistAudience>(initialAudience);
   const audienceMeta = WAITLIST_AUDIENCES.find((a) => a.id === audience);
+  const mainRef = useScrollReveal() as React.RefObject<HTMLElement>;
 
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
-      <main>
+      <main ref={mainRef}>
         <section className="relative overflow-hidden border-b border-border">
           <div
             aria-hidden
@@ -85,17 +87,28 @@ function WaitlistPage() {
             style={{ background: "var(--gradient-brand-diag)" }}
           />
           <div className="relative mx-auto max-w-5xl px-6 py-20 text-center md:py-24">
-            <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
+            <span
+              data-reveal
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur"
+            >
               <Sparkles className="h-3.5 w-3.5 text-primary" /> Founding waitlist open
             </span>
-            <h1 className="mt-6 font-display text-5xl font-bold leading-[1.05] tracking-tight md:text-7xl">
+            <h1
+              data-reveal
+              data-delay="1"
+              className="mt-6 font-display text-5xl font-bold leading-[1.05] tracking-tight md:text-7xl"
+            >
               Join the <span className="text-brand-gradient">IGE waitlist.</span>
             </h1>
-            <p className="mx-auto mt-5 max-w-2xl text-lg text-muted-foreground">
+            <p
+              data-reveal
+              data-delay="2"
+              className="mx-auto mt-5 max-w-2xl text-lg text-muted-foreground"
+            >
               Pick your role, answer a few tailored questions, and we&apos;ll save your details for
               founding-member access and launch notifications.
             </p>
-            <div className="mt-8">
+            <div data-reveal data-delay="3" className="mt-8">
               <a
                 href="mailto:hi@insideglobalevents.com"
                 className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-4 py-2 text-sm font-medium text-foreground backdrop-blur transition-colors hover:bg-muted"
@@ -108,7 +121,7 @@ function WaitlistPage() {
         </section>
 
         <section className="mx-auto max-w-3xl px-6 py-10">
-          <div className="text-center">
+          <div data-reveal className="text-center">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary-deep">
               {audienceMeta?.shortLabel ?? "Founding"} · benefits
             </div>
@@ -117,8 +130,13 @@ function WaitlistPage() {
             </h2>
           </div>
           <ul className="mt-8 grid gap-4 md:grid-cols-2">
-            {benefits[audience].map((b) => (
-              <li key={b.title} className="flex gap-3 rounded-xl border border-border/60 bg-card/40 p-4">
+            {benefits[audience].map((b, i) => (
+              <li
+                key={b.title}
+                data-reveal
+                data-delay={String(Math.min(i + 1, 6))}
+                className="flex gap-3 rounded-xl border border-border/60 bg-card/40 p-4"
+              >
                 <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-secondary" />
                 <div>
                   <div className="font-semibold">{b.title}</div>
@@ -130,10 +148,12 @@ function WaitlistPage() {
         </section>
 
         <section className="mx-auto max-w-4xl px-6 pb-20">
-          <WaitlistIntake
-            initialAudience={initialAudience}
-            onAudienceChange={setAudience}
-          />
+          <div data-reveal>
+            <WaitlistIntake
+              initialAudience={initialAudience}
+              onAudienceChange={setAudience}
+            />
+          </div>
         </section>
       </main>
       <SiteFooter />

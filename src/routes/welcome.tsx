@@ -23,6 +23,7 @@ import {
 import { SiteFooter, SITE_BRAND_NAME } from "@/components/site-chrome";
 import { BrandLogo } from "@/components/brand-logo";
 import { WaitlistIntake } from "@/components/waitlist-intake";
+import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { trackEvent } from "@/lib/analytics";
 import type { WaitlistAudience } from "@/lib/waitlist-audiences";
 import { FEATURED_EVENT_IMAGES } from "@/lib/featured-event-images";
@@ -55,6 +56,7 @@ const IG_URL = "https://www.instagram.com/insideglobalevents";
 
 function WelcomePage() {
   const [waitlistAudience, setWaitlistAudience] = useState<WaitlistAudience>("organiser");
+  const mainRef = useScrollReveal() as React.RefObject<HTMLElement>;
 
   function scrollToWaitlist(audience?: WaitlistAudience) {
     if (audience) setWaitlistAudience(audience);
@@ -84,7 +86,7 @@ function WelcomePage() {
         </div>
       </header>
 
-      <main>
+      <main ref={mainRef}>
         {/* HERO */}
         <section className="relative overflow-hidden border-b border-border">
           <div
@@ -98,21 +100,32 @@ function WelcomePage() {
             style={{ background: "var(--gradient-brand-diag)" }}
           />
           <div className="relative mx-auto max-w-5xl px-6 py-20 md:py-28">
-            <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
+            <span
+              data-reveal
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur"
+            >
               <Sparkles className="h-3.5 w-3.5 text-primary" />
               Founding waitlist open
             </span>
-            <h1 className="mt-6 font-display text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl">
+            <h1
+              data-reveal
+              data-delay="1"
+              className="mt-6 font-display text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl"
+            >
               Commercial infrastructure for the{" "}
               <span className="text-brand-gradient">global events economy.</span>
             </h1>
-            <p className="mt-6 max-w-3xl text-lg leading-relaxed text-muted-foreground">
+            <p
+              data-reveal
+              data-delay="2"
+              className="mt-6 max-w-3xl text-lg leading-relaxed text-muted-foreground"
+            >
               I.G.E (Inside Global Events 2026) is a vertically integrated event
               intelligence and sponsorship marketplace built for the Africa to
               Europe corridor — connecting event organisers, brand sponsors, and
               a distributed network of partnerships professionals.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div data-reveal data-delay="3" className="mt-8 flex flex-wrap gap-3">
               <button
                 type="button"
                 onClick={() => {
@@ -134,7 +147,7 @@ function WelcomePage() {
                 Follow @{IG_HANDLE}
               </a>
             </div>
-            <p className="mt-4 text-xs text-muted-foreground">
+            <p data-reveal data-delay="4" className="mt-4 text-xs text-muted-foreground">
               The full platform and waitlist are launching shortly. In the
               meantime, reach us by email or DM on Instagram.
             </p>
@@ -143,7 +156,7 @@ function WelcomePage() {
 
         {/* WHO IT'S FOR */}
         <section className="mx-auto max-w-6xl px-6 py-20 md:py-24">
-          <div className="max-w-2xl">
+          <div data-reveal className="max-w-2xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary-deep">
               Who it's for
             </div>
@@ -177,10 +190,12 @@ function WelcomePage() {
                 audience: "media_partner" as const,
                 desc: "Cross-promote with vetted events — coverage, interviews, newsletters, and documentary collaborations.",
               },
-            ]).map((p) => (
+            ]).map((p, i) => (
               <button
                 key={p.title}
                 type="button"
+                data-reveal
+                data-delay={String(Math.min(i + 1, 4))}
                 onClick={() => {
                   trackEvent("waitlist_role_select", { role: p.audience, source: "welcome_card" });
                   scrollToWaitlist(p.audience);
@@ -205,7 +220,7 @@ function WelcomePage() {
         {/* HOW IT WORKS */}
         <section className="border-t border-border bg-muted/30">
           <div className="mx-auto max-w-6xl px-6 py-20 md:py-24">
-            <div className="max-w-2xl">
+            <div data-reveal className="max-w-2xl">
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary-deep">
                 How it works
               </div>
@@ -219,9 +234,11 @@ function WelcomePage() {
                 { n: "02", t: "Match with data", d: "Audience, seniority, sector fit and ROI signals — not glossy decks." },
                 { n: "03", t: "Close the deal", d: "Transparent tiers, structured agreements, and a partner network that closes." },
                 { n: "04", t: "Track & payout", d: "Every introduction, deal, and commission tracked end-to-end." },
-              ].map((s) => (
+              ].map((s, i) => (
                 <li
                   key={s.n}
+                  data-reveal
+                  data-delay={String(Math.min(i + 1, 4))}
                   className="rounded-2xl border border-border bg-card p-6"
                 >
                   <div className="font-display text-2xl font-bold text-primary">
@@ -239,7 +256,7 @@ function WelcomePage() {
 
         {/* UPCOMING EVENTS */}
         <section className="mx-auto max-w-6xl px-6 py-20 md:py-24">
-          <div className="flex flex-wrap items-end justify-between gap-6">
+          <div data-reveal className="flex flex-wrap items-end justify-between gap-6">
             <div className="max-w-2xl">
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary-deep">
                 Upcoming events
@@ -256,6 +273,8 @@ function WelcomePage() {
 
           {/* Featured event — Itsekiri Global Homecoming 2026, themed to the deck */}
           <article
+            data-reveal
+            data-delay="1"
             className="mt-10 overflow-hidden rounded-3xl shadow-brand"
             style={{ backgroundColor: "#5C1410", color: "#FBEFE2" }}
           >
@@ -386,6 +405,8 @@ function WelcomePage() {
 
           {/* Featured event — Project X ... Almost Famous */}
           <article
+            data-reveal
+            data-delay="2"
             className="mt-10 overflow-hidden rounded-3xl shadow-brand"
             style={{ backgroundColor: "#2a0b5a", color: "#FFF7E6" }}
           >
@@ -586,7 +607,11 @@ function WelcomePage() {
             </div>
           </article>
 
-          <div className="mt-8 rounded-2xl border border-dashed border-border bg-card/40 p-6 text-center text-sm text-muted-foreground">
+          <div
+            data-reveal
+            data-delay="3"
+            className="mt-8 rounded-2xl border border-dashed border-border bg-card/40 p-6 text-center text-sm text-muted-foreground"
+          >
             More vetted events from across the Africa–Europe corridor will be
             announced here in the coming weeks.
           </div>
@@ -595,7 +620,7 @@ function WelcomePage() {
         {/* WHO WE ARE */}
         <section className="border-t border-border bg-muted/30">
           <div className="mx-auto grid max-w-6xl gap-12 px-6 py-20 md:grid-cols-2 md:py-24">
-            <div>
+            <div data-reveal>
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary-deep">
                 Who we are
               </div>
@@ -610,7 +635,7 @@ function WelcomePage() {
                 tracked.
               </p>
             </div>
-            <div>
+            <div data-reveal data-delay="2">
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary-deep">
                 What we do
               </div>
@@ -634,7 +659,7 @@ function WelcomePage() {
         {/* WAITLIST */}
         <section id="join-waitlist" className="border-t border-border bg-muted/20 px-6 py-20 md:py-24 scroll-mt-20">
           <div className="mx-auto max-w-4xl">
-            <div className="max-w-2xl">
+            <div data-reveal className="max-w-2xl">
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary-deep">
                 Founding waitlist
               </div>
@@ -647,7 +672,7 @@ function WelcomePage() {
                 securely so we can notify you at launch and segment founding-member outreach.
               </p>
             </div>
-            <div className="mt-10">
+            <div data-reveal data-delay="1" className="mt-10">
               <WaitlistIntake
                 key={waitlistAudience}
                 initialAudience={waitlistAudience}
@@ -665,7 +690,7 @@ function WelcomePage() {
 
         {/* CTA */}
         <section className="px-6 py-20 md:py-24">
-          <div className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl bg-brand-gradient-diag px-8 py-14 text-white shadow-brand md:px-14 md:py-16">
+          <div data-reveal className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl bg-brand-gradient-diag px-8 py-14 text-white shadow-brand md:px-14 md:py-16">
             <h2 className="font-display text-3xl font-bold leading-tight tracking-tight md:text-4xl">
               Be first when IGE opens.
             </h2>
