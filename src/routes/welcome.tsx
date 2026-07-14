@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import { SiteFooter, SITE_BRAND_NAME } from "@/components/site-chrome";
 import { BrandLogo } from "@/components/brand-logo";
-import { WaitlistIntake } from "@/components/waitlist-intake";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { trackEvent } from "@/lib/analytics";
 import type { WaitlistAudience } from "@/lib/waitlist-audiences";
@@ -55,34 +54,35 @@ const IG_URL = "https://www.instagram.com/insideglobalevents";
 
 
 function WelcomePage() {
-  const [waitlistAudience, setWaitlistAudience] = useState<WaitlistAudience>("organiser");
   const mainRef = useScrollReveal() as React.RefObject<HTMLElement>;
-
-  function scrollToWaitlist(audience?: WaitlistAudience) {
-    if (audience) setWaitlistAudience(audience);
-    document.getElementById("join-waitlist")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Lightweight header (no nav — gate page) */}
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
+      <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-5">
           <Link to="/welcome" className="flex items-center gap-3">
             <BrandLogo size="lg" />
             <span className="font-display text-lg font-bold tracking-tight">
               {SITE_BRAND_NAME}
             </span>
           </Link>
-          <a
-            href={IG_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-xs font-medium text-foreground hover:bg-accent"
-          >
-            <Instagram className="h-4 w-4" />
-            @{IG_HANDLE}
-          </a>
+          <div className="flex items-center gap-4 sm:gap-6">
+            <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
+              <Link to="/about" className="transition-colors hover:text-foreground">
+                About
+              </Link>
+              <Link to="/how-it-works" className="transition-colors hover:text-foreground">
+                How it works
+              </Link>
+            </nav>
+            <Link
+              to="/waitlist"
+              className="inline-flex shrink-0 items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow transition-transform hover:-translate-y-0.5"
+            >
+              Join waitlist
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -126,17 +126,14 @@ function WelcomePage() {
               a distributed network of partnerships professionals.
             </p>
             <div data-reveal data-delay="3" className="mt-8 flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  trackEvent("waitlist_cta_click", { source: "welcome_hero" });
-                  scrollToWaitlist();
-                }}
+              <Link
+                to="/waitlist"
+                onClick={() => trackEvent("waitlist_cta_click", { source: "welcome_hero" })}
                 className="inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow transition-transform hover:-translate-y-0.5"
               >
                 <Mail className="h-4 w-4" />
                 Join the founding waitlist
-              </button>
+              </Link>
               <a
                 href={IG_URL}
                 target="_blank"
@@ -191,14 +188,14 @@ function WelcomePage() {
                 desc: "Cross-promote with vetted events — coverage, interviews, newsletters, and documentary collaborations.",
               },
             ]).map((p, i) => (
-              <button
+              <Link
                 key={p.title}
-                type="button"
+                to="/waitlist"
+                search={{ audience: p.audience }}
                 data-reveal
                 data-delay={String(Math.min(i + 1, 4))}
                 onClick={() => {
                   trackEvent("waitlist_role_select", { role: p.audience, source: "welcome_card" });
-                  scrollToWaitlist(p.audience);
                 }}
                 className="rounded-2xl border border-border bg-card p-7 text-left transition-colors hover:border-primary/40 hover:bg-muted/30"
               >
@@ -212,7 +209,7 @@ function WelcomePage() {
                 <span className="mt-4 inline-block text-xs font-semibold text-primary">
                   Join as {p.title.toLowerCase()} →
                 </span>
-              </button>
+              </Link>
             ))}
           </div>
         </section>
@@ -656,38 +653,6 @@ function WelcomePage() {
           </div>
         </section>
 
-        {/* WAITLIST */}
-        <section id="join-waitlist" className="border-t border-border bg-muted/20 px-6 py-20 md:py-24 scroll-mt-20">
-          <div className="mx-auto max-w-4xl">
-            <div data-reveal className="max-w-2xl">
-              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary-deep">
-                Founding waitlist
-              </div>
-              <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">
-                Tell us your role. We&apos;ll collect the right details.
-              </h2>
-              <p className="mt-4 text-muted-foreground">
-                Choose your role from the dropdown — the form adapts with questions tailored to
-                organisers, sponsors, referral partners, or media partners. Your answers are saved
-                securely so we can notify you at launch and segment founding-member outreach.
-              </p>
-            </div>
-            <div data-reveal data-delay="1" className="mt-10">
-              <WaitlistIntake
-                key={waitlistAudience}
-                initialAudience={waitlistAudience}
-                onAudienceChange={setWaitlistAudience}
-              />
-            </div>
-            <p className="mt-8 text-center text-sm text-muted-foreground">
-              Prefer email? Reach us at{" "}
-              <a href={`mailto:${HI_EMAIL}`} className="font-medium text-primary hover:underline">
-                {HI_EMAIL}
-              </a>
-            </p>
-          </div>
-        </section>
-
         {/* CTA */}
         <section className="px-6 py-20 md:py-24">
           <div data-reveal className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl bg-brand-gradient-diag px-8 py-14 text-white shadow-brand md:px-14 md:py-16">
@@ -696,17 +661,17 @@ function WelcomePage() {
             </h2>
             <p className="mt-4 max-w-2xl text-base opacity-90 md:text-lg">
               Founding members get early access, locked-in rates, and priority matching.
-              Complete the waitlist above or follow along on Instagram for launch updates.
+              Join the waitlist to tell us your role and secure your spot.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={() => scrollToWaitlist()}
+              <Link
+                to="/waitlist"
+                onClick={() => trackEvent("waitlist_cta_click", { source: "welcome_final" })}
                 className="inline-flex items-center gap-2 rounded-md bg-white px-6 py-3.5 text-sm font-semibold text-primary-deep transition-transform hover:-translate-y-0.5"
               >
                 <Mail className="h-4 w-4" />
                 Join the waitlist
-              </button>
+              </Link>
               <a
                 href={IG_URL}
                 target="_blank"

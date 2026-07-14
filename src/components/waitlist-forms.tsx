@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Children, isValidElement, useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from "react";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,100 @@ export function Section({ title, letter, children }: { title: string; letter: st
       {children}
     </fieldset>
   );
+}
+
+type SectionElement = ReactElement<{ title: string; letter: string; children: ReactNode }>;
+
+function isSectionChild(child: ReactNode): child is SectionElement {
+  return isValidElement(child) && child.type === Section;
+}
+
+function fieldLabel(fieldset: HTMLFieldSetElement, field: HTMLElement): string {
+  const id = (field as HTMLInputElement).id || field.getAttribute("name");
+  if (id) {
+    const linked = fieldset.querySelector(`label[for="${id}"]`);
+    if (linked?.textContent) {
+      return linked.textContent.replace(/\s*\*\s*$/, "").trim();
+    }
+  }
+  const wrapper = field.closest(".space-y-2");
+  const label = wrapper?.querySelector("label");
+  if (label?.textContent) {
+    return label.textContent.replace(/\s*\*\s*$/, "").trim();
+  }
+  return "Required field";
+}
+
+function isFieldGroupRequired(fieldset: HTMLFieldSetElement, name: string): boolean {
+  const first = fieldset.querySelector<HTMLElement>(`[name="${name}"]`);
+  if (!first) return false;
+  if ((first as HTMLInputElement).required) return true;
+  const wrapper = first.closest(".space-y-2");
+  return Boolean(wrapper?.querySelector("label")?.textContent?.includes("*"));
+}
+
+function collectMissingFields(fieldset: HTMLFieldSetElement): string[] {
+  const missing: string[] = [];
+  const seen = new Set<string>();
+
+  const addMissing = (label: string) => {
+    if (!seen.has(label)) {
+      seen.add(label);
+      missing.push(label);
+    }
+  };
+
+  const names = new Set<string>();
+  fieldset.querySelectorAll("[name]").forEach((el) => {
+    const name = el.getAttribute("name");
+    if (name) names.add(name);
+  });
+
+  for (const name of names) {
+    const group = fieldset.querySelectorAll<HTMLInputElement>(`[name="${name}"]`);
+    const first = group[0];
+    if (!first) continue;
+
+    if (first.type === "radio" || (first.type === "checkbox" && group.length > 1)) {
+      if (isFieldGroupRequired(fieldset, name) && !fieldset.querySelector(`[name="${name}"]:checked`)) {
+        addMissing(fieldLabel(fieldset, first));
+      }
+      continue;
+    }
+
+    if (first.type === "checkbox") continue;
+
+    if (!first.checkValidity()) {
+      addMissing(fieldLabel(fieldset, first));
+    }
+  }
+
+  return missing;
+}
+
+function validateFieldset(fieldset: HTMLFieldSetElement, options?: { notify?: boolean }) {
+  const missing = collectMissingFields(fieldset);
+
+  if (missing.length > 0) {
+    if (options?.notify) {
+      toast.error(
+        missing.length === 1
+          ? `Please fill in: ${missing[0]}`
+          : `Please complete: ${missing.join(", ")}`,
+      );
+      const firstInvalid = fieldset.querySelector<HTMLElement>(
+        "input:invalid, select:invalid, textarea:invalid",
+      );
+      firstInvalid?.focus();
+    }
+    return false;
+  }
+
+  return true;
+}
+
+function fieldsetIsComplete(fieldset: HTMLFieldSetElement) {
+  return collectMissingFields(fieldset).length === 0;
 }
 
 export function Row({ children, cols = 2 }: { children: React.ReactNode; cols?: 1 | 2 | 3 }) {
@@ -161,11 +255,91 @@ async function submitForm(audience: WaitlistAudience, el: HTMLFormElement) {
 
 
 function FormShell({
-  audience, onDone, children,
-}: { audience: WaitlistAudience; onDone: () => void; children: React.ReactNode }) {
+  audience,
+  onDone,
+  children,
+  progressive = false,
+  onSectionProgress,
+  onFirstStepBack,
+}: {
+  audience: WaitlistAudience;
+  onDone: () => void;
+  children: React.ReactNode;
+  progressive?: boolean;
+  onSectionProgress?: (info: { step: number; total: number; label: string }) => void;
+  onFirstStepBack?: () => void;
+}) {
   const [submitting, setSubmitting] = useState(false);
+  const [sectionStep, setSectionStep] = useState(0);
+  const [sectionComplete, setSectionComplete] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const sections = useMemo(
+    () => Children.toArray(children).filter(isSectionChild),
+    [children],
+  );
+  const totalSections = sections.length;
+  const isLastSection = sectionStep >= totalSections - 1;
+
+  useEffect(() => {
+    if (!progressive || !onSectionProgress || totalSections === 0) return;
+    const current = sections[sectionStep];
+    onSectionProgress({
+      step: sectionStep + 2,
+      total: totalSections + 1,
+      label: current ? `Section ${current.props.letter} · ${current.props.title}` : "Details",
+    });
+  }, [sectionStep, progressive, sections, onSectionProgress, totalSections]);
+
+  useEffect(() => {
+    if (!progressive) return;
+    const form = formRef.current;
+    if (!form) return;
+
+    const sync = () => {
+      const fieldsets = form.querySelectorAll("fieldset");
+      const current = fieldsets[sectionStep];
+      setSectionComplete(current ? fieldsetIsComplete(current) : false);
+    };
+
+    sync();
+    form.addEventListener("input", sync);
+    form.addEventListener("change", sync);
+    return () => {
+      form.removeEventListener("input", sync);
+      form.removeEventListener("change", sync);
+    };
+  }, [progressive, sectionStep, totalSections]);
+
+  function tryContinue() {
+    const form = formRef.current;
+    if (!form) return;
+    const fieldsets = form.querySelectorAll("fieldset");
+    const current = fieldsets[sectionStep];
+    if (!current || !validateFieldset(current, { notify: true })) return;
+    setSectionStep((s) => Math.min(s + 1, totalSections - 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  const consentFooter = (
+    <div className="flex flex-col items-center gap-3 pt-2">
+      <label className="flex max-w-lg items-start gap-2 text-sm">
+        <input type="checkbox" name="consent" required className="mt-1 h-4 w-4" />
+        <span>I agree to the I.G.Events <a href="/terms" className="underline">Terms</a> and <a href="/privacy" className="underline">Privacy Policy</a>.</span>
+      </label>
+      <label className="flex max-w-lg items-start gap-2 text-sm text-muted-foreground">
+        <input type="checkbox" name="launch_updates" defaultChecked className="mt-1 h-4 w-4" />
+        <span>Email me about the IGE launch, founding-member access, and product updates.</span>
+      </label>
+      <Button type="submit" disabled={submitting} size="lg" className="w-full md:w-auto">
+        {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+        {submitting ? "Submitting…" : "Join the waitlist"}
+      </Button>
+    </div>
+  );
+
   return (
     <form
+      ref={formRef}
       onSubmit={async (e) => {
         e.preventDefault();
         setSubmitting(true);
@@ -178,21 +352,62 @@ function FormShell({
       }}
       className="space-y-6"
     >
-      {children}
-      <div className="flex flex-col items-center gap-3 pt-2">
-        <label className="flex max-w-lg items-start gap-2 text-sm">
-          <input type="checkbox" name="consent" required className="mt-1 h-4 w-4" />
-          <span>I agree to the I.G.Events <a href="/terms" className="underline">Terms</a> and <a href="/privacy" className="underline">Privacy Policy</a>.</span>
-        </label>
-        <label className="flex max-w-lg items-start gap-2 text-sm text-muted-foreground">
-          <input type="checkbox" name="launch_updates" defaultChecked className="mt-1 h-4 w-4" />
-          <span>Email me about the IGE launch, founding-member access, and product updates.</span>
-        </label>
-        <Button type="submit" disabled={submitting} size="lg" className="w-full md:w-auto">
-          {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          {submitting ? "Submitting…" : "Join the waitlist"}
-        </Button>
-      </div>
+      {progressive
+        ? sections.map((section, i) => (
+            <div key={`${section.props.letter}-${section.props.title}`} className={i === sectionStep ? "" : "hidden"}>
+              {section}
+            </div>
+          ))
+        : children}
+
+      {progressive ? (
+        <>
+          {isLastSection ? consentFooter : null}
+          <div className="flex flex-col-reverse gap-3 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={sectionStep === 0 && !onFirstStepBack}
+              onClick={() => {
+                if (sectionStep === 0) {
+                  onFirstStepBack?.();
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  return;
+                }
+                setSectionStep((s) => Math.max(0, s - 1));
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            >
+              Back
+            </Button>
+            {!isLastSection ? (
+              <div
+                className="inline-flex"
+                onClick={() => {
+                  if (sectionComplete) return;
+                  const form = formRef.current;
+                  const current = form?.querySelectorAll("fieldset")[sectionStep];
+                  if (current) validateFieldset(current, { notify: true });
+                }}
+              >
+                <Button
+                  type="button"
+                  disabled={!sectionComplete}
+                  className={!sectionComplete ? "pointer-events-none opacity-50" : ""}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    tryContinue();
+                  }}
+                >
+                  Continue
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        </>
+      ) : (
+        consentFooter
+      )}
     </form>
   );
 }
@@ -238,9 +453,19 @@ const TIMELINE = ["Immediately", "Within 3 months", "Within 6 months", "2027 pla
 const CONTENT_TYPES = ["Video", "Photography", "Social media", "Podcast", "Written reports", "None"];
 const REFERRAL_SOURCES = ["Instagram", "LinkedIn", "Referral", "WhatsApp", "Google", "Podcast", "Other"];
 
-export function BrandWaitlistForm({ onDone }: { onDone: () => void }) {
+export function BrandWaitlistForm({
+  onDone,
+  progressive,
+  onSectionProgress,
+  onFirstStepBack,
+}: {
+  onDone: () => void;
+  progressive?: boolean;
+  onSectionProgress?: (info: { step: number; total: number; label: string }) => void;
+  onFirstStepBack?: () => void;
+}) {
   return (
-    <FormShell audience="sponsor" onDone={onDone}>
+    <FormShell audience="sponsor" onDone={onDone} progressive={progressive} onSectionProgress={onSectionProgress} onFirstStepBack={onFirstStepBack}>
       <Section letter="A" title="Brand details">
         <Row>
           <Field id="company" label="Brand / company name" required><Input id="company" name="company" required maxLength={150} /></Field>
@@ -364,9 +589,19 @@ const OCCUPATIONS = ["Finance", "Tech", "Creative", "Fashion", "Health", "Govern
 const GEOGRAPHIC = ["Local only", "National", "Pan-African", "Diaspora Europe", "Diaspora Americas", "International"];
 const PROSPECTUS = ["Yes", "No", "In development"];
 
-export function OrganiserWaitlistForm({ onDone }: { onDone: () => void }) {
+export function OrganiserWaitlistForm({
+  onDone,
+  progressive,
+  onSectionProgress,
+  onFirstStepBack,
+}: {
+  onDone: () => void;
+  progressive?: boolean;
+  onSectionProgress?: (info: { step: number; total: number; label: string }) => void;
+  onFirstStepBack?: () => void;
+}) {
   return (
-    <FormShell audience="organiser" onDone={onDone}>
+    <FormShell audience="organiser" onDone={onDone} progressive={progressive} onSectionProgress={onSectionProgress} onFirstStepBack={onFirstStepBack}>
       <Section letter="A" title="Organiser details">
         <Row>
           <Field id="full_name" label="Full name" required><Input id="full_name" name="full_name" required maxLength={100} /></Field>
@@ -529,9 +764,19 @@ const COMMISSION_PREF = ["Standard", "Premium", "Custom"];
 const DEAL_RANGES = ["Under ₦5M", "₦5M–20M", "₦20M–50M", "₦50M+", "Mixed"];
 const INTROS_PER_QUARTER = ["1–3", "4–10", "11–20", "20+"];
 
-export function AffiliateWaitlistForm({ onDone }: { onDone: () => void }) {
+export function AffiliateWaitlistForm({
+  onDone,
+  progressive,
+  onSectionProgress,
+  onFirstStepBack,
+}: {
+  onDone: () => void;
+  progressive?: boolean;
+  onSectionProgress?: (info: { step: number; total: number; label: string }) => void;
+  onFirstStepBack?: () => void;
+}) {
   return (
-    <FormShell audience="referral_partner" onDone={onDone}>
+    <FormShell audience="referral_partner" onDone={onDone} progressive={progressive} onSectionProgress={onSectionProgress} onFirstStepBack={onFirstStepBack}>
       <Section letter="A" title="Partner details">
         <Row>
           <Field id="full_name" label="Full name" required><Input id="full_name" name="full_name" required maxLength={100} /></Field>
@@ -642,9 +887,19 @@ const MEDIA_REACH = ["Under 5k", "5k–25k", "25k–100k", "100k–500k", "500k+
 const MEDIA_REQUEST_TYPES = ["Event coverage", "Speaker interviews", "Cross-promotion", "Documentary / film", "Social amplification", "Newsletter feature", "Podcast episode"];
 const CONTENT_FOCUS = ["Business & finance", "Culture & lifestyle", "Tech", "Fashion & beauty", "Sports", "Government & policy", "Diaspora", "Entertainment", "Other"];
 
-export function MediaWaitlistForm({ onDone }: { onDone: () => void }) {
+export function MediaWaitlistForm({
+  onDone,
+  progressive,
+  onSectionProgress,
+  onFirstStepBack,
+}: {
+  onDone: () => void;
+  progressive?: boolean;
+  onSectionProgress?: (info: { step: number; total: number; label: string }) => void;
+  onFirstStepBack?: () => void;
+}) {
   return (
-    <FormShell audience="media_partner" onDone={onDone}>
+    <FormShell audience="media_partner" onDone={onDone} progressive={progressive} onSectionProgress={onSectionProgress} onFirstStepBack={onFirstStepBack}>
       <Section letter="A" title="Outlet & contact">
         <Row>
           <Field id="full_name" label="Full name" required><Input id="full_name" name="full_name" required maxLength={100} /></Field>

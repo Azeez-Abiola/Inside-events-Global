@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { AuthShell } from "@/components/auth-shell";
 import { isEmailNotConfirmedError } from "@/lib/auth-email";
 
 const search = z.object({
