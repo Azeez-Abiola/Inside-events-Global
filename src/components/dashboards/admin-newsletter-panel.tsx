@@ -147,6 +147,15 @@ export function AdminNewsletterPanel() {
           : `Newsletter sent to ${res.sent} subscriber${res.sent === 1 ? "" : "s"}`,
       );
       if (res.skipped) toast.message(`${res.skipped} skipped (suppressed or blocked)`);
+      if (res.queueFlush?.error) {
+        toast.error(`Queued, but delivery failed: ${res.queueFlush.error}`);
+      } else if (typeof res.queueFlush?.processed === "number") {
+        toast.message(
+          res.queueFlush.processed > 0
+            ? `Delivered ${res.queueFlush.processed} email(s) via Resend`
+            : "Queue was empty — check spam or Resend logs if nothing arrives",
+        );
+      }
       invalidate();
       setForm(emptyForm());
       setSelected(new Set());

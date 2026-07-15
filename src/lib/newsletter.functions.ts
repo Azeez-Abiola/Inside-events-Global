@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendTransactionalEmailServer } from "@/lib/email/server-send";
+import { flushEmailQueueInDev } from "@/lib/email/flush-queue-dev";
 
 async function ensureAdmin(supabase: any, userId: string) {
   const { data, error } = await supabase
@@ -260,7 +261,18 @@ export const sendNewsletterCampaign = createServerFn({ method: "POST" })
       .eq("id", campaignId!);
     if (upErr) throw new Error(upErr.message);
 
-    return { ok: true, campaignId, sent, skipped, resent: isResend, errors: errors.slice(0, 5) };
+    // Localhost: deliver queued emails via this machine's Resend key (live cron may be misconfigured).
+    const queueFlush = await flushEmailQueueInDev();
+
+    return {
+      ok: true,
+      campaignId,
+      sent,
+      skipped,
+      resent: isResend,
+      errors: errors.slice(0, 5),
+      queueFlush,
+    };
   });
 
 export const deleteNewsletterCampaign = createServerFn({ method: "POST" })
