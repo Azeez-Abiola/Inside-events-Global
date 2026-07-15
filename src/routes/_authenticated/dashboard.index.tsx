@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/lib/auth-context";
+import { DashboardPageSkeleton } from "@/components/dashboards/dashboard-skeletons";
 import { SponsorOverviewPage } from "@/components/dashboards/sponsor-pages";
 import { OrganiserEventsPage } from "@/components/dashboards/organiser-pages";
 import { ReferralDashboard } from "@/components/dashboards/referral-dashboard";
@@ -28,9 +29,7 @@ function DashboardIndex() {
 function DashboardLoading() {
   return (
     <AppShell>
-      <div className="flex h-[60vh] items-center justify-center text-muted-foreground">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <DashboardPageSkeleton kpis={3} showCharts />
     </AppShell>
   );
 }

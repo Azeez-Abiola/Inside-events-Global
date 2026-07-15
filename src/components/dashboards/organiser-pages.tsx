@@ -10,8 +10,9 @@ import {
 import { StatusBadge } from "@/components/app-shell";
 import { QuickLinkCard, fmtDateRange } from "@/components/dashboards/shared";
 import { KpiTile, DonutBreakdown, FeaturedHeroCard, AgendaList } from "@/components/dashboards/voom-primitives";
+import { DashboardCardGridSkeleton, DashboardTableSkeleton } from "@/components/dashboards/dashboard-skeletons";
 import {
-  DashboardEmpty, DashboardLoading, DashboardPanel, DashboardTabs, VettingTimeline,
+  DashboardEmpty, DashboardPanel, DashboardTabs, VettingTimeline,
 } from "@/components/dashboards/dashboard-shell";
 import { WorkspacePage } from "@/components/dashboards/workspace-page";
 import { OrganiserAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
@@ -131,7 +132,7 @@ export function OrganiserEventsPage() {
                 <p className="mt-3 text-sm text-muted-foreground">{EVENT_STATUS_GROUPS[statusFilter as Exclude<EventStatusGroup, "all">]?.description}</p>
               )}
               {eventsLoading ? (
-                <DashboardLoading label="Loading your events…" />
+                <DashboardCardGridSkeleton count={6} />
               ) : filteredEvents.length === 0 ? (
                 <DashboardEmpty icon={FolderOpen} title="No events yet" description="Create your first event draft to start the IGE vetting flow." action={createBtn} />
               ) : (
@@ -214,7 +215,7 @@ export function OrganiserPipelinePage() {
 
   return (
     <WorkspacePage title="Sponsorship pipeline" subtitle="Sponsor commitment forms and deal stages across your events.">
-      {pipelineLoading ? <DashboardLoading label="Loading pipeline…" /> : !pipelineData?.events?.length ? (
+      {pipelineLoading ? <DashboardTableSkeleton rows={5} cols={6} /> : !pipelineData?.events?.length ? (
         <DashboardEmpty icon={MessageSquare} title="No live pipeline yet" description="Once an event is listed, sponsor inquiries will appear here." action={createBtn} />
       ) : (
         <div className="space-y-6">
@@ -236,7 +237,7 @@ export function OrganiserDocumentsPage() {
 
   return (
     <WorkspacePage title="Documents" subtitle="Sponsorship decks, banners, and floor plans across your events.">
-      {eventsLoading ? <DashboardLoading label="Loading documents…" /> : docs.length === 0 ? (
+      {eventsLoading ? <DashboardCardGridSkeleton count={4} /> : docs.length === 0 ? (
         <DashboardEmpty icon={FolderOpen} title="No documents yet" description="Upload decks and assets in the event editor when creating or editing a listing." />
       ) : (
         <div className="space-y-4">

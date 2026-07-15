@@ -12,11 +12,11 @@ import { StatCard, fmtDateRange } from "@/components/dashboards/shared";
 import {
   DashboardEmpty,
   DashboardHeader,
-  DashboardLoading,
   DashboardPanel,
   DashboardTabs,
   VettingTimeline,
 } from "@/components/dashboards/dashboard-shell";
+import { DashboardCardGridSkeleton, DashboardTableSkeleton } from "@/components/dashboards/dashboard-skeletons";
 import { createEventDraft, getMyEvents, deleteDraftEvent } from "@/lib/events.functions";
 import { getOrganiserPipeline } from "@/lib/deals.functions";
 import { fmtMoney } from "@/lib/currency";
@@ -149,7 +149,7 @@ export function OrganiserDashboard() {
             )}
 
             {eventsLoading ? (
-              <DashboardLoading label="Loading your events…" />
+              <DashboardCardGridSkeleton count={4} />
             ) : filteredEvents.length === 0 ? (
               <DashboardEmpty
                 icon={FolderOpen}
@@ -198,7 +198,7 @@ export function OrganiserDashboard() {
 
         {mainTab === "pipeline" && (
           pipelineLoading ? (
-            <DashboardLoading label="Loading sponsorship pipeline…" />
+            <DashboardTableSkeleton rows={5} cols={7} />
           ) : !pipelineData?.events?.length ? (
             <DashboardEmpty
               icon={MessageSquare}

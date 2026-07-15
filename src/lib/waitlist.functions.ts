@@ -16,6 +16,79 @@ async function ensureAdmin(supabase: any, userId: string) {
 
 const SITE_URL = process.env.VITE_SITE_URL || "https://www.insideglobalevents.com";
 
+export const reviewWaitlistSignup = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      id: z.string().uuid(),
+      action: z.enum(["approve", "reject"]),
+      note: z.string().max(2000).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await ensureAdmin(supabase, userId);
+
+    const { data: signup, error } = await supabaseAdmin
+      .from("waitlist_signups")
+      .select("id, email, full_name, audience, status, rejection_reason")
+      .eq("id", data.id)
+      .single();
+    if (error || !signup) throw new Error("Waitlist signup not found");
+
+    const isApproved = ["approved", "invited", "converted"].includes(signup.status);
+    const isRejected = ["rejected", "declined"].includes(signup.status);
+    const audienceLabel = waitlistAudienceLabel(signup.audience as WaitlistAudience);
+
+    if (data.action === "approve") {
+      if (isApproved) throw new Error("This signup is already approved");
+      if (isRejected) throw new Error("Cannot approve a rejected signup");
+      const signupUrl = `${SITE_URL}/signup?role=${encodeURIComponent(signup.audience)}&email=${encodeURIComponent(signup.email)}`;
+
+      await sendTransactionalEmailServer({
+        templateName: "waitlist-invite",
+        recipientEmail: signup.email,
+        idempotencyKey: `waitlist-invite-${signup.id}`,
+        templateData: {
+          name: signup.full_name,
+          audienceLabel,
+          signupUrl,
+        },
+      });
+
+      await supabaseAdmin
+        .from("waitlist_signups")
+        .update({ status: "approved", rejection_reason: null } as never)
+        .eq("id", signup.id);
+
+      return { ok: true, status: "approved" };
+    }
+
+    if (isRejected) throw new Error("This signup was already rejected");
+    if (isApproved) throw new Error("Cannot reject an approved signup");
+
+    const note = data.note?.trim();
+    if (!note) throw new Error("A rejection note is required so the applicant can see why they were declined");
+
+    await sendTransactionalEmailServer({
+      templateName: "waitlist-rejected",
+      recipientEmail: signup.email,
+      idempotencyKey: `waitlist-rejected-${signup.id}`,
+      templateData: {
+        name: signup.full_name,
+        audienceLabel,
+        note,
+      },
+    });
+
+    await supabaseAdmin
+      .from("waitlist_signups")
+      .update({ status: "rejected", rejection_reason: note } as never)
+      .eq("id", signup.id);
+
+    return { ok: true, status: "rejected" };
+  });
+
 export const inviteWaitlistSignup = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
@@ -57,7 +130,7 @@ export const updateWaitlistStatus = createServerFn({ method: "POST" })
   .inputValidator((d) =>
     z.object({
       id: z.string().uuid(),
-      status: z.enum(["new", "contacted", "invited", "converted", "declined"]),
+      status: z.enum(["new", "contacted", "invited", "approved", "converted", "declined", "rejected"]),
     }).parse(d),
   )
   .handler(async ({ data, context }) => {

@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { BrandLogo } from "@/components/brand-logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { SiteFooter } from "@/components/site-footer";
 
 export { SiteFooter };
@@ -17,28 +18,30 @@ export function SiteHeader({ showAuthLinks = false }: { showAuthLinks?: boolean 
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
-          <Link to="/waitlist" className="transition-colors hover:text-foreground">Join waitlist</Link>
-          <Link to="/about" className="transition-colors hover:text-foreground">About</Link>
-          <Link to="/how-it-works" className="transition-colors hover:text-foreground">How it works</Link>
-        </nav>
-
-        {showAuthLinks ? (
-          <div className="flex items-center gap-2">
-            <Link
-              to="/login"
-              className="hidden rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-muted sm:inline-flex"
-            >
-              Sign in
-            </Link>
-            <Link
-              to="/signup"
-              className="inline-flex items-center justify-center rounded-md bg-brand-gradient px-4 py-2 text-sm font-semibold text-white shadow-soft transition-transform hover:-translate-y-0.5"
-            >
-              Sign up
-            </Link>
-          </div>
-        ) : null}
+        <div className="flex items-center gap-3">
+          <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
+            <Link to="/waitlist" className="transition-colors hover:text-foreground">Join waitlist</Link>
+            <Link to="/about" className="transition-colors hover:text-foreground">About</Link>
+            <Link to="/how-it-works" className="transition-colors hover:text-foreground">How it works</Link>
+          </nav>
+          <ThemeToggle />
+          {showAuthLinks ? (
+            <>
+              <Link
+                to="/login"
+                className="hidden rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-muted sm:inline-flex"
+              >
+                Sign in
+              </Link>
+              <Link
+                to="/signup"
+                className="inline-flex items-center justify-center rounded-md bg-brand-gradient px-4 py-2 text-sm font-semibold text-white shadow-soft transition-transform hover:-translate-y-0.5"
+              >
+                Sign up
+              </Link>
+            </>
+          ) : null}
+        </div>
       </div>
     </header>
   );

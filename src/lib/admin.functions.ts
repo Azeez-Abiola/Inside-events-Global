@@ -11,6 +11,7 @@ const STATUS_LABELS: Record<string, string> = {
   revision_requested: "Revisions requested",
   approved: "Approved",
   rejected: "Rejected",
+  draft: "Returned to draft",
   listed: "Listed on marketplace",
   closed: "Closed",
   archived: "Archived",
@@ -21,8 +22,8 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   submitted: ["under_review"],
   under_review: ["revision_requested", "approved", "rejected"],
   revision_requested: ["submitted"],
-  approved: ["listed"],
-  listed: ["closed", "archived"],
+  approved: ["listed", "draft"],
+  listed: ["closed", "archived", "draft"],
 };
 
 async function ensureAdmin(supabase: any, userId: string) {
@@ -47,7 +48,7 @@ export const listEventsForVetting = createServerFn({ method: "GET" })
       .select(
         "id, name, slug, status, event_type, start_date, city, country, created_at, updated_at, organiser_id, vetting_notes, rejection_reason"
       )
-      .in("status", ["submitted", "under_review", "revision_requested", "approved", "rejected"])
+      .in("status", ["submitted", "under_review", "revision_requested", "approved", "rejected", "listed"])
       .order("updated_at", { ascending: false });
     if (error) throw new Error(error.message);
 
@@ -94,6 +95,7 @@ export const getEventForAdmin = createServerFn({ method: "GET" })
 const SetStatusInput = z.object({
   id: z.string().uuid(),
   to_status: z.enum([
+    "draft",
     "under_review",
     "revision_requested",
     "approved",
@@ -134,6 +136,10 @@ export const setEventVettingStatus = createServerFn({ method: "POST" })
     if (data.to_status === "approved" || data.to_status === "listed") {
       patch.ige_vetted = true;
     }
+    if (data.to_status === "draft") {
+      patch.ige_vetted = false;
+      patch.vetting_notes = data.note ?? patch.vetting_notes ?? null;
+    }
     if (data.to_status === "revision_requested") {
       patch.vetting_notes = data.note ?? null;
     }
@@ -146,7 +152,7 @@ export const setEventVettingStatus = createServerFn({ method: "POST" })
 
     // Notify organiser by email (best effort)
     try {
-      if (ev.organiser_id && ["revision_requested", "approved", "rejected", "listed"].includes(data.to_status)) {
+      if (ev.organiser_id && ["revision_requested", "approved", "rejected", "listed", "draft"].includes(data.to_status)) {
         const { data: profile } = await supabase
           .from("profiles")
           .select("email")
@@ -171,7 +177,7 @@ export const setEventVettingStatus = createServerFn({ method: "POST" })
     }
 
     // In-app notification for organiser
-    if (ev.organiser_id && ["revision_requested", "approved", "rejected", "listed", "under_review"].includes(data.to_status)) {
+    if (ev.organiser_id && ["revision_requested", "approved", "rejected", "listed", "under_review", "draft"].includes(data.to_status)) {
       try {
         await supabaseAdmin.from("notifications").insert({
           user_id: ev.organiser_id,
@@ -186,6 +192,51 @@ export const setEventVettingStatus = createServerFn({ method: "POST" })
     }
 
     return { ok: true, status: data.to_status };
+  });
+
+export const adminDeleteEvent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await ensureAdmin(supabase, userId);
+
+    const { data: ev, error } = await supabase
+      .from("events")
+      .select("id, name, status, organiser_id")
+      .eq("id", data.id)
+      .single();
+    if (error) throw new Error(error.message);
+
+    const { data: deals } = await supabaseAdmin
+      .from("deals")
+      .select("status")
+      .eq("event_id", data.id);
+    const hasBlockingDeals = (deals ?? []).some(
+      (d) => !["deal_lost", "cancelled"].includes(d.status),
+    );
+    if (hasBlockingDeals) {
+      throw new Error("Cannot delete — this event has active deals in the pipeline. Close or cancel deals first.");
+    }
+
+    const { error: delErr } = await supabaseAdmin.from("events").delete().eq("id", data.id);
+    if (delErr) throw new Error(delErr.message);
+
+    if (ev.organiser_id) {
+      try {
+        await supabaseAdmin.from("notifications").insert({
+          user_id: ev.organiser_id,
+          type: "event_removed",
+          title: "Event removed",
+          body: `Your event "${ev.name}" was removed from IGE by an administrator.`,
+          data: { event_id: data.id },
+        });
+      } catch {
+        /* best effort */
+      }
+    }
+
+    return { ok: true };
   });
 
 const SuspendInput = z.object({
@@ -248,8 +299,8 @@ export const setUserSuspended = createServerFn({ method: "POST" })
       await supabaseAdmin.from("notifications").insert({
         user_id: data.user_id,
         type: "account_suspended",
-        title: "Account suspended",
-        body: data.reason ?? "Your IGE account has been suspended. Contact support if you believe this is an error.",
+        title: "Account deactivated",
+        body: data.reason ?? "Your IGE account has been deactivated. Contact support if you believe this is an error.",
         data: {},
       });
     }

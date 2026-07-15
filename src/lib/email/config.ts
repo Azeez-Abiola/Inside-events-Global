@@ -7,7 +7,7 @@ export const ROOT_DOMAIN = 'www.insideglobalevents.com'
 export function getResendFromAddress(): string {
   return (
     process.env.RESEND_FROM_EMAIL ||
-    `${SITE_NAME} <noreply@notify.www.insideglobalevents.com>`
+    `${SITE_NAME} <noreply@insideglobalevents.com>`
   )
 }
 

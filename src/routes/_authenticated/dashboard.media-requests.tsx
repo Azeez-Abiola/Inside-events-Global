@@ -1,12 +1,12 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { AdminDashboard } from "@/components/dashboards/admin-dashboard";
-import { useAuth } from "@/lib/auth-context";
+import { RoleGate } from "@/components/role-gate";
 
 export const Route = createFileRoute("/_authenticated/dashboard/media-requests")({
   head: () => ({ meta: [{ title: "Media requests - IGE" }] }),
-  component: () => {
-    const { roles } = useAuth();
-    if (!roles.includes("abw_admin") && !roles.includes("super_admin")) throw redirect({ to: "/dashboard" });
-    return <AdminDashboard section="media-requests" />;
-  },
+  component: () => (
+    <RoleGate allow={["abw_admin", "super_admin"]}>
+      <AdminDashboard section="media-requests" />
+    </RoleGate>
+  ),
 });

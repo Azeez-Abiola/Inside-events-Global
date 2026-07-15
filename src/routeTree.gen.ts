@@ -61,6 +61,7 @@ import { Route as AuthenticatedDashboardRequestsRouteImport } from './routes/_au
 import { Route as AuthenticatedDashboardReferralsRouteImport } from './routes/_authenticated/dashboard.referrals'
 import { Route as AuthenticatedDashboardPipelineRouteImport } from './routes/_authenticated/dashboard.pipeline'
 import { Route as AuthenticatedDashboardPartnersRouteImport } from './routes/_authenticated/dashboard.partners'
+import { Route as AuthenticatedDashboardNewsletterRouteImport } from './routes/_authenticated/dashboard.newsletter'
 import { Route as AuthenticatedDashboardMediaRequestsRouteImport } from './routes/_authenticated/dashboard.media-requests'
 import { Route as AuthenticatedDashboardExploreRouteImport } from './routes/_authenticated/dashboard.explore'
 import { Route as AuthenticatedDashboardDocumentsRouteImport } from './routes/_authenticated/dashboard.documents'
@@ -354,6 +355,12 @@ const AuthenticatedDashboardPartnersRoute =
     path: '/partners',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardNewsletterRoute =
+  AuthenticatedDashboardNewsletterRouteImport.update({
+    id: '/newsletter',
+    path: '/newsletter',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedDashboardMediaRequestsRoute =
   AuthenticatedDashboardMediaRequestsRouteImport.update({
     id: '/media-requests',
@@ -527,6 +534,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/dashboard/explore': typeof AuthenticatedDashboardExploreRoute
   '/dashboard/media-requests': typeof AuthenticatedDashboardMediaRequestsRoute
+  '/dashboard/newsletter': typeof AuthenticatedDashboardNewsletterRoute
   '/dashboard/partners': typeof AuthenticatedDashboardPartnersRoute
   '/dashboard/pipeline': typeof AuthenticatedDashboardPipelineRoute
   '/dashboard/referrals': typeof AuthenticatedDashboardReferralsRoute
@@ -599,6 +607,7 @@ export interface FileRoutesByTo {
   '/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/dashboard/explore': typeof AuthenticatedDashboardExploreRoute
   '/dashboard/media-requests': typeof AuthenticatedDashboardMediaRequestsRoute
+  '/dashboard/newsletter': typeof AuthenticatedDashboardNewsletterRoute
   '/dashboard/partners': typeof AuthenticatedDashboardPartnersRoute
   '/dashboard/pipeline': typeof AuthenticatedDashboardPipelineRoute
   '/dashboard/referrals': typeof AuthenticatedDashboardReferralsRoute
@@ -675,6 +684,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/_authenticated/dashboard/explore': typeof AuthenticatedDashboardExploreRoute
   '/_authenticated/dashboard/media-requests': typeof AuthenticatedDashboardMediaRequestsRoute
+  '/_authenticated/dashboard/newsletter': typeof AuthenticatedDashboardNewsletterRoute
   '/_authenticated/dashboard/partners': typeof AuthenticatedDashboardPartnersRoute
   '/_authenticated/dashboard/pipeline': typeof AuthenticatedDashboardPipelineRoute
   '/_authenticated/dashboard/referrals': typeof AuthenticatedDashboardReferralsRoute
@@ -751,6 +761,7 @@ export interface FileRouteTypes {
     | '/dashboard/documents'
     | '/dashboard/explore'
     | '/dashboard/media-requests'
+    | '/dashboard/newsletter'
     | '/dashboard/partners'
     | '/dashboard/pipeline'
     | '/dashboard/referrals'
@@ -823,6 +834,7 @@ export interface FileRouteTypes {
     | '/dashboard/documents'
     | '/dashboard/explore'
     | '/dashboard/media-requests'
+    | '/dashboard/newsletter'
     | '/dashboard/partners'
     | '/dashboard/pipeline'
     | '/dashboard/referrals'
@@ -898,6 +910,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/documents'
     | '/_authenticated/dashboard/explore'
     | '/_authenticated/dashboard/media-requests'
+    | '/_authenticated/dashboard/newsletter'
     | '/_authenticated/dashboard/partners'
     | '/_authenticated/dashboard/pipeline'
     | '/_authenticated/dashboard/referrals'
@@ -1331,6 +1344,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardPartnersRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/newsletter': {
+      id: '/_authenticated/dashboard/newsletter'
+      path: '/newsletter'
+      fullPath: '/dashboard/newsletter'
+      preLoaderRoute: typeof AuthenticatedDashboardNewsletterRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/dashboard/media-requests': {
       id: '/_authenticated/dashboard/media-requests'
       path: '/media-requests'
@@ -1492,6 +1512,7 @@ interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardDocumentsRoute: typeof AuthenticatedDashboardDocumentsRoute
   AuthenticatedDashboardExploreRoute: typeof AuthenticatedDashboardExploreRoute
   AuthenticatedDashboardMediaRequestsRoute: typeof AuthenticatedDashboardMediaRequestsRoute
+  AuthenticatedDashboardNewsletterRoute: typeof AuthenticatedDashboardNewsletterRoute
   AuthenticatedDashboardPartnersRoute: typeof AuthenticatedDashboardPartnersRoute
   AuthenticatedDashboardPipelineRoute: typeof AuthenticatedDashboardPipelineRoute
   AuthenticatedDashboardReferralsRoute: typeof AuthenticatedDashboardReferralsRoute
@@ -1520,6 +1541,8 @@ const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
     AuthenticatedDashboardExploreRoute: AuthenticatedDashboardExploreRoute,
     AuthenticatedDashboardMediaRequestsRoute:
       AuthenticatedDashboardMediaRequestsRoute,
+    AuthenticatedDashboardNewsletterRoute:
+      AuthenticatedDashboardNewsletterRoute,
     AuthenticatedDashboardPartnersRoute: AuthenticatedDashboardPartnersRoute,
     AuthenticatedDashboardPipelineRoute: AuthenticatedDashboardPipelineRoute,
     AuthenticatedDashboardReferralsRoute: AuthenticatedDashboardReferralsRoute,

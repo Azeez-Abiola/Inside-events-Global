@@ -2,7 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard, CalendarRange, Inbox, Bookmark, Compass, BarChart3, MessageSquare,
   ShieldCheck, Users, DollarSign, SlidersHorizontal, Handshake, TrendingUp, Newspaper, Send, Wallet,
-  ClipboardList, FileText, Coins, UserCheck, UserCircle, Radio,
+  ClipboardList, FileText, Coins, UserCheck, UserCircle, Radio, Mail,
 } from "lucide-react";
 
 export type WorkspaceNavItem = {
@@ -21,6 +21,7 @@ export function getWorkspaceNav(roles: string[]): WorkspaceNavItem[] {
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/dashboard/vetting", label: "Event queue", icon: ShieldCheck },
       { to: "/dashboard/waitlist", label: "Waitlist", icon: ClipboardList },
+      { to: "/dashboard/newsletter", label: "Newsletter", icon: Mail },
       { to: "/dashboard/users", label: "Users", icon: Users },
       { to: "/dashboard/submissions", label: "Contact", icon: Users },
       { to: "/dashboard/revenue", label: "Revenue & deals", icon: DollarSign },

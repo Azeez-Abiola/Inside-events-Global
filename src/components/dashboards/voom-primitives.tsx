@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Cell, Pie, PieChart } from "recharts";
 import { ArrowRight, LucideIcon } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 const CHART_COLORS = [
@@ -35,12 +36,14 @@ export function KpiTile({
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10">
           <Icon className="h-5 w-5 text-primary" />
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="text-xs font-medium text-muted-foreground">{label}</p>
-          <p className="font-display text-2xl font-bold leading-tight text-foreground">
-            {loading ? "…" : value}
-          </p>
-          {trend && <p className="mt-0.5 text-[11px] font-medium text-secondary">{trend}</p>}
+          {loading ? (
+            <Skeleton className="mt-1 h-7 w-16" />
+          ) : (
+            <p className="font-display text-2xl font-bold leading-tight text-foreground">{value}</p>
+          )}
+          {trend && !loading && <p className="mt-0.5 text-[11px] font-medium text-secondary">{trend}</p>}
         </div>
       </div>
     </div>

@@ -1,15 +1,21 @@
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
-  Plus, Link2, MousePointerClick, TrendingUp, Wallet, Award, Copy, MessageCircle, Share2, Mail, Download,
+  Plus, Link2, MousePointerClick, TrendingUp, Wallet, Award, Copy, MessageCircle, Share2, Mail,
   BarChart3,
 } from "lucide-react";
 import { KpiTile, DonutBreakdown, FeaturedHeroCard, AgendaList } from "@/components/dashboards/voom-primitives";
 import { QuickLinkCard } from "@/components/dashboards/shared";
 import { WorkspacePage } from "@/components/dashboards/workspace-page";
+import { DashboardDataToolbar } from "@/components/dashboards/dashboard-data-toolbar";
+import { DashboardTabs } from "@/components/dashboards/dashboard-shell";
+import { DashboardListSkeleton, DashboardTableSkeleton } from "@/components/dashboards/dashboard-skeletons";
+import { useDisplayCurrency } from "@/lib/display-currency-context";
+import { useTableFilters } from "@/hooks/use-table-filters";
+import { datedCsvFilename, downloadCsv } from "@/lib/csv-export";
 import { ReferralAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
 import { getReferralDashboard, generateReferralLink } from "@/lib/referrals.functions";
 import { listMarketplaceEvents } from "@/lib/marketplace.functions";
@@ -18,9 +24,10 @@ import { fmtMoney } from "@/lib/currency";
 type ReferralSection = "overview" | "links" | "deals" | "analytics" | "commissions";
 
 function exportPayoutCsv(deals: any[], events: Record<string, any>) {
-  const rows = [
+  downloadCsv(
+    datedCsvFilename("ige-payout-history"),
     ["Event", "Status", "Deal value", "Commission USD", "Payout status", "Paid at"],
-    ...deals.map((d) => {
+    deals.map((d) => {
       const ev = events[d.event_id];
       return [
         ev?.name ?? d.event_id,
@@ -31,15 +38,7 @@ function exportPayoutCsv(deals: any[], events: Record<string, any>) {
         d.referral_commission_paid_at ?? "",
       ];
     }),
-  ];
-  const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `ige-payout-history-${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+  );
 }
 
 const SECTION_META: Record<ReferralSection, { title: string; subtitle: string }> = {
@@ -67,15 +66,56 @@ const SECTION_META: Record<ReferralSection, { title: string; subtitle: string }>
 
 export function ReferralDashboard({ section = "links" }: { section?: ReferralSection }) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [linksSearch, setLinksSearch] = useState("");
+  const [dealsSearch, setDealsSearch] = useState("");
+  const [commissionsSearch, setCommissionsSearch] = useState("");
+  const [payoutFilter, setPayoutFilter] = useState("all");
   const meta = SECTION_META[section];
 
+  const { fmtUsd, labelSuffix } = useDisplayCurrency();
   const fetch = useServerFn(getReferralDashboard);
   const { data, isLoading } = useQuery({ queryKey: ["referral-dash"], queryFn: () => fetch() });
 
   const activeLinks = data?.stats.linkCount ?? 0;
   const totalClicks = data?.stats.clickCount ?? 0;
   const conversions = data?.stats.conversionCount ?? 0;
-  const earnedCommission = `$${(data?.totals.earned ?? 0).toFixed(0)}`;
+  const earnedCommission = fmtUsd(data?.totals.earned ?? 0);
+
+  const filteredLinks = useTableFilters({
+    rows: data?.links ?? [],
+    searchText: linksSearch,
+    search: (l: { event_id: string; short_code: string; status: string }) => {
+      const ev = data?.events?.[l.event_id];
+      return [ev?.name, l.short_code, l.status].filter(Boolean).join(" ");
+    },
+  });
+
+  const filteredDeals = useTableFilters({
+    rows: data?.deals ?? [],
+    searchText: dealsSearch,
+    search: (d: { event_id: string; status: string }) => {
+      const ev = data?.events?.[d.event_id];
+      return [ev?.name, d.status].filter(Boolean).join(" ");
+    },
+  });
+
+  const filteredCommissions = useTableFilters({
+    rows: data?.deals ?? [],
+    searchText: commissionsSearch,
+    statusFilter: payoutFilter,
+    search: (d: { event_id: string; status: string }) => {
+      const ev = data?.events?.[d.event_id];
+      return [ev?.name, d.status].filter(Boolean).join(" ");
+    },
+    matchStatus: (d: { referral_commission_paid?: boolean }, filter) =>
+      filter === "paid" ? !!d.referral_commission_paid : filter === "pending" ? !d.referral_commission_paid : true,
+  });
+
+  const payoutCounts = useMemo(() => ({
+    all: data?.deals?.length ?? 0,
+    paid: (data?.deals ?? []).filter((d: { referral_commission_paid?: boolean }) => d.referral_commission_paid).length,
+    pending: (data?.deals ?? []).filter((d: { referral_commission_paid?: boolean }) => !d.referral_commission_paid).length,
+  }), [data?.deals]);
 
   const handleCopy = (url: string) => {
     navigator.clipboard.writeText(url);
@@ -90,15 +130,6 @@ export function ReferralDashboard({ section = "links" }: { section?: ReferralSec
     >
       <Plus className="h-4 w-4" /> Generate link
     </button>
-  ) : section === "commissions" ? (
-    <button
-      type="button"
-      onClick={() => exportPayoutCsv(data?.deals ?? [], data?.events ?? {})}
-      disabled={!data?.deals?.length}
-      className="inline-flex items-center gap-1.5 rounded-md border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted transition-colors disabled:opacity-50"
-    >
-      <Download className="h-4 w-4" /> Export payout history
-    </button>
   ) : undefined;
 
   return (
@@ -108,7 +139,7 @@ export function ReferralDashboard({ section = "links" }: { section?: ReferralSec
           <KpiTile icon={Link2} label="Active links" value={activeLinks} loading={isLoading} />
           <KpiTile icon={MousePointerClick} label="Total clicks" value={totalClicks} loading={isLoading} />
           <KpiTile icon={TrendingUp} label="Conversions" value={conversions} loading={isLoading} />
-          <KpiTile icon={Wallet} label="Earned (USD)" value={earnedCommission} loading={isLoading} />
+          <KpiTile icon={Wallet} label={`Earned${labelSuffix}`} value={earnedCommission} loading={isLoading} />
         </div>
       )}
 
@@ -123,7 +154,7 @@ export function ReferralDashboard({ section = "links" }: { section?: ReferralSec
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <KpiTile icon={Link2} label="Active links" value={activeLinks} loading={isLoading} />
             <KpiTile icon={MousePointerClick} label="Total clicks" value={totalClicks} loading={isLoading} trend={conversions ? `${conversions} conversions` : undefined} />
-            <KpiTile icon={Wallet} label="Earned (USD)" value={earnedCommission} loading={isLoading} />
+            <KpiTile icon={Wallet} label={`Earned${labelSuffix}`} value={earnedCommission} loading={isLoading} />
           </div>
 
           {data?.profile?.igb_partner_badge && (
@@ -160,6 +191,10 @@ export function ReferralDashboard({ section = "links" }: { section?: ReferralSec
                   </Link>
                 </div>
                 <div className="divide-y divide-border/40">
+                  {isLoading ? (
+                    <DashboardListSkeleton rows={5} />
+                  ) : (
+                    <>
                   {(data?.links ?? []).slice(0, 5).map((l: any) => {
                     const ev = data?.events?.[l.event_id];
                     return (
@@ -180,6 +215,8 @@ export function ReferralDashboard({ section = "links" }: { section?: ReferralSec
                   })}
                   {!isLoading && !data?.links?.length && (
                     <p className="px-5 py-10 text-center text-sm text-muted-foreground italic">No referral links yet. Generate one to start sharing.</p>
+                  )}
+                    </>
                   )}
                 </div>
               </div>
@@ -240,12 +277,32 @@ export function ReferralDashboard({ section = "links" }: { section?: ReferralSec
       {section === "commissions" && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <KpiTile icon={Wallet} label="Earned (USD)" value={`$${(data?.totals.earned ?? 0).toFixed(0)}`} loading={isLoading} />
-            <KpiTile icon={TrendingUp} label="Pending (USD)" value={`$${(data?.totals.pending ?? 0).toFixed(0)}`} loading={isLoading} />
-            <KpiTile icon={Award} label="Paid (USD)" value={`$${(data?.totals.paid ?? 0).toFixed(0)}`} loading={isLoading} />
+            <KpiTile icon={Wallet} label={`Earned${labelSuffix}`} value={fmtUsd(data?.totals.earned ?? 0)} loading={isLoading} />
+            <KpiTile icon={TrendingUp} label={`Pending${labelSuffix}`} value={fmtUsd(data?.totals.pending ?? 0)} loading={isLoading} />
+            <KpiTile icon={Award} label={`Paid${labelSuffix}`} value={fmtUsd(data?.totals.paid ?? 0)} loading={isLoading} />
           </div>
           <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <DashboardTabs
+              tabs={[
+                { id: "all", label: "All", count: payoutCounts.all },
+                { id: "pending", label: "Pending", count: payoutCounts.pending },
+                { id: "paid", label: "Paid", count: payoutCounts.paid },
+              ]}
+              active={payoutFilter}
+              onChange={setPayoutFilter}
+            />
+            <DashboardDataToolbar
+              search={commissionsSearch}
+              onSearchChange={setCommissionsSearch}
+              searchPlaceholder="Search event or deal status…"
+              onExport={() => exportPayoutCsv(filteredCommissions, data?.events ?? {})}
+              exportDisabled={!filteredCommissions.length}
+              exportCount={filteredCommissions.length}
+            />
             <div className="overflow-x-auto">
+              {isLoading ? (
+                <DashboardTableSkeleton rows={6} cols={5} />
+              ) : (
               <table className="w-full text-sm min-w-[700px]">
                 <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
                   <tr>
@@ -257,14 +314,14 @@ export function ReferralDashboard({ section = "links" }: { section?: ReferralSec
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {(data?.deals ?? []).map((d: any) => {
+                  {filteredCommissions.map((d: any) => {
                     const ev = data!.events[d.event_id];
                     return (
                       <tr key={d.id} className="hover:bg-muted/10 transition-colors">
                         <td className="px-5 py-3.5 font-medium text-foreground">{ev?.name ?? "-"}</td>
                         <td className="px-5 py-3.5 capitalize text-muted-foreground">{d.status.replace(/_/g, " ")}</td>
                         <td className="px-5 py-3.5 text-xs font-semibold text-primary-deep">
-                          {d.referral_commission_usd ? `$${Number(d.referral_commission_usd).toFixed(0)}` : "-"}
+                          {d.referral_commission_usd ? fmtUsd(Number(d.referral_commission_usd)) : "-"}
                         </td>
                         <td className="px-5 py-3.5">
                           {d.referral_commission_paid ? (
@@ -284,8 +341,14 @@ export function ReferralDashboard({ section = "links" }: { section?: ReferralSec
                       <td colSpan={5} className="px-5 py-12 text-center text-muted-foreground italic">No commission history yet.</td>
                     </tr>
                   )}
+                  {!isLoading && data?.deals?.length > 0 && !filteredCommissions.length && (
+                    <tr>
+                      <td colSpan={5} className="px-5 py-12 text-center text-muted-foreground italic">No commissions match your filters.</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
+              )}
             </div>
           </div>
         </div>
@@ -295,7 +358,27 @@ export function ReferralDashboard({ section = "links" }: { section?: ReferralSec
         <ReferralAnalyticsPanel />
       ) : section === "links" ? (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <DashboardDataToolbar
+            search={linksSearch}
+            onSearchChange={setLinksSearch}
+            searchPlaceholder="Search event or link code…"
+            onExport={() =>
+              downloadCsv(
+                datedCsvFilename("ige-referral-links"),
+                ["event", "short_code", "clicks", "commission_rate", "status"],
+                filteredLinks.map((l: any) => {
+                  const ev = data?.events?.[l.event_id];
+                  return [ev?.name ?? "", l.short_code, l.click_count, `${(Number(l.commission_rate) * 100).toFixed(1)}%`, l.status];
+                }),
+              )
+            }
+            exportDisabled={!filteredLinks.length}
+            exportCount={filteredLinks.length}
+          />
           <div className="overflow-x-auto">
+            {isLoading ? (
+              <DashboardTableSkeleton rows={6} cols={5} />
+            ) : (
             <table className="w-full text-sm min-w-[700px]">
               <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
                 <tr>
@@ -307,7 +390,7 @@ export function ReferralDashboard({ section = "links" }: { section?: ReferralSec
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {(data?.links ?? []).map((l: any) => {
+                {filteredLinks.map((l: any) => {
                   const ev = data!.events[l.event_id];
                   const url = typeof window !== "undefined" ? `${window.location.origin}/r/${l.short_code}` : `/r/${l.short_code}`;
                   const shareText = `Sponsor ${ev?.name ?? "this event"} via IGE: ${url}`;
@@ -343,13 +426,30 @@ export function ReferralDashboard({ section = "links" }: { section?: ReferralSec
                     <td colSpan={5} className="px-5 py-12 text-center text-muted-foreground">No referral links yet. Generate one to start sharing.</td>
                   </tr>
                 )}
+                {!isLoading && data?.links?.length > 0 && !filteredLinks.length && (
+                  <tr>
+                    <td colSpan={5} className="px-5 py-12 text-center text-muted-foreground">No links match your search.</td>
+                  </tr>
+                )}
               </tbody>
             </table>
+            )}
           </div>
         </div>
       ) : section === "deals" ? (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <DashboardDataToolbar
+            search={dealsSearch}
+            onSearchChange={setDealsSearch}
+            searchPlaceholder="Search event or deal status…"
+            onExport={() => exportPayoutCsv(filteredDeals, data?.events ?? {})}
+            exportDisabled={!filteredDeals.length}
+            exportCount={filteredDeals.length}
+          />
           <div className="overflow-x-auto">
+            {isLoading ? (
+              <DashboardTableSkeleton rows={6} cols={5} />
+            ) : (
             <table className="w-full text-sm min-w-[700px]">
               <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
                 <tr>
@@ -361,7 +461,7 @@ export function ReferralDashboard({ section = "links" }: { section?: ReferralSec
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {(data?.deals ?? []).map((d: any) => {
+                {filteredDeals.map((d: any) => {
                   const ev = data!.events[d.event_id];
                   return (
                     <tr key={d.id} className="hover:bg-muted/10 transition-colors">
@@ -371,7 +471,7 @@ export function ReferralDashboard({ section = "links" }: { section?: ReferralSec
                         {d.deal_value_native ? `${d.deal_currency} ${Number(d.deal_value_native).toLocaleString()}` : "-"}
                       </td>
                       <td className="px-5 py-3.5 text-xs font-semibold text-primary-deep">
-                        {d.referral_commission_usd ? `$${Number(d.referral_commission_usd).toFixed(0)}` : "-"}
+                        {d.referral_commission_usd ? fmtUsd(Number(d.referral_commission_usd)) : "-"}
                       </td>
                       <td className="px-5 py-3.5">
                         {d.referral_commission_paid ? (
@@ -388,8 +488,14 @@ export function ReferralDashboard({ section = "links" }: { section?: ReferralSec
                     <td colSpan={5} className="px-5 py-12 text-center text-muted-foreground italic">No referred deals in pipeline yet.</td>
                   </tr>
                 )}
+                {!isLoading && data?.deals?.length > 0 && !filteredDeals.length && (
+                  <tr>
+                    <td colSpan={5} className="px-5 py-12 text-center text-muted-foreground italic">No deals match your search.</td>
+                  </tr>
+                )}
               </tbody>
             </table>
+            )}
           </div>
         </div>
       ) : null}

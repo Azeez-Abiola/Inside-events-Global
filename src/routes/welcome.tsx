@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { SiteFooter, SITE_BRAND_NAME } from "@/components/site-chrome";
 import { BrandLogo } from "@/components/brand-logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { trackEvent } from "@/lib/analytics";
 import type { WaitlistAudience } from "@/lib/waitlist-audiences";
@@ -67,7 +68,7 @@ function WelcomePage() {
               {SITE_BRAND_NAME}
             </span>
           </Link>
-          <div className="flex items-center gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-4">
             <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
               <Link to="/about" className="transition-colors hover:text-foreground">
                 About
@@ -76,6 +77,7 @@ function WelcomePage() {
                 How it works
               </Link>
             </nav>
+            <ThemeToggle />
             <Link
               to="/waitlist"
               className="inline-flex shrink-0 items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow transition-transform hover:-translate-y-0.5"

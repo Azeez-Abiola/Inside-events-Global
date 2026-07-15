@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { getWorkspaceNav } from "@/lib/workspace-nav";
 import { greetingName, roleLabel } from "@/lib/dashboard-meta";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { CurrencyToggle } from "@/components/currency-toggle";
+import { SidebarInsightCard } from "@/components/sidebar-insight-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import {
@@ -49,7 +51,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   const sidebar = (
-    <aside className="flex h-full w-[248px] shrink-0 flex-col bg-card">
+    <aside className="flex h-full w-[248px] shrink-0 flex-col border-r border-border/40 bg-brand-soft dark:bg-sidebar">
       {/* Voom: logo row */}
       <div className="flex h-[72px] items-center gap-3 px-6">
         <BrandLogo />
@@ -83,16 +85,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Voom: marketplace CTA card + sign out */}
       <div className="space-y-2 p-4">
-        <div className="rounded-2xl bg-brand-soft p-4">
-          <p className="text-xs font-semibold text-primary-deep">Join the waitlist</p>
-          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">Be first to know when the IGE marketplace opens.</p>
-          <Link
-            to="/waitlist"
-            className="mt-3 inline-flex w-full items-center justify-center rounded-xl bg-brand-gradient py-2 text-xs font-bold text-white"
-          >
-            Join waitlist
-          </Link>
-        </div>
+        <SidebarInsightCard roles={roles} />
         <button
           onClick={() => setSignOutOpen(true)}
           className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
@@ -134,7 +127,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       )}
 
       <div className="flex min-h-screen">
-        <div className="hidden md:block sticky top-0 h-screen border-r border-border/50">{sidebar}</div>
+        <div className="hidden md:block sticky top-0 h-screen">{sidebar}</div>
 
         <div className="flex min-w-0 flex-1 flex-col">
           {/* Voom: white top bar — centered search, utilities right */}
@@ -160,6 +153,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
+              <CurrencyToggle className="hidden sm:inline-flex" />
               <NotificationsBell />
               <ThemeToggle />
               <Link
@@ -178,7 +172,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           </header>
 
-          <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+          <main className="flex-1 bg-dashboard-canvas px-4 py-6 sm:px-6 lg:px-8">{children}</main>
         </div>
       </div>
 

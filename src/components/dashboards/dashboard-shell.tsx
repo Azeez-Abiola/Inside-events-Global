@@ -1,7 +1,8 @@
 import { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, Loader2 } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DashboardPageSkeleton } from "@/components/dashboards/dashboard-skeletons";
 
 export function DashboardHeader({
   title,
@@ -171,13 +172,20 @@ export function DashboardEmpty({
   );
 }
 
-export function DashboardLoading({ label = "Loading workspace…" }: { label?: string }) {
-  return (
-    <div className="flex items-center justify-center py-16 text-muted-foreground">
-      <Loader2 className="mr-2 h-5 w-5 animate-spin text-primary" />
-      <span className="text-sm font-medium">{label}</span>
-    </div>
-  );
+export function DashboardLoading({
+  label: _label,
+  kpis = 3,
+  tableRows = 6,
+  showTabs = false,
+  showCharts = false,
+}: {
+  label?: string;
+  kpis?: number;
+  tableRows?: number;
+  showTabs?: boolean;
+  showCharts?: boolean;
+}) {
+  return <DashboardPageSkeleton kpis={kpis} tableRows={tableRows} showTabs={showTabs} showCharts={showCharts} />;
 }
 
 export const VETTING_STEPS = [

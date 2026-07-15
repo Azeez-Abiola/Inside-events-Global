@@ -1,29 +1,45 @@
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import {
-  ShieldCheck, Users, DollarSign, TrendingUp, BarChart3, UserCheck,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  ShieldCheck, Users, DollarSign, BarChart3, UserCheck,
   AlertTriangle, ArrowRight,
 } from "lucide-react";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { KpiTile, DonutBreakdown, FeaturedHeroCard, AgendaList } from "@/components/dashboards/voom-primitives";
 import { QuickLinkCard } from "@/components/dashboards/shared";
 import { DashboardLoading } from "@/components/dashboards/dashboard-shell";
+import { DateRangePicker, defaultSalesRange, type DateRangeValue } from "@/components/date-range-picker";
 import { getAdminAnalytics } from "@/lib/analytics.functions";
 import { StatusBadge } from "@/components/app-shell";
+import { useDisplayCurrency } from "@/lib/display-currency-context";
+import { cn } from "@/lib/utils";
 
-const CHART_COLORS = ["hsl(271 45% 44%)", "hsl(160 100% 25%)"];
+const CHART_COLORS = ["hsl(271 45% 44%)", "hsl(160 100% 25%)", "hsl(271 45% 60%)"];
 
 function fmtMonth(m: string) {
   const [y, mo] = m.split("-");
   return new Date(Number(y), Number(mo) - 1).toLocaleString("en", { month: "short" });
 }
 
+type ChartMode = "bar" | "line";
+
 type AdminOverviewProps = {
   vettingCount: number;
   waitlistCount: number;
-  adminGmv: string;
+  adminGmvUsd: number;
   openDeals: number;
   fraudFlags: number;
   pendingInquiries: number;
@@ -36,7 +52,7 @@ type AdminOverviewProps = {
 export function AdminOverviewPanel({
   vettingCount,
   waitlistCount,
-  adminGmv,
+  adminGmvUsd,
   openDeals,
   fraudFlags,
   pendingInquiries,
@@ -45,15 +61,37 @@ export function AdminOverviewPanel({
   vettingLoading,
   revenueLoading,
 }: AdminOverviewProps) {
+  const { fmtUsd, convertUsd, displayCurrency, labelSuffix } = useDisplayCurrency();
+  const [dateRange, setDateRange] = useState<DateRangeValue>(defaultSalesRange);
+  const [chartMode, setChartMode] = useState<ChartMode>("bar");
+
   const fetch = useServerFn(getAdminAnalytics);
   const { data: analytics, isLoading: analyticsLoading } = useQuery({
-    queryKey: ["analytics", "admin", "overview"],
-    queryFn: () => fetch(),
+    queryKey: ["analytics", "admin", "overview", dateRange.from.toISOString(), dateRange.to.toISOString()],
+    queryFn: () =>
+      fetch({
+        data: {
+          from: dateRange.from.toISOString(),
+          to: dateRange.to.toISOString(),
+        },
+      }),
   });
 
-  if (analyticsLoading && !analytics) return <DashboardLoading label="Loading dashboard…" />;
+  const gmvChartData = useMemo(
+    () =>
+      (analytics?.gmvOverTime ?? []).map((d) => ({
+        ...d,
+        label: fmtMonth(d.month),
+        gmv: convertUsd(Number(d.gmv ?? 0)),
+      })),
+    [analytics?.gmvOverTime, convertUsd],
+  );
 
-  const gmvConfig = { gmv: { label: "GMV (USD)", color: CHART_COLORS[0] } };
+  const rangeTotal = convertUsd(Number(analytics?.summary.rangeGmv ?? 0));
+  const maxGmv = Math.max(...gmvChartData.map((d) => d.gmv), 0);
+
+  if (analyticsLoading && !analytics) return <DashboardLoading showCharts kpis={4} />;
+
   const vettingData = analytics?.vettingPipeline?.filter((d) => d.count > 0) ?? [];
   const featured = recentVetting[0];
   const agendaItems = recentVetting.slice(0, 4).map((e: any) => ({
@@ -66,37 +104,135 @@ export function AdminOverviewPanel({
 
   return (
     <div className="space-y-5">
-      {/* Voom row 1: compact KPI tiles */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <KpiTile icon={ShieldCheck} label="Vetting queue" value={vettingCount} loading={vettingLoading} trend={`${analytics?.summary.liveEvents ?? 0} live`} />
         <KpiTile icon={Users} label="Waitlist signups" value={waitlistCount} />
-        <KpiTile icon={DollarSign} label="Deal volume (GMV)" value={adminGmv} loading={revenueLoading} />
+        <KpiTile icon={DollarSign} label={`Deal volume (GMV)${labelSuffix}`} value={fmtUsd(adminGmvUsd)} loading={revenueLoading} />
       </div>
 
-      {/* Voom row 2: charts left + right rail */}
       <div className="grid gap-5 xl:grid-cols-3">
         <div className="space-y-5 xl:col-span-2">
           <div className="rounded-2xl bg-card shadow-card">
-            <div className="flex items-center justify-between border-b border-border/50 px-5 py-4">
+            <div className="flex flex-col gap-3 border-b border-border/50 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h3 className="font-display text-sm font-bold text-foreground">Sales revenue</h3>
-                <p className="text-xs text-muted-foreground">Closed deal GMV — last 6 months</p>
+                <p className="text-xs text-muted-foreground">
+                  Closed deal GMV ({displayCurrency})
+                  {analytics?.summary.rangeGmv != null ? ` · period total ${fmtUsd(analytics.summary.rangeGmv)}` : ""}
+                </p>
               </div>
-              <span className="rounded-full bg-muted px-3 py-1 text-[11px] font-semibold text-muted-foreground">6 months</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex rounded-full border border-border/60 bg-muted/40 p-0.5">
+                  {(["bar", "line"] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setChartMode(mode)}
+                      className={cn(
+                        "rounded-full px-2.5 py-1 text-[11px] font-bold capitalize transition-colors",
+                        chartMode === mode
+                          ? "bg-card text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {mode}
+                    </button>
+                  ))}
+                </div>
+                <DateRangePicker value={dateRange} onChange={setDateRange} />
+              </div>
             </div>
             <div className="p-5">
-              <ChartContainer config={gmvConfig} className="h-[220px] w-full aspect-auto">
-                <LineChart
-                  data={(analytics?.gmvOverTime ?? []).map((d) => ({ ...d, label: fmtMonth(d.month) }))}
-                  margin={{ left: 0, right: 8, top: 8, bottom: 0 }}
-                >
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border/40" />
-                  <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
-                  <YAxis tickLine={false} axisLine={false} width={48} tick={{ fontSize: 11 }} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Line type="monotone" dataKey="gmv" stroke={CHART_COLORS[0]} strokeWidth={2.5} dot={{ r: 4, fill: CHART_COLORS[0] }} />
-                </LineChart>
-              </ChartContainer>
+              {gmvChartData.length === 0 ? (
+                <p className="py-16 text-center text-sm text-muted-foreground italic">No closed deals in this date range.</p>
+              ) : (
+                <div className="h-[260px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    {chartMode === "bar" ? (
+                      <BarChart data={gmvChartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
+                        <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border/40" />
+                        <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
+                        <YAxis
+                          tickLine={false}
+                          axisLine={false}
+                          width={56}
+                          tick={{ fontSize: 11 }}
+                          tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : String(v))}
+                          domain={[0, maxGmv > 0 ? "auto" : 4]}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            borderRadius: 12,
+                            border: "1px solid hsl(var(--border))",
+                            background: "hsl(var(--card))",
+                            fontSize: 12,
+                          }}
+                          labelFormatter={(label) => String(label)}
+                          formatter={(value) => [
+                            typeof value === "number"
+                              ? new Intl.NumberFormat("en-US", {
+                                  style: "currency",
+                                  currency: displayCurrency,
+                                  maximumFractionDigits: 0,
+                                }).format(value)
+                              : value,
+                            "GMV",
+                          ]}
+                        />
+                        <Bar dataKey="gmv" radius={[6, 6, 0, 0]} maxBarSize={48}>
+                          {gmvChartData.map((_, i) => (
+                            <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    ) : (
+                      <LineChart data={gmvChartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
+                        <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border/40" />
+                        <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
+                        <YAxis
+                          tickLine={false}
+                          axisLine={false}
+                          width={56}
+                          tick={{ fontSize: 11 }}
+                          tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : String(v))}
+                          domain={[0, maxGmv > 0 ? "auto" : 4]}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            borderRadius: 12,
+                            border: "1px solid hsl(var(--border))",
+                            background: "hsl(var(--card))",
+                            fontSize: 12,
+                          }}
+                          formatter={(value) => [
+                            typeof value === "number"
+                              ? new Intl.NumberFormat("en-US", {
+                                  style: "currency",
+                                  currency: displayCurrency,
+                                  maximumFractionDigits: 0,
+                                }).format(value)
+                              : value,
+                            "GMV",
+                          ]}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="gmv"
+                          stroke={CHART_COLORS[0]}
+                          strokeWidth={2.5}
+                          dot={{ r: 4, fill: CHART_COLORS[0] }}
+                          activeDot={{ r: 6 }}
+                        />
+                      </LineChart>
+                    )}
+                  </ResponsiveContainer>
+                </div>
+              )}
+              {gmvChartData.every((d) => d.gmv === 0) && gmvChartData.length > 0 && (
+                <p className="mt-2 text-center text-[11px] text-muted-foreground">
+                  No paid deals in this period yet — bars stay at zero until payments land.
+                </p>
+              )}
             </div>
           </div>
 
@@ -110,7 +246,6 @@ export function AdminOverviewPanel({
             centerValue={vettingCount}
           />
 
-          {/* Voom "All Events" style list */}
           <div className="rounded-2xl bg-card shadow-card">
             <div className="flex items-center justify-between border-b border-border/50 px-5 py-4">
               <h3 className="font-display text-sm font-bold text-foreground">Recent submissions</h3>
@@ -145,7 +280,6 @@ export function AdminOverviewPanel({
           </div>
         </div>
 
-        {/* Voom right column */}
         <div className="space-y-5">
           {featured ? (
             <FeaturedHeroCard
@@ -178,6 +312,12 @@ export function AdminOverviewPanel({
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Open deals</span>
               <span className="font-display text-lg font-bold text-foreground">{openDeals}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Period GMV</span>
+              <span className="font-display text-lg font-bold text-foreground">
+                {new Intl.NumberFormat("en-US", { style: "currency", currency: displayCurrency, maximumFractionDigits: 0 }).format(rangeTotal)}
+              </span>
             </div>
             {fraudFlags > 0 && (
               <Link

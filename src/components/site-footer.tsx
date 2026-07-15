@@ -1,37 +1,38 @@
 import { useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { Instagram, Linkedin } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { subscribeNewsletter } from "@/lib/newsletter.functions";
 
 const HI_EMAIL = "hi@insideglobalevents.com";
 const IG_URL = "https://www.instagram.com/insideglobalevents";
 const LINKEDIN_URL = "https://www.linkedin.com/company/inside-global-events";
 
-const NEWSLETTER_EMAIL_KEY = "ige:footer-newsletter-email";
-
 export function SiteFooter() {
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const subscribe = useServerFn(subscribeNewsletter);
 
-  function handleSubscribe(e: React.FormEvent) {
+  async function handleSubscribe(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = email.trim();
     if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      toast.error("Enter a valid work email.");
+      toast.error("Enter a valid email address.");
       return;
     }
     setSubmitting(true);
     try {
-      sessionStorage.setItem(NEWSLETTER_EMAIL_KEY, trimmed);
-    } catch {
-      /* ignore */
+      await subscribe({ data: { email: trimmed, source: "homepage" } });
+      toast.success("You're subscribed — watch your inbox for IGE updates.");
+      setEmail("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not subscribe. Try again.");
+    } finally {
+      setSubmitting(false);
     }
-    toast.success("Almost there — pick your role on the waitlist to finish.");
-    navigate({ to: "/waitlist" });
-    setSubmitting(false);
   }
 
   return (
@@ -53,7 +54,7 @@ export function SiteFooter() {
               Stay in the loop
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
-              Join our newsletter for updates as we open access.
+              Join our newsletter for marketplace updates and featured events.
             </p>
             <form onSubmit={handleSubscribe} className="mt-4 flex max-w-md flex-col gap-2 sm:flex-row">
               <Input
@@ -71,7 +72,7 @@ export function SiteFooter() {
                 disabled={submitting}
                 className="h-11 shrink-0 rounded-lg bg-primary px-6 font-semibold hover:bg-primary-deep"
               >
-                Subscribe
+                {submitting ? "Subscribing…" : "Subscribe"}
               </Button>
             </form>
           </div>
@@ -124,5 +125,3 @@ export function SiteFooter() {
     </footer>
   );
 }
-
-export { NEWSLETTER_EMAIL_KEY };

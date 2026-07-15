@@ -1,23 +1,26 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
-  Globe2, Handshake, Megaphone, Newspaper, Users, Search, Download, Mail, Phone, Building2, MapPin,
+  Globe2, Handshake, Megaphone, Newspaper, Users, Mail, Phone, Building2, MapPin,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { KpiTile } from "@/components/dashboards/voom-primitives";
 import { StatusPill } from "@/components/dashboards/shared";
 import { DashboardPanel, DashboardTable, DashboardTableHead } from "@/components/dashboards/dashboard-shell";
-import { Input } from "@/components/ui/input";
+import { DashboardDataToolbar } from "@/components/dashboards/dashboard-data-toolbar";
+import { DashboardTableSkeleton } from "@/components/dashboards/dashboard-skeletons";
+import { datedCsvFilename, downloadCsv } from "@/lib/csv-export";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
 import {
   WAITLIST_AUDIENCES, type WaitlistAudience, waitlistAudienceLabel, isWaitlistAudience,
 } from "@/lib/waitlist-audiences";
-import { inviteWaitlistSignup } from "@/lib/waitlist.functions";
+import { reviewWaitlistSignup } from "@/lib/waitlist.functions";
 
 export type WaitlistSignup = {
   id: string;
@@ -34,6 +37,7 @@ export type WaitlistSignup = {
   referred_by: string | null;
   consent_given: boolean;
   status: string;
+  rejection_reason: string | null;
   form_data: Record<string, string | string[]> | null;
 };
 
@@ -61,50 +65,71 @@ function formatFormValue(value: string | string[] | undefined) {
 function exportWaitlistCsv(rows: WaitlistSignup[]) {
   const headers = [
     "created_at", "audience", "full_name", "email", "phone", "company", "role_title", "country",
-    "referral_source", "referred_by", "status", "notes", "form_data",
+    "referral_source", "referred_by", "status", "notes", "rejection_reason", "form_data",
   ];
-  const lines = [
-    headers.join(","),
-    ...rows.map((r) =>
-      headers.map((h) => {
-        const raw = h === "form_data"
-          ? JSON.stringify(r.form_data ?? {})
-          : String((r as Record<string, unknown>)[h] ?? "");
-        return `"${raw.replace(/"/g, '""')}"`;
-      }).join(","),
+  downloadCsv(
+    datedCsvFilename("ige-waitlist"),
+    headers,
+    rows.map((r) =>
+      headers.map((h) =>
+        h === "form_data" ? JSON.stringify(r.form_data ?? {}) : (r as Record<string, unknown>)[h] ?? "",
+      ),
     ),
-  ];
-  const blob = new Blob([lines.join("\n")], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `ige-waitlist-${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+  );
+}
+
+function isWaitlistApproved(status: string) {
+  return ["approved", "invited", "converted"].includes(status);
+}
+
+function isWaitlistRejected(status: string) {
+  return ["rejected", "declined"].includes(status);
 }
 
 function WaitlistDetailSheet({
   signup,
   open,
   onOpenChange,
-  onInvited,
+  onReviewed,
 }: {
   signup: WaitlistSignup | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onInvited: () => void;
+  onReviewed: (patch: Pick<WaitlistSignup, "status" | "rejection_reason">) => void;
 }) {
-  const invite = useServerFn(inviteWaitlistSignup);
-  const inviteMut = useMutation({
-    mutationFn: () => invite({ data: { id: signup!.id } }),
-    onSuccess: () => {
-      toast.success("Invite email sent");
-      onInvited();
+  const review = useServerFn(reviewWaitlistSignup);
+  const [rejectNote, setRejectNote] = useState("");
+
+  useEffect(() => {
+    setRejectNote("");
+  }, [signup?.id]);
+
+  const reviewMut = useMutation({
+    mutationFn: (action: "approve" | "reject") =>
+      review({
+        data: {
+          id: signup!.id,
+          action,
+          note: action === "reject" ? rejectNote.trim() : undefined,
+        },
+      }),
+    onSuccess: (res) => {
+      if (res.status === "approved") {
+        toast.success("Approved — invite email sent");
+        onReviewed({ status: "approved", rejection_reason: null });
+      } else {
+        toast.success("Rejected — applicant notified by email");
+        onReviewed({ status: "rejected", rejection_reason: rejectNote.trim() });
+      }
+      setRejectNote("");
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
   if (!signup) return null;
+  const approved = isWaitlistApproved(signup.status);
+  const rejected = isWaitlistRejected(signup.status);
+  const canReview = !approved && !rejected;
   const formEntries = Object.entries(signup.form_data ?? {}).filter(
     ([, v]) => v != null && (Array.isArray(v) ? v.length > 0 : String(v).trim() !== ""),
   );
@@ -175,6 +200,15 @@ function WaitlistDetailSheet({
             </section>
           )}
 
+          {signup.rejection_reason && (
+            <section className="space-y-2">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Rejection note</h4>
+              <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-relaxed text-red-900 whitespace-pre-wrap">
+                {signup.rejection_reason}
+              </p>
+            </section>
+          )}
+
           {formEntries.length > 0 && (
             <section className="space-y-3">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -192,16 +226,36 @@ function WaitlistDetailSheet({
           )}
         </div>
 
-        <div className="mt-8 flex flex-wrap gap-2 border-t border-border pt-6">
-          <Button
-            disabled={inviteMut.isPending || signup.status === "invited"}
-            onClick={() => inviteMut.mutate()}
-          >
-            {signup.status === "invited" ? "Already invited" : inviteMut.isPending ? "Sending…" : "Send founding-member invite"}
-          </Button>
-          <Button variant="outline" asChild>
-            <a href={`mailto:${signup.email}`}>Email directly</a>
-          </Button>
+        <div className="mt-8 space-y-4 border-t border-border pt-6">
+          {canReview && (
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Rejection note (required to reject)
+              </span>
+              <Textarea
+                rows={3}
+                value={rejectNote}
+                onChange={(e) => setRejectNote(e.target.value)}
+                placeholder="Explain why this application was not approved — the applicant will receive this by email."
+              />
+            </label>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              disabled={!canReview || reviewMut.isPending}
+              onClick={() => reviewMut.mutate("approve")}
+            >
+              {reviewMut.isPending ? "Saving…" : approved ? "Approved" : "Approve"}
+            </Button>
+            <Button
+              variant="outline"
+              className="border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
+              disabled={!canReview || reviewMut.isPending || !rejectNote.trim()}
+              onClick={() => reviewMut.mutate("reject")}
+            >
+              {rejected ? "Rejected" : reviewMut.isPending ? "Saving…" : "Reject"}
+            </Button>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
@@ -282,29 +336,6 @@ export function AdminWaitlistPanel() {
         })}
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative max-w-md flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search name, email, company, country…"
-            className="pl-9"
-          />
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={!filtered.length}
-          onClick={() => exportWaitlistCsv(filtered)}
-          className="gap-2"
-        >
-          <Download className="h-4 w-4" />
-          Export CSV ({filtered.length})
-        </Button>
-      </div>
-
       <DashboardPanel
         title={
           audienceFilter === "all"
@@ -314,8 +345,16 @@ export function AdminWaitlistPanel() {
         description="Click a row to view full intake details and role-specific answers."
         bodyClassName="p-0"
       >
+        <DashboardDataToolbar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search name, email, company, country…"
+          onExport={() => exportWaitlistCsv(filtered)}
+          exportDisabled={!filtered.length}
+          exportCount={filtered.length}
+        />
         {isLoading ? (
-          <div className="p-8 text-center text-muted-foreground">Loading waitlist…</div>
+          <DashboardTableSkeleton rows={8} cols={8} />
         ) : !filtered.length ? (
           <div className="p-8 text-center text-muted-foreground">
             {signups.length ? "No signups match your filters." : "No waitlist signups yet."}
@@ -364,9 +403,9 @@ export function AdminWaitlistPanel() {
         signup={selected}
         open={!!selected}
         onOpenChange={(open) => { if (!open) setSelected(null); }}
-        onInvited={() => {
+        onReviewed={(patch) => {
           void refetch();
-          if (selected) setSelected({ ...selected, status: "invited" });
+          if (selected) setSelected({ ...selected, ...patch });
         }}
       />
     </div>

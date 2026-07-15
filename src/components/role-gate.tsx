@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Navigate } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
+import { DashboardPageSkeleton } from "@/components/dashboards/dashboard-skeletons";
 import { useAuth } from "@/lib/auth-context";
 
 type AppRole =
@@ -24,11 +24,7 @@ export function RoleGate({
   const allowed = Array.isArray(allow) ? allow : [allow];
 
   if (loading) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center text-muted-foreground">
-        <Loader2 className="h-5 w-5 animate-spin" />
-      </div>
-    );
+    return <DashboardPageSkeleton kpis={3} tableRows={5} />;
   }
 
   if (!allowed.some((r) => roles.includes(r))) {

@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 // Slideshow images (served from /public/events). Itsekiri banner intentionally excluded.
 const SLIDES = [
@@ -86,6 +87,9 @@ export function AuthShell({
         {/* Right: form */}
         <div className="relative flex flex-col px-6 pt-20 pb-10 sm:px-12 sm:pt-24">
           {/* Back arrow — top left of the form viewport */}
+          <div className="absolute right-6 top-6 sm:right-12 sm:top-10">
+            <ThemeToggle />
+          </div>
           <div className="absolute left-6 top-6 sm:left-12 sm:top-10">
             <Link
               to="/"

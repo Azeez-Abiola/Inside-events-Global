@@ -1,12 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { AppShell } from "@/components/app-shell";
+import { DashboardPageSkeleton } from "@/components/dashboards/dashboard-skeletons";
 import { SponsorAnalyticsPage } from "@/components/dashboards/sponsor-pages";
 import { OrganiserAnalyticsPage } from "@/components/dashboards/organiser-pages";
 import { ReferralDashboard } from "@/components/dashboards/referral-dashboard";
 import { MediaPartnerDashboard } from "@/components/dashboards/media-dashboard";
 import { AdminDashboard } from "@/components/dashboards/admin-dashboard";
 import { useAuth } from "@/lib/auth-context";
-import { Navigate } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard/analytics")({
   head: () => ({ meta: [{ title: "Analytics - IGE" }] }),
@@ -18,9 +18,9 @@ function AnalyticsRoute() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center text-muted-foreground">
-        <Loader2 className="h-5 w-5 animate-spin" />
-      </div>
+      <AppShell>
+        <DashboardPageSkeleton kpis={4} showCharts />
+      </AppShell>
     );
   }
 

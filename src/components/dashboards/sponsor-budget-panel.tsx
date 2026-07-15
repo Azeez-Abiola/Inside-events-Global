@@ -2,8 +2,10 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Plus, Wallet, TrendingUp, CheckCircle2, PiggyBank, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Wallet, TrendingUp, CheckCircle2, PiggyBank, Pencil, Trash2 } from "lucide-react";
 import { StatCard } from "@/components/dashboards/shared";
+import { DashboardCardGridSkeleton } from "@/components/dashboards/dashboard-skeletons";
+import { useDisplayCurrency } from "@/lib/display-currency-context";
 import { DashboardEmpty } from "@/components/dashboards/dashboard-shell";
 import { getSponsorBudgets, upsertMarketBudget, deleteMarketBudget } from "@/lib/budget.functions";
 import { fmtMoney } from "@/lib/currency";
@@ -11,6 +13,7 @@ import { fmtMoney } from "@/lib/currency";
 const QUARTERS = ["q1_allocation", "q2_allocation", "q3_allocation", "q4_allocation"] as const;
 
 export function SponsorBudgetPanel() {
+  const { fmtUsd, labelSuffix } = useDisplayCurrency();
   const qc = useQueryClient();
   const fetch = useServerFn(getSponsorBudgets);
   const del = useServerFn(deleteMarketBudget);
@@ -40,17 +43,17 @@ export function SponsorBudgetPanel() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Wallet} label="Portfolio budget" value={fmtMoney("USD", p?.totalUsd ?? 0)} loading={isLoading} />
-        <StatCard icon={TrendingUp} label="Committed" value={fmtMoney("USD", p?.committedUsd ?? 0)} loading={isLoading} />
-        <StatCard icon={CheckCircle2} label="Paid" value={fmtMoney("USD", p?.paidUsd ?? 0)} loading={isLoading} />
-        <StatCard icon={PiggyBank} label="Remaining" value={fmtMoney("USD", p?.remainingUsd ?? 0)} loading={isLoading} />
+        <StatCard icon={Wallet} label={`Portfolio budget${labelSuffix}`} value={fmtUsd(p?.totalUsd ?? 0)} loading={isLoading} />
+        <StatCard icon={TrendingUp} label={`Committed${labelSuffix}`} value={fmtUsd(p?.committedUsd ?? 0)} loading={isLoading} />
+        <StatCard icon={CheckCircle2} label={`Paid${labelSuffix}`} value={fmtUsd(p?.paidUsd ?? 0)} loading={isLoading} />
+        <StatCard icon={PiggyBank} label={`Remaining${labelSuffix}`} value={fmtUsd(p?.remainingUsd ?? 0)} loading={isLoading} />
       </div>
 
       {p && p.totalUsd > 0 && (
         <div>
           <div className="mb-1 flex justify-between text-xs text-muted-foreground">
             <span>{usedPct.toFixed(0)}% committed + paid</span>
-            <span>{fmtMoney("USD", p.remainingUsd)} remaining</span>
+            <span>{fmtUsd(p.remainingUsd)} remaining</span>
           </div>
           <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
             <div className="h-full rounded-full bg-brand-gradient" style={{ width: `${usedPct}%` }} />
@@ -59,7 +62,7 @@ export function SponsorBudgetPanel() {
       )}
 
       {isLoading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+        <DashboardCardGridSkeleton count={4} />
       ) : markets.length === 0 ? (
         <DashboardEmpty
           icon={Wallet}

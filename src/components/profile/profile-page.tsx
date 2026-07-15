@@ -1,12 +1,10 @@
 import { useRef, useState, useEffect } from "react";
-import { useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Camera, Loader2, Lock, Shield, Trash2, User } from "lucide-react";
+import { Camera, Loader2, Lock, Shield, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import { deleteMyAccount } from "@/lib/account.functions";
 import {
   getMyProfileSummary,
   updateBaseProfile,
@@ -30,17 +28,6 @@ import { ChipMulti, Field, SelectField, TextArea } from "@/components/signup/pro
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
 type Tab = "general" | "role" | "security";
@@ -48,8 +35,7 @@ type Tab = "general" | "role" | "security";
 const OUTLET_TYPES = ["Publication", "Podcast", "Newsletter", "Creator", "Agency", "Freelance", "Other"];
 
 export function ProfilePage({ initialTab = "general" }: { initialTab?: Tab }) {
-  const { user, roles } = useAuth();
-  const navigate = useNavigate();
+  const { user, roles, signOut } = useAuth();
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [tab, setTab] = useState<Tab>(initialTab);
@@ -57,7 +43,6 @@ export function ProfilePage({ initialTab = "general" }: { initialTab?: Tab }) {
 
   const fetchProfile = useServerFn(getMyProfileSummary);
   const saveBase = useServerFn(updateBaseProfile);
-  const deleteAccount = useServerFn(deleteMyAccount);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["my-profile"],
@@ -204,14 +189,7 @@ export function ProfilePage({ initialTab = "general" }: { initialTab?: Tab }) {
       ) : tab === "role" ? (
         <RoleProfileForm role={primaryRole} data={data} onSaved={() => refetch()} />
       ) : (
-        <SecuritySection
-          onDelete={async () => {
-            await deleteAccount({});
-            await supabase.auth.signOut();
-            toast.success("Account deleted. Your personal data has been anonymised.");
-            navigate({ to: "/" });
-          }}
-        />
+        <SecuritySection onPasswordChanged={signOut} />
       )}
     </div>
   );
@@ -250,7 +228,7 @@ function GeneralProfileForm({
         setSaving(true);
         try {
           await save({ data: form });
-          toast.success("Profile updated");
+          toast.success("Your account details have been saved.");
           onSaved();
         } catch (err) {
           toast.error(err instanceof Error ? err.message : "Save failed");
@@ -493,80 +471,38 @@ function MediaProfileEdit({ data, onSaved }: { data: any; onSaved: () => void })
   );
 }
 
-function SecuritySection({ onDelete }: { onDelete: () => Promise<void> }) {
+function SecuritySection({ onPasswordChanged }: { onPasswordChanged: () => Promise<void> }) {
   const [pw, setPw] = useState({ next: "", confirm: "" });
   const [changing, setChanging] = useState(false);
-  const [deleting, setDeleting] = useState(false);
 
   return (
-    <div className="space-y-6">
-      <form
-        className="space-y-5 rounded-2xl border border-border bg-card p-6"
-        onSubmit={async (e) => {
-          e.preventDefault();
-          if (pw.next.length < 8) return toast.error("Password must be at least 8 characters");
-          if (pw.next !== pw.confirm) return toast.error("Passwords do not match");
-          setChanging(true);
-          try {
-            const { error } = await supabase.auth.updateUser({ password: pw.next });
-            if (error) throw error;
-            toast.success("Password updated");
-            setPw({ next: "", confirm: "" });
-          } catch (err) {
-            toast.error(err instanceof Error ? err.message : "Could not update password");
-          } finally {
-            setChanging(false);
-          }
-        }}
-      >
-        <h3 className="font-display text-lg font-bold">Change password</h3>
-        <Field label="New password" type="password" value={pw.next} onChange={(v) => setPw({ ...pw, next: v })} />
-        <Field label="Confirm new password" type="password" value={pw.confirm} onChange={(v) => setPw({ ...pw, confirm: v })} />
-        <Button type="submit" disabled={changing}>{changing ? "Updating…" : "Update password"}</Button>
-      </form>
-
-      <section className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6">
-        <h3 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-          <Trash2 className="h-5 w-5 text-destructive" /> Delete account
-        </h3>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Permanently delete your account and anonymise your personal data. Deal and referral records are retained for accounting (12-month minimum).
-        </p>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="destructive" className="mt-4" disabled={deleting}>
-              {deleting ? "Deleting…" : "Delete my account"}
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete your IGE account?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This cannot be undone. Your email, name, and personal links will be anonymised; you will be signed out immediately.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={async (e) => {
-                  e.preventDefault();
-                  setDeleting(true);
-                  try {
-                    await onDelete();
-                  } catch (err) {
-                    toast.error(err instanceof Error ? err.message : "Could not delete account");
-                  } finally {
-                    setDeleting(false);
-                  }
-                }}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                Yes, delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </section>
-    </div>
+    <form
+      className="space-y-5 rounded-2xl border border-border bg-card p-6"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        if (pw.next.length < 8) return toast.error("Password must be at least 8 characters.");
+        if (pw.next !== pw.confirm) return toast.error("Passwords do not match.");
+        setChanging(true);
+        try {
+          const { error } = await supabase.auth.updateUser({ password: pw.next });
+          if (error) throw error;
+          toast.success("Password updated. Please sign in again with your new password.");
+          setPw({ next: "", confirm: "" });
+          await onPasswordChanged();
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Could not update password");
+        } finally {
+          setChanging(false);
+        }
+      }}
+    >
+      <h3 className="font-display text-lg font-bold">Change password</h3>
+      <p className="text-sm text-muted-foreground">
+        After updating your password you will be signed out and asked to sign in again.
+      </p>
+      <Field label="New password" type="password" value={pw.next} onChange={(v) => setPw({ ...pw, next: v })} />
+      <Field label="Confirm new password" type="password" value={pw.confirm} onChange={(v) => setPw({ ...pw, confirm: v })} />
+      <Button type="submit" disabled={changing}>{changing ? "Updating…" : "Update password"}</Button>
+    </form>
   );
 }

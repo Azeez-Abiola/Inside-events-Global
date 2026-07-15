@@ -46,8 +46,7 @@ function PrivacyPage() {
 
         <h2 className="text-xl font-semibold">Your rights</h2>
         <p>
-          You can request access, correction, or deletion of your personal data at any time.
-          Use <strong>Account → Delete account</strong> in your dashboard, or email{" "}
+          You can request access, correction, or deletion of your personal data at any time by emailing{" "}
           <a href="mailto:Hi@insideglobalevents.com" className="text-primary hover:underline">
             Hi@insideglobalevents.com
           </a>

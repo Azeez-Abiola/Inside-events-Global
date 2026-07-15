@@ -2,10 +2,11 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Inbox, Bookmark, CalendarDays, Loader2, Calendar, BarChart3 } from "lucide-react";
+import { Inbox, Bookmark, CalendarDays, Calendar, BarChart3 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { StatCard } from "@/components/dashboards/shared";
 import { DashboardEmpty, DashboardHeader, DashboardTabs } from "@/components/dashboards/dashboard-shell";
+import { DashboardCardGridSkeleton } from "@/components/dashboards/dashboard-skeletons";
 import { SponsorAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
 import { SponsorBudgetPanel } from "@/components/dashboards/sponsor-budget-panel";
 import { SponsorPipelinePanel } from "@/components/dashboards/sponsor-pipeline-panel";
@@ -123,7 +124,7 @@ export function SponsorDashboard() {
           </div>
         ) : activeTab === "saved" ? (
           isLoading ? (
-            <div className="flex justify-center py-12 text-muted-foreground"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+            <DashboardCardGridSkeleton count={6} />
           ) : !data?.saves?.length ? (
             <DashboardEmpty
               icon={Bookmark}

@@ -1,30 +1,36 @@
 import { Link } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  ShieldCheck, Users, DollarSign, Loader2, ArrowRight, CheckCircle2, Pencil, XCircle, Award, Wallet, Inbox,
+  ShieldCheck, Users, DollarSign, Loader2, ArrowRight, Award, Wallet, Inbox,
   AlertTriangle, Check, X, SlidersHorizontal, BarChart3, TrendingUp, UserCheck, FileText,
 } from "lucide-react";
-import { AppShell, StatusBadge } from "@/components/app-shell";
+import { AppShell } from "@/components/app-shell";
 import { StatCard, StatusPill } from "@/components/dashboards/shared";
 import { DashboardHeader, DashboardTabs, DashboardPanel, DashboardTable, DashboardTableHead } from "@/components/dashboards/dashboard-shell";
+import { DashboardPageSkeleton, DashboardTableSkeleton } from "@/components/dashboards/dashboard-skeletons";
 import { AdminAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
 import { AdminOverviewPanel } from "@/components/dashboards/admin-overview";
 import { AdminWaitlistPanel } from "@/components/dashboards/admin-waitlist-panel";
 import { AdminMediaRequestsPanel } from "@/components/dashboards/admin-media-requests-panel";
 import { AdminUsersPanel } from "@/components/dashboards/admin-users-panel";
+import { AdminVettingPanel, VettingDrawer } from "@/components/dashboards/admin-vetting-panel";
+import { DashboardDataToolbar } from "@/components/dashboards/dashboard-data-toolbar";
+import { useTableFilters } from "@/hooks/use-table-filters";
+import { datedCsvFilename, downloadCsv } from "@/lib/csv-export";
 import { getAdminSectionMeta, greetingName } from "@/lib/dashboard-meta";
 import { useAuth } from "@/lib/auth-context";
-import { listEventsForVetting, setEventVettingStatus, getEventForAdmin } from "@/lib/admin.functions";
+import { listEventsForVetting } from "@/lib/admin.functions";
 import { adminGetRevenue, adminListFraudFlags, adminResolveFraudFlag, adminUpsertCommissionConfig, adminCreateDeal, adminUpdateDealStatus, adminMarkCommissionPaid, adminUpdateRates, adminAssignDeal } from "@/lib/deals.functions";
 import { generateDealPaymentLink } from "@/lib/payments.functions";
 import { generateDealContract } from "@/lib/contracts.functions";
 import { adminUpdateCustomPackageStatus } from "@/lib/custom-package.functions";
 import { getCurrentRates } from "@/lib/marketplace.functions";
 import { fmtMoney } from "@/lib/currency";
+import { useDisplayCurrency } from "@/lib/display-currency-context";
 
 const DEAL_STATUSES = [
   "inquiry_received",
@@ -40,7 +46,15 @@ const DEAL_STATUSES = [
 ];
 
 export function AdminDashboard({ section = "overview" }: { section?: "overview" | "vetting" | "submissions" | "waitlist" | "revenue" | "controls" | "analytics" | "partners" | "media-requests" | "users" }) {
+  const { fmtUsd, displayCurrency, labelSuffix } = useDisplayCurrency();
   const [drawerOpen, setDrawerOpen] = useState<string | null>(null);
+  const [contactSearch, setContactSearch] = useState("");
+  const [contactStatus, setContactStatus] = useState("all");
+  const [partnerSearch, setPartnerSearch] = useState("");
+  const [fraudSearch, setFraudSearch] = useState("");
+  const [fraudStatus, setFraudStatus] = useState("all");
+  const [dealSearch, setDealSearch] = useState("");
+  const [dealStatus, setDealStatus] = useState("all");
   const qc = useQueryClient();
   const { user } = useAuth();
   const meta = getAdminSectionMeta(section);
@@ -171,18 +185,54 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
     },
   });
 
-  const groupedVetting: Record<string, any[]> = {
-    submitted: [], under_review: [], revision_requested: [], approved: [], rejected: [],
-  };
-  (vettingData?.events ?? []).forEach((e: any) => {
-    if (groupedVetting[e.status]) groupedVetting[e.status].push(e);
-  });
-
   const vettingCount = vettingData?.events?.length ?? 0;
   const waitlistCount = waitlist.data?.length ?? 0;
-  const adminGmv = `$${(revenueData?.totals.gmv ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  const adminGmvUsd = revenueData?.totals.gmv ?? 0;
   const recentVetting = (vettingData?.events ?? []).filter((e: any) => ["submitted", "under_review", "revision_requested"].includes(e.status));
   const pendingInquiries = revenueData?.inquiries?.length ?? 0;
+
+  const filteredContact = useTableFilters({
+    rows: contact.data ?? [],
+    searchText: contactSearch,
+    statusFilter: contactStatus,
+    search: (r: { name: string; email: string; subject: string | null; message: string }) =>
+      [r.name, r.email, r.subject, r.message].filter(Boolean).join(" "),
+    matchStatus: (r: { status: string }, filter) => r.status === filter,
+  });
+
+  const filteredPartners = useTableFilters({
+    rows: revenueData?.partners ?? [],
+    searchText: partnerSearch,
+    search: (p: { full_name?: string; commission_tier?: string }) =>
+      [p.full_name, p.commission_tier].filter(Boolean).join(" "),
+  });
+
+  const filteredFraud = useTableFilters({
+    rows: fraud.data?.flags ?? [],
+    searchText: fraudSearch,
+    statusFilter: fraudStatus,
+    search: (f: { flag_type?: string; description?: string }) =>
+      [f.flag_type, f.description].filter(Boolean).join(" "),
+    matchStatus: (f: { status: string }, filter) => f.status === filter,
+  });
+
+  const filteredDeals = useTableFilters({
+    rows: revenueData?.deals ?? [],
+    searchText: dealSearch,
+    statusFilter: dealStatus,
+    search: (d: { event_id: string; status: string }) => {
+      const ev = revenueData?.events?.[d.event_id];
+      return [ev?.name, d.status].filter(Boolean).join(" ");
+    },
+    matchStatus: (d: { status: string }, filter) => d.status === filter,
+  });
+
+  const dealStatusCounts = useMemo(() => {
+    const deals = revenueData?.deals ?? [];
+    const counts: Record<string, number> = { all: deals.length };
+    for (const d of deals) counts[d.status] = (counts[d.status] ?? 0) + 1;
+    return counts;
+  }, [revenueData?.deals]);
 
   return (
     <AppShell>
@@ -198,7 +248,7 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
           <AdminOverviewPanel
             vettingCount={vettingCount}
             waitlistCount={waitlistCount}
-            adminGmv={adminGmv}
+            adminGmvUsd={adminGmvUsd}
             openDeals={revenueData?.totals.open ?? 0}
             fraudFlags={revenueData?.fraudFlagsOpen ?? 0}
             pendingInquiries={pendingInquiries}
@@ -208,45 +258,7 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
             revenueLoading={revenueLoading}
           />
         ) : section === "vetting" ? (
-          <>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <StatCard icon={ShieldCheck} label="In queue" value={vettingCount} loading={vettingLoading} />
-              <StatCard icon={Users} label="New submissions" value={groupedVetting.submitted?.length ?? 0} loading={vettingLoading} />
-              <StatCard icon={Pencil} label="Under review" value={groupedVetting.under_review?.length ?? 0} loading={vettingLoading} />
-            </div>
-            {vettingLoading ? (
-            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-          ) : (
-            <div className="grid gap-4 xl:grid-cols-5 md:grid-cols-3 sm:grid-cols-2 grid-cols-1">
-              {[
-                { key: "submitted", label: "New submissions" },
-                { key: "under_review", label: "Under review" },
-                { key: "revision_requested", label: "Revision requested" },
-                { key: "approved", label: "Approved" },
-                { key: "rejected", label: "Rejected" },
-              ].map((c) => (
-                <div key={c.key} className="rounded-2xl border border-border/70 bg-card p-4 shadow-soft">
-                  <div className="mb-3 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    <span>{c.label}</span>
-                    <span className="rounded-full bg-brand-soft px-2.5 py-0.5 text-[10px] font-bold text-primary-deep">{groupedVetting[c.key]?.length ?? 0}</span>
-                  </div>
-                  <div className="space-y-2">
-                    {(groupedVetting[c.key] ?? []).map((e: any) => (
-                      <button type="button" key={e.id} onClick={() => setDrawerOpen(e.id)} className="block w-full rounded-xl border border-border/60 bg-muted/20 p-3 text-left text-sm transition-all hover:border-primary/30 hover:bg-card hover:shadow-soft cursor-pointer">
-                        <div className="font-semibold text-foreground truncate">{e.name || "Untitled"}</div>
-                        <div className="mt-1 text-xs text-muted-foreground truncate">{[e.event_type, e.city, e.country].filter(Boolean).join(" · ") || "-"}</div>
-                        <div className="mt-1.5 truncate border-t border-border/50 pt-1 text-[10px] font-mono text-muted-foreground/80">{e.organiser_email}</div>
-                      </button>
-                    ))}
-                    {groupedVetting[c.key]?.length === 0 && (
-                      <p className="rounded-xl border border-dashed border-border p-3 text-center text-xs text-muted-foreground italic">Empty</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-            )}
-          </>
+          <AdminVettingPanel />
         ) : section === "waitlist" ? (
           <AdminWaitlistPanel />
         ) : section === "media-requests" ? (
@@ -259,12 +271,38 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
               <StatCard icon={Inbox} label="Contact messages" value={contact.data?.length ?? 0} loading={contact.isLoading} />
             </div>
 
+            <DashboardTabs
+              tabs={[
+                { id: "all", label: "All", count: contact.data?.length ?? 0 },
+                { id: "new", label: "New", count: (contact.data ?? []).filter((r: { status: string }) => r.status === "new").length },
+                { id: "read", label: "Read", count: (contact.data ?? []).filter((r: { status: string }) => r.status === "read").length },
+              ]}
+              active={contactStatus}
+              onChange={setContactStatus}
+            />
+
             {contact.isLoading ? (
-              <div className="p-8 text-center text-muted-foreground">Loading…</div>
+              <DashboardTableSkeleton rows={6} cols={5} />
             ) : !contact.data?.length ? (
               <div className="p-8 text-center text-muted-foreground">No contact messages.</div>
             ) : (
               <DashboardPanel title="Contact messages" bodyClassName="p-0">
+                <DashboardDataToolbar
+                  search={contactSearch}
+                  onSearchChange={setContactSearch}
+                  searchPlaceholder="Search name, email, subject, message…"
+                  onExport={() =>
+                    downloadCsv(
+                      datedCsvFilename("ige-contact"),
+                      ["created_at", "name", "email", "company", "subject", "message", "status"],
+                      filteredContact.map((r: { created_at: string; name: string; email: string; company: string | null; subject: string | null; message: string; status: string }) => [
+                        r.created_at, r.name, r.email, r.company ?? "", r.subject ?? "", r.message, r.status,
+                      ]),
+                    )
+                  }
+                  exportDisabled={!filteredContact.length}
+                  exportCount={filteredContact.length}
+                />
                 <DashboardTable>
                   <DashboardTableHead>
                     <tr>
@@ -272,7 +310,7 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                     </tr>
                   </DashboardTableHead>
                   <tbody className="divide-y divide-border/60">
-                    {contact.data.map((r: any) => (
+                    {filteredContact.map((r: { id: string; created_at: string; name: string; email: string; subject: string | null; message: string; status: string }) => (
                       <tr key={r.id} className="transition-colors hover:bg-muted/10">
                         <td className="px-4 py-3 text-xs whitespace-nowrap text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
                         <td className="px-4 py-3">
@@ -284,6 +322,9 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                         <td className="px-4 py-3"><StatusPill status={r.status} /></td>
                       </tr>
                     ))}
+                    {!filteredContact.length && (
+                      <tr><td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">No messages match your filters.</td></tr>
+                    )}
                   </tbody>
                 </DashboardTable>
               </DashboardPanel>
@@ -299,18 +340,46 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                 <AlertTriangle className="h-4 w-4 text-destructive" /> Fraud flags
               </h3>
               <p className="mt-1 text-xs text-muted-foreground">Self-referral and suspicious-attribution flags raised by the system.</p>
-              <div className="mt-4 rounded-xl border border-border bg-card overflow-hidden">
+              <div className="mt-4">
+                <DashboardTabs
+                  tabs={[
+                    { id: "all", label: "All", count: fraud.data?.flags?.length ?? 0 },
+                    { id: "open", label: "Open", count: (fraud.data?.flags ?? []).filter((f: { status: string }) => f.status === "open").length },
+                    { id: "actioned", label: "Actioned", count: (fraud.data?.flags ?? []).filter((f: { status: string }) => f.status === "actioned").length },
+                    { id: "dismissed", label: "Dismissed", count: (fraud.data?.flags ?? []).filter((f: { status: string }) => f.status === "dismissed").length },
+                  ]}
+                  active={fraudStatus}
+                  onChange={setFraudStatus}
+                />
+              </div>
+              <DashboardPanel title="Flagged activity" bodyClassName="p-0" className="mt-4">
+                <DashboardDataToolbar
+                  search={fraudSearch}
+                  onSearchChange={setFraudSearch}
+                  searchPlaceholder="Search type or description…"
+                  onExport={() =>
+                    downloadCsv(
+                      datedCsvFilename("ige-fraud-flags"),
+                      ["type", "description", "status", "created_at"],
+                      filteredFraud.map((f: { flag_type?: string; description?: string; status: string; created_at?: string }) => [
+                        f.flag_type ?? "", f.description ?? "", f.status, f.created_at ?? "",
+                      ]),
+                    )
+                  }
+                  exportDisabled={!filteredFraud.length}
+                  exportCount={filteredFraud.length}
+                />
                 {fraud.isLoading ? (
-                  <div className="p-8 text-center text-muted-foreground"><Loader2 className="inline h-4 w-4 animate-spin" /> Loading…</div>
+                  <DashboardTableSkeleton rows={5} cols={4} />
                 ) : !(fraud.data?.flags ?? []).length ? (
                   <div className="p-8 text-center text-muted-foreground text-sm">No fraud flags. Clean slate.</div>
                 ) : (
-                  <table className="w-full text-sm">
-                    <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide border-b border-border text-muted-foreground">
+                  <DashboardTable>
+                    <DashboardTableHead>
                       <tr><th className="px-4 py-3">Type</th><th className="px-4 py-3">Description</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Action</th></tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {(fraud.data?.flags ?? []).map((f: any) => (
+                    </DashboardTableHead>
+                    <tbody className="divide-y divide-border/60">
+                      {filteredFraud.map((f: { id: string; flag_type?: string; description?: string; status: string }) => (
                         <tr key={f.id} className="hover:bg-muted/10">
                           <td className="px-4 py-3 font-semibold text-foreground capitalize">{(f.flag_type || "").replace(/_/g, " ")}</td>
                           <td className="px-4 py-3 text-xs text-muted-foreground max-w-[360px]">{f.description ?? "—"}</td>
@@ -320,10 +389,10 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                           <td className="px-4 py-3">
                             {f.status === "open" ? (
                               <div className="flex gap-2">
-                                <button onClick={() => resolveMut.mutate({ id: f.id, status: "actioned" })} disabled={resolveMut.isPending} className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2 py-1 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
+                                <button type="button" onClick={() => resolveMut.mutate({ id: f.id, status: "actioned" })} disabled={resolveMut.isPending} className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2 py-1 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
                                   <Check className="h-3 w-3" /> Action
                                 </button>
-                                <button onClick={() => resolveMut.mutate({ id: f.id, status: "dismissed" })} disabled={resolveMut.isPending} className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-semibold hover:bg-muted disabled:opacity-50">
+                                <button type="button" onClick={() => resolveMut.mutate({ id: f.id, status: "dismissed" })} disabled={resolveMut.isPending} className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-semibold hover:bg-muted disabled:opacity-50">
                                   <X className="h-3 w-3" /> Dismiss
                                 </button>
                               </div>
@@ -333,10 +402,13 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                           </td>
                         </tr>
                       ))}
+                      {!filteredFraud.length && (
+                        <tr><td colSpan={4} className="px-4 py-10 text-center text-muted-foreground">No flags match your filters.</td></tr>
+                      )}
                     </tbody>
-                  </table>
+                  </DashboardTable>
                 )}
-              </div>
+              </DashboardPanel>
             </section>
 
             {/* Commission config */}
@@ -373,23 +445,40 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
           <>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <StatCard icon={UserCheck} label="Partners" value={revenueData?.partners?.length ?? 0} loading={revenueLoading} />
-              <StatCard icon={Wallet} label="Total owed" value={`$${Number(revenueData?.totals.refOwed ?? 0).toLocaleString()}`} loading={revenueLoading} />
+              <StatCard icon={Wallet} label={`Total owed${labelSuffix}`} value={fmtUsd(revenueData?.totals.refOwed ?? 0)} loading={revenueLoading} />
               <StatCard icon={TrendingUp} label="Open deals" value={revenueData?.totals.open ?? 0} loading={revenueLoading} />
             </div>
             {revenueLoading ? (
-              <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+              <DashboardPageSkeleton kpis={3} tableRows={6} tableCols={8} />
             ) : (
               <DashboardPanel title="Referral partner management" description="Active links, conversion rates, and commissions owed per partner." bodyClassName="p-0">
+                <DashboardDataToolbar
+                  search={partnerSearch}
+                  onSearchChange={setPartnerSearch}
+                  searchPlaceholder="Search partner name or tier…"
+                  onExport={() =>
+                    downloadCsv(
+                      datedCsvFilename("ige-referral-partners"),
+                      ["partner", "tier", "deals_closed", "active_links", "clicks", "conversions", "owed_usd", "paid_usd"],
+                      filteredPartners.map((p: { full_name?: string; commission_tier?: string; deals_closed?: number; active_links?: number; total_clicks?: number; conversions?: number; owed_usd?: number; paid_usd_running?: number }) => [
+                        p.full_name ?? "", p.commission_tier ?? "", p.deals_closed ?? 0, p.active_links ?? 0,
+                        p.total_clicks ?? 0, p.conversions ?? 0, p.owed_usd ?? 0, p.paid_usd_running ?? 0,
+                      ]),
+                    )
+                  }
+                  exportDisabled={!filteredPartners.length}
+                  exportCount={filteredPartners.length}
+                />
                 <DashboardTable className="min-w-[800px]">
                   <DashboardTableHead>
                     <tr>
                       <th className="px-4 py-3">Partner</th><th className="px-4 py-3">Tier</th><th className="px-4 py-3">Deals closed</th>
                       <th className="px-4 py-3">Active links</th><th className="px-4 py-3">Clicks</th><th className="px-4 py-3">Conversions</th>
-                      <th className="px-4 py-3">Owed (USD)</th><th className="px-4 py-3">Paid (USD)</th>
+                      <th className="px-4 py-3">Owed ({displayCurrency})</th><th className="px-4 py-3">Paid ({displayCurrency})</th>
                     </tr>
                   </DashboardTableHead>
                   <tbody className="divide-y divide-border/60">
-                    {(revenueData?.partners ?? []).map((p: any) => (
+                    {filteredPartners.map((p: { user_id: string; full_name?: string; commission_tier?: string; deals_closed?: number; active_links?: number; total_clicks?: number; conversions?: number; owed_usd?: number; paid_usd_running?: number }) => (
                       <tr key={p.user_id} className="transition-colors hover:bg-muted/10">
                         <td className="px-4 py-3 font-semibold text-foreground">{p.full_name ?? "—"}</td>
                         <td className="px-4 py-3"><StatusPill status={p.commission_tier ?? "standard"} /></td>
@@ -397,12 +486,12 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                         <td className="px-4 py-3">{p.active_links ?? 0}</td>
                         <td className="px-4 py-3">{p.total_clicks ?? 0}</td>
                         <td className="px-4 py-3">{p.conversions ?? 0}</td>
-                        <td className="px-4 py-3 font-mono text-xs text-amber-800">${Number(p.owed_usd ?? 0).toLocaleString()}</td>
-                        <td className="px-4 py-3 font-mono text-xs text-emerald-800">${Number(p.paid_usd_running ?? 0).toLocaleString()}</td>
+                        <td className="px-4 py-3 font-mono text-xs text-amber-800">{fmtUsd(p.owed_usd ?? 0)}</td>
+                        <td className="px-4 py-3 font-mono text-xs text-emerald-800">{fmtUsd(p.paid_usd_running ?? 0)}</td>
                       </tr>
                     ))}
-                    {!(revenueData?.partners ?? []).length && (
-                      <tr><td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">No referral partners registered yet.</td></tr>
+                    {!filteredPartners.length && (
+                      <tr><td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">No partners match your search.</td></tr>
                     )}
                   </tbody>
                 </DashboardTable>
@@ -411,15 +500,15 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
           </>
         ) : section === "revenue" ? (
           revenueLoading ? (
-            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+            <DashboardPageSkeleton kpis={5} tableRows={8} tableCols={10} showTabs />
           ) : (
             <div className="space-y-6">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-                <StatCard icon={DollarSign} label="Deal GMV (Total)" value={`$${Number(revenueData?.totals.gmv ?? 0).toLocaleString()}`} />
-                <StatCard icon={Award} label="IGE Commission (Total)" value={`$${Number(revenueData?.totals.abw ?? 0).toLocaleString()}`} />
-                <StatCard icon={Wallet} label="Partner Owed" value={`$${Number(revenueData?.totals.refOwed ?? 0).toLocaleString()}`} />
+                <StatCard icon={DollarSign} label={`Deal GMV (Total)${labelSuffix}`} value={fmtUsd(revenueData?.totals.gmv ?? 0)} />
+                <StatCard icon={Award} label={`IGE Commission (Total)${labelSuffix}`} value={fmtUsd(revenueData?.totals.abw ?? 0)} />
+                <StatCard icon={Wallet} label={`Partner Owed${labelSuffix}`} value={fmtUsd(revenueData?.totals.refOwed ?? 0)} />
                 <StatCard icon={Inbox} label="Open Deals" value={revenueData?.totals.open ?? 0} />
-                <StatCard icon={TrendingUp} label="Pipeline forecast" value={`$${Number(revenueData?.totals.forecast ?? 0).toLocaleString()}`} />
+                <StatCard icon={TrendingUp} label={`Pipeline forecast${labelSuffix}`} value={fmtUsd(revenueData?.totals.forecast ?? 0)} />
               </div>
 
             {/* Pending inquiries → convert to deal */}
@@ -535,15 +624,47 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                 <h3 className="font-display font-semibold text-base text-foreground">Deal pipeline</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">Set the deal value, advance the stage; commission auto-calculates at “payment received.”</p>
               </div>
+              <DashboardTabs
+                tabs={[
+                  { id: "all", label: "All", count: dealStatusCounts.all },
+                  ...DEAL_STATUSES.filter((s) => dealStatusCounts[s]).map((s) => ({
+                    id: s,
+                    label: s.replace(/_/g, " "),
+                    count: dealStatusCounts[s],
+                  })),
+                ]}
+                active={dealStatus}
+                onChange={setDealStatus}
+              />
+              <DashboardDataToolbar
+                search={dealSearch}
+                onSearchChange={setDealSearch}
+                searchPlaceholder="Search event or deal stage…"
+                onExport={() =>
+                  downloadCsv(
+                    datedCsvFilename("ige-deals"),
+                    ["event", "status", "value_native", "currency", "value_usd", "ige_commission", "partner_commission", "assigned_to"],
+                    filteredDeals.map((d: { event_id: string; status: string; deal_value_native?: number; deal_currency?: string; deal_value_usd?: number; abw_commission_usd?: number; referral_commission_usd?: number; assigned_to?: string | null }) => {
+                      const ev = revenueData?.events?.[d.event_id];
+                      return [
+                        ev?.name ?? "", d.status, d.deal_value_native ?? "", d.deal_currency ?? "",
+                        d.deal_value_usd ?? "", d.abw_commission_usd ?? "", d.referral_commission_usd ?? "", d.assigned_to ?? "",
+                      ];
+                    }),
+                  )
+                }
+                exportDisabled={!filteredDeals.length}
+                exportCount={filteredDeals.length}
+              />
               <div className="overflow-x-auto">
                 <table className="w-full text-sm min-w-[920px]">
                   <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide border-b border-border text-muted-foreground">
                     <tr>
-                      <th className="px-4 py-3">Event</th><th className="px-4 py-3">Value</th><th className="px-4 py-3">USD</th><th className="px-4 py-3">IGE</th><th className="px-4 py-3">Partner</th><th className="px-4 py-3">Assigned</th><th className="px-4 py-3">Stage</th><th className="px-4 py-3">Contract</th><th className="px-4 py-3">Payment</th><th className="px-4 py-3">Payout</th>
+                      <th className="px-4 py-3">Event</th><th className="px-4 py-3">Value</th><th className="px-4 py-3">{displayCurrency}</th><th className="px-4 py-3">IGE</th><th className="px-4 py-3">Partner</th><th className="px-4 py-3">Assigned</th><th className="px-4 py-3">Stage</th><th className="px-4 py-3">Contract</th><th className="px-4 py-3">Payment</th><th className="px-4 py-3">Payout</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {(revenueData?.deals ?? []).map((d: any) => {
+                    {filteredDeals.map((d: any) => {
                       const ev = revenueData!.events[d.event_id];
                       return (
                         <tr key={d.id} className="hover:bg-muted/10 transition-colors align-top">
@@ -563,12 +684,12 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                             />
                             <div className="mt-0.5 text-[10px] text-muted-foreground">{d.deal_currency}</div>
                           </td>
-                          <td className="px-4 py-3 font-mono text-xs">{d.deal_value_usd ? fmtMoney("USD", Number(d.deal_value_usd)) : "—"}</td>
-                          <td className="px-4 py-3 font-mono text-xs">{d.abw_commission_usd ? fmtMoney("USD", Number(d.abw_commission_usd)) : "—"}</td>
+                          <td className="px-4 py-3 font-mono text-xs">{d.deal_value_usd ? fmtUsd(Number(d.deal_value_usd)) : "—"}</td>
+                          <td className="px-4 py-3 font-mono text-xs">{d.abw_commission_usd ? fmtUsd(Number(d.abw_commission_usd)) : "—"}</td>
                           <td className="px-4 py-3">
                             {d.referral_partner_id ? (
                               <div>
-                                <div className="font-mono text-xs">{d.referral_commission_usd ? fmtMoney("USD", Number(d.referral_commission_usd)) : "—"}</div>
+                                <div className="font-mono text-xs">{d.referral_commission_usd ? fmtUsd(Number(d.referral_commission_usd)) : "—"}</div>
                                 <div className="text-[10px] text-muted-foreground">{d.referral_commission_paid ? "Paid" : "Owed"}</div>
                               </div>
                             ) : <span className="text-xs text-muted-foreground">—</span>}
@@ -664,9 +785,11 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                         </tr>
                       );
                     })}
-                    {!(revenueData?.deals ?? []).length && (
+                    {!(revenueData?.deals ?? []).length ? (
                       <tr><td colSpan={10} className="px-4 py-10 text-center text-muted-foreground">No deals yet. Convert a pending inquiry above to start the pipeline.</td></tr>
-                    )}
+                    ) : !filteredDeals.length ? (
+                      <tr><td colSpan={10} className="px-4 py-10 text-center text-muted-foreground">No deals match your filters.</td></tr>
+                    ) : null}
                   </tbody>
                 </table>
               </div>
@@ -678,113 +801,6 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
         {drawerOpen && <VettingDrawer id={drawerOpen} onClose={() => setDrawerOpen(null)} />}
       </div>
     </AppShell>
-  );
-}
-
-function VettingDrawer({ id, onClose }: { id: string; onClose: () => void }) {
-  const qc = useQueryClient();
-  const fetchOne = useServerFn(getEventForAdmin);
-  const setStatus = useServerFn(setEventVettingStatus);
-  const { data, isLoading } = useQuery({
-    queryKey: ["admin", "event", id],
-    queryFn: () => fetchOne({ data: { id } }),
-  });
-  const [note, setNote] = useState("");
-
-  const transition = useMutation({
-    mutationFn: (to: string) => setStatus({ data: { id, to_status: to as any, note: note || null } }),
-    onSuccess: (_res, to) => {
-      toast.success(`Moved to ${to.replace(/_/g, " ")}`);
-      qc.invalidateQueries({ queryKey: ["admin", "vetting"] });
-      qc.invalidateQueries({ queryKey: ["admin", "event", id] });
-      setNote("");
-      if (to === "approved" || to === "rejected" || to === "listed") onClose();
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
-
-  return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/50" onClick={onClose}>
-      <div className="h-full w-full max-w-xl overflow-y-auto bg-background p-6 shadow-2xl border-l border-border flex flex-col justify-between" onClick={(e) => e.stopPropagation()}>
-        <div>
-          <div className="flex items-center justify-between border-b border-border pb-4">
-            <button onClick={onClose} className="text-sm font-semibold text-muted-foreground hover:text-foreground cursor-pointer">✕ Close</button>
-            {data && <StatusBadge status={data.event.status} />}
-          </div>
-          {isLoading || !data ? (
-            <div className="mt-8 flex justify-center text-muted-foreground text-sm">
-              <Loader2 className="mr-2 h-4 w-4 animate-spin text-primary" /> Loading event details…
-            </div>
-          ) : (
-            <div className="mt-6 space-y-6">
-              <div>
-                <h2 className="font-display text-2xl font-bold text-foreground leading-tight">{data.event.name}</h2>
-                <p className="mt-1 text-xs text-muted-foreground font-mono">{data.organiser?.email}</p>
-              </div>
-
-              <dl className="grid grid-cols-2 gap-4 text-sm border-t border-b border-border/60 py-4 bg-muted/10 px-4 rounded-xl">
-                <InfoItem label="Type" value={data.event.event_type} />
-                <InfoItem label="Format" value={data.event.format} />
-                <InfoItem label="Start" value={data.event.start_date ? new Date(data.event.start_date).toLocaleDateString() : "-"} />
-                <InfoItem label="End" value={data.event.end_date ? new Date(data.event.end_date).toLocaleDateString() : "-"} />
-                <InfoItem label="Location" value={[data.event.city, data.event.country].filter(Boolean).join(", ")} />
-                <InfoItem label="Attendance" value={data.event.attendance_size ? Number(data.event.attendance_size).toLocaleString() : "-"} />
-                <InfoItem label="Primary sector" value={data.event.primary_sector} />
-                <InfoItem label="Min spend" value={data.event.min_sponsorship_spend ? `${data.event.currency} ${Number(data.event.min_sponsorship_spend).toLocaleString()}` : "-"} />
-              </dl>
-
-              <div className="space-y-2 text-sm">
-                <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">Event Resources</h4>
-                <AssetLinkItem label="Sponsorship deck" url={data.event.sponsorship_deck_url} />
-                <AssetLinkItem label="Banner image" url={data.event.banner_image_url} />
-                <AssetLinkItem label="Floor plan" url={data.event.floor_plan_url} />
-                <AssetLinkItem label="Event website" url={data.event.website} />
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">Tiers ({data.tiers.length})</h4>
-                <div className="space-y-1.5">
-                  {data.tiers.map((t: any) => (
-                    <div key={t.id} className="flex items-center justify-between rounded-lg border border-border bg-card p-3 text-sm">
-                      <span className="font-bold text-foreground">{t.tier_name}</span>
-                      <span className="text-xs text-muted-foreground">{t.currency} {Number(t.price).toLocaleString()} · {t.slots_total} slots</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="border-t border-border pt-4 space-y-4">
-                <label className="block">
-                  <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Action notes (Required for revision/rejection)</span>
-                  <textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary" placeholder="Enter review comments here..." />
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {data.event.status === "submitted" && (
-                    <ActionBtn onClick={() => transition.mutate("under_review")} variant="primary" icon={ArrowRight} label="Start review" pending={transition.isPending} />
-                  )}
-                  {data.event.status === "under_review" && (
-                    <>
-                      <ActionBtn onClick={() => transition.mutate("approved")} variant="success" icon={CheckCircle2} label="Approve" pending={transition.isPending} />
-                      <ActionBtn onClick={() => transition.mutate("revision_requested")} variant="warning" icon={Pencil} label="Request revision" pending={transition.isPending} />
-                      <ActionBtn onClick={() => transition.mutate("rejected")} variant="danger" icon={XCircle} label="Reject" pending={transition.isPending} />
-                    </>
-                  )}
-                  {data.event.status === "approved" && (
-                    <ActionBtn onClick={() => transition.mutate("listed")} variant="primary" icon={ArrowRight} label="List publicly" pending={transition.isPending} />
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-4 pt-2">
-                  <Link to="/events/edit/$id" params={{ id }} className="text-xs text-primary font-semibold hover:underline">View full event editor →</Link>
-                  {(data.event.status === "approved" || data.event.status === "listed") && data.event.slug && (
-                    <Link to="/events/$slug" params={{ slug: data.event.slug }} className="text-xs text-primary font-semibold hover:underline">View public listing →</Link>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -903,34 +919,5 @@ function FxRatesSection({
         </div>
       </form>
     </section>
-  );
-}
-
-function InfoItem({ label, value }: { label: string; value: any }) {
-  return (
-    <div>
-      <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</dt>
-      <dd className="mt-0.5 text-foreground font-medium">{value ?? "-"}</dd>
-    </div>
-  );
-}
-
-function AssetLinkItem({ label, url }: { label: string; url?: string | null }) {
-  if (!url) return <div className="text-xs text-muted-foreground">{label}: <span className="italic">not provided</span></div>;
-  return (
-    <a href={url} target="_blank" rel="noreferrer" className="block truncate text-sm text-primary font-bold hover:underline">{label} ↗</a>
-  );
-}
-
-function ActionBtn({ onClick, variant, icon: Icon, label, pending }: any) {
-  const cls =
-    variant === "primary" ? "bg-brand-gradient text-white"
-      : variant === "success" ? "bg-emerald-600 text-white hover:bg-emerald-700"
-        : variant === "warning" ? "bg-amber-500 text-white hover:bg-amber-600"
-          : "bg-destructive text-destructive-foreground hover:bg-destructive/90";
-  return (
-    <button disabled={pending} onClick={onClick} className={`inline-flex items-center gap-1.5 rounded-md px-3 py-2.5 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer ${cls}`}>
-      {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Icon className="h-3.5 w-3.5" />} {label}
-    </button>
   );
 }

@@ -25,6 +25,11 @@ const ADMIN_SECTIONS: Record<string, DashboardMeta> = {
     subtitle: "Monitor founding waitlist signups by role. Click any row for full intake details.",
     breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Waitlist" }],
   },
+  newsletter: {
+    title: "Newsletter",
+    subtitle: "Manage homepage subscribers and send branded campaign emails.",
+    breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Newsletter" }],
+  },
   revenue: {
     title: "Revenue & deals",
     subtitle: "GMV, deal pipeline, commission payouts, and pending inquiries.",
@@ -65,6 +70,7 @@ const PATH_META: Record<string, DashboardMeta> = {
   },
   "/dashboard/vetting": ADMIN_SECTIONS.vetting,
   "/dashboard/waitlist": ADMIN_SECTIONS.waitlist,
+  "/dashboard/newsletter": ADMIN_SECTIONS.newsletter,
   "/dashboard/submissions": ADMIN_SECTIONS.submissions,
   "/dashboard/revenue": ADMIN_SECTIONS.revenue,
   "/dashboard/partners": ADMIN_SECTIONS.partners,

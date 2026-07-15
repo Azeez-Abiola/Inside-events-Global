@@ -4,6 +4,7 @@ import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, XAx
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { StatCard } from "@/components/dashboards/shared";
 import { DashboardLoading, DashboardPanel } from "@/components/dashboards/dashboard-shell";
+import { useDisplayCurrency } from "@/lib/display-currency-context";
 import {
   getOrganiserAnalytics, getSponsorAnalytics, getReferralAnalytics, getMediaAnalytics, getAdminAnalytics,
 } from "@/lib/analytics.functions";
@@ -105,9 +106,10 @@ function PiePanel({ title, description, data, nameKey, valueKey }: {
 }
 
 export function OrganiserAnalyticsPanel() {
+  const { fmtUsd, labelSuffix } = useDisplayCurrency();
   const fetch = useServerFn(getOrganiserAnalytics);
   const { data, isLoading } = useQuery({ queryKey: ["analytics", "organiser"], queryFn: () => fetch() });
-  if (isLoading || !data) return <DashboardLoading label="Loading analytics…" />;
+  if (isLoading || !data) return <DashboardLoading showCharts kpis={4} />;
   const s = data.summary;
   return (
     <div className="space-y-6">
@@ -117,7 +119,7 @@ export function OrganiserAnalyticsPanel() {
         <StatCard icon={MessageSquare} label="Commitment inquiries" value={s.totalInquiries} />
         <StatCard icon={Percent} label="Inquiry conversion" value={`${s.conversionRate}%`} />
         <StatCard icon={BarChart3} label="Closed deals" value={s.closedDeals} />
-        <StatCard icon={DollarSign} label="Closed deal value" value={`$${Number(s.closedDealValueUsd ?? 0).toLocaleString()}`} />
+        <StatCard icon={DollarSign} label={`Closed deal value${labelSuffix}`} value={fmtUsd(s.closedDealValueUsd ?? 0)} />
         <StatCard icon={ShieldCheck} label="IGE vetted events" value={s.vettedEvents} />
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
@@ -132,7 +134,7 @@ export function OrganiserAnalyticsPanel() {
 export function SponsorAnalyticsPanel() {
   const fetch = useServerFn(getSponsorAnalytics);
   const { data, isLoading } = useQuery({ queryKey: ["analytics", "sponsor"], queryFn: () => fetch() });
-  if (isLoading || !data) return <DashboardLoading label="Loading analytics…" />;
+  if (isLoading || !data) return <DashboardLoading showCharts kpis={4} />;
   const s = data.summary;
   return (
     <div className="space-y-6">
@@ -152,9 +154,10 @@ export function SponsorAnalyticsPanel() {
 }
 
 export function ReferralAnalyticsPanel() {
+  const { fmtUsd, convertUsd, displayCurrency, labelSuffix } = useDisplayCurrency();
   const fetch = useServerFn(getReferralAnalytics);
   const { data, isLoading } = useQuery({ queryKey: ["analytics", "referral"], queryFn: () => fetch() });
-  if (isLoading || !data) return <DashboardLoading label="Loading analytics…" />;
+  if (isLoading || !data) return <DashboardLoading showCharts kpis={4} />;
   const s = data.summary;
   return (
     <div className="space-y-6">
@@ -162,11 +165,16 @@ export function ReferralAnalyticsPanel() {
         <StatCard icon={Link2} label="Active links" value={s.links} />
         <StatCard icon={TrendingUp} label="Total clicks" value={s.clicks} />
         <StatCard icon={BarChart3} label="Conversions" value={s.conversions} />
-        <StatCard icon={Wallet} label="Earned (USD)" value={`$${s.earned.toFixed(0)}`} />
+        <StatCard icon={Wallet} label={`Earned${labelSuffix}`} value={fmtUsd(s.earned)} />
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <BarPanel title="Clicks by referral link" data={data.clicksByLink} dataKey="clicks" nameKey="name" />
-        <PiePanel title="Commission breakdown (USD)" data={data.commissionBreakdown} nameKey="label" valueKey="value" />
+        <PiePanel
+          title={`Commission breakdown (${displayCurrency})`}
+          data={data.commissionBreakdown.map((d) => ({ ...d, value: convertUsd(Number(d.value)) }))}
+          nameKey="label"
+          valueKey="value"
+        />
         <LinePanel title="Attributed deals over time" data={data.dealsOverTime} />
       </div>
     </div>
@@ -176,7 +184,7 @@ export function ReferralAnalyticsPanel() {
 export function MediaAnalyticsPanel() {
   const fetch = useServerFn(getMediaAnalytics);
   const { data, isLoading } = useQuery({ queryKey: ["analytics", "media"], queryFn: () => fetch() });
-  if (isLoading || !data) return <DashboardLoading label="Loading analytics…" />;
+  if (isLoading || !data) return <DashboardLoading showCharts kpis={4} />;
   const s = data.summary;
   return (
     <div className="space-y-6">
@@ -195,23 +203,29 @@ export function MediaAnalyticsPanel() {
 }
 
 export function AdminAnalyticsPanel() {
+  const { fmtUsd, convertUsd, displayCurrency, labelSuffix } = useDisplayCurrency();
   const fetch = useServerFn(getAdminAnalytics);
   const { data, isLoading } = useQuery({ queryKey: ["analytics", "admin"], queryFn: () => fetch() });
-  if (isLoading || !data) return <DashboardLoading label="Loading analytics…" />;
+  if (isLoading || !data) return <DashboardLoading showCharts kpis={4} />;
   const s = data.summary;
-  const gmvConfig = { gmv: { label: "GMV (USD)", color: CHART_COLORS[0] } };
+  const gmvConfig = { gmv: { label: `GMV (${displayCurrency})`, color: CHART_COLORS[0] } };
+  const gmvChartData = data.gmvOverTime.map((d) => ({
+    ...d,
+    label: fmtMonth(d.month),
+    gmv: convertUsd(Number(d.gmv ?? 0)),
+  }));
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={ShieldCheck} label="Total events" value={s.totalEvents} />
         <StatCard icon={TrendingUp} label="Live listings" value={s.liveEvents} />
-        <StatCard icon={DollarSign} label="Platform GMV" value={`$${s.gmv.toLocaleString()}`} />
+        <StatCard icon={DollarSign} label={`Platform GMV${labelSuffix}`} value={fmtUsd(s.gmv)} />
         <StatCard icon={Users} label="Waitlist signups" value={s.waitlist} />
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
-        <DashboardPanel title="GMV over time" description="Closed deal value (USD, last 6 months)">
+        <DashboardPanel title="GMV over time" description={`Closed deal value (${displayCurrency}, last 6 months)`}>
           <ChartContainer config={gmvConfig} className="h-[260px] w-full aspect-auto">
-            <LineChart data={data.gmvOverTime.map((d) => ({ ...d, label: fmtMonth(d.month) }))} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
+            <LineChart data={gmvChartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
               <CartesianGrid vertical={false} strokeDasharray="3 3" />
               <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
               <YAxis tickLine={false} axisLine={false} width={48} tick={{ fontSize: 11 }} />

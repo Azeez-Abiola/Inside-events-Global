@@ -1273,6 +1273,7 @@ export type Database = {
           phone: string | null
           referral_source: string | null
           referred_by: string | null
+          rejection_reason: string | null
           role_title: string | null
           status: string
         }
@@ -1290,6 +1291,7 @@ export type Database = {
           phone?: string | null
           referral_source?: string | null
           referred_by?: string | null
+          rejection_reason?: string | null
           role_title?: string | null
           status?: string
         }
@@ -1307,6 +1309,7 @@ export type Database = {
           phone?: string | null
           referral_source?: string | null
           referred_by?: string | null
+          rejection_reason?: string | null
           role_title?: string | null
           status?: string
         }

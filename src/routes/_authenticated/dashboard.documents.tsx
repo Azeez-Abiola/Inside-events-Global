@@ -1,12 +1,12 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { OrganiserDocumentsPage } from "@/components/dashboards/organiser-pages";
-import { useAuth } from "@/lib/auth-context";
+import { RoleGate } from "@/components/role-gate";
 
 export const Route = createFileRoute("/_authenticated/dashboard/documents")({
   head: () => ({ meta: [{ title: "Documents - IGE" }] }),
-  component: () => {
-    const { roles } = useAuth();
-    if (!roles.includes("organiser")) throw redirect({ to: "/dashboard" });
-    return <OrganiserDocumentsPage />;
-  },
+  component: () => (
+    <RoleGate allow="organiser">
+      <OrganiserDocumentsPage />
+    </RoleGate>
+  ),
 });

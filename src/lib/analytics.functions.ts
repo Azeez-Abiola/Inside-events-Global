@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -15,6 +16,21 @@ function lastNMonths(n: number) {
     out.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
   }
   return out;
+}
+
+/** Inclusive month keys between two dates (YYYY-MM). */
+function monthsBetween(fromIso: string, toIso: string) {
+  const from = new Date(fromIso);
+  const to = new Date(toIso);
+  const start = new Date(from.getFullYear(), from.getMonth(), 1);
+  const end = new Date(to.getFullYear(), to.getMonth(), 1);
+  const out: string[] = [];
+  const cursor = new Date(start);
+  while (cursor <= end) {
+    out.push(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`);
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+  return out.length ? out : lastNMonths(6);
 }
 
 function seriesFromDates(dates: string[], months = 6) {
@@ -236,9 +252,24 @@ export const getMediaAnalytics = createServerFn({ method: "GET" })
 
 export const getAdminAnalytics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d) => {
+    if (d == null) return {};
+    return z
+      .object({
+        from: z.string().optional().nullable(),
+        to: z.string().optional().nullable(),
+      })
+      .parse(d);
+  })
+  .handler(async ({ data, context }) => {
     const { userId } = context;
     await requireRole(userId, ["abw_admin", "super_admin"]);
+
+    const toDate = data?.to ? new Date(data.to) : new Date();
+    const fromDate = data?.from
+      ? new Date(data.from)
+      : new Date(toDate.getFullYear(), toDate.getMonth() - 5, 1);
+    const monthKeys = monthsBetween(fromDate.toISOString(), toDate.toISOString());
 
     const [{ data: events }, { data: deals }, { data: waitlist }] = await Promise.all([
       supabaseAdmin.from("events").select("status"),
@@ -252,11 +283,20 @@ export const getAdminAnalytics = createServerFn({ method: "GET" })
     const dealStatusCounts: Record<string, number> = {};
     for (const d of deals ?? []) dealStatusCounts[d.status] = (dealStatusCounts[d.status] ?? 0) + 1;
 
-    const gmvByMonth: Record<string, number> = Object.fromEntries(lastNMonths(6).map((m) => [m, 0]));
+    const gmvByMonth: Record<string, number> = Object.fromEntries(monthKeys.map((m) => [m, 0]));
+    const fromMs = fromDate.getTime();
+    const toMs = toDate.getTime();
+    let rangeGmv = 0;
     for (const d of deals ?? []) {
       if (d.status !== "payment_received") continue;
-      const k = monthKey(d.paid_at ?? d.updated_at ?? d.created_at);
-      if (k in gmvByMonth) gmvByMonth[k] += Number(d.deal_value_usd ?? 0);
+      const paidIso = d.paid_at ?? d.updated_at ?? d.created_at;
+      if (!paidIso) continue;
+      const paidMs = new Date(paidIso).getTime();
+      if (paidMs < fromMs || paidMs > toMs) continue;
+      const value = Number(d.deal_value_usd ?? 0);
+      rangeGmv += value;
+      const k = monthKey(paidIso);
+      if (k in gmvByMonth) gmvByMonth[k] += value;
     }
 
     return {
@@ -266,6 +306,7 @@ export const getAdminAnalytics = createServerFn({ method: "GET" })
         openDeals: (deals ?? []).filter((d) => !["payment_received", "deal_lost", "deal_closed", "cancelled"].includes(d.status)).length,
         waitlist: waitlist?.length ?? 0,
         gmv: (deals ?? []).filter((d) => d.status === "payment_received").reduce((s, d) => s + Number(d.deal_value_usd ?? 0), 0),
+        rangeGmv: Math.round(rangeGmv),
       },
       vettingPipeline: Object.entries(vettingCounts).map(([status, count]) => ({
         status: status.replace(/_/g, " "),
@@ -277,5 +318,6 @@ export const getAdminAnalytics = createServerFn({ method: "GET" })
       })),
       gmvOverTime: Object.entries(gmvByMonth).map(([month, gmv]) => ({ month, gmv: Math.round(gmv) })),
       waitlistOverTime: seriesFromDates((waitlist ?? []).map((w) => w.created_at).filter(Boolean)),
+      range: { from: fromDate.toISOString(), to: toDate.toISOString() },
     };
   });

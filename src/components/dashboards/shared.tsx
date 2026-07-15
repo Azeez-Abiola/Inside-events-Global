@@ -47,6 +47,9 @@ const PILL_STYLES: Record<string, string> = {
   cancelled: "bg-muted text-muted-foreground",
   rejected: "bg-red-100 text-red-800",
   draft: "bg-muted text-muted-foreground",
+  invited: "bg-secondary/15 text-secondary-deep",
+  new: "bg-primary/10 text-primary-deep",
+  contacted: "bg-amber-100 text-amber-900",
   submitted: "bg-primary/10 text-primary-deep",
   under_review: "bg-amber-100 text-amber-900",
 };

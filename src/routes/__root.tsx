@@ -12,6 +12,9 @@ import appCss from "../styles.css?url";
 import { WaitlistGate } from "@/components/waitlist-gate";
 import { AuthProvider } from "@/lib/auth-context";
 import { DevRoleSwitcher } from "@/components/dev-role-switcher";
+import { Toaster } from "@/components/ui/sonner";
+import { DisplayCurrencyProvider } from "@/lib/display-currency-context";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 
 function NotFoundComponent() {
   return (
@@ -87,6 +90,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6410c0bf-c8c9-4d1e-b048-e98ce84ec6a2/id-preview-04099da8--0d1f4683-f826-450c-927b-386eaca7e044.lovable.app-1779749582346.png" },
     ],
     links: [
+      { rel: "icon", href: "/favicon.ico", sizes: "any" },
+      { rel: "icon", href: "/favicon.png?v=2", type: "image/png", sizes: "32x32" },
+      { rel: "icon", href: "/ige-icon-192.png?v=2", type: "image/png", sizes: "192x192" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png?v=2", sizes: "180x180" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -139,11 +147,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    // Theme init script may add class="dark" before React hydrates — suppress the mismatch.
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/favicon.png?v=2" type="image/png" sizes="32x32" />
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         {children}
         <Scripts />
       </body>
@@ -157,10 +169,13 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <WaitlistGate>
-          <Outlet />
-        </WaitlistGate>
-        <DevRoleSwitcher />
+        <DisplayCurrencyProvider>
+          <WaitlistGate>
+            <Outlet />
+          </WaitlistGate>
+          <Toaster richColors closeButton position="top-right" />
+          <DevRoleSwitcher />
+        </DisplayCurrencyProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

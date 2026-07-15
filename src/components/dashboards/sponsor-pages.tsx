@@ -2,8 +2,9 @@ import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  Inbox, Bookmark, CalendarDays, Loader2, Calendar, Compass, TrendingUp, Wallet, BarChart3, ArrowRight,
+  Inbox, Bookmark, CalendarDays, Calendar, Compass, TrendingUp, Wallet, BarChart3, ArrowRight,
 } from "lucide-react";
+import { DashboardCardGridSkeleton } from "@/components/dashboards/dashboard-skeletons";
 import { KpiTile, DonutBreakdown, FeaturedHeroCard, AgendaList } from "@/components/dashboards/voom-primitives";
 import { QuickLinkCard } from "@/components/dashboards/shared";
 import { DashboardEmpty } from "@/components/dashboards/dashboard-shell";
@@ -24,7 +25,7 @@ export function SponsorPipelinePage() {
 
 export function SponsorBudgetPage() {
   return (
-    <WorkspacePage title="Sponsorship budget" subtitle="Plan by market; committed and paid update from your live deals. Portfolio shown in USD.">
+    <WorkspacePage title="Sponsorship budget" subtitle="Plan by market; committed and paid update from your live deals. Use the currency toggle to view totals in USD, NGN, or EUR.">
       <SponsorBudgetPanel />
     </WorkspacePage>
   );
@@ -91,7 +92,7 @@ export function SponsorOverviewPage() {
               </Link>
             </div>
             {isLoading ? (
-              <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+              <div className="p-5"><DashboardCardGridSkeleton count={6} /></div>
             ) : featuredList.length ? (
               <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3">
                 {featuredList.slice(0, 6).map((e: any) => (
@@ -270,7 +271,7 @@ export function SponsorSavedPage() {
   return (
     <WorkspacePage title="Saved events" subtitle="Events you've bookmarked for sponsorship consideration.">
       {isLoading ? (
-        <div className="flex justify-center py-12 text-muted-foreground"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+        <DashboardCardGridSkeleton count={6} />
       ) : !data?.saves?.length ? (
         <DashboardEmpty icon={Bookmark} title="No saved events" description="Browse the marketplace and save events that match your criteria." action={<Link to="/marketplace" className="text-sm font-semibold text-primary hover:underline">Explore marketplace →</Link>} />
       ) : (
@@ -327,7 +328,7 @@ export function SponsorDiscoverPage() {
   return (
     <WorkspacePage title="Discover" subtitle="Recommended events, new listings, and referral-shared opportunities.">
       {isLoading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+        <DashboardCardGridSkeleton count={9} />
       ) : (
         <div className="space-y-8">
           {(data?.recommendedEvents?.length ?? 0) > 0 && (

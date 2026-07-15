@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { CalendarDays, Bookmark, Newspaper, Loader2, Calendar, Send, BarChart3 } from "lucide-react";
+import { CalendarDays, Bookmark, Newspaper, Calendar, Send, BarChart3 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -11,6 +11,7 @@ import { ensureAccessToken, isAuthError } from "@/lib/auth-session";
 import { demoLoginSearch } from "@/lib/demo-accounts";
 import { StatCard } from "@/components/dashboards/shared";
 import { DashboardHeader } from "@/components/dashboards/dashboard-shell";
+import { DashboardCardGridSkeleton, DashboardTableSkeleton } from "@/components/dashboards/dashboard-skeletons";
 import { MediaAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
 import { listMarketplaceEvents, toggleSaveEvent } from "@/lib/marketplace.functions";
 import { submitMediaRequest, getMyMediaRequests, getMediaPartnerSaves } from "@/lib/media.functions";
@@ -73,7 +74,7 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
           <MediaAnalyticsPanel />
         ) : section === "explore" ? (
           exploreLoading ? (
-            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+            <DashboardCardGridSkeleton count={6} />
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {events.map((e: any) => (
@@ -105,7 +106,7 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
           )
         ) : section === "saved" ? (
           savesLoading ? (
-            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+            <DashboardCardGridSkeleton count={6} />
           ) : savedEvents.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border p-12 text-center"><p className="text-muted-foreground text-sm">No saved opportunities yet.</p></div>
           ) : (
@@ -127,7 +128,7 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
           )
         ) : section === "requests" ? (
           requestsLoading ? (
-            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+            <DashboardTableSkeleton rows={5} cols={4} />
           ) : requests.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border p-12 text-center">
               <p className="text-muted-foreground text-sm">No coverage requests yet. Browse Explore and request coverage on an event.</p>

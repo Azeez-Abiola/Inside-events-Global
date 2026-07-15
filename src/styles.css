@@ -125,7 +125,7 @@
   --shadow-brand: 0 20px 60px -20px oklch(0.44 0.17 305 / 0.45);
   --shadow-soft: 0 8px 30px -12px oklch(0.30 0.14 305 / 0.18);
   --shadow-card: 0 2px 16px -4px oklch(0.30 0.14 305 / 0.10);
-  --dashboard-canvas: oklch(0.97 0.006 305);
+  --dashboard-canvas: oklch(1 0 0);
 }
 
 .dark {
@@ -158,6 +158,7 @@
   --sidebar-accent-foreground: oklch(0.98 0.003 300);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.62 0.18 305);
+  --dashboard-canvas: oklch(0.14 0.02 305);
 }
 
 @layer base {
