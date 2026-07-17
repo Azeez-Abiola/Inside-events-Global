@@ -163,7 +163,7 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
       }
       return;
     }
-    toast.success("Check your inbox for your 6-digit verification code.");
+    toast.success("Check your inbox for your verification code.");
     goToStep("verify");
   }
 
@@ -360,7 +360,7 @@ function stepCopy(step: SignupStep, roleTitle: string) {
   if (step === "verify") {
     return {
       title: "Verify your email",
-      subtitle: "Enter the 6-digit code we sent to your inbox.",
+      subtitle: "Enter the verification code we sent to your inbox.",
     };
   }
   return {

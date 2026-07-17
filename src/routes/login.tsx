@@ -42,7 +42,7 @@ function LoginPage() {
     setSubmitting(false);
     if (error) {
       if (isEmailNotConfirmedError(error.message)) {
-        toast.error("Confirm your email first — enter the 6-digit code from your inbox on the signup page.");
+        toast.error("Confirm your email first — enter the verification code from your inbox on the signup page.");
       } else {
         toast.error(error.message);
       }
@@ -70,7 +70,7 @@ function LoginPage() {
     >
       {unconfirmed === "1" && (
         <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-foreground">
-          Your email isn&apos;t confirmed yet. Enter the 6-digit code from your verification email on the{" "}
+          Your email isn&apos;t confirmed yet. Enter the verification code from your email on the{" "}
           <Link to="/signup" search={{ step: "verify" }} className="font-semibold text-primary">
             signup page
           </Link>

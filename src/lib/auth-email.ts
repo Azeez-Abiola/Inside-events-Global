@@ -12,3 +12,16 @@ export function isEmailNotConfirmedError(message: string): boolean {
     lower.includes('email address not confirmed')
   )
 }
+
+/** Supabase email OTP length varies by project (often 6 or 8). */
+export const AUTH_EMAIL_OTP_MIN = 6
+export const AUTH_EMAIL_OTP_MAX = 8
+
+export function normalizeEmailOtp(input: string): string {
+  return input.replace(/\D/g, '')
+}
+
+export function isValidEmailOtp(code: string): boolean {
+  const digits = normalizeEmailOtp(code)
+  return digits.length >= AUTH_EMAIL_OTP_MIN && digits.length <= AUTH_EMAIL_OTP_MAX
+}
