@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireSuperAdmin, requirePlatformAdmin, getActorProfile } from "@/lib/admin-auth";
+import { auditAdminAction } from "@/lib/admin-audit";
 import { notifyDealParties } from "@/lib/email/deal-notify";
 import { sendTransactionalEmailServer } from "@/lib/email/server-send";
 import { rankEventsForSponsor } from "@/lib/event-recommendations";
@@ -386,13 +388,23 @@ export const adminUpsertCommissionConfig = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => ConfigInput.parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-    if (!roles?.some((r) => r.role === "abw_admin" || r.role === "super_admin")) throw new Error("Forbidden");
+    const { userId } = context;
+    await requireSuperAdmin(userId);
     const { error } = await supabaseAdmin
       .from("commission_config")
       .upsert({ ...data, updated_by: userId, updated_at: new Date().toISOString() }, { onConflict: "event_type_category" });
     if (error) throw new Error(error.message);
+    const actor = await getActorProfile(userId);
+    await auditAdminAction({
+      actorId: userId,
+      actorEmail: actor?.email,
+      action: "commission_rates_updated",
+      summary: `Updated commission rates for ${data.event_type_category}`,
+      resourceType: "commission_config",
+      resourceId: data.event_type_category,
+      notifyTitle: "Commission rates updated",
+      notifyBody: `${actor?.display_name ?? actor?.email ?? "Admin"} updated commission rates for ${data.event_type_category}.`,
+    });
     return { ok: true };
   });
 
@@ -408,11 +420,20 @@ export const adminUpdateRates = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => RateInput.parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-    if (!roles?.some((r) => r.role === "abw_admin" || r.role === "super_admin")) throw new Error("Forbidden");
+    const { userId } = context;
+    await requireSuperAdmin(userId);
     const { error } = await supabaseAdmin.from("exchange_rates").insert({ ...data, source: "manual_admin" });
     if (error) throw new Error(error.message);
+    const actor = await getActorProfile(userId);
+    await auditAdminAction({
+      actorId: userId,
+      actorEmail: actor?.email,
+      action: "fx_rates_updated",
+      summary: `Updated FX rates (NGN ${data.ngn_rate}, GBP ${data.gbp_rate}, EUR ${data.eur_rate})`,
+      resourceType: "exchange_rates",
+      notifyTitle: "FX rates updated",
+      notifyBody: `${actor?.display_name ?? actor?.email ?? "Admin"} updated platform exchange rates.`,
+    });
     return { ok: true };
   });
 
@@ -438,13 +459,24 @@ export const adminResolveFraudFlag = createServerFn({ method: "POST" })
     z.object({ id: z.string().uuid(), status: z.enum(["actioned", "dismissed"]) }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-    if (!roles?.some((r) => r.role === "abw_admin" || r.role === "super_admin")) throw new Error("Forbidden");
+    const { userId } = context;
+    await requireSuperAdmin(userId);
     await supabaseAdmin
       .from("fraud_flags")
       .update({ status: data.status, reviewed_at: new Date().toISOString(), reviewed_by: userId })
       .eq("id", data.id);
+    const actor = await getActorProfile(userId);
+    await auditAdminAction({
+      actorId: userId,
+      actorEmail: actor?.email,
+      action: "fraud_flag_updated",
+      summary: `Fraud flag marked as ${data.status}`,
+      resourceType: "fraud_flag",
+      resourceId: data.id,
+      metadata: { status: data.status },
+      notifyTitle: "Fraud flag updated",
+      notifyBody: `${actor?.display_name ?? actor?.email ?? "Admin"} marked a fraud flag as ${data.status}.`,
+    });
     return { ok: true };
   });
 

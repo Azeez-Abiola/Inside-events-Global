@@ -54,6 +54,7 @@ import { Route as ApiAuthSendEmailHookRouteImport } from './routes/api/auth/send
 import { Route as AuthenticatedDashboardWaitlistRouteImport } from './routes/_authenticated/dashboard.waitlist'
 import { Route as AuthenticatedDashboardVettingRouteImport } from './routes/_authenticated/dashboard.vetting'
 import { Route as AuthenticatedDashboardUsersRouteImport } from './routes/_authenticated/dashboard.users'
+import { Route as AuthenticatedDashboardTeamRouteImport } from './routes/_authenticated/dashboard.team'
 import { Route as AuthenticatedDashboardSubmissionsRouteImport } from './routes/_authenticated/dashboard.submissions'
 import { Route as AuthenticatedDashboardSavedRouteImport } from './routes/_authenticated/dashboard.saved'
 import { Route as AuthenticatedDashboardRevenueRouteImport } from './routes/_authenticated/dashboard.revenue'
@@ -71,6 +72,7 @@ import { Route as AuthenticatedDashboardControlsRouteImport } from './routes/_au
 import { Route as AuthenticatedDashboardCommitmentsRouteImport } from './routes/_authenticated/dashboard.commitments'
 import { Route as AuthenticatedDashboardCommissionsRouteImport } from './routes/_authenticated/dashboard.commissions'
 import { Route as AuthenticatedDashboardBudgetRouteImport } from './routes/_authenticated/dashboard.budget'
+import { Route as AuthenticatedDashboardAuditRouteImport } from './routes/_authenticated/dashboard.audit'
 import { Route as AuthenticatedDashboardAnalyticsRouteImport } from './routes/_authenticated/dashboard.analytics'
 import { Route as AuthenticatedAdminVettingRouteImport } from './routes/_authenticated/admin.vetting'
 import { Route as AuthenticatedAdminSubmissionsRouteImport } from './routes/_authenticated/admin.submissions'
@@ -313,6 +315,12 @@ const AuthenticatedDashboardUsersRoute =
     path: '/users',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardTeamRoute =
+  AuthenticatedDashboardTeamRouteImport.update({
+    id: '/team',
+    path: '/team',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedDashboardSubmissionsRoute =
   AuthenticatedDashboardSubmissionsRouteImport.update({
     id: '/submissions',
@@ -413,6 +421,12 @@ const AuthenticatedDashboardBudgetRoute =
   AuthenticatedDashboardBudgetRouteImport.update({
     id: '/budget',
     path: '/budget',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardAuditRoute =
+  AuthenticatedDashboardAuditRouteImport.update({
+    id: '/audit',
+    path: '/audit',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
 const AuthenticatedDashboardAnalyticsRoute =
@@ -525,6 +539,7 @@ export interface FileRoutesByFullPath {
   '/admin/submissions': typeof AuthenticatedAdminSubmissionsRoute
   '/admin/vetting': typeof AuthenticatedAdminVettingRoute
   '/dashboard/analytics': typeof AuthenticatedDashboardAnalyticsRoute
+  '/dashboard/audit': typeof AuthenticatedDashboardAuditRoute
   '/dashboard/budget': typeof AuthenticatedDashboardBudgetRoute
   '/dashboard/commissions': typeof AuthenticatedDashboardCommissionsRoute
   '/dashboard/commitments': typeof AuthenticatedDashboardCommitmentsRoute
@@ -542,6 +557,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/revenue': typeof AuthenticatedDashboardRevenueRoute
   '/dashboard/saved': typeof AuthenticatedDashboardSavedRoute
   '/dashboard/submissions': typeof AuthenticatedDashboardSubmissionsRoute
+  '/dashboard/team': typeof AuthenticatedDashboardTeamRoute
   '/dashboard/users': typeof AuthenticatedDashboardUsersRoute
   '/dashboard/vetting': typeof AuthenticatedDashboardVettingRoute
   '/dashboard/waitlist': typeof AuthenticatedDashboardWaitlistRoute
@@ -598,6 +614,7 @@ export interface FileRoutesByTo {
   '/admin/submissions': typeof AuthenticatedAdminSubmissionsRoute
   '/admin/vetting': typeof AuthenticatedAdminVettingRoute
   '/dashboard/analytics': typeof AuthenticatedDashboardAnalyticsRoute
+  '/dashboard/audit': typeof AuthenticatedDashboardAuditRoute
   '/dashboard/budget': typeof AuthenticatedDashboardBudgetRoute
   '/dashboard/commissions': typeof AuthenticatedDashboardCommissionsRoute
   '/dashboard/commitments': typeof AuthenticatedDashboardCommitmentsRoute
@@ -615,6 +632,7 @@ export interface FileRoutesByTo {
   '/dashboard/revenue': typeof AuthenticatedDashboardRevenueRoute
   '/dashboard/saved': typeof AuthenticatedDashboardSavedRoute
   '/dashboard/submissions': typeof AuthenticatedDashboardSubmissionsRoute
+  '/dashboard/team': typeof AuthenticatedDashboardTeamRoute
   '/dashboard/users': typeof AuthenticatedDashboardUsersRoute
   '/dashboard/vetting': typeof AuthenticatedDashboardVettingRoute
   '/dashboard/waitlist': typeof AuthenticatedDashboardWaitlistRoute
@@ -675,6 +693,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/submissions': typeof AuthenticatedAdminSubmissionsRoute
   '/_authenticated/admin/vetting': typeof AuthenticatedAdminVettingRoute
   '/_authenticated/dashboard/analytics': typeof AuthenticatedDashboardAnalyticsRoute
+  '/_authenticated/dashboard/audit': typeof AuthenticatedDashboardAuditRoute
   '/_authenticated/dashboard/budget': typeof AuthenticatedDashboardBudgetRoute
   '/_authenticated/dashboard/commissions': typeof AuthenticatedDashboardCommissionsRoute
   '/_authenticated/dashboard/commitments': typeof AuthenticatedDashboardCommitmentsRoute
@@ -692,6 +711,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/revenue': typeof AuthenticatedDashboardRevenueRoute
   '/_authenticated/dashboard/saved': typeof AuthenticatedDashboardSavedRoute
   '/_authenticated/dashboard/submissions': typeof AuthenticatedDashboardSubmissionsRoute
+  '/_authenticated/dashboard/team': typeof AuthenticatedDashboardTeamRoute
   '/_authenticated/dashboard/users': typeof AuthenticatedDashboardUsersRoute
   '/_authenticated/dashboard/vetting': typeof AuthenticatedDashboardVettingRoute
   '/_authenticated/dashboard/waitlist': typeof AuthenticatedDashboardWaitlistRoute
@@ -752,6 +772,7 @@ export interface FileRouteTypes {
     | '/admin/submissions'
     | '/admin/vetting'
     | '/dashboard/analytics'
+    | '/dashboard/audit'
     | '/dashboard/budget'
     | '/dashboard/commissions'
     | '/dashboard/commitments'
@@ -769,6 +790,7 @@ export interface FileRouteTypes {
     | '/dashboard/revenue'
     | '/dashboard/saved'
     | '/dashboard/submissions'
+    | '/dashboard/team'
     | '/dashboard/users'
     | '/dashboard/vetting'
     | '/dashboard/waitlist'
@@ -825,6 +847,7 @@ export interface FileRouteTypes {
     | '/admin/submissions'
     | '/admin/vetting'
     | '/dashboard/analytics'
+    | '/dashboard/audit'
     | '/dashboard/budget'
     | '/dashboard/commissions'
     | '/dashboard/commitments'
@@ -842,6 +865,7 @@ export interface FileRouteTypes {
     | '/dashboard/revenue'
     | '/dashboard/saved'
     | '/dashboard/submissions'
+    | '/dashboard/team'
     | '/dashboard/users'
     | '/dashboard/vetting'
     | '/dashboard/waitlist'
@@ -901,6 +925,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/submissions'
     | '/_authenticated/admin/vetting'
     | '/_authenticated/dashboard/analytics'
+    | '/_authenticated/dashboard/audit'
     | '/_authenticated/dashboard/budget'
     | '/_authenticated/dashboard/commissions'
     | '/_authenticated/dashboard/commitments'
@@ -918,6 +943,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/revenue'
     | '/_authenticated/dashboard/saved'
     | '/_authenticated/dashboard/submissions'
+    | '/_authenticated/dashboard/team'
     | '/_authenticated/dashboard/users'
     | '/_authenticated/dashboard/vetting'
     | '/_authenticated/dashboard/waitlist'
@@ -1295,6 +1321,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardUsersRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/team': {
+      id: '/_authenticated/dashboard/team'
+      path: '/team'
+      fullPath: '/dashboard/team'
+      preLoaderRoute: typeof AuthenticatedDashboardTeamRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/dashboard/submissions': {
       id: '/_authenticated/dashboard/submissions'
       path: '/submissions'
@@ -1414,6 +1447,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardBudgetRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/audit': {
+      id: '/_authenticated/dashboard/audit'
+      path: '/audit'
+      fullPath: '/dashboard/audit'
+      preLoaderRoute: typeof AuthenticatedDashboardAuditRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/dashboard/analytics': {
       id: '/_authenticated/dashboard/analytics'
       path: '/analytics'
@@ -1503,6 +1543,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardAnalyticsRoute: typeof AuthenticatedDashboardAnalyticsRoute
+  AuthenticatedDashboardAuditRoute: typeof AuthenticatedDashboardAuditRoute
   AuthenticatedDashboardBudgetRoute: typeof AuthenticatedDashboardBudgetRoute
   AuthenticatedDashboardCommissionsRoute: typeof AuthenticatedDashboardCommissionsRoute
   AuthenticatedDashboardCommitmentsRoute: typeof AuthenticatedDashboardCommitmentsRoute
@@ -1520,6 +1561,7 @@ interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardRevenueRoute: typeof AuthenticatedDashboardRevenueRoute
   AuthenticatedDashboardSavedRoute: typeof AuthenticatedDashboardSavedRoute
   AuthenticatedDashboardSubmissionsRoute: typeof AuthenticatedDashboardSubmissionsRoute
+  AuthenticatedDashboardTeamRoute: typeof AuthenticatedDashboardTeamRoute
   AuthenticatedDashboardUsersRoute: typeof AuthenticatedDashboardUsersRoute
   AuthenticatedDashboardVettingRoute: typeof AuthenticatedDashboardVettingRoute
   AuthenticatedDashboardWaitlistRoute: typeof AuthenticatedDashboardWaitlistRoute
@@ -1529,6 +1571,7 @@ interface AuthenticatedDashboardRouteChildren {
 const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
   {
     AuthenticatedDashboardAnalyticsRoute: AuthenticatedDashboardAnalyticsRoute,
+    AuthenticatedDashboardAuditRoute: AuthenticatedDashboardAuditRoute,
     AuthenticatedDashboardBudgetRoute: AuthenticatedDashboardBudgetRoute,
     AuthenticatedDashboardCommissionsRoute:
       AuthenticatedDashboardCommissionsRoute,
@@ -1551,6 +1594,7 @@ const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
     AuthenticatedDashboardSavedRoute: AuthenticatedDashboardSavedRoute,
     AuthenticatedDashboardSubmissionsRoute:
       AuthenticatedDashboardSubmissionsRoute,
+    AuthenticatedDashboardTeamRoute: AuthenticatedDashboardTeamRoute,
     AuthenticatedDashboardUsersRoute: AuthenticatedDashboardUsersRoute,
     AuthenticatedDashboardVettingRoute: AuthenticatedDashboardVettingRoute,
     AuthenticatedDashboardWaitlistRoute: AuthenticatedDashboardWaitlistRoute,

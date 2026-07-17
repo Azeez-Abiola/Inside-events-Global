@@ -124,7 +124,7 @@ function WelcomePage() {
             >
               I.G.E (Inside Global Events 2026) is a vertically integrated event
               intelligence and sponsorship marketplace built for the Africa to
-              Europe corridor — connecting event organisers, brand sponsors, and
+              Europe corridor, connecting event organisers, brand sponsors, and
               a distributed network of partnerships professionals.
             </p>
             <div data-reveal data-delay="3" className="mt-8 flex flex-wrap gap-3">
@@ -169,7 +169,7 @@ function WelcomePage() {
                 icon: Megaphone,
                 title: "Event organisers",
                 audience: "organiser" as const,
-                desc: "From cultural homecomings to global summits — list once and reach sponsors that actually fit your audience.",
+                desc: "From cultural homecomings to global summits. List once and reach sponsors that actually fit your audience.",
               },
               {
                 icon: Globe2,
@@ -187,7 +187,7 @@ function WelcomePage() {
                 icon: Newspaper,
                 title: "Media partners",
                 audience: "media_partner" as const,
-                desc: "Cross-promote with vetted events — coverage, interviews, newsletters, and documentary collaborations.",
+                desc: "Cross-promote with vetted events: coverage, interviews, newsletters, and documentary collaborations.",
               },
             ]).map((p, i) => (
               <Link
@@ -230,7 +230,7 @@ function WelcomePage() {
             <ol className="mt-12 grid gap-6 md:grid-cols-4">
               {[
                 { n: "01", t: "List or discover", d: "Organisers publish events; sponsors and partners browse vetted opportunities." },
-                { n: "02", t: "Match with data", d: "Audience, seniority, sector fit and ROI signals — not glossy decks." },
+                { n: "02", t: "Match with data", d: "Audience, seniority, sector fit and ROI signals, not glossy decks." },
                 { n: "03", t: "Close the deal", d: "Transparent tiers, structured agreements, and a partner network that closes." },
                 { n: "04", t: "Track & payout", d: "Every introduction, deal, and commission tracked end-to-end." },
               ].map((s, i) => (
@@ -629,7 +629,7 @@ function WelcomePage() {
               <p className="mt-5 text-base leading-relaxed text-muted-foreground">
                 Sponsorship is one of the largest line items in B2B marketing,
                 yet it still runs on cold inbound, inflated decks and broker
-                handshakes. IGE is rebuilding that market — every event vetted,
+                handshakes. IGE is rebuilding that market: every event vetted,
                 every sponsor verified, every partner accountable, every deal
                 tracked.
               </p>

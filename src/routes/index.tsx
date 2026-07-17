@@ -112,7 +112,7 @@ function MarketplacePreview() {
               Vetted events looking for your brand.
             </h2>
             <p className="mt-2 max-w-xl text-muted-foreground">
-              Browse IGE-vetted sponsorship opportunities. Filter by sector, audience, and budget — no login needed.
+              Browse IGE-vetted sponsorship opportunities. Filter by sector, audience, and budget. No login needed.
             </p>
           </div>
           <Link

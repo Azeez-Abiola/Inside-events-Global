@@ -9,19 +9,19 @@ export async function flushEmailQueueInDev(): Promise<{
   reason?: string
   error?: string
 }> {
-  if (process.env.NODE_ENV === "production") {
-    return { skipped: true, reason: "production" }
-  }
   if (!process.env.RESEND_API_KEY) {
-    return { skipped: true, reason: "RESEND_API_KEY missing locally" }
+    return { skipped: true, reason: "RESEND_API_KEY missing" }
   }
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!serviceKey) {
     return { skipped: true, reason: "SUPABASE_SERVICE_ROLE_KEY missing" }
   }
 
-  const port = process.env.PORT || "8080"
-  const url = `http://127.0.0.1:${port}/lovable/email/queue/process`
+  const base =
+    process.env.VITE_SITE_URL?.replace(/\/$/, "") ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+    `http://127.0.0.1:${process.env.PORT || "8080"}`
+  const url = `${base}/lovable/email/queue/process`
 
   try {
     const res = await fetch(url, {

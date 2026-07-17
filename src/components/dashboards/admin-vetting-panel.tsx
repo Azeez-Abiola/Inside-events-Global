@@ -16,6 +16,8 @@ import { DashboardTableSkeleton, DashboardDrawerDetailSkeleton } from "@/compone
 import { ImageLightbox } from "@/components/image-lightbox";
 import { useTableFilters } from "@/hooks/use-table-filters";
 import { datedCsvFilename, downloadCsv } from "@/lib/csv-export";
+import { useAuth } from "@/lib/auth-context";
+import { isSuperAdmin } from "@/lib/admin-permissions";
 import { listEventsForVetting, setEventVettingStatus, getEventForAdmin, adminDeleteEvent } from "@/lib/admin.functions";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -202,6 +204,8 @@ export function AdminVettingPanel({ onEventClick }: { onEventClick?: (id: string
 
 export function VettingDrawer({ id, onClose }: { id: string; onClose: () => void }) {
   const qc = useQueryClient();
+  const { roles } = useAuth();
+  const canDelete = isSuperAdmin(roles);
   const fetchOne = useServerFn(getEventForAdmin);
   const setStatus = useServerFn(setEventVettingStatus);
   const removeEvent = useServerFn(adminDeleteEvent);
@@ -343,13 +347,15 @@ export function VettingDrawer({ id, onClose }: { id: string; onClose: () => void
                         label="Move to draft"
                         pending={transition.isPending}
                       />
-                      <ActionBtn
-                        onClick={() => setDeleteOpen(true)}
-                        variant="danger"
-                        icon={Trash2}
-                        label="Delete event"
-                        pending={deleteMut.isPending}
-                      />
+                      {canDelete && (
+                        <ActionBtn
+                          onClick={() => setDeleteOpen(true)}
+                          variant="danger"
+                          icon={Trash2}
+                          label="Delete event"
+                          pending={deleteMut.isPending}
+                        />
+                      )}
                     </>
                   )}
                 </div>

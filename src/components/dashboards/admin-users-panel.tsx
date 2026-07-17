@@ -10,7 +10,8 @@ import { DashboardDataToolbar } from "@/components/dashboards/dashboard-data-too
 import { StatusPill } from "@/components/dashboards/shared";
 import { Button } from "@/components/ui/button";
 import { useTableFilters } from "@/hooks/use-table-filters";
-import { datedCsvFilename, downloadCsv } from "@/lib/csv-export";
+import { useAuth } from "@/lib/auth-context";
+import { isSuperAdmin } from "@/lib/admin-permissions";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
@@ -53,6 +54,8 @@ function exportUsersCsv(users: PlatformUser[]) {
 
 export function AdminUsersPanel() {
   const qc = useQueryClient();
+  const { roles } = useAuth();
+  const canSuspend = isSuperAdmin(roles);
   const fetch = useServerFn(listPlatformUsers);
   const suspend = useServerFn(setUserSuspended);
   const [search, setSearch] = useState("");
@@ -118,7 +121,7 @@ export function AdminUsersPanel() {
 
       <DashboardPanel
         title="User management"
-        description="View accounts, roles, and deactivate users who breach platform standards."
+        description={canSuspend ? "View accounts, roles, and deactivate users who breach platform standards." : "View accounts and roles (read-only)."}
         bodyClassName="p-0"
       >
         <DashboardDataToolbar
@@ -139,7 +142,7 @@ export function AdminUsersPanel() {
                 <th className="px-4 py-3">Roles</th>
                 <th className="px-4 py-3">Joined</th>
                 <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Action</th>
+                {canSuspend && <th className="px-4 py-3">Action</th>}
               </tr>
             </DashboardTableHead>
             <tbody className="divide-y divide-border/60">
@@ -169,21 +172,25 @@ export function AdminUsersPanel() {
                     )}
                   </td>
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                    <Button
-                      size="sm"
-                      variant={u.is_suspended ? "outline" : "destructive"}
-                      disabled={mut.isPending || u.roles.includes("super_admin")}
-                      onClick={() => {
-                        if (u.is_suspended) {
-                          mut.mutate({ user_id: u.id, suspended: false });
-                        } else {
-                          setSuspendTarget(u);
-                          setReason("");
-                        }
-                      }}
-                    >
-                      {u.is_suspended ? "Reactivate" : "Deactivate"}
-                    </Button>
+                    {canSuspend ? (
+                      <Button
+                        size="sm"
+                        variant={u.is_suspended ? "outline" : "destructive"}
+                        disabled={mut.isPending || u.roles.includes("super_admin")}
+                        onClick={() => {
+                          if (u.is_suspended) {
+                            mut.mutate({ user_id: u.id, suspended: false });
+                          } else {
+                            setSuspendTarget(u);
+                            setReason("");
+                          }
+                        }}
+                      >
+                        {u.is_suspended ? "Reactivate" : "Deactivate"}
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </td>
                 </tr>
               ))}

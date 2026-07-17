@@ -2,8 +2,9 @@ import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard, CalendarRange, Inbox, Bookmark, Compass, BarChart3, MessageSquare,
   ShieldCheck, Users, DollarSign, SlidersHorizontal, Handshake, TrendingUp, Newspaper, Send, Wallet,
-  ClipboardList, FileText, Coins, UserCheck, UserCircle, Radio, Mail,
+  ClipboardList, FileText, Coins, UserCheck, UserCircle, Radio, Mail, ScrollText, UserCog,
 } from "lucide-react";
+import { canAccessAdminRoute, isSuperAdmin } from "@/lib/admin-permissions";
 
 export type WorkspaceNavItem = {
   to: string;
@@ -17,19 +18,29 @@ export function getWorkspaceNav(roles: string[]): WorkspaceNavItem[] {
   const items: WorkspaceNavItem[] = [];
 
   if (isAdmin) {
+    const superAdmin = isSuperAdmin([...r]);
+    const maybe = (to: string, label: string, icon: LucideIcon) =>
+      canAccessAdminRoute([...r], to) ? [{ to, label, icon }] : [];
+
     items.push(
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/dashboard/vetting", label: "Event queue", icon: ShieldCheck },
-      { to: "/dashboard/waitlist", label: "Waitlist", icon: ClipboardList },
-      { to: "/dashboard/newsletter", label: "Newsletter", icon: Mail },
-      { to: "/dashboard/users", label: "Users", icon: Users },
-      { to: "/dashboard/submissions", label: "Contact", icon: Users },
-      { to: "/dashboard/revenue", label: "Revenue & deals", icon: DollarSign },
-      { to: "/dashboard/partners", label: "Referral partners", icon: UserCheck },
-      { to: "/dashboard/controls", label: "Fraud & rates", icon: SlidersHorizontal },
-      { to: "/dashboard/media-requests", label: "Media requests", icon: Radio },
-      { to: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
+      ...maybe("/dashboard/vetting", "Event queue", ShieldCheck),
+      ...maybe("/dashboard/waitlist", "Waitlist", ClipboardList),
+      ...maybe("/dashboard/newsletter", "Newsletter", Mail),
+      ...maybe("/dashboard/users", "Users", Users),
+      ...maybe("/dashboard/submissions", "Contact", Users),
+      ...maybe("/dashboard/revenue", "Revenue & deals", DollarSign),
+      ...maybe("/dashboard/partners", "Referral partners", UserCheck),
+      ...maybe("/dashboard/controls", "Fraud & rates", SlidersHorizontal),
+      ...maybe("/dashboard/media-requests", "Media requests", Radio),
+      ...maybe("/dashboard/analytics", "Analytics", BarChart3),
     );
+    if (superAdmin) {
+      items.push(
+        { to: "/dashboard/team", label: "Admin team", icon: UserCog },
+        { to: "/dashboard/audit", label: "Audit log", icon: ScrollText },
+      );
+    }
   } else if (r.has("organiser")) {
     items.push(
       { to: "/dashboard", label: "My events", icon: CalendarRange },

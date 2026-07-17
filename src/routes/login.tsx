@@ -3,9 +3,11 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Eye, EyeOff } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthShell } from "@/components/auth-shell";
 import { isEmailNotConfirmedError } from "@/lib/auth-email";
+import { recordAdminLogin } from "@/lib/admin-team.functions";
 
 const search = z.object({
   redirect: z.string().optional(),
@@ -24,6 +26,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
+  const recordLogin = useServerFn(recordAdminLogin);
   const { redirect, email: emailParam, password: passwordParam, unconfirmed } = useSearch({ from: "/login" });
   const [email, setEmail] = useState(emailParam ?? "");
   const [password, setPassword] = useState(passwordParam ?? "");
@@ -49,6 +52,7 @@ function LoginPage() {
       return;
     }
     toast.success("Welcome back");
+    void recordLogin().catch(() => {});
     navigate({ to: redirect ?? "/dashboard" });
   }
 

@@ -246,6 +246,8 @@ function NotificationsBell() {
             toast.message(n.title ?? "New message", { description: desc });
           } else if (n.type === "account_complaint") {
             toast.warning(n.title ?? "Account complaint", { description: desc });
+          } else if (n.type === "admin_audit") {
+            toast.message(n.title ?? "Admin activity", { description: desc });
           } else {
             toast.info(n.title ?? "Notification", { description: desc });
           }

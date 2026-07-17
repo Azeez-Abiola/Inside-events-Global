@@ -16,8 +16,10 @@ import { template as waitlistConfirmation } from './waitlist-confirmation'
 import { template as waitlistInvite } from './waitlist-invite'
 import { template as waitlistRejected } from './waitlist-rejected'
 import { template as welcome } from './welcome'
+import { template as adminInvite } from './admin-invite'
 import { template as accountSuspended } from './account-suspended'
 import { template as complaintInternal } from './complaint-internal'
+import { template as complaintReply } from './complaint-reply'
 import { template as newMessage } from './new-message'
 import { template as paymentLink } from './payment-link'
 import { template as commissionPaid } from './commission-paid'
@@ -34,7 +36,9 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'waitlist-rejected': waitlistRejected,
   welcome,
   'account-suspended': accountSuspended,
+  'admin-invite': adminInvite,
   'complaint-internal': complaintInternal,
+  'complaint-reply': complaintReply,
   'new-message': newMessage,
   'vetting-status': vettingStatus,
   'payment-link': paymentLink,

@@ -6,6 +6,9 @@ import { sendTransactionalEmailServer } from "@/lib/email/server-send";
 import { flushEmailQueueInDev } from "@/lib/email/flush-queue-dev";
 import { IGE_SUPPORT_EMAIL } from "@/lib/support-email";
 import { getSiteUrl } from "@/lib/site-url";
+import { requirePlatformAdmin, requireSuperAdmin, getActorProfile } from "@/lib/admin-auth";
+import { auditAdminAction } from "@/lib/admin-audit";
+import { isSubAdmin } from "@/lib/admin-permissions";
 
 const SITE_URL = process.env.VITE_SITE_URL || "https://www.insideglobalevents.com";
 
@@ -30,15 +33,7 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
 };
 
 async function ensureAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId);
-  if (error) throw new Error(error.message);
-  const roles = (data ?? []).map((r: any) => r.role);
-  if (!roles.includes("abw_admin") && !roles.includes("super_admin")) {
-    throw new Error("Forbidden: admin access required");
-  }
+  await requirePlatformAdmin(userId);
 }
 
 export const listEventsForVetting = createServerFn({ method: "GET" })
@@ -194,6 +189,24 @@ export const setEventVettingStatus = createServerFn({ method: "POST" })
       }
     }
 
+    if (["approved", "rejected", "listed", "revision_requested"].includes(data.to_status)) {
+      const actor = await getActorProfile(userId);
+      const roles = await requirePlatformAdmin(userId);
+      await auditAdminAction({
+        actorId: userId,
+        actorEmail: actor?.email,
+        action: "event_vetting_updated",
+        summary: `Event "${ev.name}" → ${STATUS_LABELS[data.to_status] ?? data.to_status}`,
+        resourceType: "event",
+        resourceId: data.id,
+        metadata: { to_status: data.to_status, note: data.note ?? null },
+        notifyTitle: isSubAdmin(roles) ? "Sub-admin updated event vetting" : undefined,
+        notifyBody: isSubAdmin(roles)
+          ? `${actor?.display_name ?? actor?.email ?? "Sub-admin"} set "${ev.name}" to ${STATUS_LABELS[data.to_status] ?? data.to_status}.`
+          : undefined,
+      });
+    }
+
     return { ok: true, status: data.to_status };
   });
 
@@ -201,10 +214,10 @@ export const adminDeleteEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    await ensureAdmin(supabase, userId);
+    const { userId } = context;
+    await requireSuperAdmin(userId);
 
-    const { data: ev, error } = await supabase
+    const { data: ev, error } = await supabaseAdmin
       .from("events")
       .select("id, name, status, organiser_id")
       .eq("id", data.id)
@@ -238,6 +251,18 @@ export const adminDeleteEvent = createServerFn({ method: "POST" })
         /* best effort */
       }
     }
+
+    const actor = await getActorProfile(userId);
+    await auditAdminAction({
+      actorId: userId,
+      actorEmail: actor?.email,
+      action: "event_deleted",
+      summary: `Deleted event "${ev.name}"`,
+      resourceType: "event",
+      resourceId: data.id,
+      notifyTitle: "Event deleted",
+      notifyBody: `${actor?.display_name ?? actor?.email ?? "Admin"} deleted event "${ev.name}".`,
+    });
 
     return { ok: true };
   });
@@ -282,8 +307,8 @@ export const setUserSuspended = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => SuspendInput.parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    await ensureAdmin(supabase, userId);
+    const { userId } = context;
+    await requireSuperAdmin(userId);
     if (data.user_id === userId) throw new Error("You cannot suspend your own account");
 
     const { data: targetRoles } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", data.user_id);
@@ -332,6 +357,29 @@ export const setUserSuspended = createServerFn({ method: "POST" })
         }
       }
     }
+
+    const actor = await getActorProfile(userId);
+    const { data: targetProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("email, display_name")
+      .eq("id", data.user_id)
+      .maybeSingle();
+
+    await auditAdminAction({
+      actorId: userId,
+      actorEmail: actor?.email,
+      action: data.suspended ? "user_suspended" : "user_reactivated",
+      summary: data.suspended
+        ? `Deactivated ${targetProfile?.email ?? data.user_id}`
+        : `Reactivated ${targetProfile?.email ?? data.user_id}`,
+      resourceType: "user",
+      resourceId: data.user_id,
+      metadata: { reason: data.reason ?? null },
+      notifyTitle: data.suspended ? "User account deactivated" : "User account reactivated",
+      notifyBody: data.suspended
+        ? `${actor?.display_name ?? actor?.email ?? "Admin"} deactivated ${targetProfile?.display_name ?? targetProfile?.email ?? "a user"}.`
+        : `${actor?.display_name ?? actor?.email ?? "Admin"} reactivated ${targetProfile?.display_name ?? targetProfile?.email ?? "a user"}.`,
+    });
 
     return { ok: true };
   });

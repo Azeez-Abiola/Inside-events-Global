@@ -4,6 +4,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendTransactionalEmailServer } from "@/lib/email/server-send";
 import { waitlistAudienceLabel, type WaitlistAudience } from "@/lib/waitlist-audiences";
+import { auditAdminAction } from "@/lib/admin-audit";
+import { getActorProfile } from "@/lib/admin-auth";
 
 async function ensureAdmin(supabase: any, userId: string) {
   const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId);
@@ -61,6 +63,16 @@ export const reviewWaitlistSignup = createServerFn({ method: "POST" })
         .update({ status: "approved", rejection_reason: null } as never)
         .eq("id", signup.id);
 
+      const actor = await getActorProfile(userId);
+      await auditAdminAction({
+        actorId: userId,
+        actorEmail: actor?.email,
+        action: "waitlist_invited",
+        summary: `Approved waitlist signup for ${signup.email} (${audienceLabel})`,
+        resourceType: "waitlist_signup",
+        resourceId: signup.id,
+      });
+
       return { ok: true, status: "approved" };
     }
 
@@ -85,6 +97,17 @@ export const reviewWaitlistSignup = createServerFn({ method: "POST" })
       .from("waitlist_signups")
       .update({ status: "rejected", rejection_reason: note } as never)
       .eq("id", signup.id);
+
+    const actor = await getActorProfile(userId);
+    await auditAdminAction({
+      actorId: userId,
+      actorEmail: actor?.email,
+      action: "waitlist_rejected",
+      summary: `Rejected waitlist signup for ${signup.email} (${audienceLabel})`,
+      resourceType: "waitlist_signup",
+      resourceId: signup.id,
+      metadata: { note },
+    });
 
     return { ok: true, status: "rejected" };
   });
@@ -121,6 +144,16 @@ export const inviteWaitlistSignup = createServerFn({ method: "POST" })
       .from("waitlist_signups")
       .update({ status: "invited" } as never)
       .eq("id", signup.id);
+
+    const actor = await getActorProfile(userId);
+    await auditAdminAction({
+      actorId: userId,
+      actorEmail: actor?.email,
+      action: "waitlist_invited",
+      summary: `Sent waitlist invite to ${signup.email} (${audienceLabel})`,
+      resourceType: "waitlist_signup",
+      resourceId: signup.id,
+    });
 
     return { ok: true };
   });

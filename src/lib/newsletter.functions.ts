@@ -4,6 +4,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendTransactionalEmailServer } from "@/lib/email/server-send";
 import { flushEmailQueueInDev } from "@/lib/email/flush-queue-dev";
+import { requirePlatformAdmin, requireAdminPermission, getActorProfile } from "@/lib/admin-auth";
+import { auditAdminAction } from "@/lib/admin-audit";
+import { isSubAdmin } from "@/lib/admin-permissions";
 
 async function ensureAdmin(supabase: any, userId: string) {
   const { data, error } = await supabase
@@ -165,8 +168,8 @@ export const sendNewsletterCampaign = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => SendNewsletterInput.parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    await ensureAdmin(supabase, userId);
+    const { userId } = context;
+    await requireAdminPermission(userId, "newsletter_send");
 
     const { data: subscribers, error: subErr } = await supabaseAdmin
       .from("newsletter_subscribers")
@@ -263,6 +266,19 @@ export const sendNewsletterCampaign = createServerFn({ method: "POST" })
 
     // Localhost: deliver queued emails via this machine's Resend key (live cron may be misconfigured).
     const queueFlush = await flushEmailQueueInDev();
+
+    const actor = await getActorProfile(userId);
+    await auditAdminAction({
+      actorId: userId,
+      actorEmail: actor?.email,
+      action: "newsletter_sent",
+      summary: `Newsletter "${subject}" sent to ${sent} subscriber${sent === 1 ? "" : "s"}`,
+      resourceType: "newsletter_campaign",
+      resourceId: campaignId ?? undefined,
+      metadata: { sent, skipped, resend: isResend },
+      notifyTitle: "Newsletter sent",
+      notifyBody: `${actor?.display_name ?? actor?.email ?? "Admin"} sent "${subject}" to ${sent} subscribers.`,
+    });
 
     return {
       ok: true,

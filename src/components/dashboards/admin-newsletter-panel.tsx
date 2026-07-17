@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { isSuperAdmin } from "@/lib/admin-permissions";
 import { KpiTile } from "@/components/dashboards/voom-primitives";
 import { DashboardPanel, DashboardTable, DashboardTableHead } from "@/components/dashboards/dashboard-shell";
 import { DashboardDataToolbar } from "@/components/dashboards/dashboard-data-toolbar";
@@ -82,6 +83,8 @@ function emptyForm() {
 
 export function AdminNewsletterPanel() {
   const qc = useQueryClient();
+  const { roles } = useAuth();
+  const canSend = isSuperAdmin(roles);
   const fetch = useServerFn(listNewsletterSubscribers);
   const saveDraft = useServerFn(saveNewsletterDraft);
   const send = useServerFn(sendNewsletterCampaign);
@@ -294,31 +297,45 @@ export function AdminNewsletterPanel() {
                 <Save className="mr-2 h-4 w-4" />
                 {saveMut.isPending ? "Saving…" : "Save draft"}
               </Button>
-              <Button
-                type="button"
-                disabled={!canSave}
-                onClick={() => {
-                  if (!form.id) {
+              {canSend ? (
+                <Button
+                  type="button"
+                  disabled={!canSave}
+                  onClick={() => {
+                    if (!form.id) {
+                      saveMut.mutate(undefined, {
+                        onSuccess: () => {
+                          toast.success("Draft saved — pick subscribers to send");
+                          setView("send");
+                        },
+                      });
+                      return;
+                    }
                     saveMut.mutate(undefined, {
-                      onSuccess: () => {
-                        toast.success("Draft saved — pick subscribers to send");
-                        setView("send");
-                      },
+                      onSuccess: () => setView("send"),
                     });
-                    return;
-                  }
-                  // Persist latest edits before send step
-                  saveMut.mutate(undefined, {
-                    onSuccess: () => setView("send"),
-                  });
-                }}
-              >
-                <Send className="mr-2 h-4 w-4" /> Continue to send
-              </Button>
+                  }}
+                >
+                  <Send className="mr-2 h-4 w-4" /> Continue to send
+                </Button>
+              ) : (
+                <p className="self-center text-xs text-muted-foreground">Only super admins can send campaigns.</p>
+              )}
               </div>
             </div>
           }
         />
+      </div>
+    );
+  }
+
+  if (view === "send" && !canSend) {
+    return (
+      <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">Only super admins can send newsletter campaigns.</p>
+        <Button type="button" variant="outline" onClick={() => setView("list")}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back to newsletters
+        </Button>
       </div>
     );
   }
@@ -467,9 +484,11 @@ export function AdminNewsletterPanel() {
                       <Button type="button" size="sm" variant="outline" onClick={() => openEditDraft(c)}>
                         Edit
                       </Button>
-                      <Button type="button" size="sm" onClick={() => openSendDraft(c)}>
-                        Send
-                      </Button>
+                      {canSend && (
+                        <Button type="button" size="sm" onClick={() => openSendDraft(c)}>
+                          Send
+                        </Button>
+                      )}
                       <Button
                         type="button"
                         size="sm"
@@ -554,10 +573,14 @@ export function AdminNewsletterPanel() {
                     {c.sent_at ? new Date(c.sent_at).toLocaleString() : "—"}
                   </td>
                   <td className="px-4 py-3">
-                    <Button type="button" size="sm" variant="outline" onClick={() => openResend(c)}>
-                      <Send className="mr-1.5 h-3.5 w-3.5" />
-                      Resend
-                    </Button>
+                    {canSend ? (
+                      <Button type="button" size="sm" variant="outline" onClick={() => openResend(c)}>
+                        <Send className="mr-1.5 h-3.5 w-3.5" />
+                        Resend
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </td>
                 </tr>
               ))}
