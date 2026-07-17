@@ -19,6 +19,9 @@ import {
   clearSignupRole,
   applySignupRole,
   hasRoleProfile,
+  resolveSignupRole,
+  getSignupRoleMeta,
+  isSignupRole,
 } from "@/lib/signup-roles";
 
 const STEPS: { key: SignupStep; label: string }[] = [
@@ -39,8 +42,8 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const signupRole = (roles[0] as SignupRole | undefined) ?? role;
-  const roleMeta = SIGNUP_ROLES.find((r) => r.key === signupRole)!;
+  const signupRole = resolveSignupRole(roles, role);
+  const roleMeta = getSignupRoleMeta(signupRole);
   const stepIndex = STEPS.findIndex((s) => s.key === step);
 
   function goToStep(next: SignupStep) {
@@ -69,7 +72,13 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
       }
 
       const storedRole = readSignupRole();
-      const primaryRole = roles[0] as SignupRole | undefined;
+      const primaryRole = roles.find((r): r is SignupRole => isSignupRole(r));
+
+      // Staff/admin accounts should not use the public signup flow.
+      if (roles.some((r) => r === "abw_admin" || r === "super_admin") && !primaryRole) {
+        navigate({ to: "/dashboard", replace: true });
+        return;
+      }
 
       if (!primaryRole && storedRole) {
         try {

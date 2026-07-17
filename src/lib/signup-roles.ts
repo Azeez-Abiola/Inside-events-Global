@@ -17,6 +17,23 @@ export const SIGNUP_ROLES: {
   { key: "media_partner", title: "Media Partner", desc: "Cross-promote with quality events.", icon: Newspaper },
 ];
 
+export function isSignupRole(value: string | undefined | null): value is SignupRole {
+  return !!value && SIGNUP_ROLES.some((r) => r.key === value);
+}
+
+export function getSignupRoleMeta(role: SignupRole) {
+  return SIGNUP_ROLES.find((r) => r.key === role) ?? SIGNUP_ROLES[0];
+}
+
+/** First signup role from auth roles, else session stash, else fallback. */
+export function resolveSignupRole(roles: string[], fallback: SignupRole = "sponsor"): SignupRole {
+  const fromAuth = roles.find((r): r is SignupRole => isSignupRole(r));
+  if (fromAuth) return fromAuth;
+  const stored = readSignupRole();
+  if (stored) return stored;
+  return fallback;
+}
+
 const ROLE_STORAGE_KEY = "ige:signup-role";
 
 export function stashSignupRole(role: SignupRole) {
