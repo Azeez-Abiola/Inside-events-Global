@@ -12,6 +12,9 @@ import { useUserDisplayName } from "@/hooks/use-user-display-name";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CurrencyToggle } from "@/components/currency-toggle";
 import { SidebarInsightCard } from "@/components/sidebar-insight-card";
+import { DashboardTourOverlay } from "@/components/dashboard-tour";
+import { DashboardTourProvider } from "@/lib/dashboard-tour-context";
+import { navTourTarget } from "@/lib/dashboard-tours";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import {
@@ -67,6 +70,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link
               key={n.to}
               to={n.to}
+              data-tour={navTourTarget(n.to)}
               className={cn(
                 "relative flex items-center gap-3 rounded-lg py-2.5 pl-5 pr-3 text-[13px] font-medium transition-colors",
                 active
@@ -117,6 +121,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
+    <DashboardTourProvider>
     <div className="min-h-screen bg-dashboard-canvas">
       {mobileOpen && (
         <div className="fixed inset-0 z-40 flex md:hidden">
@@ -171,7 +176,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           </header>
 
-          <main className="flex-1 bg-dashboard-canvas px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+          <main data-tour="main-content" className="flex-1 bg-dashboard-canvas px-4 py-6 sm:px-6 lg:px-8">{children}</main>
         </div>
       </div>
 
@@ -197,7 +202,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <DashboardTourOverlay />
     </div>
+    </DashboardTourProvider>
   );
 }
 
@@ -272,6 +279,7 @@ function NotificationsBell() {
   return (
     <div className="relative">
       <button
+        data-tour="header-notifications"
         onClick={() => { setOpen((o) => !o); if (!open && unread) markAllRead(); }}
         className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition-colors hover:bg-muted/60"
         aria-label="Notifications"

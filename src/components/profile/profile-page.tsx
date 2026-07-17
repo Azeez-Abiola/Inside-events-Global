@@ -2,9 +2,10 @@ import { useRef, useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Camera, Loader2, Lock, Shield, User } from "lucide-react";
+import { Camera, Compass, Loader2, Lock, Shield, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { useDashboardTour } from "@/lib/dashboard-tour-context";
 import {
   getMyProfileSummary,
   updateBaseProfile,
@@ -36,6 +37,7 @@ const OUTLET_TYPES = ["Publication", "Podcast", "Newsletter", "Creator", "Agency
 
 export function ProfilePage({ initialTab = "general" }: { initialTab?: Tab }) {
   const { user, roles, signOut } = useAuth();
+  const { startTour, tourRole } = useDashboardTour();
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [tab, setTab] = useState<Tab>(initialTab);
@@ -101,11 +103,24 @@ export function ProfilePage({ initialTab = "general" }: { initialTab?: Tab }) {
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
-      <header>
-        <h1 className="font-display text-3xl font-bold text-foreground">Profile</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Manage your account details, {roleLabel(roles).toLowerCase()} profile, and security settings.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl font-bold text-foreground">Profile</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Manage your account details, {roleLabel(roles).toLowerCase()} profile, and security settings.
+          </p>
+        </div>
+        {tourRole && (
+          <Button
+            type="button"
+            variant="outline"
+            className="shrink-0"
+            onClick={() => startTour({ force: true })}
+          >
+            <Compass className="mr-2 h-4 w-4" />
+            See tour
+          </Button>
+        )}
       </header>
 
       {/* Avatar hero */}
