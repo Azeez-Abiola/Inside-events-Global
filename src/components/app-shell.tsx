@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { LogOut, Bell, Loader2, Menu, Search } from "lucide-react";
+import { LogOut, Bell, Loader2, Menu, Search, Compass } from "lucide-react";
 import { toast } from "sonner";
 import { BrandLogo } from "@/components/brand-logo";
 import { useAuth } from "@/lib/auth-context";
@@ -13,9 +13,10 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { CurrencyToggle } from "@/components/currency-toggle";
 import { SidebarInsightCard } from "@/components/sidebar-insight-card";
 import { DashboardTourOverlay } from "@/components/dashboard-tour";
-import { DashboardTourProvider } from "@/lib/dashboard-tour-context";
+import { DashboardTourProvider, useDashboardTour } from "@/lib/dashboard-tour-context";
 import { navTourTarget } from "@/lib/dashboard-tours";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -32,6 +33,25 @@ function isNavActive(pathname: string, to: string) {
   if (to === "/marketplace") return pathname === "/marketplace" || pathname.startsWith("/marketplace/");
   if (to === "/dashboard") return pathname === "/dashboard";
   return pathname === to || pathname.startsWith(to + "/");
+}
+
+function HeaderTourButton() {
+  const { startTour, tourRole } = useDashboardTour();
+  if (!tourRole) return null;
+
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      className="h-9 gap-1.5 rounded-full border-border/60 px-2.5 text-xs font-semibold sm:px-3"
+      onClick={() => startTour({ force: true })}
+      aria-label="See dashboard tour"
+    >
+      <Compass className="h-3.5 w-3.5" />
+      <span className="hidden sm:inline">See tour</span>
+    </Button>
+  );
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -157,6 +177,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
+              <HeaderTourButton />
               <CurrencyToggle className="hidden sm:inline-flex" />
               <NotificationsBell />
               <ThemeToggle />
