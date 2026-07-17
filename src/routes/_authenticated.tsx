@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isEmailConfirmed } from "@/lib/auth-email";
 import { useAuth } from "@/lib/auth-context";
+import { SuspendedAccountGate } from "@/components/suspended-account-gate";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
@@ -52,5 +53,9 @@ function AuthenticatedLayout() {
 
   if (!import.meta.env.DEV && !user) return null;
 
-  return <Outlet />;
+  return (
+    <SuspendedAccountGate>
+      <Outlet />
+    </SuspendedAccountGate>
+  );
 }

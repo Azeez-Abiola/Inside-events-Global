@@ -16,8 +16,8 @@ const ADMIN_SECTIONS: Record<string, DashboardMeta> = {
     breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Event queue" }],
   },
   submissions: {
-    title: "Contact messages",
-    subtitle: "Inbound contact form submissions from the public site.",
+    title: "Contact & complaints",
+    subtitle: "Public contact messages and account complaints from deactivated users.",
     breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Contact" }],
   },
   waitlist: {

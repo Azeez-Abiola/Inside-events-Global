@@ -3,6 +3,9 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendTransactionalEmailServer } from "@/lib/email/server-send";
+import { flushEmailQueueInDev } from "@/lib/email/flush-queue-dev";
+import { IGE_SUPPORT_EMAIL } from "@/lib/support-email";
+import { getSiteUrl } from "@/lib/site-url";
 
 const SITE_URL = process.env.VITE_SITE_URL || "https://www.insideglobalevents.com";
 
@@ -296,6 +299,12 @@ export const setUserSuspended = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     if (data.suspended) {
+      const { data: targetProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("email, display_name")
+        .eq("id", data.user_id)
+        .maybeSingle();
+
       await supabaseAdmin.from("notifications").insert({
         user_id: data.user_id,
         type: "account_suspended",
@@ -303,6 +312,25 @@ export const setUserSuspended = createServerFn({ method: "POST" })
         body: data.reason ?? "Your IGE account has been deactivated. Contact support if you believe this is an error.",
         data: {},
       });
+
+      if (targetProfile?.email) {
+        try {
+          await sendTransactionalEmailServer({
+            templateName: "account-suspended",
+            recipientEmail: targetProfile.email,
+            idempotencyKey: `account-suspended-${data.user_id}`,
+            templateData: {
+              name: targetProfile.display_name ?? undefined,
+              reason: data.reason ?? "Your account has been deactivated by the IGE team.",
+              supportEmail: IGE_SUPPORT_EMAIL,
+              siteUrl: getSiteUrl(),
+            },
+          });
+          await flushEmailQueueInDev();
+        } catch (e) {
+          console.error("[setUserSuspended] deactivation email failed", e);
+        }
+      }
     }
 
     return { ok: true };

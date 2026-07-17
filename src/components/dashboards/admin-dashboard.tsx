@@ -24,6 +24,7 @@ import { datedCsvFilename, downloadCsv } from "@/lib/csv-export";
 import { getAdminSectionMeta, greetingName } from "@/lib/dashboard-meta";
 import { useAuth } from "@/lib/auth-context";
 import { listEventsForVetting } from "@/lib/admin.functions";
+import { listAccountComplaints, updateAccountComplaintStatus } from "@/lib/complaints.functions";
 import { adminGetRevenue, adminListFraudFlags, adminResolveFraudFlag, adminUpsertCommissionConfig, adminCreateDeal, adminUpdateDealStatus, adminMarkCommissionPaid, adminUpdateRates, adminAssignDeal } from "@/lib/deals.functions";
 import { generateDealPaymentLink } from "@/lib/payments.functions";
 import { generateDealContract } from "@/lib/contracts.functions";
@@ -50,6 +51,9 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
   const [drawerOpen, setDrawerOpen] = useState<string | null>(null);
   const [contactSearch, setContactSearch] = useState("");
   const [contactStatus, setContactStatus] = useState("all");
+  const [submissionView, setSubmissionView] = useState<"contact" | "complaints">("contact");
+  const [complaintSearch, setComplaintSearch] = useState("");
+  const [complaintStatus, setComplaintStatus] = useState("all");
   const [partnerSearch, setPartnerSearch] = useState("");
   const [fraudSearch, setFraudSearch] = useState("");
   const [fraudStatus, setFraudStatus] = useState("all");
@@ -185,6 +189,22 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
     },
   });
 
+  const fetchComplaints = useServerFn(listAccountComplaints);
+  const updateComplaint = useServerFn(updateAccountComplaintStatus);
+  const complaints = useQuery({
+    queryKey: ["admin-complaints"],
+    queryFn: () => fetchComplaints(),
+  });
+
+  const complaintStatusMut = useMutation({
+    mutationFn: (v: { id: string; status: "new" | "read" | "resolved" }) => updateComplaint({ data: v }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-complaints"] });
+      toast.success("Complaint updated");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const vettingCount = vettingData?.events?.length ?? 0;
   const waitlistCount = waitlist.data?.length ?? 0;
   const adminGmvUsd = revenueData?.totals.gmv ?? 0;
@@ -197,6 +217,16 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
     statusFilter: contactStatus,
     search: (r: { name: string; email: string; subject: string | null; message: string }) =>
       [r.name, r.email, r.subject, r.message].filter(Boolean).join(" "),
+    matchStatus: (r: { status: string }, filter) => r.status === filter,
+  });
+
+  const complaintRows = complaints.data?.complaints ?? [];
+  const filteredComplaints = useTableFilters({
+    rows: complaintRows,
+    searchText: complaintSearch,
+    statusFilter: complaintStatus,
+    search: (r: { display_name?: string | null; email: string; role: string; message: string }) =>
+      [r.display_name, r.email, r.role, r.message].filter(Boolean).join(" "),
     matchStatus: (r: { status: string }, filter) => r.status === filter,
   });
 
@@ -267,67 +297,162 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
           <AdminUsersPanel />
         ) : section === "submissions" ? (
           <>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 max-w-xs">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 max-w-xl">
               <StatCard icon={Inbox} label="Contact messages" value={contact.data?.length ?? 0} loading={contact.isLoading} />
+              <StatCard icon={AlertTriangle} label="Account complaints" value={complaintRows.length} loading={complaints.isLoading} />
             </div>
 
             <DashboardTabs
               tabs={[
-                { id: "all", label: "All", count: contact.data?.length ?? 0 },
-                { id: "new", label: "New", count: (contact.data ?? []).filter((r: { status: string }) => r.status === "new").length },
-                { id: "read", label: "Read", count: (contact.data ?? []).filter((r: { status: string }) => r.status === "read").length },
+                { id: "contact", label: "Contact", count: contact.data?.length ?? 0 },
+                { id: "complaints", label: "Complaints", count: complaintRows.length },
               ]}
-              active={contactStatus}
-              onChange={setContactStatus}
+              active={submissionView}
+              onChange={(id) => setSubmissionView(id as "contact" | "complaints")}
             />
 
-            {contact.isLoading ? (
-              <DashboardTableSkeleton rows={6} cols={5} />
-            ) : !contact.data?.length ? (
-              <div className="p-8 text-center text-muted-foreground">No contact messages.</div>
-            ) : (
-              <DashboardPanel title="Contact messages" bodyClassName="p-0">
-                <DashboardDataToolbar
-                  search={contactSearch}
-                  onSearchChange={setContactSearch}
-                  searchPlaceholder="Search name, email, subject, message…"
-                  onExport={() =>
-                    downloadCsv(
-                      datedCsvFilename("ige-contact"),
-                      ["created_at", "name", "email", "company", "subject", "message", "status"],
-                      filteredContact.map((r: { created_at: string; name: string; email: string; company: string | null; subject: string | null; message: string; status: string }) => [
-                        r.created_at, r.name, r.email, r.company ?? "", r.subject ?? "", r.message, r.status,
-                      ]),
-                    )
-                  }
-                  exportDisabled={!filteredContact.length}
-                  exportCount={filteredContact.length}
+            {submissionView === "contact" ? (
+              <>
+                <DashboardTabs
+                  tabs={[
+                    { id: "all", label: "All", count: contact.data?.length ?? 0 },
+                    { id: "new", label: "New", count: (contact.data ?? []).filter((r: { status: string }) => r.status === "new").length },
+                    { id: "read", label: "Read", count: (contact.data ?? []).filter((r: { status: string }) => r.status === "read").length },
+                  ]}
+                  active={contactStatus}
+                  onChange={setContactStatus}
                 />
-                <DashboardTable>
-                  <DashboardTableHead>
-                    <tr>
-                      <th className="px-4 py-3">When</th><th className="px-4 py-3">From</th><th className="px-4 py-3">Subject</th><th className="px-4 py-3">Message</th><th className="px-4 py-3">Status</th>
-                    </tr>
-                  </DashboardTableHead>
-                  <tbody className="divide-y divide-border/60">
-                    {filteredContact.map((r: { id: string; created_at: string; name: string; email: string; subject: string | null; message: string; status: string }) => (
-                      <tr key={r.id} className="transition-colors hover:bg-muted/10">
-                        <td className="px-4 py-3 text-xs whitespace-nowrap text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
-                        <td className="px-4 py-3">
-                          <div className="font-medium text-foreground">{r.name}</div>
-                          <a href={`mailto:${r.email}`} className="text-xs text-primary hover:underline">{r.email}</a>
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">{r.subject ?? "—"}</td>
-                        <td className="px-4 py-3 max-w-md text-sm text-muted-foreground line-clamp-3">{r.message}</td>
-                        <td className="px-4 py-3"><StatusPill status={r.status} /></td>
-                      </tr>
-                    ))}
-                    {!filteredContact.length && (
-                      <tr><td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">No messages match your filters.</td></tr>
-                    )}
-                  </tbody>
-                </DashboardTable>
-              </DashboardPanel>
+
+                {contact.isLoading ? (
+                  <DashboardTableSkeleton rows={6} cols={5} />
+                ) : !contact.data?.length ? (
+                  <div className="p-8 text-center text-muted-foreground">No contact messages.</div>
+                ) : (
+                  <DashboardPanel title="Contact messages" bodyClassName="p-0">
+                    <DashboardDataToolbar
+                      search={contactSearch}
+                      onSearchChange={setContactSearch}
+                      searchPlaceholder="Search name, email, subject, message…"
+                      onExport={() =>
+                        downloadCsv(
+                          datedCsvFilename("ige-contact"),
+                          ["created_at", "name", "email", "company", "subject", "message", "status"],
+                          filteredContact.map((r: { created_at: string; name: string; email: string; company: string | null; subject: string | null; message: string; status: string }) => [
+                            r.created_at, r.name, r.email, r.company ?? "", r.subject ?? "", r.message, r.status,
+                          ]),
+                        )
+                      }
+                      exportDisabled={!filteredContact.length}
+                      exportCount={filteredContact.length}
+                    />
+                    <DashboardTable>
+                      <DashboardTableHead>
+                        <tr>
+                          <th className="px-4 py-3">When</th><th className="px-4 py-3">From</th><th className="px-4 py-3">Subject</th><th className="px-4 py-3">Message</th><th className="px-4 py-3">Status</th>
+                        </tr>
+                      </DashboardTableHead>
+                      <tbody className="divide-y divide-border/60">
+                        {filteredContact.map((r: { id: string; created_at: string; name: string; email: string; subject: string | null; message: string; status: string }) => (
+                          <tr key={r.id} className="transition-colors hover:bg-muted/10">
+                            <td className="px-4 py-3 text-xs whitespace-nowrap text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
+                            <td className="px-4 py-3">
+                              <div className="font-medium text-foreground">{r.name}</div>
+                              <a href={`mailto:${r.email}`} className="text-xs text-primary hover:underline">{r.email}</a>
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground">{r.subject ?? "—"}</td>
+                            <td className="px-4 py-3 max-w-md text-sm text-muted-foreground line-clamp-3">{r.message}</td>
+                            <td className="px-4 py-3"><StatusPill status={r.status} /></td>
+                          </tr>
+                        ))}
+                        {!filteredContact.length && (
+                          <tr><td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">No messages match your filters.</td></tr>
+                        )}
+                      </tbody>
+                    </DashboardTable>
+                  </DashboardPanel>
+                )}
+              </>
+            ) : (
+              <>
+                <DashboardTabs
+                  tabs={[
+                    { id: "all", label: "All", count: complaintRows.length },
+                    { id: "new", label: "New", count: complaintRows.filter((r: { status: string }) => r.status === "new").length },
+                    { id: "read", label: "Read", count: complaintRows.filter((r: { status: string }) => r.status === "read").length },
+                    { id: "resolved", label: "Resolved", count: complaintRows.filter((r: { status: string }) => r.status === "resolved").length },
+                  ]}
+                  active={complaintStatus}
+                  onChange={setComplaintStatus}
+                />
+
+                {complaints.isLoading ? (
+                  <DashboardTableSkeleton rows={6} cols={6} />
+                ) : !complaintRows.length ? (
+                  <div className="p-8 text-center text-muted-foreground">No account complaints yet.</div>
+                ) : (
+                  <DashboardPanel title="Account complaints" bodyClassName="p-0">
+                    <DashboardDataToolbar
+                      search={complaintSearch}
+                      onSearchChange={setComplaintSearch}
+                      searchPlaceholder="Search name, email, role, message…"
+                      onExport={() =>
+                        downloadCsv(
+                          datedCsvFilename("ige-complaints"),
+                          ["created_at", "display_name", "email", "role", "message", "status"],
+                          filteredComplaints.map((r: { created_at: string; display_name?: string | null; email: string; role: string; message: string; status: string }) => [
+                            r.created_at, r.display_name ?? "", r.email, r.role, r.message, r.status,
+                          ]),
+                        )
+                      }
+                      exportDisabled={!filteredComplaints.length}
+                      exportCount={filteredComplaints.length}
+                    />
+                    <DashboardTable>
+                      <DashboardTableHead>
+                        <tr>
+                          <th className="px-4 py-3">When</th>
+                          <th className="px-4 py-3">User</th>
+                          <th className="px-4 py-3">Role</th>
+                          <th className="px-4 py-3">Message</th>
+                          <th className="px-4 py-3">Status</th>
+                          <th className="px-4 py-3">Action</th>
+                        </tr>
+                      </DashboardTableHead>
+                      <tbody className="divide-y divide-border/60">
+                        {filteredComplaints.map((r: { id: string; created_at: string; display_name?: string | null; email: string; role: string; message: string; status: string }) => (
+                          <tr key={r.id} className="transition-colors hover:bg-muted/10">
+                            <td className="px-4 py-3 text-xs whitespace-nowrap text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
+                            <td className="px-4 py-3">
+                              <div className="font-medium text-foreground">{r.display_name ?? r.email.split("@")[0]}</div>
+                              <a href={`mailto:${r.email}`} className="text-xs text-primary hover:underline">{r.email}</a>
+                            </td>
+                            <td className="px-4 py-3 text-sm capitalize text-muted-foreground">{r.role.replace(/_/g, " ")}</td>
+                            <td className="px-4 py-3 max-w-md text-sm text-muted-foreground whitespace-pre-wrap">{r.message}</td>
+                            <td className="px-4 py-3"><StatusPill status={r.status} /></td>
+                            <td className="px-4 py-3">
+                              {r.status !== "resolved" ? (
+                                <button
+                                  type="button"
+                                  onClick={() => complaintStatusMut.mutate({ id: r.id, status: r.status === "new" ? "read" : "resolved" })}
+                                  disabled={complaintStatusMut.isPending}
+                                  className="rounded-md border border-border px-2 py-1 text-xs font-semibold hover:bg-muted disabled:opacity-50"
+                                >
+                                  Mark {r.status === "new" ? "read" : "resolved"}
+                                </button>
+                              ) : (
+                                <span className="text-xs text-muted-foreground italic">closed</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                        {!filteredComplaints.length && (
+                          <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">No complaints match your filters.</td></tr>
+                        )}
+                      </tbody>
+                    </DashboardTable>
+                  </DashboardPanel>
+                )}
+              </>
             )}
           </>
         ) : section === "analytics" ? (

@@ -19,6 +19,8 @@ type AuthCtx = {
   user: User | null;
   roles: Role[];
   loading: boolean;
+  isSuspended: boolean;
+  suspensionReason: string | null;
   isDevImpersonating: boolean;
   signOut: () => Promise<void>;
   refreshRoles: () => Promise<void>;
@@ -29,6 +31,8 @@ const Ctx = createContext<AuthCtx>({
   user: null,
   roles: [],
   loading: true,
+  isSuspended: false,
+  suspensionReason: null,
   isDevImpersonating: false,
   signOut: async () => {},
   refreshRoles: async () => {},
@@ -37,6 +41,8 @@ const Ctx = createContext<AuthCtx>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [isSuspended, setIsSuspended] = useState(false);
+  const [suspensionReason, setSuspensionReason] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -51,6 +57,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
   const devActive = DEV_AUTH_ENABLED && devRoles != null;
 
+  async function applySuspensionState(uid: string) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_suspended, suspension_reason")
+      .eq("id", uid)
+      .maybeSingle();
+    const suspended = Boolean(profile?.is_suspended);
+    setIsSuspended(suspended);
+    setSuspensionReason(suspended ? profile?.suspension_reason ?? null : null);
+    return suspended;
+  }
+
   useEffect(() => {
     // In dev impersonation mode, bypass Supabase entirely.
     if (devActive) {
@@ -64,6 +82,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else if (event === "SIGNED_OUT" || !s) {
         setSession(null);
         setRoles([]);
+        setIsSuspended(false);
+        setSuspensionReason(null);
         setLoading(false);
         return;
       } else {
@@ -72,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (s?.user) {
         // fetch roles asynchronously (not inside listener body)
         setTimeout(() => {
+          void applySuspensionState(s.user.id);
           supabase
             .from("user_roles")
             .select("role")
@@ -82,6 +103,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }, 0);
       } else {
         setRoles([]);
+        setIsSuspended(false);
+        setSuspensionReason(null);
       }
       router.invalidate();
       queryClient.invalidateQueries();
@@ -115,20 +138,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(data.session);
       if (data.session?.user) {
         const uid = data.session.user.id;
-        const [{ data: rolesData }, { data: profile }] = await Promise.all([
-          supabase.from("user_roles").select("role").eq("user_id", uid),
-          supabase.from("profiles").select("is_suspended").eq("id", uid).maybeSingle(),
-        ]);
-        if (profile?.is_suspended) {
-          await supabase.auth.signOut({ scope: "local" });
-          setSession(null);
-          setRoles([]);
-          setLoading(false);
-          return;
-        }
+        const { data: rolesData } = await supabase.from("user_roles").select("role").eq("user_id", uid);
+        await applySuspensionState(uid);
         setRoles((rolesData ?? []).map((r) => r.role as Role));
         setLoading(false);
       } else {
+        setIsSuspended(false);
+        setSuspensionReason(null);
         setLoading(false);
       }
     });
@@ -179,6 +195,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: devActive ? mockUser : session?.user ?? null,
         roles: devActive ? (devRoles as Role[]) : roles,
         loading: devActive ? false : loading,
+        isSuspended: devActive ? false : isSuspended,
+        suspensionReason: devActive ? null : suspensionReason,
         isDevImpersonating: devActive,
         signOut,
         refreshRoles,

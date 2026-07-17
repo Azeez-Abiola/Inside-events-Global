@@ -244,6 +244,8 @@ function NotificationsBell() {
           const desc = n.body?.slice(0, 120);
           if (n.type === "new_message") {
             toast.message(n.title ?? "New message", { description: desc });
+          } else if (n.type === "account_complaint") {
+            toast.warning(n.title ?? "Account complaint", { description: desc });
           } else {
             toast.info(n.title ?? "Notification", { description: desc });
           }
