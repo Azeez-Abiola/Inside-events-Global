@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 
 type Rect = { top: number; left: number; width: number; height: number };
 
+const OVERLAY =
+  "fixed bg-black/50 backdrop-blur-[4px] transition-all duration-300 ease-out cursor-pointer";
+
 function measureTarget(targetId: string): Rect | null {
   const el = document.querySelector(`[data-tour="${targetId}"]`);
   if (!el) return null;
@@ -17,6 +20,47 @@ function measureTarget(targetId: string): Rect | null {
     width: r.width + pad * 2,
     height: r.height + pad * 2,
   };
+}
+
+function SpotlightMask({ rect, onDismiss }: { rect: Rect; onDismiss: () => void }) {
+  const bottom = rect.top + rect.height;
+  const right = rect.left + rect.width;
+
+  return (
+    <>
+      {/* Four panels around the hole — blur/dim only outside the highlight */}
+      <div className={OVERLAY} style={{ top: 0, left: 0, right: 0, height: rect.top }} onClick={onDismiss} aria-hidden />
+      <div
+        className={OVERLAY}
+        style={{ top: bottom, left: 0, right: 0, bottom: 0 }}
+        onClick={onDismiss}
+        aria-hidden
+      />
+      <div
+        className={OVERLAY}
+        style={{ top: rect.top, left: 0, width: rect.left, height: rect.height }}
+        onClick={onDismiss}
+        aria-hidden
+      />
+      <div
+        className={OVERLAY}
+        style={{ top: rect.top, left: right, right: 0, height: rect.height }}
+        onClick={onDismiss}
+        aria-hidden
+      />
+
+      {/* Highlight ring — centre stays fully sharp (no overlay on top of it) */}
+      <div
+        className="pointer-events-none fixed rounded-xl border-2 border-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.25)] transition-all duration-300 ease-out"
+        style={{
+          top: rect.top,
+          left: rect.left,
+          width: rect.width,
+          height: rect.height,
+        }}
+      />
+    </>
+  );
 }
 
 export function DashboardTourOverlay() {
@@ -61,27 +105,18 @@ export function DashboardTourOverlay() {
   const tooltipLeft = rect ? Math.min(Math.max(16, rect.left), window.innerWidth - 340) : 16;
 
   return createPortal(
-    <div className="fixed inset-0 z-[200]" role="dialog" aria-modal="true" aria-label="Dashboard tour">
-      {/* Blurred backdrop */}
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={skipTour} aria-hidden />
-
-      {/* Spotlight ring */}
-      {rect && (
-        <div
-          className="pointer-events-none absolute rounded-xl border-2 border-primary transition-all duration-300 ease-out"
-          style={{
-            top: rect.top,
-            left: rect.left,
-            width: rect.width,
-            height: rect.height,
-            boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.62)",
-          }}
-        />
-      )}
+    <div className="fixed inset-0 z-[200] pointer-events-none" role="dialog" aria-modal="true" aria-label="Dashboard tour">
+      <div className="pointer-events-auto">
+        {rect ? (
+          <SpotlightMask rect={rect} onDismiss={skipTour} />
+        ) : (
+          <div className={`${OVERLAY} inset-0`} onClick={skipTour} aria-hidden />
+        )}
+      </div>
 
       {/* Tooltip card */}
       <div
-        className="absolute z-[201] w-[min(320px,calc(100vw-32px))] rounded-2xl border border-border bg-card p-5 shadow-2xl"
+        className="pointer-events-auto absolute z-[201] w-[min(320px,calc(100vw-32px))] rounded-2xl border border-border bg-card p-5 shadow-2xl"
         style={{ top: tooltipTop, left: tooltipLeft }}
       >
         <div className="mb-3 flex items-start justify-between gap-3">
