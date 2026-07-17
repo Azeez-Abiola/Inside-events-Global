@@ -25,6 +25,55 @@ const InviteInput = z.object({
   email: z.string().trim().email().max(255),
 });
 
+async function deliverAdminInviteEmail(input: {
+  email: string;
+  name: string;
+  password: string;
+  idempotencyKey: string;
+}) {
+  const siteUrl = getSiteUrl();
+  const sendResult = await sendTransactionalEmailServer({
+    templateName: "admin-invite",
+    recipientEmail: input.email,
+    idempotencyKey: input.idempotencyKey,
+    templateData: {
+      name: input.name,
+      email: input.email,
+      temporaryPassword: input.password,
+      loginUrl: `${siteUrl}/login`,
+      siteUrl,
+    },
+  });
+  if (!sendResult.success) {
+    throw new Error(
+      sendResult.reason === "suppressed"
+        ? `Could not send invite: ${input.email} is on the email suppression list.`
+        : "Could not queue the invite email. Please try again.",
+    );
+  }
+
+  const queueFlush = await flushEmailQueueInDev();
+  if (queueFlush.error) {
+    throw new Error(`Invite saved but email delivery failed: ${queueFlush.error}`);
+  }
+  if (queueFlush.skipped && queueFlush.reason?.includes("RESEND_API_KEY")) {
+    throw new Error(
+      "Invite saved but RESEND_API_KEY is not configured, so the email was not sent. Add it to your environment and try again.",
+    );
+  }
+}
+
+async function assertSubAdmin(userId: string) {
+  const { data: roles } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", userId);
+  const roleList = (roles ?? []).map((r) => r.role);
+  if (!roleList.includes("abw_admin")) {
+    throw new Error("This user is not a sub-admin.");
+  }
+  if (roleList.includes("super_admin")) {
+    throw new Error("Cannot resend invite for a super admin account.");
+  }
+}
+
 export const inviteSubAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => InviteInput.parse(d))
@@ -32,7 +81,6 @@ export const inviteSubAdmin = createServerFn({ method: "POST" })
     await requireSuperAdmin(context.userId);
     const email = data.email.toLowerCase();
     const password = generateTempPassword();
-    const siteUrl = getSiteUrl();
 
     const { data: existingProfile } = await supabaseAdmin
       .from("profiles")
@@ -79,35 +127,12 @@ export const inviteSubAdmin = createServerFn({ method: "POST" })
       await supabaseAdmin.from("user_roles").insert({ user_id: created.user.id, role: "abw_admin" });
     }
 
-    const sendResult = await sendTransactionalEmailServer({
-      templateName: "admin-invite",
-      recipientEmail: email,
+    await deliverAdminInviteEmail({
+      email,
+      name: data.name,
+      password,
       idempotencyKey: `admin-invite-${email}-${Date.now()}`,
-      templateData: {
-        name: data.name,
-        email,
-        temporaryPassword: password,
-        loginUrl: `${siteUrl}/login`,
-        siteUrl,
-      },
     });
-    if (!sendResult.success) {
-      throw new Error(
-        sendResult.reason === "suppressed"
-          ? `Could not send invite: ${email} is on the email suppression list.`
-          : "Could not queue the invite email. Please try again.",
-      );
-    }
-
-    const queueFlush = await flushEmailQueueInDev();
-    if (queueFlush.error) {
-      throw new Error(`Invite created but email delivery failed: ${queueFlush.error}`);
-    }
-    if (queueFlush.skipped && queueFlush.reason?.includes("RESEND_API_KEY")) {
-      throw new Error(
-        "Invite created but RESEND_API_KEY is not configured, so the email was not sent. Add it to your environment and invite again.",
-      );
-    }
 
     const inviter = await getActorProfile(context.userId);
     await auditAdminAction({
@@ -120,6 +145,59 @@ export const inviteSubAdmin = createServerFn({ method: "POST" })
       metadata: { invitee_name: data.name, invitee_email: email },
       notifyTitle: "Sub-admin invited",
       notifyBody: `${inviter?.display_name ?? inviter?.email ?? "Super admin"} invited ${data.name} (${email}) as a sub-admin.`,
+    });
+
+    return { ok: true };
+  });
+
+export const resendSubAdminInvite = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ user_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await requireSuperAdmin(context.userId);
+    await assertSubAdmin(data.user_id);
+
+    const { data: profile, error: profileErr } = await supabaseAdmin
+      .from("profiles")
+      .select("id, email, display_name, is_suspended")
+      .eq("id", data.user_id)
+      .single();
+    if (profileErr || !profile?.email) {
+      throw new Error(profileErr?.message ?? "Sub-admin profile not found");
+    }
+    if (profile.is_suspended) {
+      throw new Error("Cannot resend invite for a deactivated account.");
+    }
+
+    const password = generateTempPassword();
+    const { error: pwdErr } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
+      password,
+      email_confirm: true,
+    });
+    if (pwdErr) throw new Error(pwdErr.message);
+
+    await supabaseAdmin
+      .from("profiles")
+      .update({ last_login_at: null } as never)
+      .eq("id", data.user_id);
+
+    const name = profile.display_name?.trim() || profile.email.split("@")[0];
+    await deliverAdminInviteEmail({
+      email: profile.email,
+      name,
+      password,
+      idempotencyKey: `admin-invite-resend-${profile.email}-${Date.now()}`,
+    });
+
+    const actor = await getActorProfile(context.userId);
+    await auditAdminAction({
+      actorId: context.userId,
+      actorEmail: actor?.email,
+      action: "admin_invited",
+      summary: `Resent sub-admin invite to ${name} (${profile.email})`,
+      resourceType: "admin_user",
+      resourceId: profile.email,
+      metadata: { invitee_name: name, invitee_email: profile.email, resend: true },
     });
 
     return { ok: true };
