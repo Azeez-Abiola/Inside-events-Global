@@ -13,8 +13,7 @@ import {
 } from "@react-email/components";
 import type { TemplateEntry } from "./registry";
 import { EmailBrandHeader } from "@/lib/email-templates/email-brand-header";
-
-const SITE_NAME = "Inside Global Events";
+import { SITE_NAME } from "@/lib/email/config";
 
 type RoleKey =
   | "organiser"
@@ -27,6 +26,7 @@ type RoleKey =
 interface Props {
   role: RoleKey;
   roleLabel: string;
+  name?: string;
   siteUrl: string;
   dashboardUrl: string;
   messagesUrl: string;
@@ -87,24 +87,29 @@ const ROLE_COPY: Record<RoleKey, { headline: string; bullets: string[] }> = {
 function WelcomeEmail({
   role,
   roleLabel,
+  name,
   siteUrl,
   dashboardUrl,
   messagesUrl,
   marketplaceUrl,
 }: Props) {
   const copy = ROLE_COPY[role] ?? ROLE_COPY.sponsor;
+  const firstName = name?.trim().split(/\s+/)[0];
   return (
     <Html lang="en" dir="ltr">
       <Head />
-      <Preview>Welcome to {SITE_NAME} — your {roleLabel} workspace is ready</Preview>
+      <Preview>
+        Welcome to {SITE_NAME} — thanks for joining as a {roleLabel}
+      </Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={hero}>
             <EmailBrandHeader siteUrl={siteUrl} variant="hero" />
             <Heading style={h1}>{copy.headline}</Heading>
             <Text style={lead}>
-              Thanks for joining <strong>{SITE_NAME}</strong> as a{" "}
-              <strong>{roleLabel}</strong>. Here&apos;s what you can do next:
+              {firstName ? `Hi ${firstName},` : "Hi there,"} thanks for joining{" "}
+              <strong>{SITE_NAME}</strong> as a <strong>{roleLabel}</strong>. Your account is
+              set up — here&apos;s what you can do next:
             </Text>
           </Section>
           <Section style={card}>
@@ -151,12 +156,15 @@ function WelcomeEmail({
 
 export const template = {
   component: WelcomeEmail,
-  subject: (data: { roleLabel?: string }) =>
-    `Welcome to IGE — your ${data.roleLabel ?? "workspace"} is ready`,
+  subject: (data: { roleLabel?: string; name?: string }) =>
+    data.name
+      ? `Welcome to IGE, ${data.name.split(/\s+/)[0]} — your ${data.roleLabel ?? "workspace"} is ready`
+      : `Welcome to IGE — your ${data.roleLabel ?? "workspace"} is ready`,
   displayName: "Welcome (role-based)",
   previewData: {
     role: "sponsor" as RoleKey,
     roleLabel: "Brand / Sponsor",
+    name: "Jane Doe",
     siteUrl: "https://www.insideglobalevents.com",
     dashboardUrl: "https://www.insideglobalevents.com/dashboard",
     messagesUrl: "https://www.insideglobalevents.com/messages",

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { sendWelcomeEmailForUser } from "@/lib/email/welcome";
+import { flushEmailQueueInDev } from "@/lib/email/flush-queue-dev";
 import { computeProfileComplete, completenessHint } from "@/lib/profile-completeness";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -111,8 +112,9 @@ export const sendWelcomeEmail = createServerFn({ method: "POST" })
       roles?.[0]?.role ||
       (authUser.user?.user_metadata?.role as string | undefined);
     if (!role) return { ok: false };
-    await sendWelcomeEmailForUser(userId, role);
-    return { ok: true };
+    const result = await sendWelcomeEmailForUser(userId, role);
+    const queueFlush = await flushEmailQueueInDev();
+    return { ...result, queueFlush };
   });
 
 const BaseProfileInput = z.object({

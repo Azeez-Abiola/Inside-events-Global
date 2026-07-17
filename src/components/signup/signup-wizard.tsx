@@ -136,6 +136,15 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
     goToStep("account");
   }
 
+  async function handleSignupComplete() {
+    try {
+      await sendWelcome({ data: { role: signupRole } });
+    } catch {
+      // Welcome email is best-effort — don't block dashboard access.
+    }
+    navigate({ to: "/dashboard" });
+  }
+
   async function handlePassword(e: React.FormEvent) {
     e.preventDefault();
     if (password.length < 8) {
@@ -158,7 +167,6 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
     if (data.session?.user && isEmailConfirmed(data.session.user)) {
       try {
         await assignRole(role);
-        await sendWelcome({ data: { role } }).catch(() => {});
         clearSignupRole();
         toast.success("Account created — one more step");
         goToStep("profile");
@@ -177,7 +185,6 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
     if (!verifiedUser) throw new Error("Session missing after verification");
 
     await assignRole(role);
-    await sendWelcome({ data: { role } }).catch(() => {});
     clearSignupRole();
     toast.success("Email verified — welcome to IGE!");
     goToStep("profile");
@@ -341,7 +348,7 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
       )}
 
       {step === "profile" && user && isEmailConfirmed(user) && (
-        <SignupProfileStep role={signupRole} onDone={() => navigate({ to: "/dashboard" })} />
+        <SignupProfileStep role={signupRole} onDone={() => void handleSignupComplete()} />
       )}
     </AuthShell>
   );
