@@ -27,6 +27,7 @@ type DashboardTourContextValue = {
   tourRole: DashboardTourRole | null;
   startTour: (options?: { force?: boolean }) => void;
   nextStep: () => void;
+  prevStep: () => void;
   skipTour: () => void;
 };
 
@@ -106,6 +107,10 @@ export function DashboardTourProvider({ children }: { children: ReactNode }) {
     setStepIndex((i) => i + 1);
   }, [stepIndex, steps.length, finishTour]);
 
+  const prevStep = useCallback(() => {
+    setStepIndex((i) => Math.max(0, i - 1));
+  }, []);
+
   const skipTour = useCallback(() => {
     void finishTour();
   }, [finishTour]);
@@ -130,9 +135,10 @@ export function DashboardTourProvider({ children }: { children: ReactNode }) {
       tourRole,
       startTour,
       nextStep,
+      prevStep,
       skipTour,
     }),
-    [isActive, stepIndex, steps, tourRole, startTour, nextStep, skipTour],
+    [isActive, stepIndex, steps, tourRole, startTour, nextStep, prevStep, skipTour],
   );
 
   return <DashboardTourContext.Provider value={value}>{children}</DashboardTourContext.Provider>;

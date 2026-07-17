@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowRight, Sparkles, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, X } from "lucide-react";
 import { useDashboardTour } from "@/lib/dashboard-tour-context";
 import { Button } from "@/components/ui/button";
 
@@ -64,12 +64,13 @@ function SpotlightMask({ rect, onDismiss }: { rect: Rect; onDismiss: () => void 
 }
 
 export function DashboardTourOverlay() {
-  const { isActive, stepIndex, steps, nextStep, skipTour } = useDashboardTour();
+  const { isActive, stepIndex, steps, nextStep, prevStep, skipTour } = useDashboardTour();
   const [rect, setRect] = useState<Rect | null>(null);
   const [mounted, setMounted] = useState(false);
 
   const step = steps[stepIndex];
   const isLast = stepIndex >= steps.length - 1;
+  const isFirst = stepIndex === 0;
 
   useEffect(() => setMounted(true), []);
 
@@ -140,6 +141,16 @@ export function DashboardTourOverlay() {
         <div className="mt-5 flex flex-wrap items-center gap-2">
           <Button type="button" variant="ghost" size="sm" onClick={skipTour}>
             Skip tour
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={isFirst}
+            onClick={prevStep}
+          >
+            <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
+            Back
           </Button>
           <Button type="button" size="sm" className="bg-brand-gradient text-white" onClick={nextStep}>
             {isLast ? "Finish" : "Next"}
