@@ -18,6 +18,9 @@ import {
 import type { SignupRole } from "@/lib/signup-roles";
 import { ChipMulti, Field, SelectField, TextArea } from "@/components/signup/profile-fields";
 
+const signupPrimaryBtn =
+  "inline-flex w-full items-center justify-center rounded-md bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition-transform hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-60";
+
 export function SignupProfileStep({ role, onDone }: { role: SignupRole; onDone: () => void }) {
   if (role === "organiser") return <OrganiserForm onDone={onDone} />;
   if (role === "sponsor") return <SponsorForm onDone={onDone} />;
@@ -31,7 +34,7 @@ function MediaSkipForm({ onDone }: { onDone: () => void }) {
       <p className="text-sm text-muted-foreground">
         Media partner accounts get a custom onboarding from our partnerships team — we'll be in touch.
       </p>
-      <button type="button" onClick={onDone} className="btn-primary w-full">
+      <button type="button" onClick={onDone} className={signupPrimaryBtn}>
         Continue to dashboard
       </button>
     </div>
@@ -70,7 +73,7 @@ function OrganiserForm({ onDone }: { onDone: () => void }) {
         onChange={(v) => setForm({ ...form, event_history: v })}
         placeholder="Past editions, notable speakers / sponsors…"
       />
-      <button type="submit" disabled={saving} className="btn-primary w-full">
+      <button type="submit" disabled={saving} className={signupPrimaryBtn}>
         {saving ? "Saving…" : "Finish & go to dashboard"}
       </button>
     </form>
@@ -132,7 +135,7 @@ function SponsorForm({ onDone }: { onDone: () => void }) {
         <Field label="Max budget" type="number" value={form.budget_range_max} onChange={(v) => setForm({ ...form, budget_range_max: v })} />
         <SelectField label="Currency" value={form.preferred_currency} onChange={(v) => setForm({ ...form, preferred_currency: v })} options={[...CURRENCIES]} />
       </div>
-      <button type="submit" disabled={saving} className="btn-primary w-full">
+      <button type="submit" disabled={saving} className={signupPrimaryBtn}>
         {saving ? "Saving…" : "Finish & go to dashboard"}
       </button>
     </form>
@@ -176,7 +179,7 @@ function ReferralForm({ onDone }: { onDone: () => void }) {
       <TextArea label="Describe your sponsor network" rows={3} value={form.sponsor_network_desc} onChange={(v) => setForm({ ...form, sponsor_network_desc: v })} />
       <ChipMulti label="Sector expertise" options={SECTOR_EXPERTISE} value={form.sector_expertise} onChange={(v) => setForm({ ...form, sector_expertise: v })} />
       <SelectField label="Payout currency" value={form.payout_currency} onChange={(v) => setForm({ ...form, payout_currency: v as any })} options={[...CURRENCIES]} />
-      <button type="submit" disabled={saving} className="btn-primary w-full">
+      <button type="submit" disabled={saving} className={signupPrimaryBtn}>
         {saving ? "Saving…" : "Finish & go to dashboard"}
       </button>
     </form>

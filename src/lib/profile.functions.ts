@@ -5,6 +5,12 @@ import { sendWelcomeEmailForUser } from "@/lib/email/welcome";
 import { computeProfileComplete, completenessHint } from "@/lib/profile-completeness";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+async function syncDisplayName(userId: string, displayName: string) {
+  const trimmed = displayName.trim();
+  if (!trimmed) return;
+  await supabaseAdmin.from("profiles").update({ display_name: trimmed } as never).eq("id", userId);
+}
+
 const OrganiserInput = z.object({
   org_name: z.string().trim().min(1).max(160),
   bio: z.string().trim().max(1000).optional().nullable(),
@@ -22,6 +28,7 @@ export const upsertOrganiserProfile = createServerFn({ method: "POST" })
       .from("organiser_profiles")
       .upsert({ user_id: userId, ...data } as never, { onConflict: "user_id" });
     if (error) throw new Error(error.message);
+    await syncDisplayName(userId, data.org_name);
     const profile_complete = await syncProfileCompleteness(userId).catch(() => null);
     return { ok: true, profile_complete };
   });
@@ -49,6 +56,7 @@ export const upsertSponsorProfile = createServerFn({ method: "POST" })
       .from("sponsor_profiles")
       .upsert({ user_id: userId, ...data } as never, { onConflict: "user_id" });
     if (error) throw new Error(error.message);
+    await syncDisplayName(userId, data.brand_name);
     const profile_complete = await syncProfileCompleteness(userId).catch(() => null);
     return { ok: true, profile_complete };
   });
@@ -86,6 +94,7 @@ export const upsertReferralProfile = createServerFn({ method: "POST" })
     ]);
     if (pErr) throw new Error(pErr.message);
     if (rErr) throw new Error(rErr.message);
+    await syncDisplayName(userId, data.full_name);
     const profile_complete = await syncProfileCompleteness(userId).catch(() => null);
     return { ok: true, profile_complete };
   });

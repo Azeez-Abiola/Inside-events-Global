@@ -7,7 +7,8 @@ import { BrandLogo } from "@/components/brand-logo";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { getWorkspaceNav } from "@/lib/workspace-nav";
-import { greetingName, roleLabel } from "@/lib/dashboard-meta";
+import { roleLabel } from "@/lib/dashboard-meta";
+import { useUserDisplayName } from "@/hooks/use-user-display-name";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CurrencyToggle } from "@/components/currency-toggle";
 import { SidebarInsightCard } from "@/components/sidebar-insight-card";
@@ -97,12 +98,13 @@ export function AppShell({ children }: { children: ReactNode }) {
     </aside>
   );
 
+  const { data: displayName = "there" } = useUserDisplayName();
   const { data: headerProfile } = useQuery({
     queryKey: ["header-profile", user?.id],
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("display_name, avatar_url")
+        .select("avatar_url")
         .eq("id", user!.id)
         .single();
       return data;
@@ -111,9 +113,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     staleTime: 60_000,
   });
 
-  const displayName =
-    headerProfile?.display_name?.trim() ||
-    greetingName(user?.email, user?.user_metadata);
   const avatarUrl = headerProfile?.avatar_url ?? null;
   const initials = displayName.slice(0, 2).toUpperCase();
 

@@ -63,12 +63,6 @@ export function clearSignupRole() {
   }
 }
 
-export async function applySignupRole(userId: string, role: SignupRole) {
-  const { supabase } = await import("@/integrations/supabase/client");
-  const { error } = await supabase.from("user_roles").insert({ user_id: userId, role });
-  if (error && !error.message.includes("duplicate")) throw new Error(error.message);
-}
-
 export async function hasRoleProfile(userId: string, role: SignupRole): Promise<boolean> {
   const { supabase } = await import("@/integrations/supabase/client");
   if (role === "media_partner") return true;

@@ -2,8 +2,8 @@ import { ReactNode } from "react";
 import { useLocation } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { DashboardHeader } from "@/components/dashboards/dashboard-shell";
-import { getDashboardMeta, greetingName } from "@/lib/dashboard-meta";
-import { useAuth } from "@/lib/auth-context";
+import { getDashboardMeta } from "@/lib/dashboard-meta";
+import { useUserDisplayName } from "@/hooks/use-user-display-name";
 
 export function WorkspacePage({
   title,
@@ -21,10 +21,10 @@ export function WorkspacePage({
   showGreeting?: boolean;
 }) {
   const loc = useLocation();
-  const { user } = useAuth();
+  const { data: displayName = "there" } = useUserDisplayName();
   const meta = getDashboardMeta(loc.pathname);
   const resolvedBreadcrumbs = breadcrumbs ?? meta?.breadcrumbs ?? [{ label: "Dashboard", to: "/dashboard" }, { label: title }];
-  const greeting = showGreeting ? greetingName(user?.email, user?.user_metadata) : undefined;
+  const greeting = showGreeting ? displayName : undefined;
 
   return (
     <AppShell>

@@ -6,6 +6,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isEmailConfirmed } from "@/lib/auth-email";
 import { sendWelcomeEmail } from "@/lib/profile.functions";
+import { ensureSignupRole } from "@/lib/signup.functions";
 import { AuthShell } from "@/components/auth-shell";
 import { SignupProfileStep } from "@/components/signup/profile-step";
 import { SignupOtpStep } from "@/components/signup/signup-otp-step";
@@ -17,7 +18,6 @@ import {
   stashSignupRole,
   readSignupRole,
   clearSignupRole,
-  applySignupRole,
   hasRoleProfile,
   resolveSignupRole,
   getSignupRoleMeta,
@@ -35,6 +35,7 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
   const navigate = useNavigate();
   const { user, roles, loading, refreshRoles } = useAuth();
   const sendWelcome = useServerFn(sendWelcomeEmail);
+  const ensureRole = useServerFn(ensureSignupRole);
   const [step, setStep] = useState<SignupStep>(initialStep ?? "role");
   const [role, setRole] = useState<SignupRole>("sponsor");
   const [bootstrapping, setBootstrapping] = useState(true);
@@ -49,6 +50,11 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
   function goToStep(next: SignupStep) {
     setStep(next);
     navigate({ to: "/signup", search: next === "role" ? {} : { step: next }, replace: true });
+  }
+
+  async function assignRole(selected: SignupRole) {
+    await ensureRole({ data: { role: selected } });
+    await refreshRoles();
   }
 
   useEffect(() => {
@@ -82,11 +88,11 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
 
       if (!primaryRole && storedRole) {
         try {
-          await applySignupRole(user.id, storedRole);
-          await refreshRoles();
+          await assignRole(storedRole);
           clearSignupRole();
           setRole(storedRole);
-          goToStep("profile");
+          // Let SignupOtpStep show the success toast when coming from verify.
+          if (step !== "verify") goToStep("profile");
         } catch (e: unknown) {
           toast.error(e instanceof Error ? e.message : "Could not save your role");
         }
@@ -118,8 +124,7 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
     stashSignupRole(role);
     if (user && isEmailConfirmed(user)) {
       try {
-        await applySignupRole(user.id, role);
-        await refreshRoles();
+        await assignRole(role);
         clearSignupRole();
         toast.success("Role set — let's complete your profile");
         goToStep("profile");
@@ -152,8 +157,7 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
     }
     if (data.session?.user && isEmailConfirmed(data.session.user)) {
       try {
-        await applySignupRole(data.session.user.id, role);
-        await refreshRoles();
+        await assignRole(role);
         await sendWelcome({ data: { role } }).catch(() => {});
         clearSignupRole();
         toast.success("Account created — one more step");
@@ -168,12 +172,11 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
   }
 
   async function handleOtpVerified() {
-    const { data } = await supabase.auth.getUser();
-    const verifiedUser = data.user;
+    const { data: sessionData } = await supabase.auth.getSession();
+    const verifiedUser = sessionData.session?.user ?? (await supabase.auth.getUser()).data.user;
     if (!verifiedUser) throw new Error("Session missing after verification");
 
-    await applySignupRole(verifiedUser.id, role);
-    await refreshRoles();
+    await assignRole(role);
     await sendWelcome({ data: { role } }).catch(() => {});
     clearSignupRole();
     toast.success("Email verified — welcome to IGE!");

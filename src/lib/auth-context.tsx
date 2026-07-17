@@ -106,7 +106,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         if (userData.user && !isEmailConfirmed(userData.user)) {
-          await supabase.auth.signOut({ scope: "local" });
           setSession(null);
           setRoles([]);
           setLoading(false);
@@ -139,14 +138,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshRoles = async () => {
     if (devActive) return;
-    const { data: sessionData } = await supabase.auth.getSession();
-    const uid = sessionData.session?.user?.id;
-    if (!uid) {
-      setRoles([]);
-      return;
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const uid = sessionData.session?.user?.id;
+      if (!uid) {
+        setRoles([]);
+        return;
+      }
+      const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", uid);
+      if (!error) {
+        setRoles((data ?? []).map((r) => r.role as Role));
+        return;
+      }
+      const retryable =
+        (error as { status?: number }).status === 403 ||
+        error.code === "42501" ||
+        error.message.toLowerCase().includes("row-level");
+      if (!retryable || attempt === 5) return;
+      await new Promise((r) => setTimeout(r, 200 * (attempt + 1)));
     }
-    const { data } = await supabase.from("user_roles").select("role").eq("user_id", uid);
-    setRoles((data ?? []).map((r) => r.role as Role));
   };
 
   const signOut = async () => {
