@@ -12,6 +12,11 @@ import { fmtMoney } from "@/lib/currency";
 
 const QUARTERS = ["q1_allocation", "q2_allocation", "q3_allocation", "q4_allocation"] as const;
 
+function budgetLabel(m: any) {
+  if (m.budget_name && m.region) return `${m.budget_name} · ${m.region}`;
+  return m.budget_name || m.market_name || "Budget";
+}
+
 export function SponsorBudgetPanel() {
   const { fmtUsd, labelSuffix } = useDisplayCurrency();
   const qc = useQueryClient();
@@ -23,7 +28,7 @@ export function SponsorBudgetPanel() {
 
   const delMut = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["sponsor-budgets"] }); toast.success("Market removed"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["sponsor-budgets"] }); toast.success("Budget removed"); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -38,7 +43,7 @@ export function SponsorBudgetPanel() {
           onClick={() => { setEditing(null); setOpen(true); }}
           className="inline-flex items-center gap-1.5 rounded-md bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-soft hover:-translate-y-0.5 transition-all"
         >
-          <Plus className="h-4 w-4" /> Add market
+          <Plus className="h-4 w-4" /> Add marketing budget
         </button>
       </div>
 
@@ -66,9 +71,9 @@ export function SponsorBudgetPanel() {
       ) : markets.length === 0 ? (
         <DashboardEmpty
           icon={Wallet}
-          title="No market budgets yet"
-          description="Add a market budget (e.g. Nigeria, UK) to start tracking your annual sponsorship spend."
-          action={<button onClick={() => { setEditing(null); setOpen(true); }} className="text-sm font-semibold text-primary hover:underline">Add your first market →</button>}
+          title="No marketing budgets yet"
+          description="Add a marketing budget with a region and budget name to track your annual sponsorship spend."
+          action={<button onClick={() => { setEditing(null); setOpen(true); }} className="text-sm font-semibold text-primary hover:underline">Add your first budget →</button>}
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
@@ -76,12 +81,12 @@ export function SponsorBudgetPanel() {
             <div key={m.id} className="rounded-xl border border-border bg-card p-5">
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="font-display text-base font-bold">{m.market_name}</div>
+                  <div className="font-display text-base font-bold">{budgetLabel(m)}</div>
                   <div className="text-xs text-muted-foreground">{m.currency} · FY starts month {m.fiscal_year_start_month}</div>
                 </div>
                 <div className="flex gap-1">
                   <button onClick={() => { setEditing(m); setOpen(true); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                  <button onClick={() => { if (confirm(`Remove ${m.market_name}?`)) delMut.mutate(m.id); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+                  <button onClick={() => { if (confirm(`Remove ${budgetLabel(m)}?`)) delMut.mutate(m.id); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
                 </div>
               </div>
               <div className="mt-3 font-display text-xl font-bold">{fmtMoney(m.currency, Number(m.total_annual))}</div>
@@ -108,7 +113,8 @@ function BudgetModal({ budget, onClose }: { budget: any | null; onClose: () => v
   const save = useServerFn(upsertMarketBudget);
   const [form, setForm] = useState({
     id: budget?.id,
-    market_name: budget?.market_name ?? "",
+    region: budget?.region ?? "",
+    budget_name: budget?.budget_name ?? budget?.market_name ?? "",
     currency: budget?.currency ?? "USD",
     fiscal_year_start_month: budget?.fiscal_year_start_month ?? 1,
     total_annual: budget?.total_annual ?? 0,
@@ -122,7 +128,8 @@ function BudgetModal({ budget, onClose }: { budget: any | null; onClose: () => v
     mutationFn: () => save({
       data: {
         ...(form.id ? { id: form.id } : {}),
-        market_name: form.market_name,
+        region: form.region,
+        budget_name: form.budget_name,
         currency: form.currency as any,
         fiscal_year_start_month: Number(form.fiscal_year_start_month),
         total_annual: Number(form.total_annual),
@@ -143,12 +150,16 @@ function BudgetModal({ budget, onClose }: { budget: any | null; onClose: () => v
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
       <div className="w-full max-w-lg rounded-xl bg-card p-6 shadow-2xl border border-border max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <h3 className="font-display text-xl font-bold">{form.id ? "Edit market budget" : "Add market budget"}</h3>
+        <h3 className="font-display text-xl font-bold">{form.id ? "Edit marketing budget" : "Add marketing budget"}</h3>
 
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
-          <label className="block text-sm sm:col-span-2">
-            <span className="mb-1.5 block font-medium">Market name</span>
-            <input value={form.market_name} onChange={(e) => setForm({ ...form, market_name: e.target.value })} placeholder="e.g. Nigeria" className={input} />
+          <label className="block text-sm">
+            <span className="mb-1.5 block font-medium">Region</span>
+            <input value={form.region} onChange={(e) => setForm({ ...form, region: e.target.value })} placeholder="e.g. Nigeria" className={input} />
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1.5 block font-medium">Budget</span>
+            <input value={form.budget_name} onChange={(e) => setForm({ ...form, budget_name: e.target.value })} placeholder="e.g. Q3 EMEA spend" className={input} />
           </label>
           <label className="block text-sm">
             <span className="mb-1.5 block font-medium">Currency</span>
@@ -189,7 +200,11 @@ function BudgetModal({ budget, onClose }: { budget: any | null; onClose: () => v
         <div className="mt-6 flex justify-end gap-3">
           <button onClick={onClose} className="rounded-md px-4 py-2 text-sm font-medium hover:bg-muted">Cancel</button>
           <button
-            onClick={() => { if (!form.market_name.trim()) return toast.error("Market name is required"); mut.mutate(); }}
+            onClick={() => {
+              if (!form.region.trim()) return toast.error("Region is required");
+              if (!form.budget_name.trim()) return toast.error("Budget name is required");
+              mut.mutate();
+            }}
             disabled={mut.isPending}
             className="rounded-md bg-brand-gradient px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
           >

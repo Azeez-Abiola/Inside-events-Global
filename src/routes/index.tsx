@@ -1,6 +1,4 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
   ShieldCheck,
@@ -11,12 +9,8 @@ import {
   Users,
   CheckCircle2,
   TrendingUp,
-  MapPin,
-  Calendar,
 } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
-import { ClientOnly } from "@/components/client-only";
-import { listMarketplaceEvents } from "@/lib/marketplace.functions";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { MARKETPLACE_PUBLIC } from "@/lib/marketplace-visibility";
 import ogImage from "@/assets/og-image.jpg";
@@ -64,21 +58,6 @@ function Landing() {
       <main>
         <Hero />
         <Stats />
-        <ClientOnly
-          fallback={
-            <section className="border-t border-border/60 bg-muted/20 py-20">
-              <div className="mx-auto max-w-7xl px-6">
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="h-72 animate-pulse rounded-xl bg-muted" />
-                  ))}
-                </div>
-              </div>
-            </section>
-          }
-        >
-          <MarketplacePreview />
-        </ClientOnly>
         <ThreeSides />
         <HowItWorks />
         <Trust />
@@ -86,98 +65,6 @@ function Landing() {
       </main>
       <SiteFooter />
     </div>
-  );
-}
-
-function MarketplacePreview() {
-  const fetchEvents = useServerFn(listMarketplaceEvents);
-  const { data, isLoading } = useQuery({
-    queryKey: ["marketplace-preview"],
-    queryFn: () => fetchEvents({ data: { vetted_only: false, sort: "newest", per_page: 6 } }),
-    retry: false,
-    throwOnError: false,
-  });
-  const events = data?.events ?? [];
-  const ref = useScrollReveal() as React.RefObject<HTMLElement>;
-
-  return (
-    <section ref={ref as any} className="border-t border-border/60 bg-muted/20 py-20">
-      <div className="mx-auto max-w-7xl px-6">
-        <div data-reveal className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold text-primary-deep">
-              <ShieldCheck className="h-3.5 w-3.5" /> The Marketplace
-            </span>
-            <h2 className="mt-4 font-display text-3xl font-bold tracking-tight md:text-4xl">
-              Vetted events looking for your brand.
-            </h2>
-            <p className="mt-2 max-w-xl text-muted-foreground">
-              Browse IGE-vetted sponsorship opportunities. Filter by sector, audience, and budget. No login needed.
-            </p>
-          </div>
-          <Link
-            to="/marketplace"
-            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-4 py-2.5 text-sm font-semibold hover:bg-muted"
-          >
-            View full marketplace <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-
-        <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {isLoading
-            ? Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-72 animate-pulse rounded-xl bg-muted" />
-              ))
-            : events.slice(0, 6).map((e: any, i: number) => (
-                <Link
-                  key={e.id}
-                  to="/events/$slug"
-                  params={{ slug: e.slug }}
-                  data-reveal
-                  data-delay={String(Math.min(i + 1, 6))}
-                  className="group block overflow-hidden rounded-xl border border-border bg-card transition-all hover:-translate-y-0.5 hover:shadow-lg"
-                  style={{ borderLeft: "4px solid hsl(var(--primary))" }}
-                >
-                  <div className="relative aspect-video bg-muted">
-                    {e.banner_image_url ? (
-                      <img loading="lazy" src={e.banner_image_url} alt={e.name} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-soft to-muted text-muted-foreground">
-                        <Calendar className="h-10 w-10" />
-                      </div>
-                    )}
-                    {e.ige_vetted && (
-                      <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2 py-1 text-[10px] font-bold uppercase text-white shadow">
-                        <ShieldCheck className="h-3 w-3" /> Vetted
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <div className="mb-2 inline-flex rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-semibold text-primary-deep">
-                      {e.event_type ?? "Event"}
-                    </div>
-                    <h3 className="line-clamp-2 font-display text-base font-bold leading-tight">{e.name}</h3>
-                    <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-                      <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{e.city ?? "-"}, {e.country ?? "-"}</span>
-                      {e.start_date && <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(e.start_date).toLocaleDateString()}</span>}
-                    </div>
-                    {e.attendance_size && (
-                      <div className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground">
-                        <Users className="h-3 w-3" />{Number(e.attendance_size).toLocaleString()}+ attendees
-                      </div>
-                    )}
-                  </div>
-                </Link>
-              ))}
-        </div>
-
-        {!isLoading && events.length === 0 && (
-          <div className="mt-10 rounded-xl border border-dashed border-border bg-card p-10 text-center text-muted-foreground">
-            No events listed yet. Check back soon — or <Link to="/signup" className="text-primary hover:underline">list yours</Link>.
-          </div>
-        )}
-      </div>
-    </section>
   );
 }
 

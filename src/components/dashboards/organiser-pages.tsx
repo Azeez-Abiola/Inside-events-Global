@@ -212,19 +212,51 @@ export function OrganiserPipelinePage() {
   const { createBtn } = useOrganiserEvents();
   const fetchPipeline = useServerFn(getOrganiserPipeline);
   const { data: pipelineData, isLoading: pipelineLoading } = useQuery({ queryKey: ["org-pipeline"], queryFn: () => fetchPipeline() });
+  const [tab, setTab] = useState<"ige" | "mine">("ige");
+
+  const dealByForm: Record<string, any> = {};
+  for (const d of pipelineData?.deals ?? []) {
+    if (d.commitment_form_id) dealByForm[d.commitment_form_id] = d;
+  }
+
+  const filterForms = (forms: any[]) =>
+    tab === "ige" ? forms.filter((f) => !dealByForm[f.id]) : forms.filter((f) => dealByForm[f.id]);
 
   return (
-    <WorkspacePage title="Sponsorship pipeline" subtitle="Sponsor commitment forms and deal stages across your events.">
+    <WorkspacePage title="Sponsorship pipeline" subtitle="Track IGE-verified sponsor leads and your active sponsor relationships.">
+      <DashboardTabs
+        tabs={[
+          { id: "ige", label: "IGE sponsors" },
+          { id: "mine", label: "My sponsors" },
+        ]}
+        active={tab}
+        onChange={(id) => setTab(id as "ige" | "mine")}
+      />
       {pipelineLoading ? <DashboardTableSkeleton rows={5} cols={6} /> : !pipelineData?.events?.length ? (
         <DashboardEmpty icon={MessageSquare} title="No live pipeline yet" description="Once an event is listed, sponsor inquiries will appear here." action={createBtn} />
       ) : (
         <div className="space-y-6">
-          {pipelineData.events.map((ev: any) => (
-            <PipelineEventTable key={ev.id} event={ev}
-              partnerMap={pipelineData.partnerMap ?? {}}
-              forms={(pipelineData.forms ?? []).filter((f: any) => f.event_id === ev.id)}
-              deals={(pipelineData.deals ?? []).filter((d: any) => d.event_id === ev.id)} />
-          ))}
+          {pipelineData.events.map((ev: any) => {
+            const forms = filterForms((pipelineData.forms ?? []).filter((f: any) => f.event_id === ev.id));
+            if (!forms.length) return null;
+            return (
+              <PipelineEventTable key={ev.id} event={ev}
+                partnerMap={pipelineData.partnerMap ?? {}}
+                forms={forms}
+                deals={(pipelineData.deals ?? []).filter((d: any) => d.event_id === ev.id)} />
+            );
+          })}
+          {!pipelineData.events.some((ev: any) =>
+            filterForms((pipelineData.forms ?? []).filter((f: any) => f.event_id === ev.id)).length > 0,
+          ) && (
+            <DashboardEmpty
+              icon={MessageSquare}
+              title={tab === "ige" ? "No IGE sponsor leads yet" : "No active sponsor deals yet"}
+              description={tab === "ige"
+                ? "New commitment forms appear here while IGE verifies them before creating a deal."
+                : "Once IGE converts an inquiry to a deal, your sponsor relationships show here."}
+            />
+          )}
         </div>
       )}
     </WorkspacePage>

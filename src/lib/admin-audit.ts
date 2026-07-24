@@ -6,6 +6,8 @@ export type AdminAuditAction =
   | "admin_invited"
   | "user_suspended"
   | "user_reactivated"
+  | "user_approved"
+  | "user_unapproved"
   | "event_vetting_updated"
   | "event_deleted"
   | "newsletter_sent"

@@ -560,7 +560,15 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                         const ev = revenueData!.events[f.event_id];
                         return (
                           <tr key={f.id} className="hover:bg-amber-100/20">
-                            <td className="px-4 py-3 font-semibold text-foreground">{ev?.name ?? "—"}</td>
+                            <td className="px-4 py-3 font-semibold text-foreground">
+                              {ev?.slug ? (
+                                <Link to="/events/$slug" params={{ slug: ev.slug }} className="text-primary hover:underline">
+                                  {ev.name ?? "—"}
+                                </Link>
+                              ) : (
+                                ev?.name ?? "—"
+                              )}
+                            </td>
                             <td className="px-4 py-3">
                               <div className="font-medium text-foreground">{f.company_name}</div>
                               <div className="text-xs text-muted-foreground">{f.contact_name}</div>

@@ -155,6 +155,13 @@ export const adminCreateDeal = createServerFn({ method: "POST" })
       .single();
     if (!cf) throw new Error("Form not found");
 
+    const { data: existingDeal } = await supabaseAdmin
+      .from("deals")
+      .select("id")
+      .eq("commitment_form_id", data.commitment_form_id)
+      .maybeSingle();
+    if (existingDeal) throw new Error("A deal already exists for this inquiry");
+
     const { data: ev } = await supabaseAdmin
       .from("events")
       .select("organiser_id, name")

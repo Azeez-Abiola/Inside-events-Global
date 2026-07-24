@@ -9,6 +9,7 @@ import { getSiteUrl } from "@/lib/site-url";
 import { requirePlatformAdmin, requireSuperAdmin, getActorProfile } from "@/lib/admin-auth";
 import { auditAdminAction } from "@/lib/admin-audit";
 import { isSubAdmin } from "@/lib/admin-permissions";
+import { notifyEventListed } from "@/lib/email/notify-event-listed";
 
 const SITE_URL = process.env.VITE_SITE_URL || "https://www.insideglobalevents.com";
 
@@ -44,7 +45,7 @@ export const listEventsForVetting = createServerFn({ method: "GET" })
     const { data, error } = await supabase
       .from("events")
       .select(
-        "id, name, slug, status, event_type, start_date, city, country, created_at, updated_at, organiser_id, vetting_notes, rejection_reason"
+        "id, name, slug, status, event_type, start_date, city, country, created_at, updated_at, organiser_id, vetting_notes, rejection_reason, is_featured"
       )
       .in("status", ["submitted", "under_review", "revision_requested", "approved", "rejected", "listed"])
       .order("updated_at", { ascending: false });
@@ -103,6 +104,7 @@ const SetStatusInput = z.object({
     "archived",
   ]),
   note: z.string().max(2000).optional().nullable(),
+  is_featured: z.boolean().optional(),
 });
 
 export const setEventVettingStatus = createServerFn({ method: "POST" })
@@ -114,7 +116,7 @@ export const setEventVettingStatus = createServerFn({ method: "POST" })
 
     const { data: ev, error } = await supabase
       .from("events")
-      .select("id, status, name, organiser_id")
+      .select("id, status, name, organiser_id, slug, city, country, start_date")
       .eq("id", data.id)
       .single();
     if (error) throw new Error(error.message);
@@ -143,6 +145,9 @@ export const setEventVettingStatus = createServerFn({ method: "POST" })
     }
     if (data.to_status === "rejected") {
       patch.rejection_reason = data.note ?? null;
+    }
+    if (data.is_featured !== undefined && ["approved", "listed"].includes(data.to_status)) {
+      patch.is_featured = data.is_featured;
     }
 
     const { error: upErr } = await supabase.from("events").update(patch as never).eq("id", data.id);
@@ -199,12 +204,29 @@ export const setEventVettingStatus = createServerFn({ method: "POST" })
         summary: `Event "${ev.name}" → ${STATUS_LABELS[data.to_status] ?? data.to_status}`,
         resourceType: "event",
         resourceId: data.id,
-        metadata: { to_status: data.to_status, note: data.note ?? null },
+        metadata: { to_status: data.to_status, note: data.note ?? null, is_featured: data.is_featured ?? null },
         notifyTitle: isSubAdmin(roles) ? "Sub-admin updated event vetting" : undefined,
         notifyBody: isSubAdmin(roles)
           ? `${actor?.display_name ?? actor?.email ?? "Sub-admin"} set "${ev.name}" to ${STATUS_LABELS[data.to_status] ?? data.to_status}.`
           : undefined,
       });
+    }
+
+    if (data.to_status === "listed") {
+      try {
+        await notifyEventListed({
+          id: ev.id,
+          name: ev.name,
+          slug: ev.slug,
+          city: ev.city,
+          country: ev.country,
+          start_date: ev.start_date,
+          organiser_id: ev.organiser_id,
+        });
+        await flushEmailQueueInDev();
+      } catch (e) {
+        console.error("[setEventVettingStatus] event listed broadcast failed", e);
+      }
     }
 
     return { ok: true, status: data.to_status };
@@ -379,6 +401,139 @@ export const setUserSuspended = createServerFn({ method: "POST" })
       notifyBody: data.suspended
         ? `${actor?.display_name ?? actor?.email ?? "Admin"} deactivated ${targetProfile?.display_name ?? targetProfile?.email ?? "a user"}.`
         : `${actor?.display_name ?? actor?.email ?? "Admin"} reactivated ${targetProfile?.display_name ?? targetProfile?.email ?? "a user"}.`,
+    });
+
+    return { ok: true };
+  });
+
+export const setEventFeatured = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ id: z.string().uuid(), is_featured: z.boolean() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await ensureAdmin(supabase, userId);
+
+    const { data: ev, error } = await supabase
+      .from("events")
+      .select("id, name, status")
+      .eq("id", data.id)
+      .single();
+    if (error) throw new Error(error.message);
+    if (!["approved", "listed"].includes(ev.status)) {
+      throw new Error("Only approved or listed events can be featured");
+    }
+
+    const { error: upErr } = await supabase
+      .from("events")
+      .update({ is_featured: data.is_featured } as never)
+      .eq("id", data.id);
+    if (upErr) throw new Error(upErr.message);
+
+    return { ok: true };
+  });
+
+export const getPlatformUserDetail = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { user_id: string }) => z.object({ user_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await ensureAdmin(supabase, userId);
+
+    const [{ data: profile }, { data: roles }] = await Promise.all([
+      supabaseAdmin.from("profiles").select("*").eq("id", data.user_id).single(),
+      supabaseAdmin.from("user_roles").select("role").eq("user_id", data.user_id),
+    ]);
+    if (!profile) throw new Error("User not found");
+
+    const role = roles?.[0]?.role ?? "sponsor";
+    const [{ data: organiser }, { data: sponsor }, { data: referral }, { data: media }] = await Promise.all([
+      supabaseAdmin.from("organiser_profiles").select("*").eq("user_id", data.user_id).maybeSingle(),
+      supabaseAdmin.from("sponsor_profiles").select("*").eq("user_id", data.user_id).maybeSingle(),
+      supabaseAdmin.from("referral_partner_profiles").select("*").eq("user_id", data.user_id).maybeSingle(),
+      supabaseAdmin.from("media_partner_profiles" as never).select("*").eq("user_id", data.user_id).maybeSingle(),
+    ]);
+
+    return {
+      profile,
+      roles: (roles ?? []).map((r) => r.role),
+      role,
+      organiser,
+      sponsor,
+      referral,
+      media,
+    };
+  });
+
+const ApproveUserInput = z.object({
+  user_id: z.string().uuid(),
+  approved: z.boolean(),
+});
+
+export const setUserApproved = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => ApproveUserInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    await requirePlatformAdmin(userId);
+
+    const { data: targetRoles } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.user_id);
+    if (targetRoles?.some((r) => r.role === "super_admin")) {
+      throw new Error("Cannot change approval for a super admin");
+    }
+
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({ is_active: data.approved } as never)
+      .eq("id", data.user_id);
+    if (error) throw new Error(error.message);
+
+    const { data: targetProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("email, display_name")
+      .eq("id", data.user_id)
+      .maybeSingle();
+
+    if (data.approved && targetProfile?.email) {
+      try {
+        await sendTransactionalEmailServer({
+          templateName: "account-approved",
+          recipientEmail: targetProfile.email,
+          idempotencyKey: `account-approved-${data.user_id}`,
+          templateData: {
+            name: targetProfile.display_name ?? undefined,
+            dashboardUrl: `${SITE_URL}/dashboard`,
+            siteUrl: SITE_URL,
+          },
+        });
+        await flushEmailQueueInDev();
+      } catch (e) {
+        console.error("[setUserApproved] email failed", e);
+      }
+
+      await supabaseAdmin.from("notifications").insert({
+        user_id: data.user_id,
+        type: "account_approved",
+        title: "Account approved",
+        body: "Your IGE account has been approved. You can now access your dashboard.",
+        data: {},
+      });
+    }
+
+    const actor = await getActorProfile(userId);
+    await auditAdminAction({
+      actorId: userId,
+      actorEmail: actor?.email,
+      action: data.approved ? "user_approved" : "user_unapproved",
+      summary: data.approved
+        ? `Approved ${targetProfile?.email ?? data.user_id}`
+        : `Set pending approval for ${targetProfile?.email ?? data.user_id}`,
+      resourceType: "user",
+      resourceId: data.user_id,
     });
 
     return { ok: true };

@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isEmailConfirmed } from "@/lib/auth-email";
-import { sendWelcomeEmail } from "@/lib/profile.functions";
+import { markSignupPendingApproval } from "@/lib/profile.functions";
 import { ensureSignupRole } from "@/lib/signup.functions";
 import { AuthShell } from "@/components/auth-shell";
 import { SignupProfileStep } from "@/components/signup/profile-step";
@@ -34,7 +34,7 @@ const STEPS: { key: SignupStep; label: string }[] = [
 export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
   const navigate = useNavigate();
   const { user, roles, loading, refreshRoles } = useAuth();
-  const sendWelcome = useServerFn(sendWelcomeEmail);
+  const markPending = useServerFn(markSignupPendingApproval);
   const ensureRole = useServerFn(ensureSignupRole);
   const [step, setStep] = useState<SignupStep>(initialStep ?? "role");
   const [role, setRole] = useState<SignupRole>("sponsor");
@@ -138,9 +138,9 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
 
   async function handleSignupComplete() {
     try {
-      await sendWelcome({ data: { role: signupRole } });
+      await markPending({ data: {} });
     } catch {
-      // Welcome email is best-effort — don't block dashboard access.
+      // Best-effort — gate still enforced server-side.
     }
     navigate({ to: "/dashboard" });
   }

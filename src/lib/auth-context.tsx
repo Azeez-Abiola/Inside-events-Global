@@ -21,6 +21,7 @@ type AuthCtx = {
   loading: boolean;
   isSuspended: boolean;
   suspensionReason: string | null;
+  isPendingApproval: boolean;
   isDevImpersonating: boolean;
   signOut: () => Promise<void>;
   refreshRoles: () => Promise<void>;
@@ -33,6 +34,7 @@ const Ctx = createContext<AuthCtx>({
   loading: true,
   isSuspended: false,
   suspensionReason: null,
+  isPendingApproval: false,
   isDevImpersonating: false,
   signOut: async () => {},
   refreshRoles: async () => {},
@@ -43,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<Role[]>([]);
   const [isSuspended, setIsSuspended] = useState(false);
   const [suspensionReason, setSuspensionReason] = useState<string | null>(null);
+  const [isPendingApproval, setIsPendingApproval] = useState(false);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -57,16 +60,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
   const devActive = DEV_AUTH_ENABLED && devRoles != null;
 
-  async function applySuspensionState(uid: string) {
+  async function applyProfileGateState(uid: string) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("is_suspended, suspension_reason")
+      .select("is_suspended, suspension_reason, is_active")
       .eq("id", uid)
       .maybeSingle();
     const suspended = Boolean(profile?.is_suspended);
     setIsSuspended(suspended);
     setSuspensionReason(suspended ? profile?.suspension_reason ?? null : null);
-    return suspended;
+    setIsPendingApproval(!suspended && profile?.is_active === false);
+    return { suspended, pending: !suspended && profile?.is_active === false };
   }
 
   useEffect(() => {
@@ -84,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRoles([]);
         setIsSuspended(false);
         setSuspensionReason(null);
+        setIsPendingApproval(false);
         setLoading(false);
         return;
       } else {
@@ -92,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (s?.user) {
         // fetch roles asynchronously (not inside listener body)
         setTimeout(() => {
-          void applySuspensionState(s.user.id);
+          void applyProfileGateState(s.user.id);
           supabase
             .from("user_roles")
             .select("role")
@@ -105,6 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRoles([]);
         setIsSuspended(false);
         setSuspensionReason(null);
+        setIsPendingApproval(false);
       }
       router.invalidate();
       queryClient.invalidateQueries();
@@ -139,12 +145,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.session?.user) {
         const uid = data.session.user.id;
         const { data: rolesData } = await supabase.from("user_roles").select("role").eq("user_id", uid);
-        await applySuspensionState(uid);
+        await applyProfileGateState(uid);
         setRoles((rolesData ?? []).map((r) => r.role as Role));
         setLoading(false);
       } else {
         setIsSuspended(false);
         setSuspensionReason(null);
+        setIsPendingApproval(false);
         setLoading(false);
       }
     });
@@ -197,6 +204,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading: devActive ? false : loading,
         isSuspended: devActive ? false : isSuspended,
         suspensionReason: devActive ? null : suspensionReason,
+        isPendingApproval: devActive ? false : isPendingApproval,
         isDevImpersonating: devActive,
         signOut,
         refreshRoles,

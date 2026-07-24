@@ -3,6 +3,8 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin, supabasePublic } from "@/integrations/supabase/client.server";
 import { applyOrganiserDiscoverability, rankEventsForSponsor } from "@/lib/event-recommendations";
+import { sendTransactionalEmailServer } from "@/lib/email/server-send";
+import { getSiteUrl } from "@/lib/site-url";
 
 // ───────────────────────────────────────────────────────────────
 // Public marketplace listing - anon client (RLS: public view live events)
@@ -19,6 +21,7 @@ const FilterInput = z.object({
   audience_min: z.number().int().min(0).optional(),
   audience_max: z.number().int().min(0).optional(),
   vetted_only: z.boolean().default(true),
+  featured_only: z.boolean().default(false),
   decision_makers: z.boolean().default(false),
   sort: z.enum(["newest", "soonest", "audience", "best_match"]).default("newest"),
   page: z.number().int().min(1).default(1),
@@ -46,6 +49,7 @@ export const getMarketplaceFilterOptions = createServerFn({ method: "POST" })
       .in("status", ["approved", "listed"]);
 
     if (data.vetted_only) q = q.eq("ige_vetted", true);
+    if (data.featured_only) q = q.eq("is_featured", true);
     if (data.decision_makers) q = q.gte("decision_makers_pct", 30);
 
     const [{ data: events, error }, { data: allLive, error: allErr }] = await Promise.all([
@@ -91,12 +95,13 @@ export const listMarketplaceEvents = createServerFn({ method: "POST" })
     let q = supabasePublic
       .from("events")
       .select(
-        "id, slug, name, event_type, format, start_date, end_date, city, country, primary_sector, attendance_size, decision_makers_pct, banner_image_url, ige_vetted, currency, created_at, organiser_id",
+        "id, slug, name, event_type, format, start_date, end_date, city, country, primary_sector, attendance_size, decision_makers_pct, banner_image_url, ige_vetted, is_featured, currency, created_at, organiser_id",
         { count: "exact" },
       )
       .in("status", ["approved", "listed"]);
 
     if (data.vetted_only) q = q.eq("ige_vetted", true);
+    if (data.featured_only) q = q.eq("is_featured", true);
     if (data.decision_makers) q = q.gte("decision_makers_pct", 30);
     if (data.event_types?.length) q = q.in("event_type", data.event_types);
     if (data.sectors?.length) q = q.in("primary_sector", data.sectors);
@@ -480,6 +485,59 @@ export const submitCommitmentForm = createServerFn({ method: "POST" })
         related_referral_link_id: referral_link_id,
       });
     }
+
+    const siteUrl = getSiteUrl();
+    const emailJobs: Promise<unknown>[] = [];
+
+    if (sponsor_user_id) {
+      const { data: sponsorProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("email")
+        .eq("id", sponsor_user_id)
+        .maybeSingle();
+      if (sponsorProfile?.email) {
+        emailJobs.push(
+          sendTransactionalEmailServer({
+            templateName: "commitment-received",
+            recipientEmail: sponsorProfile.email,
+            idempotencyKey: `commitment-sponsor-${cf.id}`,
+            templateData: {
+              eventName: ev.name,
+              companyName: data.company_name,
+              contactName: data.contact_name,
+              isOrganiser: false,
+              siteUrl,
+            },
+          }),
+        );
+      }
+    }
+
+    if (ev.organiser_id) {
+      const { data: orgProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("email")
+        .eq("id", ev.organiser_id)
+        .maybeSingle();
+      if (orgProfile?.email) {
+        emailJobs.push(
+          sendTransactionalEmailServer({
+            templateName: "commitment-received",
+            recipientEmail: orgProfile.email,
+            idempotencyKey: `commitment-organiser-${cf.id}`,
+            templateData: {
+              eventName: ev.name,
+              companyName: data.company_name,
+              contactName: data.contact_name,
+              isOrganiser: true,
+              siteUrl,
+            },
+          }),
+        );
+      }
+    }
+
+    await Promise.all(emailJobs.map((p) => p.catch((e) => console.error("[submitCommitmentForm] email", e))));
 
     return { ok: true, id: cf.id };
   });

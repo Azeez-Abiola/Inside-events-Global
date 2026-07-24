@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { isEmailConfirmed } from "@/lib/auth-email";
 import { useAuth } from "@/lib/auth-context";
 import { SuspendedAccountGate } from "@/components/suspended-account-gate";
+import { PendingApprovalGate } from "@/components/pending-approval-gate";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
@@ -55,7 +56,9 @@ function AuthenticatedLayout() {
 
   return (
     <SuspendedAccountGate>
-      <Outlet />
+      <PendingApprovalGate>
+        <Outlet />
+      </PendingApprovalGate>
     </SuspendedAccountGate>
   );
 }

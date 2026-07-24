@@ -47,11 +47,13 @@ export function getWorkspaceNav(roles: string[]): WorkspaceNavItem[] {
       { to: "/dashboard/pipeline", label: "Pipeline", icon: TrendingUp },
       { to: "/dashboard/documents", label: "Documents", icon: FileText },
       { to: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
+      { to: "/marketplace", label: "Marketplace", icon: Compass },
     );
   } else if (r.has("sponsor")) {
     items.push(
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/dashboard/discover", label: "Discover", icon: Compass },
+      { to: "/marketplace", label: "Marketplace", icon: Compass },
       { to: "/dashboard/pipeline", label: "My deals", icon: TrendingUp },
       { to: "/dashboard/budget", label: "Budget", icon: Wallet },
       { to: "/dashboard/commitments", label: "Commitments", icon: Inbox },
@@ -62,6 +64,7 @@ export function getWorkspaceNav(roles: string[]): WorkspaceNavItem[] {
     items.push(
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/dashboard/referrals", label: "My referrals", icon: Handshake },
+      { to: "/marketplace", label: "Marketplace", icon: Compass },
       { to: "/dashboard/commissions", label: "Commission tracker", icon: Coins },
       { to: "/dashboard/deals", label: "Deal pipeline", icon: TrendingUp },
       { to: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
@@ -70,6 +73,7 @@ export function getWorkspaceNav(roles: string[]): WorkspaceNavItem[] {
     items.push(
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/dashboard/explore", label: "Explore", icon: Compass },
+      { to: "/marketplace", label: "Marketplace", icon: Compass },
       { to: "/dashboard/saved", label: "Saved", icon: Bookmark },
       { to: "/dashboard/requests", label: "My requests", icon: Send },
       { to: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },

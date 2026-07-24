@@ -26,6 +26,10 @@ import { template as commissionPaid } from './commission-paid'
 import { template as dealStatus } from './deal-status'
 import { template as vettingStatus } from './vetting-status'
 import { template as newsletter } from './newsletter'
+import { template as eventListed } from './event-listed'
+import { template as commitmentReceived } from './commitment-received'
+import { template as accountPendingApproval } from './account-pending-approval'
+import { template as accountApproved } from './account-approved'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'contact-confirmation': contactConfirmation,
@@ -45,4 +49,8 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'deal-status': dealStatus,
   'commission-paid': commissionPaid,
   newsletter,
+  'event-listed': eventListed,
+  'commitment-received': commitmentReceived,
+  'account-pending-approval': accountPendingApproval,
+  'account-approved': accountApproved,
 }

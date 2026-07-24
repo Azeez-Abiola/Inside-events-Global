@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { sendWelcomeEmailForUser } from "@/lib/email/welcome";
 import { flushEmailQueueInDev } from "@/lib/email/flush-queue-dev";
+import { sendTransactionalEmailServer } from "@/lib/email/server-send";
 import { computeProfileComplete, completenessHint } from "@/lib/profile-completeness";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -98,6 +99,57 @@ export const upsertReferralProfile = createServerFn({ method: "POST" })
     await syncDisplayName(userId, data.full_name);
     const profile_complete = await syncProfileCompleteness(userId).catch(() => null);
     return { ok: true, profile_complete };
+  });
+
+export const markSignupPendingApproval = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+    const { data: roles } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", userId);
+    if (roles?.some((r) => r.role === "abw_admin" || r.role === "super_admin")) {
+      return { ok: true, skipped: true };
+    }
+
+    await supabaseAdmin.from("profiles").update({ is_active: false } as never).eq("id", userId);
+
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("email, display_name")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (profile?.email) {
+      try {
+        await sendTransactionalEmailServer({
+          templateName: "account-pending-approval",
+          recipientEmail: profile.email,
+          idempotencyKey: `account-pending-${userId}`,
+          templateData: {
+            name: profile.display_name ?? undefined,
+            siteUrl: process.env.VITE_SITE_URL || "https://www.insideglobalevents.com",
+          },
+        });
+        await flushEmailQueueInDev();
+      } catch (e) {
+        console.error("[markSignupPendingApproval] email failed", e);
+      }
+    }
+
+    const { data: admins } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .in("role", ["super_admin", "abw_admin"]);
+    for (const a of admins ?? []) {
+      await supabaseAdmin.from("notifications").insert({
+        user_id: a.user_id,
+        type: "user_pending_approval",
+        title: "New signup pending approval",
+        body: `${profile?.display_name ?? profile?.email ?? "A user"} completed signup and awaits approval.`,
+        data: { user_id: userId },
+      });
+    }
+
+    return { ok: true };
   });
 
 export const sendWelcomeEmail = createServerFn({ method: "POST" })

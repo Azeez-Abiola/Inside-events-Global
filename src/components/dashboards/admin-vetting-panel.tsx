@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -18,7 +18,7 @@ import { useTableFilters } from "@/hooks/use-table-filters";
 import { datedCsvFilename, downloadCsv } from "@/lib/csv-export";
 import { useAuth } from "@/lib/auth-context";
 import { isSuperAdmin } from "@/lib/admin-permissions";
-import { listEventsForVetting, setEventVettingStatus, getEventForAdmin, adminDeleteEvent } from "@/lib/admin.functions";
+import { listEventsForVetting, setEventVettingStatus, getEventForAdmin, adminDeleteEvent, setEventFeatured } from "@/lib/admin.functions";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -39,6 +39,7 @@ export type VettingEvent = {
   organiser_email: string | null;
   vetting_notes: string | null;
   rejection_reason: string | null;
+  is_featured: boolean | null;
 };
 
 const STATUS_TABS = [
@@ -208,17 +209,31 @@ export function VettingDrawer({ id, onClose }: { id: string; onClose: () => void
   const canDelete = isSuperAdmin(roles);
   const fetchOne = useServerFn(getEventForAdmin);
   const setStatus = useServerFn(setEventVettingStatus);
+  const toggleFeatured = useServerFn(setEventFeatured);
   const removeEvent = useServerFn(adminDeleteEvent);
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "event", id],
     queryFn: () => fetchOne({ data: { id } }),
   });
   const [note, setNote] = useState("");
+  const [isFeatured, setIsFeatured] = useState(false);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
+  useEffect(() => {
+    if (data?.event) setIsFeatured(Boolean((data.event as any).is_featured));
+  }, [data?.event?.id, (data?.event as any)?.is_featured]);
+
   const transition = useMutation({
-    mutationFn: (to: string) => setStatus({ data: { id, to_status: to as any, note: note || null } }),
+    mutationFn: (to: string) =>
+      setStatus({
+        data: {
+          id,
+          to_status: to as any,
+          note: note || null,
+          ...(["approved", "listed"].includes(to) ? { is_featured: isFeatured } : {}),
+        },
+      }),
     onSuccess: (_res, to) => {
       toast.success(`Moved to ${to.replace(/_/g, " ")}`);
       qc.invalidateQueries({ queryKey: ["admin", "vetting"] });
@@ -236,6 +251,17 @@ export function VettingDrawer({ id, onClose }: { id: string; onClose: () => void
       qc.invalidateQueries({ queryKey: ["admin", "vetting"] });
       setDeleteOpen(false);
       onClose();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const featuredMut = useMutation({
+    mutationFn: (next: boolean) => toggleFeatured({ data: { id, is_featured: next } }),
+    onSuccess: (_res, next) => {
+      setIsFeatured(next);
+      toast.success(next ? "Event marked as featured" : "Removed from featured");
+      qc.invalidateQueries({ queryKey: ["admin", "vetting"] });
+      qc.invalidateQueries({ queryKey: ["admin", "event", id] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -309,6 +335,30 @@ export function VettingDrawer({ id, onClose }: { id: string; onClose: () => void
               </div>
 
               <div className="space-y-4 border-t border-border pt-4">
+                {["under_review", "approved", "listed"].includes(data.event.status) && (
+                  <label className="flex items-start gap-2 rounded-md border border-border bg-muted/30 p-3 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={isFeatured}
+                      onChange={(e) => {
+                        const next = e.target.checked;
+                        if (["approved", "listed"].includes(data.event.status)) {
+                          featuredMut.mutate(next);
+                        } else {
+                          setIsFeatured(next);
+                        }
+                      }}
+                      disabled={featuredMut.isPending}
+                      className="mt-0.5"
+                    />
+                    <span>
+                      <span className="font-semibold text-foreground">Featured event</span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">
+                        Show in featured sections on the marketplace and welcome page when listed.
+                      </span>
+                    </span>
+                  </label>
+                )}
                 <label className="block">
                   <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Action notes (required for revision/rejection)

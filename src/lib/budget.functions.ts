@@ -70,7 +70,8 @@ export const getSponsorBudgets = createServerFn({ method: "GET" })
 
 const BudgetInput = z.object({
   id: z.string().uuid().optional(),
-  market_name: z.string().trim().min(1).max(120),
+  region: z.string().trim().min(1).max(80),
+  budget_name: z.string().trim().min(1).max(120),
   currency: z.enum(["USD", "NGN", "GBP", "EUR"]).default("USD"),
   fiscal_year_start_month: z.number().int().min(1).max(12).default(1),
   total_annual: z.number().nonnegative().default(0),
@@ -85,7 +86,8 @@ export const upsertMarketBudget = createServerFn({ method: "POST" })
   .inputValidator((d) => BudgetInput.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const row = { ...data, sponsor_user_id: userId };
+    const market_name = `${data.budget_name} (${data.region})`;
+    const row = { ...data, market_name, sponsor_user_id: userId };
     const { error } = await db(supabase)
       .from("market_budgets")
       .upsert(row, { onConflict: "sponsor_user_id,market_name" });
