@@ -25,7 +25,7 @@ import { BrandLogo } from "@/components/brand-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { trackEvent } from "@/lib/analytics";
-import type { WaitlistAudience } from "@/lib/waitlist-audiences";
+import { stashSignupRole, type SignupRole } from "@/lib/signup-roles";
 import { FEATURED_EVENT_IMAGES } from "@/lib/featured-event-images";
 
 
@@ -36,13 +36,13 @@ export const Route = createFileRoute("/welcome")({
       {
         name: "description",
         content:
-          "Join the IGE founding waitlist. Role-specific intake for organisers, sponsors, referral partners, and media partners across the Africa–Europe corridor.",
+          "Create your IGE account. Role-specific onboarding for organisers, sponsors, referral partners, and media partners across the Africa–Europe corridor.",
       },
       { property: "og:title", content: "Welcome to Inside Global Events 2026" },
       {
         property: "og:description",
         content:
-          "Event intelligence + sponsorship marketplace. Join the founding waitlist — featuring the Itsekiri Global Homecoming.",
+          "Event intelligence + sponsorship marketplace. Sign up to list events, find sponsors, and close deals — featuring the Itsekiri Global Homecoming.",
       },
     ],
   }),
@@ -79,10 +79,16 @@ function WelcomePage() {
             </nav>
             <ThemeToggle />
             <Link
-              to="/waitlist"
+              to="/login"
+              className="hidden rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-muted sm:inline-flex"
+            >
+              Sign in
+            </Link>
+            <Link
+              to="/signup"
               className="inline-flex shrink-0 items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow transition-transform hover:-translate-y-0.5"
             >
-              Join waitlist
+              Sign up
             </Link>
           </div>
         </div>
@@ -107,7 +113,7 @@ function WelcomePage() {
               className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur"
             >
               <Sparkles className="h-3.5 w-3.5 text-primary" />
-              Founding waitlist open
+              Now open · Create your account
             </span>
             <h1
               data-reveal
@@ -129,12 +135,18 @@ function WelcomePage() {
             </p>
             <div data-reveal data-delay="3" className="mt-8 flex flex-wrap gap-3">
               <Link
-                to="/waitlist"
-                onClick={() => trackEvent("waitlist_cta_click", { source: "welcome_hero" })}
+                to="/signup"
+                onClick={() => trackEvent("signup_cta_click", { source: "welcome_hero" })}
                 className="inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow transition-transform hover:-translate-y-0.5"
               >
                 <Mail className="h-4 w-4" />
-                Join the founding waitlist
+                Create your account
+              </Link>
+              <Link
+                to="/marketplace"
+                className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-6 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+              >
+                Browse marketplace
               </Link>
               <a
                 href={IG_URL}
@@ -147,8 +159,8 @@ function WelcomePage() {
               </a>
             </div>
             <p data-reveal data-delay="4" className="mt-4 text-xs text-muted-foreground">
-              The full platform and waitlist are launching shortly. In the
-              meantime, reach us by email or DM on Instagram.
+              Sign up to list events, discover sponsors, or earn referral commission.
+              Questions? Email us or DM on Instagram.
             </p>
           </div>
         </section>
@@ -168,36 +180,36 @@ function WelcomePage() {
               {
                 icon: Megaphone,
                 title: "Event organisers",
-                audience: "organiser" as const,
+                audience: "organiser" as SignupRole,
                 desc: "From cultural homecomings to global summits. List once and reach sponsors that actually fit your audience.",
               },
               {
                 icon: Globe2,
                 title: "Brand sponsors",
-                audience: "sponsor" as const,
+                audience: "sponsor" as SignupRole,
                 desc: "Discover vetted events your buyers attend, compare tiers, and commit with confidence and clean data.",
               },
               {
                 icon: Handshake,
                 title: "Referral partners",
-                audience: "referral_partner" as const,
+                audience: "referral_partner" as SignupRole,
                 desc: "Turn your network into recurring commission with trackable referral links and transparent payouts.",
               },
               {
                 icon: Newspaper,
                 title: "Media partners",
-                audience: "media_partner" as const,
+                audience: "media_partner" as SignupRole,
                 desc: "Cross-promote with vetted events: coverage, interviews, newsletters, and documentary collaborations.",
               },
             ]).map((p, i) => (
               <Link
                 key={p.title}
-                to="/waitlist"
-                search={{ audience: p.audience }}
+                to="/signup"
                 data-reveal
                 data-delay={String(Math.min(i + 1, 4))}
                 onClick={() => {
-                  trackEvent("waitlist_role_select", { role: p.audience, source: "welcome_card" });
+                  stashSignupRole(p.audience);
+                  trackEvent("signup_role_select", { role: p.audience, source: "welcome_card" });
                 }}
                 className="rounded-2xl border border-border bg-card p-7 text-left transition-colors hover:border-primary/40 hover:bg-muted/30"
               >
@@ -209,7 +221,7 @@ function WelcomePage() {
                   {p.desc}
                 </p>
                 <span className="mt-4 inline-block text-xs font-semibold text-primary">
-                  Join as {p.title.toLowerCase()} →
+                  Sign up as {p.title.toLowerCase()} →
                 </span>
               </Link>
             ))}
@@ -659,20 +671,20 @@ function WelcomePage() {
         <section className="px-6 py-20 md:py-24">
           <div data-reveal className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl bg-brand-gradient-diag px-8 py-14 text-white shadow-brand md:px-14 md:py-16">
             <h2 className="font-display text-3xl font-bold leading-tight tracking-tight md:text-4xl">
-              Be first when IGE opens.
+              Ready to get on IGE?
             </h2>
             <p className="mt-4 max-w-2xl text-base opacity-90 md:text-lg">
-              Founding members get early access, locked-in rates, and priority matching.
-              Join the waitlist to tell us your role and secure your spot.
+              Create your account, choose your role, and start listing events, discovering sponsors,
+              or earning referral commission.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
-                to="/waitlist"
-                onClick={() => trackEvent("waitlist_cta_click", { source: "welcome_final" })}
+                to="/signup"
+                onClick={() => trackEvent("signup_cta_click", { source: "welcome_final" })}
                 className="inline-flex items-center gap-2 rounded-md bg-white px-6 py-3.5 text-sm font-semibold text-primary-deep transition-transform hover:-translate-y-0.5"
               >
                 <Mail className="h-4 w-4" />
-                Join the waitlist
+                Create your account
               </Link>
               <a
                 href={IG_URL}

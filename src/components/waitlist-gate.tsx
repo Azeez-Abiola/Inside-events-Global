@@ -3,9 +3,9 @@ import { useLocation, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { DEV_AUTH_ENABLED, getDevRoles } from "@/lib/dev-auth";
 
-// Gate the entire site behind /waitlist until launch.
-// Signed-in users (admins / team) bypass so they can still manage the platform.
-const LAUNCH = new Date("2026-07-01T00:00:00Z").getTime();
+// Legacy pre-launch gate. Signup is open — leave disabled.
+const SITE_GATE_DISABLED = true;
+
 const ALLOWED_PREFIXES = [
   "/welcome",
   "/waitlist",
@@ -18,9 +18,6 @@ const ALLOWED_PREFIXES = [
   "/api/",
   "/r/",
 ];
-
-// Public site is waitlist-only until marketplace launch. Signed-in users reach the dashboard.
-const SITE_GATE_DISABLED = false;
 
 export function WaitlistGate({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -39,10 +36,6 @@ export function WaitlistGate({ children }: { children: React.ReactNode }) {
         if (!cancelled) { setAllowed(true); setChecked(true); }
         return;
       }
-      if (Date.now() >= LAUNCH) {
-        if (!cancelled) { setAllowed(true); setChecked(true); }
-        return;
-      }
       const path = location.pathname;
       if (ALLOWED_PREFIXES.some((p) => path === p || path.startsWith(p + "/") || path.startsWith(p))) {
         if (!cancelled) { setAllowed(true); setChecked(true); }
@@ -56,7 +49,7 @@ export function WaitlistGate({ children }: { children: React.ReactNode }) {
       if (!cancelled) {
         setAllowed(false);
         setChecked(true);
-        navigate({ to: "/welcome", replace: true });
+        navigate({ to: "/", replace: true });
       }
     }
     run();

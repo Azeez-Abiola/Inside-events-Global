@@ -7,11 +7,11 @@ export { SiteFooter };
 
 export const SITE_BRAND_NAME = "Inside Global Events";
 
-export function SiteHeader({ showAuthLinks = false }: { showAuthLinks?: boolean }) {
+export function SiteHeader({ showAuthLinks = true }: { showAuthLinks?: boolean }) {
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-        <Link to="/welcome" className="flex items-center gap-2.5">
+        <Link to="/" className="flex items-center gap-2.5">
           <BrandLogo />
           <span className="font-display italic font-semibold text-brand-gradient text-base sm:text-lg">
             {SITE_BRAND_NAME}
@@ -20,7 +20,7 @@ export function SiteHeader({ showAuthLinks = false }: { showAuthLinks?: boolean 
 
         <div className="flex items-center gap-3">
           <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
-            <Link to="/waitlist" className="transition-colors hover:text-foreground">Join waitlist</Link>
+            <Link to="/marketplace" className="transition-colors hover:text-foreground">Marketplace</Link>
             <Link to="/about" className="transition-colors hover:text-foreground">About</Link>
             <Link to="/how-it-works" className="transition-colors hover:text-foreground">How it works</Link>
           </nav>
@@ -46,4 +46,3 @@ export function SiteHeader({ showAuthLinks = false }: { showAuthLinks?: boolean 
     </header>
   );
 }
-
