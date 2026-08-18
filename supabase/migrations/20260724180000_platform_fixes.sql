@@ -1,7 +1,7 @@
 -- Featured events (admin toggles from vetting queue)
 ALTER TABLE public.events
   ADD COLUMN IF NOT EXISTS is_featured BOOLEAN NOT NULL DEFAULT false;
-
+ 
 CREATE INDEX IF NOT EXISTS idx_events_featured_live
   ON public.events (is_featured, start_date)
   WHERE is_featured = true AND status IN ('approved', 'listed');

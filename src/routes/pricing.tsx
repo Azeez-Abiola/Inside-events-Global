@@ -62,9 +62,16 @@ function PricingPage() {
         <Link to="/" className="text-sm text-primary hover:underline">← Home</Link>
         <h1 className="mt-6 font-display text-4xl font-bold tracking-tight md:text-5xl">Pricing &amp; Commission</h1>
         <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-          IGE is a success-based marketplace. Listing is free. We only earn when a sponsorship deal
-          actually closes.
+          Command Centers are free for your first 90 days — on purpose. Listing stays free.
+          We only earn when a sponsorship deal actually closes.
         </p>
+
+        <div className="mt-8 rounded-2xl border border-secondary/30 bg-secondary/10 px-5 py-4 text-sm text-foreground">
+          <span className="font-semibold text-secondary-deep">90-day free window.</span>{" "}
+          Full access to Organiser and Sponsorship Command Centers with no card required until
+          your trial ends. Marketplace listing remains free; platform commission applies only on
+          closed deals.
+        </div>
 
         <div className="mt-12 grid gap-6 md:grid-cols-3">
           {tiers.map((t) => (

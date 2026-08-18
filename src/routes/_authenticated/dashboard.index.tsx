@@ -41,7 +41,7 @@ function FallbackDashboard() {
         <ShieldCheck className="mx-auto h-12 w-12 text-primary" />
         <h2 className="mt-4 font-display text-2xl font-bold">Welcome to IGE</h2>
         <p className="mt-2 text-muted-foreground text-sm">Your account has no role assigned. Please complete onboarding.</p>
-        <Link to="/signup" className="btn-primary mt-6 inline-block">
+        <Link to="/onboarding/role" className="btn-primary mt-6 inline-block">
           Complete setup
         </Link>
       </div>

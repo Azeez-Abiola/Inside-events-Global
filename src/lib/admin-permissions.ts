@@ -43,6 +43,7 @@ export const SUPER_ADMIN_ONLY_PERMISSIONS: AdminPermission[] = [
 
 export const ADMIN_ROUTE_PERMISSIONS: Record<string, AdminPermission> = {
   "/dashboard": "dashboard",
+  "/dashboard/onboarding-vetting": "vetting",
   "/dashboard/vetting": "vetting",
   "/dashboard/waitlist": "waitlist",
   "/dashboard/submissions": "contact",

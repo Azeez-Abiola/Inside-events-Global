@@ -60,6 +60,11 @@ const ADMIN_SECTIONS: Record<string, DashboardMeta> = {
     subtitle: "View platform accounts, roles, and suspend users who breach standards.",
     breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Users" }],
   },
+  onboarding: {
+    title: "Onboarding vetting",
+    subtitle: "Review submitted applications, request changes, and approve dashboard access.",
+    breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Onboarding" }],
+  },
 };
 
 const PATH_META: Record<string, DashboardMeta> = {
@@ -78,6 +83,7 @@ const PATH_META: Record<string, DashboardMeta> = {
   "/dashboard/analytics": ADMIN_SECTIONS.analytics,
   "/dashboard/media-requests": ADMIN_SECTIONS["media-requests"],
   "/dashboard/users": ADMIN_SECTIONS.users,
+  "/dashboard/onboarding-vetting": ADMIN_SECTIONS.onboarding,
   "/profile": {
     title: "Profile",
     subtitle: "Account details, role profile, and security.",

@@ -5,6 +5,8 @@ import {
   upsertOrganiserProfile,
   upsertSponsorProfile,
   upsertReferralProfile,
+  upsertMediaPartnerProfile,
+  updateBaseProfile,
 } from "@/lib/profile.functions";
 import {
   COMPANY_SIZES,
@@ -16,34 +18,80 @@ import {
   SECTOR_EXPERTISE,
 } from "@/lib/event-taxonomy";
 import type { SignupRole } from "@/lib/signup-roles";
+import { readSignupAccountDraft, clearSignupAccountDraft } from "@/lib/signup-roles";
 import { ChipMulti, Field, SelectField, TextArea } from "@/components/signup/profile-fields";
 
 const signupPrimaryBtn =
   "inline-flex w-full items-center justify-center rounded-md bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition-transform hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-60";
 
+async function applyAccountDraft(
+  updateProfile: (args: { data: { display_name?: string | null; phone?: string | null } }) => Promise<unknown>,
+) {
+  const draft = readSignupAccountDraft();
+  if (!draft) return null;
+  await updateProfile({
+    data: {
+      display_name: draft.fullName || null,
+      phone: draft.phone || null,
+    },
+  });
+  return draft;
+}
+
 export function SignupProfileStep({ role, onDone }: { role: SignupRole; onDone: () => void }) {
   if (role === "organiser") return <OrganiserForm onDone={onDone} />;
   if (role === "sponsor") return <SponsorForm onDone={onDone} />;
   if (role === "referral_partner") return <ReferralForm onDone={onDone} />;
-  return <MediaSkipForm onDone={onDone} />;
+  return <MediaForm onDone={onDone} />;
 }
 
-function MediaSkipForm({ onDone }: { onDone: () => void }) {
+function MediaForm({ onDone }: { onDone: () => void }) {
+  const draft = readSignupAccountDraft();
+  const submit = useServerFn(upsertMediaPartnerProfile);
+  const updateProfile = useServerFn(updateBaseProfile);
+  const [outletName, setOutletName] = useState(draft?.companyName ?? "");
+  const [saving, setSaving] = useState(false);
   return (
-    <div className="space-y-4">
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+        if (!outletName.trim()) return toast.error("Outlet / company name is required");
+        setSaving(true);
+        try {
+          await applyAccountDraft(updateProfile);
+          await submit({ data: { outlet_name: outletName.trim(), beat_sectors: [] } });
+          clearSignupAccountDraft();
+          toast.success("Profile saved");
+          onDone();
+        } catch (err: any) {
+          toast.error(err.message);
+        } finally {
+          setSaving(false);
+        }
+      }}
+      className="space-y-4"
+    >
       <p className="text-sm text-muted-foreground">
-        Media partner accounts get a custom onboarding from our partnerships team — we'll be in touch.
+        Media partner accounts get tailored onboarding from our partnerships team after approval.
       </p>
-      <button type="button" onClick={onDone} className={signupPrimaryBtn}>
-        Continue to dashboard
+      <Field label="Outlet / company name" value={outletName} onChange={setOutletName} required />
+      <button type="submit" disabled={saving} className={signupPrimaryBtn}>
+        {saving ? "Saving…" : "Finish & go to dashboard"}
       </button>
-    </div>
+    </form>
   );
 }
 
 function OrganiserForm({ onDone }: { onDone: () => void }) {
+  const draft = readSignupAccountDraft();
   const submit = useServerFn(upsertOrganiserProfile);
-  const [form, setForm] = useState({ org_name: "", bio: "", website: "", event_history: "" });
+  const updateProfile = useServerFn(updateBaseProfile);
+  const [form, setForm] = useState({
+    org_name: draft?.companyName || draft?.fullName || "",
+    bio: "",
+    website: "",
+    event_history: "",
+  });
   const [saving, setSaving] = useState(false);
   return (
     <form
@@ -52,7 +100,9 @@ function OrganiserForm({ onDone }: { onDone: () => void }) {
         if (!form.org_name.trim()) return toast.error("Organisation name is required");
         setSaving(true);
         try {
+          await applyAccountDraft(updateProfile);
           await submit({ data: form });
+          clearSignupAccountDraft();
           toast.success("Profile saved");
           onDone();
         } catch (err: any) {
@@ -81,9 +131,11 @@ function OrganiserForm({ onDone }: { onDone: () => void }) {
 }
 
 function SponsorForm({ onDone }: { onDone: () => void }) {
+  const draft = readSignupAccountDraft();
   const submit = useServerFn(upsertSponsorProfile);
+  const updateProfile = useServerFn(updateBaseProfile);
   const [form, setForm] = useState({
-    brand_name: "",
+    brand_name: draft?.companyName || draft?.fullName || "",
     industry: "",
     company_size: "",
     hq_country: "",
@@ -103,6 +155,7 @@ function SponsorForm({ onDone }: { onDone: () => void }) {
         if (!form.brand_name.trim()) return toast.error("Brand name is required");
         setSaving(true);
         try {
+          await applyAccountDraft(updateProfile);
           await submit({
             data: {
               ...form,
@@ -110,6 +163,7 @@ function SponsorForm({ onDone }: { onDone: () => void }) {
               budget_range_max: form.budget_range_max ? Number(form.budget_range_max) : null,
             },
           });
+          clearSignupAccountDraft();
           toast.success("Profile saved");
           onDone();
         } catch (err: any) {
@@ -143,9 +197,11 @@ function SponsorForm({ onDone }: { onDone: () => void }) {
 }
 
 function ReferralForm({ onDone }: { onDone: () => void }) {
+  const draft = readSignupAccountDraft();
   const submit = useServerFn(upsertReferralProfile);
+  const updateProfile = useServerFn(updateBaseProfile);
   const [form, setForm] = useState({
-    full_name: "",
+    full_name: draft?.fullName || "",
     professional_title: "",
     professional_bg: "",
     sponsor_network_desc: "",
@@ -161,7 +217,9 @@ function ReferralForm({ onDone }: { onDone: () => void }) {
         if (!form.full_name.trim()) return toast.error("Full name is required");
         setSaving(true);
         try {
+          await applyAccountDraft(updateProfile);
           await submit({ data: form });
+          clearSignupAccountDraft();
           toast.success("Profile saved");
           onDone();
         } catch (err: any) {

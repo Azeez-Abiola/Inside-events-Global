@@ -12,7 +12,8 @@ import { SponsorAnalyticsPanel } from "@/components/dashboards/dashboard-analyti
 import { SponsorBudgetPanel } from "@/components/dashboards/sponsor-budget-panel";
 import { SponsorPipelinePanel } from "@/components/dashboards/sponsor-pipeline-panel";
 import { WorkspacePage } from "@/components/dashboards/workspace-page";
-import { getSponsorDashboard } from "@/lib/deals.functions";
+import { getSponsorDashboard, getSponsorPipeline } from "@/lib/deals.functions";
+import { getSponsorBudgets } from "@/lib/budget.functions";
 import { fmtMoney } from "@/lib/currency";
 
 export function SponsorPipelinePage() {
@@ -38,6 +39,16 @@ function useSponsorData() {
 
 export function SponsorOverviewPage() {
   const { data, isLoading } = useSponsorData();
+  const fetchBudgets = useServerFn(getSponsorBudgets);
+  const fetchPipeline = useServerFn(getSponsorPipeline);
+  const { data: budgetData, isLoading: budgetLoading } = useQuery({
+    queryKey: ["sponsor-budgets"],
+    queryFn: () => fetchBudgets(),
+  });
+  const { data: pipelineData, isLoading: pipelineLoading } = useQuery({
+    queryKey: ["sponsor-pipeline"],
+    queryFn: () => fetchPipeline(),
+  });
   const featuredList = data?.recommendedEvents?.length ? data.recommendedEvents : data?.freshEvents ?? [];
   const hero = featuredList[0];
   const sectorData = (data?.profileSectors ?? []).map((s: string) => ({
@@ -58,18 +69,65 @@ export function SponsorOverviewPage() {
     };
   });
 
+  const portfolio = budgetData?.portfolio;
+  const pipelineColumns = [
+    { key: "watching", label: "Watching" },
+    { key: "in_conversation", label: "In conversation" },
+    { key: "proposal", label: "Proposal" },
+    { key: "committed", label: "Committed" },
+    { key: "paid_active", label: "Paid" },
+  ] as const;
+  const pipelineCounts = pipelineColumns.map((col) => ({
+    ...col,
+    count: (pipelineData?.cards ?? []).filter((c: any) => c.column === col.key).length,
+  }));
+
   return (
     <WorkspacePage
-      title="Dashboard"
-      subtitle="Discover vetted B2B events, track sponsorship commitments, and save opportunities for your brand."
+      title="Sponsorship Command Center"
+      subtitle="Budget remaining, deal flow, and recommended events for your brand."
       showGreeting
       breadcrumbs={[{ label: "Dashboard" }]}
     >
-      {/* Voom KPI row */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiTile
+          icon={Wallet}
+          label="Budget remaining"
+          value={budgetLoading ? "…" : fmtMoney("USD", Number(portfolio?.remainingUsd ?? 0))}
+          loading={budgetLoading}
+          trend={portfolio ? `${fmtMoney("USD", Number(portfolio.committedUsd ?? 0))} committed` : undefined}
+        />
         <KpiTile icon={Inbox} label="Submitted commitments" value={data?.forms?.length ?? 0} loading={isLoading} />
         <KpiTile icon={Bookmark} label="Saved events" value={data?.saves?.length ?? 0} loading={isLoading} />
         <KpiTile icon={CalendarDays} label="New listings" value={data?.freshEvents?.length ?? 0} loading={isLoading} />
+      </div>
+
+      <div className="rounded-2xl bg-card p-5 shadow-card">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="font-display text-sm font-bold text-foreground">Deal-flow snapshot</h3>
+            <p className="text-xs text-muted-foreground">Pipeline stages from watching to paid</p>
+          </div>
+          <Link to="/dashboard/pipeline" className="text-xs font-semibold text-primary hover:underline">
+            Open pipeline →
+          </Link>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
+          {pipelineCounts.map((s) => (
+            <div key={s.key} className="rounded-xl bg-muted/40 px-3 py-3 text-center">
+              <div className="font-display text-xl font-bold text-foreground">{pipelineLoading ? "—" : s.count}</div>
+              <div className="mt-0.5 text-[11px] font-medium text-muted-foreground">{s.label}</div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 flex flex-wrap gap-3 text-xs">
+          <Link to="/dashboard/budget" className="font-semibold text-primary hover:underline">
+            Manage budget →
+          </Link>
+          <Link to="/dashboard/pipeline" className="font-semibold text-primary hover:underline">
+            View deals →
+          </Link>
+        </div>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-3">
@@ -79,7 +137,7 @@ export function SponsorOverviewPage() {
             <div className="flex items-center justify-between border-b border-border/50 px-5 py-4">
               <div>
                 <h3 className="font-display text-sm font-bold text-foreground">
-                  {data?.recommendedEvents?.length ? "Recommended for you" : "All events"}
+                  {data?.recommendedEvents?.length ? "Recommended for you" : "Deal-flow feed"}
                 </h3>
                 <p className="text-xs text-muted-foreground">
                   {data?.recommendedEvents?.length

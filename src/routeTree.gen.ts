@@ -34,7 +34,10 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RCodeRouteImport } from './routes/r.$code'
+import { Route as OnboardingWizardRouteImport } from './routes/onboarding.wizard'
+import { Route as OnboardingRoleRouteImport } from './routes/onboarding.role'
 import { Route as OnboardingProfileRouteImport } from './routes/onboarding.profile'
+import { Route as OnboardingPendingRouteImport } from './routes/onboarding.pending'
 import { Route as EventsSlugRouteImport } from './routes/events.$slug'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
@@ -62,6 +65,7 @@ import { Route as AuthenticatedDashboardRequestsRouteImport } from './routes/_au
 import { Route as AuthenticatedDashboardReferralsRouteImport } from './routes/_authenticated/dashboard.referrals'
 import { Route as AuthenticatedDashboardPipelineRouteImport } from './routes/_authenticated/dashboard.pipeline'
 import { Route as AuthenticatedDashboardPartnersRouteImport } from './routes/_authenticated/dashboard.partners'
+import { Route as AuthenticatedDashboardOnboardingVettingRouteImport } from './routes/_authenticated/dashboard.onboarding-vetting'
 import { Route as AuthenticatedDashboardNewsletterRouteImport } from './routes/_authenticated/dashboard.newsletter'
 import { Route as AuthenticatedDashboardMediaRequestsRouteImport } from './routes/_authenticated/dashboard.media-requests'
 import { Route as AuthenticatedDashboardExploreRouteImport } from './routes/_authenticated/dashboard.explore'
@@ -210,9 +214,24 @@ const RCodeRoute = RCodeRouteImport.update({
   path: '/r/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingWizardRoute = OnboardingWizardRouteImport.update({
+  id: '/wizard',
+  path: '/wizard',
+  getParentRoute: () => OnboardingRoute,
+} as any)
+const OnboardingRoleRoute = OnboardingRoleRouteImport.update({
+  id: '/role',
+  path: '/role',
+  getParentRoute: () => OnboardingRoute,
+} as any)
 const OnboardingProfileRoute = OnboardingProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => OnboardingRoute,
+} as any)
+const OnboardingPendingRoute = OnboardingPendingRouteImport.update({
+  id: '/pending',
+  path: '/pending',
   getParentRoute: () => OnboardingRoute,
 } as any)
 const EventsSlugRoute = EventsSlugRouteImport.update({
@@ -361,6 +380,12 @@ const AuthenticatedDashboardPartnersRoute =
   AuthenticatedDashboardPartnersRouteImport.update({
     id: '/partners',
     path: '/partners',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardOnboardingVettingRoute =
+  AuthenticatedDashboardOnboardingVettingRouteImport.update({
+    id: '/onboarding-vetting',
+    path: '/onboarding-vetting',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
 const AuthenticatedDashboardNewsletterRoute =
@@ -533,7 +558,10 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/events/$slug': typeof EventsSlugRoute
+  '/onboarding/pending': typeof OnboardingPendingRoute
   '/onboarding/profile': typeof OnboardingProfileRoute
+  '/onboarding/role': typeof OnboardingRoleRoute
+  '/onboarding/wizard': typeof OnboardingWizardRoute
   '/r/$code': typeof RCodeRoute
   '/admin/revenue': typeof AuthenticatedAdminRevenueRoute
   '/admin/submissions': typeof AuthenticatedAdminSubmissionsRoute
@@ -550,6 +578,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/explore': typeof AuthenticatedDashboardExploreRoute
   '/dashboard/media-requests': typeof AuthenticatedDashboardMediaRequestsRoute
   '/dashboard/newsletter': typeof AuthenticatedDashboardNewsletterRoute
+  '/dashboard/onboarding-vetting': typeof AuthenticatedDashboardOnboardingVettingRoute
   '/dashboard/partners': typeof AuthenticatedDashboardPartnersRoute
   '/dashboard/pipeline': typeof AuthenticatedDashboardPipelineRoute
   '/dashboard/referrals': typeof AuthenticatedDashboardReferralsRoute
@@ -608,7 +637,10 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/events/$slug': typeof EventsSlugRoute
+  '/onboarding/pending': typeof OnboardingPendingRoute
   '/onboarding/profile': typeof OnboardingProfileRoute
+  '/onboarding/role': typeof OnboardingRoleRoute
+  '/onboarding/wizard': typeof OnboardingWizardRoute
   '/r/$code': typeof RCodeRoute
   '/admin/revenue': typeof AuthenticatedAdminRevenueRoute
   '/admin/submissions': typeof AuthenticatedAdminSubmissionsRoute
@@ -625,6 +657,7 @@ export interface FileRoutesByTo {
   '/dashboard/explore': typeof AuthenticatedDashboardExploreRoute
   '/dashboard/media-requests': typeof AuthenticatedDashboardMediaRequestsRoute
   '/dashboard/newsletter': typeof AuthenticatedDashboardNewsletterRoute
+  '/dashboard/onboarding-vetting': typeof AuthenticatedDashboardOnboardingVettingRoute
   '/dashboard/partners': typeof AuthenticatedDashboardPartnersRoute
   '/dashboard/pipeline': typeof AuthenticatedDashboardPipelineRoute
   '/dashboard/referrals': typeof AuthenticatedDashboardReferralsRoute
@@ -687,7 +720,10 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/events/$slug': typeof EventsSlugRoute
+  '/onboarding/pending': typeof OnboardingPendingRoute
   '/onboarding/profile': typeof OnboardingProfileRoute
+  '/onboarding/role': typeof OnboardingRoleRoute
+  '/onboarding/wizard': typeof OnboardingWizardRoute
   '/r/$code': typeof RCodeRoute
   '/_authenticated/admin/revenue': typeof AuthenticatedAdminRevenueRoute
   '/_authenticated/admin/submissions': typeof AuthenticatedAdminSubmissionsRoute
@@ -704,6 +740,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/explore': typeof AuthenticatedDashboardExploreRoute
   '/_authenticated/dashboard/media-requests': typeof AuthenticatedDashboardMediaRequestsRoute
   '/_authenticated/dashboard/newsletter': typeof AuthenticatedDashboardNewsletterRoute
+  '/_authenticated/dashboard/onboarding-vetting': typeof AuthenticatedDashboardOnboardingVettingRoute
   '/_authenticated/dashboard/partners': typeof AuthenticatedDashboardPartnersRoute
   '/_authenticated/dashboard/pipeline': typeof AuthenticatedDashboardPipelineRoute
   '/_authenticated/dashboard/referrals': typeof AuthenticatedDashboardReferralsRoute
@@ -766,7 +803,10 @@ export interface FileRouteTypes {
     | '/settings'
     | '/email/unsubscribe'
     | '/events/$slug'
+    | '/onboarding/pending'
     | '/onboarding/profile'
+    | '/onboarding/role'
+    | '/onboarding/wizard'
     | '/r/$code'
     | '/admin/revenue'
     | '/admin/submissions'
@@ -783,6 +823,7 @@ export interface FileRouteTypes {
     | '/dashboard/explore'
     | '/dashboard/media-requests'
     | '/dashboard/newsletter'
+    | '/dashboard/onboarding-vetting'
     | '/dashboard/partners'
     | '/dashboard/pipeline'
     | '/dashboard/referrals'
@@ -841,7 +882,10 @@ export interface FileRouteTypes {
     | '/settings'
     | '/email/unsubscribe'
     | '/events/$slug'
+    | '/onboarding/pending'
     | '/onboarding/profile'
+    | '/onboarding/role'
+    | '/onboarding/wizard'
     | '/r/$code'
     | '/admin/revenue'
     | '/admin/submissions'
@@ -858,6 +902,7 @@ export interface FileRouteTypes {
     | '/dashboard/explore'
     | '/dashboard/media-requests'
     | '/dashboard/newsletter'
+    | '/dashboard/onboarding-vetting'
     | '/dashboard/partners'
     | '/dashboard/pipeline'
     | '/dashboard/referrals'
@@ -919,7 +964,10 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/email/unsubscribe'
     | '/events/$slug'
+    | '/onboarding/pending'
     | '/onboarding/profile'
+    | '/onboarding/role'
+    | '/onboarding/wizard'
     | '/r/$code'
     | '/_authenticated/admin/revenue'
     | '/_authenticated/admin/submissions'
@@ -936,6 +984,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/explore'
     | '/_authenticated/dashboard/media-requests'
     | '/_authenticated/dashboard/newsletter'
+    | '/_authenticated/dashboard/onboarding-vetting'
     | '/_authenticated/dashboard/partners'
     | '/_authenticated/dashboard/pipeline'
     | '/_authenticated/dashboard/referrals'
@@ -1181,11 +1230,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboarding/wizard': {
+      id: '/onboarding/wizard'
+      path: '/wizard'
+      fullPath: '/onboarding/wizard'
+      preLoaderRoute: typeof OnboardingWizardRouteImport
+      parentRoute: typeof OnboardingRoute
+    }
+    '/onboarding/role': {
+      id: '/onboarding/role'
+      path: '/role'
+      fullPath: '/onboarding/role'
+      preLoaderRoute: typeof OnboardingRoleRouteImport
+      parentRoute: typeof OnboardingRoute
+    }
     '/onboarding/profile': {
       id: '/onboarding/profile'
       path: '/profile'
       fullPath: '/onboarding/profile'
       preLoaderRoute: typeof OnboardingProfileRouteImport
+      parentRoute: typeof OnboardingRoute
+    }
+    '/onboarding/pending': {
+      id: '/onboarding/pending'
+      path: '/pending'
+      fullPath: '/onboarding/pending'
+      preLoaderRoute: typeof OnboardingPendingRouteImport
       parentRoute: typeof OnboardingRoute
     }
     '/events/$slug': {
@@ -1377,6 +1447,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardPartnersRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/onboarding-vetting': {
+      id: '/_authenticated/dashboard/onboarding-vetting'
+      path: '/onboarding-vetting'
+      fullPath: '/dashboard/onboarding-vetting'
+      preLoaderRoute: typeof AuthenticatedDashboardOnboardingVettingRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/dashboard/newsletter': {
       id: '/_authenticated/dashboard/newsletter'
       path: '/newsletter'
@@ -1554,6 +1631,7 @@ interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardExploreRoute: typeof AuthenticatedDashboardExploreRoute
   AuthenticatedDashboardMediaRequestsRoute: typeof AuthenticatedDashboardMediaRequestsRoute
   AuthenticatedDashboardNewsletterRoute: typeof AuthenticatedDashboardNewsletterRoute
+  AuthenticatedDashboardOnboardingVettingRoute: typeof AuthenticatedDashboardOnboardingVettingRoute
   AuthenticatedDashboardPartnersRoute: typeof AuthenticatedDashboardPartnersRoute
   AuthenticatedDashboardPipelineRoute: typeof AuthenticatedDashboardPipelineRoute
   AuthenticatedDashboardReferralsRoute: typeof AuthenticatedDashboardReferralsRoute
@@ -1586,6 +1664,8 @@ const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
       AuthenticatedDashboardMediaRequestsRoute,
     AuthenticatedDashboardNewsletterRoute:
       AuthenticatedDashboardNewsletterRoute,
+    AuthenticatedDashboardOnboardingVettingRoute:
+      AuthenticatedDashboardOnboardingVettingRoute,
     AuthenticatedDashboardPartnersRoute: AuthenticatedDashboardPartnersRoute,
     AuthenticatedDashboardPipelineRoute: AuthenticatedDashboardPipelineRoute,
     AuthenticatedDashboardReferralsRoute: AuthenticatedDashboardReferralsRoute,
@@ -1652,11 +1732,17 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 interface OnboardingRouteChildren {
+  OnboardingPendingRoute: typeof OnboardingPendingRoute
   OnboardingProfileRoute: typeof OnboardingProfileRoute
+  OnboardingRoleRoute: typeof OnboardingRoleRoute
+  OnboardingWizardRoute: typeof OnboardingWizardRoute
 }
 
 const OnboardingRouteChildren: OnboardingRouteChildren = {
+  OnboardingPendingRoute: OnboardingPendingRoute,
   OnboardingProfileRoute: OnboardingProfileRoute,
+  OnboardingRoleRoute: OnboardingRoleRoute,
+  OnboardingWizardRoute: OnboardingWizardRoute,
 }
 
 const OnboardingRouteWithChildren = OnboardingRoute._addFileChildren(

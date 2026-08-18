@@ -6,6 +6,7 @@ import { isEmailConfirmed } from "@/lib/auth-email";
 import { useAuth } from "@/lib/auth-context";
 import { SuspendedAccountGate } from "@/components/suspended-account-gate";
 import { PendingApprovalGate } from "@/components/pending-approval-gate";
+import { OnboardingAccessGate } from "@/components/onboarding/onboarding-access-gate";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
@@ -57,7 +58,9 @@ function AuthenticatedLayout() {
   return (
     <SuspendedAccountGate>
       <PendingApprovalGate>
-        <Outlet />
+        <OnboardingAccessGate>
+          <Outlet />
+        </OnboardingAccessGate>
       </PendingApprovalGate>
     </SuspendedAccountGate>
   );

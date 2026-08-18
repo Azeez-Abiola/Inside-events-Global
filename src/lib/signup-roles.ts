@@ -11,10 +11,10 @@ export const SIGNUP_ROLES: {
   desc: string;
   icon: LucideIcon;
 }[] = [
-  { key: "organiser", title: "Event Organiser", desc: "List your event and find sponsors.", icon: Megaphone },
-  { key: "sponsor", title: "Brand / Sponsor", desc: "Discover vetted events to sponsor.", icon: Globe2 },
-  { key: "referral_partner", title: "Referral Partner", desc: "Earn commission introducing sponsors.", icon: Handshake },
-  { key: "media_partner", title: "Media Partner", desc: "Cross-promote with quality events.", icon: Newspaper },
+  { key: "organiser", title: "Event Organiser", desc: "I run events and want sponsors.", icon: Megaphone },
+  { key: "sponsor", title: "Brand / Sponsor", desc: "I have a budget to sponsor events.", icon: Globe2 },
+  { key: "referral_partner", title: "Referral Partner", desc: "I want to earn by connecting sponsors to events.", icon: Handshake },
+  { key: "media_partner", title: "Media Partner", desc: "I cover, film, or document events.", icon: Newspaper },
 ];
 
 export function isSignupRole(value: string | undefined | null): value is SignupRole {
@@ -58,6 +58,41 @@ export function clearSignupRole() {
   try {
     sessionStorage.removeItem(ROLE_STORAGE_KEY);
     sessionStorage.removeItem("ige:pending-role");
+  } catch {
+    /* ignore */
+  }
+}
+
+const ACCOUNT_DRAFT_KEY = "ige:signup-account-draft";
+
+export type SignupAccountDraft = {
+  fullName: string;
+  phone: string;
+  accountType: "individual" | "organisation";
+  companyName: string;
+};
+
+export function stashSignupAccountDraft(draft: SignupAccountDraft) {
+  try {
+    sessionStorage.setItem(ACCOUNT_DRAFT_KEY, JSON.stringify(draft));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readSignupAccountDraft(): SignupAccountDraft | null {
+  try {
+    const raw = sessionStorage.getItem(ACCOUNT_DRAFT_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as SignupAccountDraft;
+  } catch {
+    return null;
+  }
+}
+
+export function clearSignupAccountDraft() {
+  try {
+    sessionStorage.removeItem(ACCOUNT_DRAFT_KEY);
   } catch {
     /* ignore */
   }

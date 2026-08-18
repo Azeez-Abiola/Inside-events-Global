@@ -65,6 +65,11 @@ function useOrganiserEvents() {
 export function OrganiserEventsPage() {
   const [statusFilter, setStatusFilter] = useState<EventStatusGroup>("all");
   const { events, counts, buckets, eventsLoading, createBtn, del } = useOrganiserEvents();
+  const fetchPipeline = useServerFn(getOrganiserPipeline);
+  const { data: pipelineData, isLoading: pipelineLoading } = useQuery({
+    queryKey: ["org-pipeline"],
+    queryFn: () => fetchPipeline(),
+  });
   const filteredEvents = useMemo(() => filterEventsByGroup(events, statusFilter), [events, statusFilter]);
   const activeEventsCount = counts.approved + counts.live;
   const featured =
@@ -92,10 +97,45 @@ export function OrganiserEventsPage() {
       badge: e.status?.replace(/_/g, " "),
     }));
 
+  const commandStats = useMemo(() => {
+    const forms = pipelineData?.forms ?? [];
+    const deals = pipelineData?.deals ?? [];
+    const interestUsd = forms.reduce((sum: number, f: any) => {
+      const max = Number(f.budget_range_max ?? f.budget_range_min ?? 0);
+      return sum + (Number.isFinite(max) ? max : 0);
+    }, 0);
+    const closedUsd = deals
+      .filter((d: any) => ["payment_received", "contract_signed", "contract_sent"].includes(d.status))
+      .reduce((sum: number, d: any) => sum + Number(d.deal_value_usd ?? 0), 0);
+    const fundingGap = Math.max(0, interestUsd - closedUsd);
+    const openInquiries = forms.filter((f: any) => !deals.some((d: any) => d.commitment_form_id === f.id)).length;
+    const stages = [
+      { label: "Inquiries", count: forms.length },
+      {
+        label: "In negotiation",
+        count: deals.filter((d: any) =>
+          ["inquiry_received", "qualification_call_scheduled", "proposal_sent", "negotiation"].includes(d.status),
+        ).length,
+      },
+      { label: "Committed", count: deals.filter((d: any) => ["contract_sent", "contract_signed"].includes(d.status)).length },
+      { label: "Paid", count: deals.filter((d: any) => d.status === "payment_received").length },
+    ];
+    const demandStrip = [...events]
+      .filter((e: any) => ["listed", "approved", "live"].includes(e.status) || (e.inquiry_count ?? 0) > 0)
+      .slice(0, 6)
+      .map((e: any) => {
+        const views = Math.max(1, Number(e.view_count ?? 0));
+        const inquiries = Number(e.inquiry_count ?? 0);
+        const fill = Math.min(100, Math.round((inquiries / Math.max(views * 0.05, 1)) * 100));
+        return { id: e.id, name: e.name || "Untitled", fill, inquiries, views };
+      });
+    return { fundingGap, interestUsd, closedUsd, openInquiries, stages, demandStrip };
+  }, [pipelineData, events]);
+
   return (
     <WorkspacePage
-      title="Organiser workspace"
-      subtitle="Manage listings, track vetting, and monitor sponsor inquiries."
+      title="Organiser Command Center"
+      subtitle="Funding gap, pipeline pulse, and listing health — then manage events below."
       action={createBtn}
       showGreeting
     >
@@ -103,6 +143,57 @@ export function OrganiserEventsPage() {
         <KpiTile icon={CalendarDays} label="Active listings" value={activeEventsCount} loading={eventsLoading} trend={`${counts.live} live`} />
         <KpiTile icon={ShieldCheck} label="Pending vetting" value={counts.pending} loading={eventsLoading} />
         <KpiTile icon={MessageSquare} label="Sponsor inquiries" value={events.reduce((a: number, e: any) => a + (e.inquiry_count ?? 0), 0)} loading={eventsLoading} />
+      </div>
+
+      <div className="rounded-2xl bg-brand-gradient p-5 text-white shadow-soft sm:p-6">
+        <p className="text-xs font-semibold uppercase tracking-wider text-white/80">Estimated funding gap</p>
+        <p className="mt-1 font-display text-3xl font-bold tracking-tight">
+          {pipelineLoading ? "…" : fmtMoney("USD", commandStats.fundingGap)}
+        </p>
+        <p className="mt-2 max-w-xl text-sm text-white/85">
+          Interest from open inquiries minus committed deal value
+          {commandStats.openInquiries ? ` · ${commandStats.openInquiries} open inquiry${commandStats.openInquiries === 1 ? "" : "ies"}` : ""}.
+          Refine tiers on each event editor for a slot-level inventory view.
+        </p>
+        <Link to="/dashboard/pipeline" className="mt-4 inline-flex text-sm font-semibold text-white underline-offset-2 hover:underline">
+          Open sponsorship pipeline →
+        </Link>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="rounded-2xl bg-card p-5 shadow-card">
+          <h3 className="font-display text-sm font-bold text-foreground">Pipeline snapshot</h3>
+          <p className="mt-0.5 text-xs text-muted-foreground">Inquiries through paid deals</p>
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {commandStats.stages.map((s) => (
+              <div key={s.label} className="rounded-xl bg-muted/40 px-3 py-3 text-center">
+                <div className="font-display text-xl font-bold text-foreground">{pipelineLoading ? "—" : s.count}</div>
+                <div className="mt-0.5 text-[11px] font-medium text-muted-foreground">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-2xl bg-card p-5 shadow-card">
+          <h3 className="font-display text-sm font-bold text-foreground">Demand fill</h3>
+          <p className="mt-0.5 text-xs text-muted-foreground">Inquiry heat vs listing views (proxy until tier slots roll up)</p>
+          <div className="mt-4 space-y-3">
+            {eventsLoading || !commandStats.demandStrip.length ? (
+              <p className="text-sm text-muted-foreground italic">List or promote an event to see demand fill.</p>
+            ) : (
+              commandStats.demandStrip.map((row) => (
+                <div key={row.id}>
+                  <div className="mb-1 flex items-center justify-between gap-2 text-xs">
+                    <span className="truncate font-medium text-foreground">{row.name}</span>
+                    <span className="shrink-0 text-muted-foreground">{row.inquiries} inq · {row.fill}%</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-brand-gradient" style={{ width: `${row.fill}%` }} />
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-3">

@@ -44,8 +44,8 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
     <AppShell>
       <div className="space-y-8">
         <DashboardHeader
-          title="Media partner workspace"
-          subtitle="Discover vetted events to cover and request press credentials or coverage access."
+          title="Media Command Center"
+          subtitle="Coverage requests, saved opportunities, and reach signals across vetted events."
         />
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -55,18 +55,122 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
         </div>
 
         {section === "overview" && (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {[
-              { to: "/dashboard/explore", label: "Explore", desc: "Events to cover" },
-              { to: "/dashboard/saved", label: "Saved", desc: "Bookmarked opportunities" },
-              { to: "/dashboard/requests", label: "My requests", desc: "Coverage requests" },
-              { to: "/dashboard/analytics", label: "Analytics", desc: "Sector & request trends" },
-            ].map((item) => (
-              <Link key={item.to} to={item.to} className="rounded-xl border border-border bg-card p-5 hover:border-primary hover:shadow-soft transition-all">
-                <div className="font-semibold">{item.label}</div>
-                <div className="mt-1 text-sm text-muted-foreground">{item.desc}</div>
-              </Link>
-            ))}
+          <div className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {[
+                { to: "/dashboard/explore", label: "Explore", desc: "Events to cover" },
+                { to: "/dashboard/saved", label: "Saved", desc: "Bookmarked opportunities" },
+                { to: "/dashboard/requests", label: "My requests", desc: "Coverage requests" },
+                { to: "/dashboard/analytics", label: "Analytics", desc: "Sector & request trends" },
+              ].map((item) => (
+                <Link key={item.to} to={item.to} className="rounded-xl border border-border bg-card p-5 hover:border-primary hover:shadow-soft transition-all">
+                  <div className="font-semibold">{item.label}</div>
+                  <div className="mt-1 text-sm text-muted-foreground">{item.desc}</div>
+                </Link>
+              ))}
+            </div>
+
+            <div className="grid gap-5 lg:grid-cols-2">
+              <div className="rounded-2xl border border-border bg-card shadow-soft">
+                <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
+                  <div>
+                    <h3 className="font-display text-sm font-bold">Coverage requests</h3>
+                    <p className="text-xs text-muted-foreground">Latest submissions and status</p>
+                  </div>
+                  <Link to="/dashboard/requests" className="text-xs font-semibold text-primary hover:underline">
+                    View all →
+                  </Link>
+                </div>
+                <div className="divide-y divide-border/50">
+                  {requestsLoading ? (
+                    <p className="px-5 py-8 text-sm text-muted-foreground">Loading…</p>
+                  ) : requests.length === 0 ? (
+                    <p className="px-5 py-8 text-sm text-muted-foreground italic">No coverage requests yet.</p>
+                  ) : (
+                    requests.slice(0, 5).map((r: any) => {
+                      const ev = requestsData?.events?.[r.event_id];
+                      return (
+                        <div key={r.id} className="flex items-start justify-between gap-3 px-5 py-3.5">
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-semibold">{ev?.name ?? "Event"}</div>
+                            <div className="mt-0.5 text-xs text-muted-foreground capitalize">
+                              {(r.request_type ?? "coverage").replace(/_/g, " ")}
+                              {r.created_at ? ` · ${new Date(r.created_at).toLocaleDateString()}` : ""}
+                            </div>
+                          </div>
+                          <span className="shrink-0 rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-semibold capitalize text-muted-foreground">
+                            {(r.status ?? "pending").replace(/_/g, " ")}
+                          </span>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-card shadow-soft">
+                <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
+                  <div>
+                    <h3 className="font-display text-sm font-bold">Saved events</h3>
+                    <p className="text-xs text-muted-foreground">Bookmarks for coverage planning</p>
+                  </div>
+                  <Link to="/dashboard/saved" className="text-xs font-semibold text-primary hover:underline">
+                    View all →
+                  </Link>
+                </div>
+                <div className="divide-y divide-border/50">
+                  {savesLoading ? (
+                    <p className="px-5 py-8 text-sm text-muted-foreground">Loading…</p>
+                  ) : savedEvents.length === 0 ? (
+                    <p className="px-5 py-8 text-sm text-muted-foreground italic">No saved opportunities yet.</p>
+                  ) : (
+                    savedEvents.slice(0, 5).map((ev: any) => (
+                      <Link
+                        key={ev.id}
+                        to="/events/$slug"
+                        params={{ slug: ev.slug }}
+                        className="flex items-center gap-3 px-5 py-3.5 hover:bg-muted/30"
+                      >
+                        {ev.banner_image_url ? (
+                          <img src={ev.banner_image_url} alt="" className="h-10 w-14 shrink-0 rounded object-cover" />
+                        ) : (
+                          <div className="flex h-10 w-14 shrink-0 items-center justify-center rounded bg-muted">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-semibold">{ev.name}</div>
+                          <div className="truncate text-xs text-muted-foreground">
+                            {[ev.city, ev.country].filter(Boolean).join(", ") || "—"}
+                          </div>
+                        </div>
+                      </Link>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-dashed border-border bg-muted/20 p-5">
+              <h3 className="font-display text-sm font-bold">Reach signals</h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Audience reach metrics will appear here as coverage outcomes are logged. For now, use request volume and saves as leading indicators.
+              </p>
+              <div className="mt-4 grid grid-cols-3 gap-3">
+                <div className="rounded-xl bg-card px-3 py-3 text-center shadow-soft">
+                  <div className="font-display text-xl font-bold">{requests.length}</div>
+                  <div className="text-[11px] text-muted-foreground">Requests filed</div>
+                </div>
+                <div className="rounded-xl bg-card px-3 py-3 text-center shadow-soft">
+                  <div className="font-display text-xl font-bold">{savedEvents.length}</div>
+                  <div className="text-[11px] text-muted-foreground">Events tracked</div>
+                </div>
+                <div className="rounded-xl bg-card px-3 py-3 text-center shadow-soft">
+                  <div className="font-display text-xl font-bold text-muted-foreground">—</div>
+                  <div className="text-[11px] text-muted-foreground">Est. reach</div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

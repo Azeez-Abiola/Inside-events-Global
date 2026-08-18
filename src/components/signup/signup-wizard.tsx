@@ -5,8 +5,8 @@ import { toast } from "sonner";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isEmailConfirmed } from "@/lib/auth-email";
-import { markSignupPendingApproval } from "@/lib/profile.functions";
 import { ensureSignupRole } from "@/lib/signup.functions";
+import { saveOnboardingSection } from "@/lib/onboarding.functions";
 import { AuthShell } from "@/components/auth-shell";
 import { SignupProfileStep } from "@/components/signup/profile-step";
 import { SignupOtpStep } from "@/components/signup/signup-otp-step";
@@ -22,6 +22,7 @@ import {
   resolveSignupRole,
   getSignupRoleMeta,
   isSignupRole,
+  stashSignupAccountDraft,
 } from "@/lib/signup-roles";
 
 const STEPS: { key: SignupStep; label: string }[] = [
@@ -34,13 +35,19 @@ const STEPS: { key: SignupStep; label: string }[] = [
 export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
   const navigate = useNavigate();
   const { user, roles, loading, refreshRoles } = useAuth();
-  const markPending = useServerFn(markSignupPendingApproval);
   const ensureRole = useServerFn(ensureSignupRole);
+  const saveOnboarding = useServerFn(saveOnboardingSection);
   const [step, setStep] = useState<SignupStep>(initialStep ?? "role");
   const [role, setRole] = useState<SignupRole>("sponsor");
   const [bootstrapping, setBootstrapping] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [phoneLocal, setPhoneLocal] = useState("");
+  const [accountType, setAccountType] = useState<"individual" | "organisation">("individual");
+  const [companyName, setCompanyName] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const signupRole = resolveSignupRole(roles, role);
@@ -55,6 +62,20 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
   async function assignRole(selected: SignupRole) {
     await ensureRole({ data: { role: selected } });
     await refreshRoles();
+  }
+
+  async function startOnboarding(selected: SignupRole) {
+    await assignRole(selected);
+    await saveOnboarding({
+      data: {
+        role: selected,
+        sectionKey: "__role",
+        sectionData: { role: selected },
+        currentSection: 0,
+      },
+    });
+    clearSignupRole();
+    navigate({ to: "/onboarding/role", replace: true });
   }
 
   useEffect(() => {
@@ -88,11 +109,9 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
 
       if (!primaryRole && storedRole) {
         try {
-          await assignRole(storedRole);
-          clearSignupRole();
-          setRole(storedRole);
+          await startOnboarding(storedRole);
           // Let SignupOtpStep show the success toast when coming from verify.
-          if (step !== "verify") goToStep("profile");
+          if (step !== "verify") return;
         } catch (e: unknown) {
           toast.error(e instanceof Error ? e.message : "Could not save your role");
         }
@@ -107,8 +126,12 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
           navigate({ to: "/dashboard", replace: true });
           return;
         }
-        goToStep("profile");
-        setBootstrapping(false);
+        try {
+          await startOnboarding(primaryRole);
+        } catch (e: unknown) {
+          toast.error(e instanceof Error ? e.message : "Could not start onboarding");
+          setBootstrapping(false);
+        }
         return;
       }
 
@@ -124,10 +147,8 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
     stashSignupRole(role);
     if (user && isEmailConfirmed(user)) {
       try {
-        await assignRole(role);
-        clearSignupRole();
-        toast.success("Role set — let's complete your profile");
-        goToStep("profile");
+        await startOnboarding(role);
+        toast.success("Role set — next, confirm it and complete onboarding");
       } catch (e: unknown) {
         toast.error(e instanceof Error ? e.message : "Could not save your role");
       }
@@ -137,26 +158,50 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
   }
 
   async function handleSignupComplete() {
-    try {
-      await markPending({ data: {} });
-    } catch {
-      // Best-effort — gate still enforced server-side.
-    }
-    navigate({ to: "/dashboard" });
+    navigate({ to: "/onboarding/role" });
   }
 
   async function handlePassword(e: React.FormEvent) {
     e.preventDefault();
+    if (!fullName.trim()) {
+      toast.error("Enter your full name.");
+      return;
+    }
+    if (!phoneLocal.trim()) {
+      toast.error("Enter your phone number.");
+      return;
+    }
+    if (accountType === "organisation" && !companyName.trim()) {
+      toast.error("Organisation / company name is required.");
+      return;
+    }
+    if (!termsAccepted) {
+      toast.error("Please agree to the Terms and Privacy Policy.");
+      return;
+    }
     if (password.length < 8) {
       toast.error("Use at least 8 characters for your password.");
       return;
     }
+    const phone = `+234${phoneLocal.replace(/\D/g, "").replace(/^0+/, "")}`;
+    stashSignupAccountDraft({
+      fullName: fullName.trim(),
+      phone,
+      accountType,
+      companyName: companyName.trim(),
+    });
     setSubmitting(true);
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { role },
+        data: {
+          role,
+          full_name: fullName.trim(),
+          phone,
+          account_type: accountType,
+          company_name: companyName.trim() || null,
+        },
       },
     });
     setSubmitting(false);
@@ -166,10 +211,8 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
     }
     if (data.session?.user && isEmailConfirmed(data.session.user)) {
       try {
-        await assignRole(role);
-        clearSignupRole();
-        toast.success("Account created — one more step");
-        goToStep("profile");
+        await startOnboarding(role);
+        toast.success("Account created — now complete onboarding");
       } catch (err: unknown) {
         toast.error(err instanceof Error ? err.message : "Could not save your role");
       }
@@ -184,10 +227,8 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
     const verifiedUser = sessionData.session?.user ?? (await supabase.auth.getUser()).data.user;
     if (!verifiedUser) throw new Error("Session missing after verification");
 
-    await assignRole(role);
-    clearSignupRole();
-    toast.success("Email verified — welcome to IGE!");
-    goToStep("profile");
+    await startOnboarding(role);
+    toast.success("Email verified — now complete onboarding");
   }
 
   async function handleResendOtp() {
@@ -308,6 +349,14 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
               </p>
               <form onSubmit={handlePassword} className="space-y-4">
                 <AccountField
+                  label="Full name"
+                  type="text"
+                  autoComplete="name"
+                  required
+                  value={fullName}
+                  onChange={setFullName}
+                />
+                <AccountField
                   label="Email"
                   type="email"
                   autoComplete="email"
@@ -315,14 +364,96 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
                   value={email}
                   onChange={setEmail}
                 />
-                <AccountField
-                  label="Password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={password}
-                  onChange={setPassword}
-                />
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-foreground">Phone *</label>
+                  <div className="flex gap-2">
+                    <span className="inline-flex h-10 items-center rounded-md border border-input bg-muted px-3 text-sm font-medium text-muted-foreground">
+                      +234
+                    </span>
+                    <input
+                      type="tel"
+                      inputMode="numeric"
+                      required
+                      placeholder="801 234 5678"
+                      value={phoneLocal}
+                      onChange={(e) => setPhoneLocal(e.target.value)}
+                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <span className="mb-1.5 block text-sm font-medium text-foreground">Account type</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {([
+                      { id: "individual" as const, label: "Individual" },
+                      { id: "organisation" as const, label: "Organisation" },
+                    ]).map((opt) => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setAccountType(opt.id)}
+                        className={`rounded-md border px-3 py-2.5 text-sm font-medium transition-colors ${
+                          accountType === opt.id
+                            ? "border-primary bg-brand-soft text-foreground"
+                            : "border-border bg-card text-muted-foreground hover:bg-muted"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {accountType === "organisation" && (
+                  <AccountField
+                    label="Organisation / company name"
+                    type="text"
+                    autoComplete="organization"
+                    required
+                    value={companyName}
+                    onChange={setCompanyName}
+                  />
+                )}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-foreground">Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="h-10 w-full rounded-md border border-input bg-background px-3 pr-10 text-sm outline-none focus:ring-2 focus:ring-ring"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+                <label className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                    className="mt-0.5"
+                    required
+                  />
+                  <span>
+                    I agree to IGE's{" "}
+                    <Link to="/terms" className="font-semibold text-primary hover:underline">
+                      Terms
+                    </Link>{" "}
+                    and{" "}
+                    <Link to="/privacy" className="font-semibold text-primary hover:underline">
+                      Privacy Policy
+                    </Link>
+                    .
+                  </span>
+                </label>
                 <button
                   type="submit"
                   disabled={submitting}
@@ -330,9 +461,6 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
                 >
                   {submitting ? "Creating account…" : "Create account"}
                 </button>
-                <p className="text-xs text-muted-foreground">
-                  By continuing you agree to IGE's Terms and Privacy Policy.
-                </p>
               </form>
             </>
           )}

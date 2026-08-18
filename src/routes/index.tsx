@@ -1,4 +1,7 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import {
   ArrowRight,
   ShieldCheck,
@@ -9,10 +12,20 @@ import {
   Users,
   CheckCircle2,
   TrendingUp,
+  Mic2,
+  Camera,
+  Podcast,
+  FileText,
+  Film,
+  Download,
 } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { MARKETPLACE_PUBLIC } from "@/lib/marketplace-visibility";
+import { stashSignupRole } from "@/lib/signup-roles";
+import { subscribeNewsletter } from "@/lib/newsletter.functions";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import ogImage from "@/assets/og-image.jpg";
 import featuredImg from "@/assets/featured-itsekiri.png";
 
@@ -61,6 +74,9 @@ function Landing() {
         <ThreeSides />
         <HowItWorks />
         <Trust />
+        <ProfessionalsMarketplaceTeaser />
+        <MovementLayer />
+        <PricingTeaser />
         <FinalCta />
       </main>
       <SiteFooter />
@@ -507,13 +523,240 @@ function Trust() {
   );
 }
 
+/* ---------------- Professionals Marketplace teaser ---------------- */
+
+const PRO_CATEGORIES = [
+  "MC / Host",
+  "Sponsorship Strategist",
+  "Photographer",
+  "Videographer",
+  "Decor",
+  "Sound",
+  "Stage Design",
+  "Brand Activation",
+  "Event Ops",
+  "Producer",
+  "Content Creator",
+  "PR / Comms",
+];
+
+function ProfessionalsMarketplaceTeaser() {
+  const ref = useScrollReveal() as React.RefObject<HTMLElement>;
+  return (
+    <section ref={ref as any} className="border-t border-border/60 bg-muted/20 py-20 md:py-24">
+      <div className="mx-auto max-w-7xl px-6">
+        <div data-reveal className="max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary-deep">
+            The talent behind every great activation
+          </p>
+          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">
+            Professionals Marketplace
+          </h2>
+          <p className="mt-3 text-muted-foreground">
+            Get discovered by organisers and brands looking for vetted talent across strategy,
+            production, and creative services.
+          </p>
+        </div>
+
+        <div data-reveal data-delay="1" className="mt-10 flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+          {PRO_CATEGORIES.map((c) => (
+            <span
+              key={c}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground"
+            >
+              {c === "MC / Host" ? <Mic2 className="h-3.5 w-3.5 text-primary" /> : null}
+              {c === "Photographer" ? <Camera className="h-3.5 w-3.5 text-primary" /> : null}
+              {c}
+            </span>
+          ))}
+        </div>
+
+        <div data-reveal data-delay="2" className="mt-8">
+          <Link
+            to="/signup"
+            onClick={() => stashSignupRole("media_partner")}
+            className="inline-flex items-center gap-2 rounded-md bg-brand-gradient px-6 py-3.5 text-sm font-semibold text-white shadow-soft transition-transform hover:-translate-y-0.5"
+          >
+            Get Discovered
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- Movement Layer ---------------- */
+
+function MovementLayer() {
+  const ref = useScrollReveal() as React.RefObject<HTMLElement>;
+  const [email, setEmail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const subscribe = useServerFn(subscribeNewsletter);
+
+  async function handleReportLead(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = email.trim();
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      toast.error("Enter a valid email address.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await subscribe({ data: { email: trimmed, source: "intelligence-report" } });
+      toast.success("You're on the list — we'll send the Quarterly Intelligence Report when it's ready.");
+      setEmail("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not subscribe. Try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const cards = [
+    {
+      icon: Podcast,
+      title: "PartnerUp Podcast",
+      desc: "Conversations with organisers, brands, and partners shaping the Africa–Europe events corridor.",
+    },
+    {
+      icon: FileText,
+      title: "Quarterly Intelligence Report",
+      desc: "Benchmark sponsorship spend, corridor trends, and deal patterns from the IGE marketplace.",
+    },
+    {
+      icon: Film,
+      title: "Documentary series",
+      desc: "Stories behind landmark events and the sponsorships that made them possible.",
+    },
+  ];
+
+  return (
+    <section ref={ref as any} className="border-t border-border/60 py-20 md:py-24">
+      <div className="mx-auto max-w-7xl px-6">
+        <div data-reveal className="max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary-deep">
+            Events are not a cost centre. They're a growth engine.
+          </p>
+          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">
+            The Movement Layer
+          </h2>
+          <p className="mt-3 text-muted-foreground">
+            Thought leadership, intelligence, and stories that move the sponsorship economy forward.
+          </p>
+        </div>
+
+        <div className="mt-12 grid gap-6 sm:grid-cols-3">
+          {cards.map((c, i) => (
+            <div
+              key={c.title}
+              data-reveal
+              data-delay={String(i + 1)}
+              className="rounded-2xl border border-border bg-card p-6"
+            >
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-soft">
+                <c.icon className="h-5 w-5 text-primary" />
+              </div>
+              <h3 className="mt-5 font-display text-lg font-bold">{c.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <form
+          data-reveal
+          data-delay="3"
+          onSubmit={(e) => void handleReportLead(e)}
+          className="mt-10 flex max-w-lg flex-col gap-3 sm:flex-row sm:items-center"
+        >
+          <Input
+            type="email"
+            placeholder="Work email for the report"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="h-11 flex-1"
+            required
+          />
+          <Button
+            type="submit"
+            disabled={submitting}
+            className="h-11 shrink-0 gap-2 bg-brand-gradient font-semibold text-white"
+          >
+            <Download className="h-4 w-4" />
+            {submitting ? "Sending…" : "Download the Quarterly Intelligence Report"}
+          </Button>
+        </form>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- Pricing teaser ---------------- */
+
+function PricingTeaser() {
+  const ref = useScrollReveal() as React.RefObject<HTMLElement>;
+  return (
+    <section ref={ref as any} className="border-t border-border/60 bg-muted/20 py-20 md:py-24">
+      <div className="mx-auto max-w-7xl px-6">
+        <div data-reveal className="max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary-deep">
+            Free for your first 90 days. On purpose.
+          </p>
+          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">
+            Command Centers, unlocked
+          </h2>
+          <p className="mt-3 text-muted-foreground">
+            Full access to your workspace for 90 days — no card required until your trial ends.
+          </p>
+        </div>
+
+        <div className="mt-12 grid gap-6 md:grid-cols-2">
+          {[
+            {
+              title: "Sponsorship Command Center",
+              desc: "Budget planner, deal pipeline, deliverable matrix, and board-ready business cases for brand sponsors.",
+            },
+            {
+              title: "Organiser Command Center",
+              desc: "Funding gap tracker, sponsor pipeline, brand-readiness coaching, and documents vault for event teams.",
+            },
+          ].map((card, i) => (
+            <div
+              key={card.title}
+              data-reveal
+              data-delay={String(i + 1)}
+              className="rounded-2xl border border-border bg-card p-8"
+            >
+              <div className="inline-flex rounded-full bg-secondary/15 px-3 py-1 text-xs font-semibold text-secondary-deep">
+                90 days free
+              </div>
+              <h3 className="mt-4 font-display text-xl font-bold">{card.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{card.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <div data-reveal data-delay="2" className="mt-8">
+          <Link
+            to="/pricing"
+            className="inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-soft transition-transform hover:-translate-y-0.5"
+          >
+            See Full Pricing
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ---------------- Final CTA ---------------- */
 
 function FinalCta() {
   const ref = useScrollReveal() as React.RefObject<HTMLElement>;
   return (
-    <section ref={ref as any} className="px-6 pb-24">
-      <div data-reveal className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-brand-gradient-diag px-8 py-16 text-white shadow-brand md:px-16 md:py-20">
+    <section ref={ref as any} className="px-6 pb-24 pt-8">
+      <div data-reveal className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-brand-gradient-diag px-8 py-16 text-center text-white shadow-brand md:px-16 md:py-20">
         <div
           aria-hidden
           className="absolute inset-0 opacity-30"
@@ -522,28 +765,25 @@ function FinalCta() {
               "radial-gradient(circle at 80% 20%, rgba(255,255,255,0.25), transparent 50%)",
           }}
         />
-        <div className="relative max-w-2xl">
-          <h2 className="font-display text-4xl font-bold leading-tight tracking-tight md:text-5xl">
-            Ready to make your next sponsorship deal a quiet one?
+        <div className="relative mx-auto max-w-3xl">
+          <h2 className="font-display text-3xl font-bold leading-tight tracking-tight md:text-5xl">
+            Your next sponsor is already looking for an event like yours.
           </h2>
-          <p className="mt-5 text-lg opacity-90">
-            Join organisers, sponsors and partners already working inside IGE.
-            Zero listing fees. Vetted from day one.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link
               to="/signup"
+              onClick={() => stashSignupRole("organiser")}
               className="inline-flex items-center gap-2 rounded-md bg-white px-6 py-3.5 text-sm font-semibold text-primary-deep transition-transform hover:-translate-y-0.5"
             >
-              Create your account
+              List Your Event
               <ArrowRight className="h-4 w-4" />
             </Link>
-            <a
-              href="mailto:Hi@insideglobalevents.com"
-              className="inline-flex items-center gap-2 rounded-md border border-white/30 bg-white/10 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/20"
+            <Link
+              to="/marketplace"
+              className="inline-flex items-center gap-2 rounded-md border border-white/40 bg-white/10 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/20"
             >
-              Talk to the team
-            </a>
+              Find Events to Sponsor
+            </Link>
           </div>
         </div>
       </div>

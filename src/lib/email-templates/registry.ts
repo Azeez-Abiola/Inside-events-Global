@@ -30,6 +30,7 @@ import { template as eventListed } from './event-listed'
 import { template as commitmentReceived } from './commitment-received'
 import { template as accountPendingApproval } from './account-pending-approval'
 import { template as accountApproved } from './account-approved'
+import { template as accountDeclined } from './account-declined'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'contact-confirmation': contactConfirmation,
@@ -53,4 +54,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'commitment-received': commitmentReceived,
   'account-pending-approval': accountPendingApproval,
   'account-approved': accountApproved,
+  'account-declined': accountDeclined,
 }

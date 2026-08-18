@@ -469,6 +469,10 @@ export const getPlatformUserDetail = createServerFn({ method: "GET" })
 const ApproveUserInput = z.object({
   user_id: z.string().uuid(),
   approved: z.boolean(),
+  /** When declining (approved: false), optional note emailed to the applicant. */
+  reason: z.string().trim().max(2000).optional(),
+  /** When true with approved: false, send the declined email and keep is_active false. */
+  decline: z.boolean().optional(),
 });
 
 export const setUserApproved = createServerFn({ method: "POST" })
@@ -484,6 +488,11 @@ export const setUserApproved = createServerFn({ method: "POST" })
       .eq("user_id", data.user_id);
     if (targetRoles?.some((r) => r.role === "super_admin")) {
       throw new Error("Cannot change approval for a super admin");
+    }
+
+    const isDecline = !data.approved && !!data.decline;
+    if (isDecline && !data.reason?.trim()) {
+      throw new Error("A decline note is required so the applicant can see why they were declined");
     }
 
     const { error } = await supabaseAdmin
@@ -524,16 +533,46 @@ export const setUserApproved = createServerFn({ method: "POST" })
       });
     }
 
+    if (isDecline && targetProfile?.email) {
+      try {
+        await sendTransactionalEmailServer({
+          templateName: "account-declined",
+          recipientEmail: targetProfile.email,
+          idempotencyKey: `account-declined-${data.user_id}-${Date.now()}`,
+          templateData: {
+            name: targetProfile.display_name ?? undefined,
+            reason: data.reason,
+            supportEmail: IGE_SUPPORT_EMAIL,
+            siteUrl: SITE_URL,
+          },
+        });
+        await flushEmailQueueInDev();
+      } catch (e) {
+        console.error("[setUserApproved] decline email failed", e);
+      }
+
+      await supabaseAdmin.from("notifications").insert({
+        user_id: data.user_id,
+        type: "account_declined",
+        title: "Account application declined",
+        body: data.reason ?? "Your IGE account application was not approved.",
+        data: {},
+      });
+    }
+
     const actor = await getActorProfile(userId);
     await auditAdminAction({
       actorId: userId,
       actorEmail: actor?.email,
-      action: data.approved ? "user_approved" : "user_unapproved",
+      action: data.approved ? "user_approved" : isDecline ? "user_declined" : "user_unapproved",
       summary: data.approved
         ? `Approved ${targetProfile?.email ?? data.user_id}`
-        : `Set pending approval for ${targetProfile?.email ?? data.user_id}`,
+        : isDecline
+          ? `Declined ${targetProfile?.email ?? data.user_id}`
+          : `Set pending approval for ${targetProfile?.email ?? data.user_id}`,
       resourceType: "user",
       resourceId: data.user_id,
+      metadata: isDecline && data.reason ? { reason: data.reason } : undefined,
     });
 
     return { ok: true };

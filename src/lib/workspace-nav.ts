@@ -24,6 +24,7 @@ export function getWorkspaceNav(roles: string[]): WorkspaceNavItem[] {
 
     items.push(
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      ...maybe("/dashboard/onboarding-vetting", "Onboarding", UserCheck),
       ...maybe("/dashboard/vetting", "Event queue", ShieldCheck),
       ...maybe("/dashboard/waitlist", "Waitlist", ClipboardList),
       ...maybe("/dashboard/newsletter", "Newsletter", Mail),

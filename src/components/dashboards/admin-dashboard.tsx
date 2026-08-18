@@ -46,7 +46,9 @@ const DEAL_STATUSES = [
   "cancelled",
 ];
 
-export function AdminDashboard({ section = "overview" }: { section?: "overview" | "vetting" | "submissions" | "waitlist" | "revenue" | "controls" | "analytics" | "partners" | "media-requests" | "users" }) {
+import { AdminOnboardingVettingPanel } from "@/components/dashboards/admin-onboarding-vetting-panel";
+
+export function AdminDashboard({ section = "overview" }: { section?: "overview" | "vetting" | "submissions" | "waitlist" | "revenue" | "controls" | "analytics" | "partners" | "media-requests" | "users" | "onboarding" }) {
   const { fmtUsd, displayCurrency, labelSuffix } = useDisplayCurrency();
   const [drawerOpen, setDrawerOpen] = useState<string | null>(null);
   const [contactSearch, setContactSearch] = useState("");
@@ -273,6 +275,8 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
           />
         ) : section === "vetting" ? (
           <AdminVettingPanel />
+        ) : section === "onboarding" ? (
+          <AdminOnboardingVettingPanel />
         ) : section === "waitlist" ? (
           <AdminWaitlistPanel />
         ) : section === "media-requests" ? (

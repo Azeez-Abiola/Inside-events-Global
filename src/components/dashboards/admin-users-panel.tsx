@@ -83,6 +83,8 @@ function UserDetailSheet({
   const qc = useQueryClient();
   const fetchDetail = useServerFn(getPlatformUserDetail);
   const approve = useServerFn(setUserApproved);
+  const [declineNote, setDeclineNote] = useState("");
+  const [showDecline, setShowDecline] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-user-detail", user?.id],
@@ -91,11 +93,24 @@ function UserDetailSheet({
   });
 
   const approveMut = useMutation({
-    mutationFn: (approved: boolean) => approve({ data: { user_id: user!.id, approved } }),
-    onSuccess: (_res, approved) => {
-      toast.success(approved ? "User approved" : "User set to pending");
+    mutationFn: (payload: { approved: boolean; decline?: boolean; reason?: string }) =>
+      approve({
+        data: {
+          user_id: user!.id,
+          approved: payload.approved,
+          decline: payload.decline,
+          reason: payload.reason,
+        },
+      }),
+    onSuccess: (_res, vars) => {
+      if (vars.approved) toast.success("User approved");
+      else if (vars.decline) toast.success("Application declined — email sent");
+      else toast.success("User set to pending");
+      setShowDecline(false);
+      setDeclineNote("");
       qc.invalidateQueries({ queryKey: ["admin-users"] });
       qc.invalidateQueries({ queryKey: ["admin-user-detail", user?.id] });
+      if (vars.decline) onClose();
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -110,7 +125,16 @@ function UserDetailSheet({
           : data?.media;
 
   return (
-    <Sheet open={!!user} onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Sheet
+      open={!!user}
+      onOpenChange={(o) => {
+        if (!o) {
+          setShowDecline(false);
+          setDeclineNote("");
+          onClose();
+        }
+      }}
+    >
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader>
           <SheetTitle>{user?.display_name ?? user?.email ?? "User"}</SheetTitle>
@@ -148,14 +172,54 @@ function UserDetailSheet({
             )}
 
             {canManage && user && !user.roles.includes("super_admin") && (
-              <div className="flex flex-wrap gap-2 border-t border-border pt-4">
+              <div className="space-y-3 border-t border-border pt-4">
                 {!user.is_active && !user.is_suspended && (
-                  <Button disabled={approveMut.isPending} onClick={() => approveMut.mutate(true)}>
-                    Approve account
-                  </Button>
+                  <>
+                    <div className="flex flex-wrap gap-2">
+                      <Button disabled={approveMut.isPending} onClick={() => approveMut.mutate({ approved: true })}>
+                        Approve account
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        disabled={approveMut.isPending}
+                        onClick={() => setShowDecline((v) => !v)}
+                      >
+                        Decline
+                      </Button>
+                    </div>
+                    {showDecline && (
+                      <div className="space-y-3 rounded-xl border border-destructive/20 bg-destructive/5 p-4">
+                        <TextArea
+                          label="Decline note (required — emailed to applicant)"
+                          rows={3}
+                          value={declineNote}
+                          onChange={setDeclineNote}
+                          placeholder="We need more detail on your organisation and past events…"
+                        />
+                        <Button
+                          variant="destructive"
+                          className="w-full"
+                          disabled={approveMut.isPending || !declineNote.trim()}
+                          onClick={() =>
+                            approveMut.mutate({
+                              approved: false,
+                              decline: true,
+                              reason: declineNote.trim(),
+                            })
+                          }
+                        >
+                          Confirm decline &amp; email
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 )}
                 {user.is_active && !user.is_suspended && (
-                  <Button variant="outline" disabled={approveMut.isPending} onClick={() => approveMut.mutate(false)}>
+                  <Button
+                    variant="outline"
+                    disabled={approveMut.isPending}
+                    onClick={() => approveMut.mutate({ approved: false })}
+                  >
                     Set pending approval
                   </Button>
                 )}
