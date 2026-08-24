@@ -1,10 +1,10 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
-  Plus, Loader2, Trash2, CalendarDays, MapPin, Eye, Bookmark, MessageSquare,
+  Plus, Loader2, Trash2, CalendarDays, Eye, Bookmark, MessageSquare,
   ShieldCheck, FolderOpen, ExternalLink, BarChart3, TrendingUp,
 } from "lucide-react";
 import { StatusBadge } from "@/components/app-shell";
@@ -12,16 +12,25 @@ import { QuickLinkCard, fmtDateRange } from "@/components/dashboards/shared";
 import { KpiTile, DonutBreakdown, FeaturedHeroCard, AgendaList } from "@/components/dashboards/voom-primitives";
 import { DashboardCardGridSkeleton, DashboardTableSkeleton } from "@/components/dashboards/dashboard-skeletons";
 import {
-  DashboardEmpty, DashboardPanel, DashboardTabs, VettingTimeline,
+  DashboardEmpty, DashboardPanel, DashboardTable, DashboardTableHead, VettingTimeline,
 } from "@/components/dashboards/dashboard-shell";
+import { DashboardDataToolbar, DashboardFilterSelect } from "@/components/dashboards/dashboard-data-toolbar";
 import { WorkspacePage } from "@/components/dashboards/workspace-page";
 import { OrganiserAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
-import { createEventDraft, getMyEvents, deleteDraftEvent } from "@/lib/events.functions";
+import {
+  createEventDraft, getMyEvents, deleteDraftEvent, getEventForEdit, autosaveEvent, pickAutosavePatch,
+} from "@/lib/events.functions";
 import { getOrganiserPipeline } from "@/lib/deals.functions";
 import { fmtMoney } from "@/lib/currency";
 import {
   EVENT_STATUS_GROUPS, type EventStatusGroup, filterEventsByGroup, groupEventsByStatus,
 } from "@/lib/event-dashboard";
+import { COUNTRIES, PRIMARY_SECTORS } from "@/lib/event-taxonomy";
+import { useTableFilters } from "@/hooks/use-table-filters";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
+} from "@/components/ui/sheet";
 
 const EVENT_TABS: { id: EventStatusGroup; label: string }[] = [
   { id: "all", label: "All events" },
@@ -64,13 +73,21 @@ function useOrganiserEvents() {
 
 export function OrganiserEventsPage() {
   const [statusFilter, setStatusFilter] = useState<EventStatusGroup>("all");
+  const [search, setSearch] = useState("");
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const { events, counts, buckets, eventsLoading, createBtn, del } = useOrganiserEvents();
   const fetchPipeline = useServerFn(getOrganiserPipeline);
   const { data: pipelineData, isLoading: pipelineLoading } = useQuery({
     queryKey: ["org-pipeline"],
     queryFn: () => fetchPipeline(),
   });
-  const filteredEvents = useMemo(() => filterEventsByGroup(events, statusFilter), [events, statusFilter]);
+  const statusFiltered = useMemo(() => filterEventsByGroup(events, statusFilter), [events, statusFilter]);
+  const filteredEvents = useTableFilters({
+    rows: statusFiltered,
+    searchText: search,
+    search: (e: any) =>
+      [e.name, e.primary_sector, e.city, e.country, e.status].filter(Boolean).join(" "),
+  });
   const activeEventsCount = counts.approved + counts.live;
   const featured =
     buckets.revision[0] ??
@@ -196,9 +213,9 @@ export function OrganiserEventsPage() {
         </div>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-3">
-        <div className="space-y-5 xl:col-span-2">
-          {statusDonut.length > 0 && (
+      <div className="grid gap-5 lg:grid-cols-3">
+        <div className="space-y-5 lg:col-span-2">
+          {statusDonut.length > 0 ? (
             <DonutBreakdown
               title="Portfolio by status"
               description="How your events are distributed"
@@ -208,38 +225,12 @@ export function OrganiserEventsPage() {
               centerLabel="Events"
               centerValue={events.length}
             />
+          ) : (
+            <div className="rounded-2xl bg-card p-5 shadow-card">
+              <h3 className="font-display text-sm font-bold text-foreground">Portfolio by status</h3>
+              <p className="mt-2 text-sm text-muted-foreground italic">Create events to see status distribution.</p>
+            </div>
           )}
-
-          <div className="rounded-2xl bg-card shadow-card">
-            <div className="flex items-center justify-between border-b border-border/50 px-5 py-4">
-              <div>
-                <h3 className="font-display text-sm font-bold text-foreground">My events</h3>
-                <p className="text-xs text-muted-foreground">All listings in your workspace</p>
-              </div>
-            </div>
-            <div className="p-5">
-              <DashboardTabs active={statusFilter} onChange={(id) => setStatusFilter(id as EventStatusGroup)} tabs={EVENT_TABS.map((t) => ({ id: t.id, label: t.label, count: counts[t.id] }))} />
-              {statusFilter !== "all" && (
-                <p className="mt-3 text-sm text-muted-foreground">{EVENT_STATUS_GROUPS[statusFilter as Exclude<EventStatusGroup, "all">]?.description}</p>
-              )}
-              {eventsLoading ? (
-                <DashboardCardGridSkeleton count={6} />
-              ) : filteredEvents.length === 0 ? (
-                <DashboardEmpty icon={FolderOpen} title="No events yet" description="Create your first event draft to start the IGE vetting flow." action={createBtn} />
-              ) : (
-                <div className="mt-4 grid gap-4">
-                  {filteredEvents.map((e: any) => (
-                    <EventCard
-                      key={e.id}
-                      event={e}
-                      onDelete={() => { if (confirm("Delete this draft?")) del.mutate(e.id); }}
-                      showVettingTimeline={["submitted", "under_review", "approved", "revision_requested", "rejected"].includes(e.status)}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
         </div>
 
         <div className="space-y-5">
@@ -268,18 +259,21 @@ export function OrganiserEventsPage() {
               ctaTo="/dashboard"
             />
           )}
+        </div>
+      </div>
 
+      <div className="grid gap-5 lg:grid-cols-3">
+        <div className="lg:col-span-1">
           <AgendaList title="Upcoming start dates" items={agendaItems} empty="No scheduled events yet." />
-
-          <div className="space-y-2">
-            {[
-              { to: "/dashboard/pipeline", label: "Sponsorship pipeline", desc: "Inquiries & deal stages", icon: TrendingUp },
-              { to: "/dashboard/documents", label: "Documents", desc: "Decks & assets", icon: FolderOpen },
-              { to: "/dashboard/analytics", label: "Analytics", desc: "Views & conversions", icon: BarChart3 },
-            ].map((item) => (
-              <QuickLinkCard key={item.to} {...item} />
-            ))}
-          </div>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-3 lg:col-span-2 lg:grid-cols-3">
+          {[
+            { to: "/dashboard/pipeline", label: "Sponsorship pipeline", desc: "Inquiries & deal stages", icon: TrendingUp },
+            { to: "/dashboard/documents", label: "Documents", desc: "Decks & assets", icon: FolderOpen },
+            { to: "/dashboard/analytics", label: "Analytics", desc: "Views & conversions", icon: BarChart3 },
+          ].map((item) => (
+            <QuickLinkCard key={item.to} {...item} />
+          ))}
         </div>
       </div>
 
@@ -287,14 +281,110 @@ export function OrganiserEventsPage() {
         <DashboardPanel title="Action needed" description="Events sent back for revision">
           <div className="space-y-3">
             {buckets.revision.map((e: any) => (
-              <Link key={e.id} to="/events/edit/$id" params={{ id: e.id }} className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm hover:border-amber-300">
+              <button
+                key={e.id}
+                type="button"
+                onClick={() => setSelectedEventId(e.id)}
+                className="flex w-full items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-left text-sm hover:border-amber-300"
+              >
                 <span className="font-semibold text-amber-950">{e.name || "Untitled event"}</span>
-                <span className="text-xs font-medium text-amber-800">Continue editing →</span>
-              </Link>
+                <span className="text-xs font-medium text-amber-800">Review & edit →</span>
+              </button>
             ))}
           </div>
         </DashboardPanel>
       )}
+
+      <div className="rounded-2xl bg-card shadow-card">
+        <div className="flex items-center justify-between border-b border-border/50 px-5 py-4">
+          <div>
+            <h3 className="font-display text-sm font-bold text-foreground">My events</h3>
+            <p className="text-xs text-muted-foreground">All listings in your workspace</p>
+          </div>
+        </div>
+        <div className="p-0">
+          <DashboardDataToolbar
+            search={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search event, sector, location…"
+            filters={
+              <DashboardFilterSelect
+                label="Status"
+                value={statusFilter}
+                onChange={(id) => setStatusFilter(id as EventStatusGroup)}
+                options={EVENT_TABS.map((t) => ({ id: t.id, label: t.label, count: counts[t.id] }))}
+              />
+            }
+          />
+          <div className="px-5 pb-5">
+            {statusFilter !== "all" && (
+              <p className="mb-3 text-sm text-muted-foreground">
+                {EVENT_STATUS_GROUPS[statusFilter as Exclude<EventStatusGroup, "all">]?.description}
+              </p>
+            )}
+            {eventsLoading ? (
+              <DashboardTableSkeleton rows={6} cols={6} />
+            ) : filteredEvents.length === 0 ? (
+              <DashboardEmpty
+                icon={FolderOpen}
+                title="No events yet"
+                description="Create your first event draft to start the IGE vetting flow."
+                action={createBtn}
+              />
+            ) : (
+              <div className="overflow-hidden rounded-xl border border-border">
+                <DashboardTable>
+                  <DashboardTableHead>
+                    <tr>
+                      <th className="px-4 py-3">Event</th>
+                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3">Dates</th>
+                      <th className="px-4 py-3">Location</th>
+                      <th className="px-4 py-3">Views</th>
+                      <th className="px-4 py-3">Inquiries</th>
+                    </tr>
+                  </DashboardTableHead>
+                  <tbody className="divide-y divide-border">
+                    {filteredEvents.map((e: any) => (
+                      <tr
+                        key={e.id}
+                        onClick={() => setSelectedEventId(e.id)}
+                        className="cursor-pointer transition-colors hover:bg-muted/40"
+                      >
+                        <td className="px-4 py-3">
+                          <div className="font-medium text-foreground">{e.name || "Untitled event"}</div>
+                          {e.primary_sector && (
+                            <div className="mt-0.5 text-xs text-muted-foreground">{e.primary_sector}</div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3"><StatusBadge status={e.status} /></td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">
+                          {e.start_date ? fmtDateRange(e.start_date, e.end_date) : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">
+                          {[e.city, e.country].filter(Boolean).join(", ") || "—"}
+                        </td>
+                        <td className="px-4 py-3 text-xs tabular-nums text-muted-foreground">{e.view_count ?? 0}</td>
+                        <td className="px-4 py-3 text-xs tabular-nums text-muted-foreground">{e.inquiry_count ?? 0}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </DashboardTable>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <OrganiserEventDetailSheet
+        eventId={selectedEventId}
+        onClose={() => setSelectedEventId(null)}
+        onDeleteDraft={(id) => {
+          if (confirm("Delete this draft?")) {
+            del.mutate(id, { onSuccess: () => setSelectedEventId(null) });
+          }
+        }}
+      />
     </WorkspacePage>
   );
 }
@@ -315,14 +405,21 @@ export function OrganiserPipelinePage() {
 
   return (
     <WorkspacePage title="Sponsorship pipeline" subtitle="Track IGE-verified sponsor leads and your active sponsor relationships.">
-      <DashboardTabs
-        tabs={[
-          { id: "ige", label: "IGE sponsors" },
-          { id: "mine", label: "My sponsors" },
-        ]}
-        active={tab}
-        onChange={(id) => setTab(id as "ige" | "mine")}
-      />
+      <DashboardPanel title="Pipeline" description="Switch between IGE leads and your active sponsor deals." bodyClassName="p-0">
+        <DashboardDataToolbar
+          filters={
+            <DashboardFilterSelect
+              label="View"
+              value={tab}
+              onChange={(id) => setTab(id as "ige" | "mine")}
+              options={[
+                { id: "ige", label: "IGE sponsors" },
+                { id: "mine", label: "My sponsors" },
+              ]}
+            />
+          }
+        />
+        <div className="p-5">
       {pipelineLoading ? <DashboardTableSkeleton rows={5} cols={6} /> : !pipelineData?.events?.length ? (
         <DashboardEmpty icon={MessageSquare} title="No live pipeline yet" description="Once an event is listed, sponsor inquiries will appear here." action={createBtn} />
       ) : (
@@ -350,6 +447,8 @@ export function OrganiserPipelinePage() {
           )}
         </div>
       )}
+        </div>
+      </DashboardPanel>
     </WorkspacePage>
   );
 }
@@ -399,35 +498,277 @@ export function OrganiserAnalyticsPage() {
   );
 }
 
-function EventCard({ event: e, onDelete, showVettingTimeline }: { event: any; onDelete: () => void; showVettingTimeline: boolean }) {
-  const isLive = e.status === "listed" || e.status === "approved";
+function OrganiserEventDetailSheet({
+  eventId,
+  onClose,
+  onDeleteDraft,
+}: {
+  eventId: string | null;
+  onClose: () => void;
+  onDeleteDraft: (id: string) => void;
+}) {
+  const qc = useQueryClient();
+  const fetchEvent = useServerFn(getEventForEdit);
+  const autosave = useServerFn(autosaveEvent);
+  const { data, isLoading } = useQuery({
+    queryKey: ["event", eventId],
+    queryFn: () => fetchEvent({ data: { id: eventId! } }),
+    enabled: !!eventId,
+  });
+
+  const event = data?.event;
+  const editable = !!event && ["draft", "revision_requested"].includes(event.status);
+  const [form, setForm] = useState<Record<string, any> | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const formRef = useRef<Record<string, any> | null>(null);
+  const debouncer = useRef<number | null>(null);
+  const hydratedId = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!event || !eventId) {
+      setForm(null);
+      formRef.current = null;
+      hydratedId.current = null;
+      return;
+    }
+    if (event.id !== eventId) return;
+    if (hydratedId.current === eventId) return;
+    const next = { ...event };
+    setForm(next);
+    formRef.current = next;
+    setSavedAt(event.updated_at ?? null);
+    hydratedId.current = eventId;
+  }, [event, eventId]);
+
+  useEffect(() => {
+    if (!eventId) {
+      hydratedId.current = null;
+      setForm(null);
+      formRef.current = null;
+    } else if (hydratedId.current && hydratedId.current !== eventId) {
+      hydratedId.current = null;
+      setForm(null);
+      formRef.current = null;
+    }
+  }, [eventId]);
+
+  useEffect(() => {
+    return () => {
+      if (debouncer.current) window.clearTimeout(debouncer.current);
+    };
+  }, []);
+
+  function update(patch: Record<string, any>) {
+    if (!editable) return;
+    setForm((f) => {
+      const next = { ...(f ?? {}), ...patch };
+      formRef.current = next;
+      if (debouncer.current) window.clearTimeout(debouncer.current);
+      debouncer.current = window.setTimeout(() => {
+        void doSave(next);
+      }, 700);
+      return next;
+    });
+  }
+
+  async function doSave(snapshot: Record<string, any>) {
+    if (!eventId || !editable) return;
+    setSaving(true);
+    try {
+      const res = await autosave({
+        data: {
+          id: eventId,
+          step: snapshot.form_step_completed ?? 0,
+          patch: pickAutosavePatch(snapshot),
+        },
+      });
+      setSavedAt(res.savedAt);
+      qc.invalidateQueries({ queryKey: ["events", "mine"] });
+      qc.invalidateQueries({ queryKey: ["event", eventId] });
+    } catch (e: any) {
+      toast.error(e.message ?? "Could not save");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleSaveNow() {
+    if (!formRef.current || !editable) return;
+    if (debouncer.current) {
+      window.clearTimeout(debouncer.current);
+      debouncer.current = null;
+    }
+    await doSave(formRef.current);
+    toast.success("Changes saved");
+  }
+
+  const isLive = event?.status === "listed" || event?.status === "approved";
+  const showTimeline = event && ["submitted", "under_review", "approved", "revision_requested", "rejected", "listed"].includes(event.status);
+
   return (
-    <div className="rounded-xl border border-border bg-card p-5 transition-all hover:border-primary hover:shadow-soft">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <Link to="/events/edit/$id" params={{ id: e.id }} className="font-display text-base font-bold text-foreground hover:text-primary-deep">{e.name || "Untitled event"}</Link>
-            <StatusBadge status={e.status} />
+    <Sheet open={!!eventId} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
+        {isLoading || !form ? (
+          <div className="flex items-center justify-center py-16 text-sm text-muted-foreground">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading event…
           </div>
-          <div className="mt-1.5 flex flex-wrap gap-3 text-xs text-muted-foreground">
-            {e.start_date && <span className="inline-flex items-center gap-1"><CalendarDays className="h-3 w-3" /> {fmtDateRange(e.start_date, e.end_date)}</span>}
-            {(e.city || e.country) && <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" /> {[e.city, e.country].filter(Boolean).join(", ")}</span>}
-          </div>
-          <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
-            <span>{e.view_count ?? 0} views</span><span>{e.save_count ?? 0} saves</span><span>{e.inquiry_count ?? 0} inquiries</span>
-          </div>
-          {showVettingTimeline && <VettingTimeline status={e.status} />}
-        </div>
-        <div className="flex shrink-0 flex-col items-end gap-2">
-          {isLive && e.slug && (
-            <Link to="/events/$slug" params={{ slug: e.slug }} className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline">View listing <ExternalLink className="h-3 w-3" /></Link>
-          )}
-          {e.status === "draft" && (
-            <button type="button" onClick={onDelete} className="rounded-md p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
-          )}
-        </div>
-      </div>
-    </div>
+        ) : (
+          <>
+            <SheetHeader className="pr-8 text-left">
+              <div className="flex flex-wrap items-center gap-2">
+                <SheetTitle className="font-display">{form.name || "Untitled event"}</SheetTitle>
+                <StatusBadge status={form.status} />
+              </div>
+              <SheetDescription>
+                {editable
+                  ? "Edit key details here, or open the full editor for the complete listing."
+                  : "This event is locked for editing. Open the listing or use the full editor for review."}
+              </SheetDescription>
+            </SheetHeader>
+
+            <div className="mt-6 space-y-5">
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="rounded-xl bg-muted/40 px-2 py-3">
+                  <div className="font-display text-lg font-bold">{event?.view_count ?? 0}</div>
+                  <div className="text-[11px] text-muted-foreground">Views</div>
+                </div>
+                <div className="rounded-xl bg-muted/40 px-2 py-3">
+                  <div className="font-display text-lg font-bold">{event?.save_count ?? 0}</div>
+                  <div className="text-[11px] text-muted-foreground">Saves</div>
+                </div>
+                <div className="rounded-xl bg-muted/40 px-2 py-3">
+                  <div className="font-display text-lg font-bold">{event?.inquiry_count ?? 0}</div>
+                  <div className="text-[11px] text-muted-foreground">Inquiries</div>
+                </div>
+              </div>
+
+              {showTimeline && <VettingTimeline status={form.status} />}
+
+              <div className="space-y-3">
+                <SheetField label="Event name">
+                  <input
+                    value={form.name ?? ""}
+                    disabled={!editable}
+                    onChange={(e) => update({ name: e.target.value })}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm disabled:opacity-60"
+                  />
+                </SheetField>
+                <div className="grid grid-cols-2 gap-3">
+                  <SheetField label="City">
+                    <input
+                      value={form.city ?? ""}
+                      disabled={!editable}
+                      onChange={(e) => update({ city: e.target.value })}
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm disabled:opacity-60"
+                    />
+                  </SheetField>
+                  <SheetField label="Country">
+                    <select
+                      value={form.country ?? ""}
+                      disabled={!editable}
+                      onChange={(e) => update({ country: e.target.value })}
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm disabled:opacity-60"
+                    >
+                      <option value="">Select…</option>
+                      {COUNTRIES.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </SheetField>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <SheetField label="Start date">
+                    <input
+                      type="date"
+                      value={form.start_date ? String(form.start_date).slice(0, 10) : ""}
+                      disabled={!editable}
+                      onChange={(e) => update({ start_date: e.target.value || null })}
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm disabled:opacity-60"
+                    />
+                  </SheetField>
+                  <SheetField label="End date">
+                    <input
+                      type="date"
+                      value={form.end_date ? String(form.end_date).slice(0, 10) : ""}
+                      disabled={!editable}
+                      onChange={(e) => update({ end_date: e.target.value || null })}
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm disabled:opacity-60"
+                    />
+                  </SheetField>
+                </div>
+                <SheetField label="Primary sector">
+                  <select
+                    value={form.primary_sector ?? ""}
+                    disabled={!editable}
+                    onChange={(e) => update({ primary_sector: e.target.value })}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm disabled:opacity-60"
+                  >
+                    <option value="">Select…</option>
+                    {PRIMARY_SECTORS.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </SheetField>
+                <SheetField label="Venue">
+                  <input
+                    value={form.venue ?? ""}
+                    disabled={!editable}
+                    onChange={(e) => update({ venue: e.target.value })}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm disabled:opacity-60"
+                  />
+                </SheetField>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4">
+                {editable && (
+                  <Button type="button" onClick={() => void handleSaveNow()} disabled={saving}>
+                    {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Save changes
+                  </Button>
+                )}
+                <Button type="button" variant="outline" asChild>
+                  <Link to="/events/edit/$id" params={{ id: eventId! }}>
+                    Open full editor
+                  </Link>
+                </Button>
+                {isLive && form.slug && (
+                  <Button type="button" variant="ghost" asChild>
+                    <Link to="/events/$slug" params={{ slug: form.slug }}>
+                      View listing <ExternalLink className="ml-1 h-3.5 w-3.5" />
+                    </Link>
+                  </Button>
+                )}
+                {form.status === "draft" && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => onDeleteDraft(eventId!)}
+                  >
+                    <Trash2 className="mr-1.5 h-4 w-4" /> Delete draft
+                  </Button>
+                )}
+              </div>
+              {(saving || savedAt) && editable && (
+                <p className="text-xs text-muted-foreground">
+                  {saving ? "Saving…" : savedAt ? `Last saved ${new Date(savedAt).toLocaleTimeString()}` : null}
+                </p>
+              )}
+            </div>
+          </>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function SheetField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block space-y-1.5">
+      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
+      {children}
+    </label>
   );
 }
 

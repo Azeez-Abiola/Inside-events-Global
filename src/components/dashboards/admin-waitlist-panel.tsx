@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { KpiTile } from "@/components/dashboards/voom-primitives";
 import { StatusPill } from "@/components/dashboards/shared";
 import { DashboardPanel, DashboardTable, DashboardTableHead } from "@/components/dashboards/dashboard-shell";
-import { DashboardDataToolbar } from "@/components/dashboards/dashboard-data-toolbar";
+import { DashboardDataToolbar, DashboardFilterSelect } from "@/components/dashboards/dashboard-data-toolbar";
 import { DashboardTableSkeleton } from "@/components/dashboards/dashboard-skeletons";
 import { datedCsvFilename, downloadCsv } from "@/lib/csv-export";
 import { Button } from "@/components/ui/button";
@@ -314,24 +314,11 @@ export function AdminWaitlistPanel() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <button
-          type="button"
-          onClick={() => setAudienceFilter("all")}
-          className={`text-left transition-opacity ${audienceFilter === "all" ? "ring-2 ring-primary ring-offset-2 rounded-2xl" : "opacity-80 hover:opacity-100"}`}
-        >
-          <KpiTile icon={Users} label="All signups" value={counts.all} loading={isLoading} />
-        </button>
+        <KpiTile icon={Users} label="All signups" value={counts.all} loading={isLoading} />
         {WAITLIST_AUDIENCES.map((a) => {
           const Icon = AUDIENCE_ICONS[a.id];
           return (
-            <button
-              key={a.id}
-              type="button"
-              onClick={() => setAudienceFilter(a.id)}
-              className={`text-left transition-opacity ${audienceFilter === a.id ? "ring-2 ring-primary ring-offset-2 rounded-2xl" : "opacity-80 hover:opacity-100"}`}
-            >
-              <KpiTile icon={Icon} label={a.shortLabel} value={counts[a.id]} loading={isLoading} />
-            </button>
+            <KpiTile key={a.id} icon={Icon} label={a.shortLabel} value={counts[a.id]} loading={isLoading} />
           );
         })}
       </div>
@@ -352,6 +339,21 @@ export function AdminWaitlistPanel() {
           onExport={() => exportWaitlistCsv(filtered)}
           exportDisabled={!filtered.length}
           exportCount={filtered.length}
+          filters={
+            <DashboardFilterSelect
+              label="Audience"
+              value={audienceFilter}
+              onChange={(id) => setAudienceFilter(id as "all" | WaitlistAudience)}
+              options={[
+                { id: "all", label: "All audiences", count: counts.all },
+                ...WAITLIST_AUDIENCES.map((a) => ({
+                  id: a.id,
+                  label: a.shortLabel,
+                  count: counts[a.id],
+                })),
+              ]}
+            />
+          }
         />
         {isLoading ? (
           <DashboardTableSkeleton rows={8} cols={8} />

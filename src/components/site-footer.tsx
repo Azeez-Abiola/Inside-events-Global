@@ -16,7 +16,7 @@ const PLATFORM_LINKS = [
   { to: "/how-it-works" as const, label: "How it Works" },
   { to: "/marketplace" as const, label: "Marketplace" },
   { to: "/pricing" as const, label: "Pricing" },
-  { to: "/knowledge-base" as const, label: "Intelligence" },
+  // { to: "/knowledge-base" as const, label: "Intelligence" },
 ];
 
 const COMPANY_LINKS = [

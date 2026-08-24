@@ -68,6 +68,7 @@ import { Route as AuthenticatedDashboardPartnersRouteImport } from './routes/_au
 import { Route as AuthenticatedDashboardOnboardingVettingRouteImport } from './routes/_authenticated/dashboard.onboarding-vetting'
 import { Route as AuthenticatedDashboardNewsletterRouteImport } from './routes/_authenticated/dashboard.newsletter'
 import { Route as AuthenticatedDashboardMediaRequestsRouteImport } from './routes/_authenticated/dashboard.media-requests'
+import { Route as AuthenticatedDashboardMarketplaceRouteImport } from './routes/_authenticated/dashboard.marketplace'
 import { Route as AuthenticatedDashboardExploreRouteImport } from './routes/_authenticated/dashboard.explore'
 import { Route as AuthenticatedDashboardDocumentsRouteImport } from './routes/_authenticated/dashboard.documents'
 import { Route as AuthenticatedDashboardDiscoverRouteImport } from './routes/_authenticated/dashboard.discover'
@@ -400,6 +401,12 @@ const AuthenticatedDashboardMediaRequestsRoute =
     path: '/media-requests',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardMarketplaceRoute =
+  AuthenticatedDashboardMarketplaceRouteImport.update({
+    id: '/marketplace',
+    path: '/marketplace',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedDashboardExploreRoute =
   AuthenticatedDashboardExploreRouteImport.update({
     id: '/explore',
@@ -576,6 +583,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/discover': typeof AuthenticatedDashboardDiscoverRoute
   '/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/dashboard/explore': typeof AuthenticatedDashboardExploreRoute
+  '/dashboard/marketplace': typeof AuthenticatedDashboardMarketplaceRoute
   '/dashboard/media-requests': typeof AuthenticatedDashboardMediaRequestsRoute
   '/dashboard/newsletter': typeof AuthenticatedDashboardNewsletterRoute
   '/dashboard/onboarding-vetting': typeof AuthenticatedDashboardOnboardingVettingRoute
@@ -655,6 +663,7 @@ export interface FileRoutesByTo {
   '/dashboard/discover': typeof AuthenticatedDashboardDiscoverRoute
   '/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/dashboard/explore': typeof AuthenticatedDashboardExploreRoute
+  '/dashboard/marketplace': typeof AuthenticatedDashboardMarketplaceRoute
   '/dashboard/media-requests': typeof AuthenticatedDashboardMediaRequestsRoute
   '/dashboard/newsletter': typeof AuthenticatedDashboardNewsletterRoute
   '/dashboard/onboarding-vetting': typeof AuthenticatedDashboardOnboardingVettingRoute
@@ -738,6 +747,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/discover': typeof AuthenticatedDashboardDiscoverRoute
   '/_authenticated/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/_authenticated/dashboard/explore': typeof AuthenticatedDashboardExploreRoute
+  '/_authenticated/dashboard/marketplace': typeof AuthenticatedDashboardMarketplaceRoute
   '/_authenticated/dashboard/media-requests': typeof AuthenticatedDashboardMediaRequestsRoute
   '/_authenticated/dashboard/newsletter': typeof AuthenticatedDashboardNewsletterRoute
   '/_authenticated/dashboard/onboarding-vetting': typeof AuthenticatedDashboardOnboardingVettingRoute
@@ -821,6 +831,7 @@ export interface FileRouteTypes {
     | '/dashboard/discover'
     | '/dashboard/documents'
     | '/dashboard/explore'
+    | '/dashboard/marketplace'
     | '/dashboard/media-requests'
     | '/dashboard/newsletter'
     | '/dashboard/onboarding-vetting'
@@ -900,6 +911,7 @@ export interface FileRouteTypes {
     | '/dashboard/discover'
     | '/dashboard/documents'
     | '/dashboard/explore'
+    | '/dashboard/marketplace'
     | '/dashboard/media-requests'
     | '/dashboard/newsletter'
     | '/dashboard/onboarding-vetting'
@@ -982,6 +994,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/discover'
     | '/_authenticated/dashboard/documents'
     | '/_authenticated/dashboard/explore'
+    | '/_authenticated/dashboard/marketplace'
     | '/_authenticated/dashboard/media-requests'
     | '/_authenticated/dashboard/newsletter'
     | '/_authenticated/dashboard/onboarding-vetting'
@@ -1468,6 +1481,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardMediaRequestsRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/marketplace': {
+      id: '/_authenticated/dashboard/marketplace'
+      path: '/marketplace'
+      fullPath: '/dashboard/marketplace'
+      preLoaderRoute: typeof AuthenticatedDashboardMarketplaceRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/dashboard/explore': {
       id: '/_authenticated/dashboard/explore'
       path: '/explore'
@@ -1629,6 +1649,7 @@ interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardDiscoverRoute: typeof AuthenticatedDashboardDiscoverRoute
   AuthenticatedDashboardDocumentsRoute: typeof AuthenticatedDashboardDocumentsRoute
   AuthenticatedDashboardExploreRoute: typeof AuthenticatedDashboardExploreRoute
+  AuthenticatedDashboardMarketplaceRoute: typeof AuthenticatedDashboardMarketplaceRoute
   AuthenticatedDashboardMediaRequestsRoute: typeof AuthenticatedDashboardMediaRequestsRoute
   AuthenticatedDashboardNewsletterRoute: typeof AuthenticatedDashboardNewsletterRoute
   AuthenticatedDashboardOnboardingVettingRoute: typeof AuthenticatedDashboardOnboardingVettingRoute
@@ -1660,6 +1681,8 @@ const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
     AuthenticatedDashboardDiscoverRoute: AuthenticatedDashboardDiscoverRoute,
     AuthenticatedDashboardDocumentsRoute: AuthenticatedDashboardDocumentsRoute,
     AuthenticatedDashboardExploreRoute: AuthenticatedDashboardExploreRoute,
+    AuthenticatedDashboardMarketplaceRoute:
+      AuthenticatedDashboardMarketplaceRoute,
     AuthenticatedDashboardMediaRequestsRoute:
       AuthenticatedDashboardMediaRequestsRoute,
     AuthenticatedDashboardNewsletterRoute:

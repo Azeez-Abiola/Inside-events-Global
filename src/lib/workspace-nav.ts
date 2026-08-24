@@ -48,7 +48,7 @@ export function getWorkspaceNav(roles: string[]): WorkspaceNavItem[] {
       { to: "/dashboard/pipeline", label: "Pipeline", icon: TrendingUp },
       { to: "/dashboard/documents", label: "Documents", icon: FileText },
       { to: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
-      { to: "/marketplace", label: "Marketplace", icon: Compass },
+      { to: "/dashboard/marketplace", label: "Marketplace", icon: Compass },
     );
   } else if (r.has("sponsor")) {
     items.push(

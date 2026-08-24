@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listAdminAuditLog } from "@/lib/admin-team.functions";
-import { DashboardPanel, DashboardTable, DashboardTableHead, DashboardTabs } from "@/components/dashboards/dashboard-shell";
-import { DashboardDataToolbar } from "@/components/dashboards/dashboard-data-toolbar";
+import { DashboardPanel, DashboardTable, DashboardTableHead } from "@/components/dashboards/dashboard-shell";
+import { DashboardDataToolbar, DashboardFilterSelect } from "@/components/dashboards/dashboard-data-toolbar";
 import { DashboardTableSkeleton } from "@/components/dashboards/dashboard-skeletons";
 import { useTableFilters } from "@/hooks/use-table-filters";
 import { datedCsvFilename, downloadCsv } from "@/lib/csv-export";
@@ -53,16 +53,6 @@ export function AdminAuditPanel() {
 
   return (
     <>
-      <DashboardTabs
-        tabs={[
-          { id: "all", label: "All roles", count: rows.length },
-          { id: "abw_admin", label: "Sub-admins", count: rows.filter((r) => r.actor_role === "abw_admin").length },
-          { id: "super_admin", label: "Super admins", count: rows.filter((r) => r.actor_role === "super_admin").length },
-        ]}
-        active={roleFilter}
-        onChange={setRoleFilter}
-      />
-
       <DashboardPanel title="Audit log" description="Who signed in and what vital actions were taken." bodyClassName="p-0">
         <DashboardDataToolbar
           search={search}
@@ -83,6 +73,18 @@ export function AdminAuditPanel() {
           }
           exportDisabled={!filtered.length}
           exportCount={filtered.length}
+          filters={
+            <DashboardFilterSelect
+              label="Role"
+              value={roleFilter}
+              onChange={setRoleFilter}
+              options={[
+                { id: "all", label: "All roles", count: rows.length },
+                { id: "abw_admin", label: "Sub-admins", count: rows.filter((r) => r.actor_role === "abw_admin").length },
+                { id: "super_admin", label: "Super admins", count: rows.filter((r) => r.actor_role === "super_admin").length },
+              ]}
+            />
+          }
         />
         {isLoading ? (
           <DashboardTableSkeleton rows={8} cols={4} />

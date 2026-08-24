@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -10,14 +10,18 @@ import { useAuth } from "@/lib/auth-context";
 import { ensureAccessToken, isAuthError } from "@/lib/auth-session";
 import { demoLoginSearch } from "@/lib/demo-accounts";
 import { StatCard } from "@/components/dashboards/shared";
-import { DashboardHeader } from "@/components/dashboards/dashboard-shell";
+import { DashboardHeader, DashboardPanel, DashboardTable, DashboardTableHead } from "@/components/dashboards/dashboard-shell";
+import { DashboardDataToolbar, DashboardFilterSelect } from "@/components/dashboards/dashboard-data-toolbar";
 import { DashboardCardGridSkeleton, DashboardTableSkeleton } from "@/components/dashboards/dashboard-skeletons";
 import { MediaAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
 import { listMarketplaceEvents, toggleSaveEvent } from "@/lib/marketplace.functions";
 import { submitMediaRequest, getMyMediaRequests, getMediaPartnerSaves } from "@/lib/media.functions";
+import { useTableFilters } from "@/hooks/use-table-filters";
 
 export function MediaPartnerDashboard({ section = "explore" }: { section?: "overview" | "explore" | "saved" | "requests" | "analytics" }) {
   const [requestEvent, setRequestEvent] = useState<{ id: string; name: string } | null>(null);
+  const [requestSearch, setRequestSearch] = useState("");
+  const [requestStatus, setRequestStatus] = useState("all");
 
   const fetchMarketplace = useServerFn(listMarketplaceEvents);
   const fetchSaves = useServerFn(getMediaPartnerSaves);
@@ -38,7 +42,33 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
 
   const events = marketplaceData?.events ?? [];
   const savedEvents = (savesData?.saves ?? []).map((s: any) => savesData?.eventMap[s.event_id]).filter(Boolean);
-  const requests = requestsData?.requests ?? [];
+  const requests = (requestsData?.requests ?? []) as unknown as Array<{
+    id: string;
+    event_id: string;
+    request_type: string;
+    status: string;
+    created_at: string;
+  }>;
+
+  const requestStatusCounts = useMemo(() => {
+    const base = { all: requests.length, pending: 0, approved: 0, declined: 0, completed: 0 };
+    for (const r of requests) {
+      const s = r.status as keyof typeof base;
+      if (s in base && s !== "all") base[s]++;
+    }
+    return base;
+  }, [requests]);
+
+  const filteredRequests = useTableFilters({
+    rows: requests,
+    searchText: requestSearch,
+    statusFilter: requestStatus,
+    search: (r) => {
+      const ev = requestsData?.events?.[r.event_id];
+      return [ev?.name, r.request_type, r.status].filter(Boolean).join(" ");
+    },
+    matchStatus: (r, filter) => r.status === filter,
+  });
 
   return (
     <AppShell>
@@ -238,13 +268,37 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
               <p className="text-muted-foreground text-sm">No coverage requests yet. Browse Explore and request coverage on an event.</p>
             </div>
           ) : (
-            <div className="rounded-xl border border-border bg-card overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
-                  <tr><th className="px-5 py-3">Event</th><th className="px-5 py-3">Type</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Requested</th></tr>
-                </thead>
+            <DashboardPanel title="My coverage requests" bodyClassName="p-0">
+              <DashboardDataToolbar
+                search={requestSearch}
+                onSearchChange={setRequestSearch}
+                searchPlaceholder="Search event, type, status…"
+                filters={
+                  <DashboardFilterSelect
+                    label="Status"
+                    value={requestStatus}
+                    onChange={setRequestStatus}
+                    options={[
+                      { id: "all", label: "All", count: requestStatusCounts.all },
+                      { id: "pending", label: "Pending", count: requestStatusCounts.pending },
+                      { id: "approved", label: "Approved", count: requestStatusCounts.approved },
+                      { id: "declined", label: "Declined", count: requestStatusCounts.declined },
+                      { id: "completed", label: "Completed", count: requestStatusCounts.completed },
+                    ]}
+                  />
+                }
+              />
+              <DashboardTable>
+                <DashboardTableHead>
+                  <tr>
+                    <th className="px-5 py-3">Event</th>
+                    <th className="px-5 py-3">Type</th>
+                    <th className="px-5 py-3">Status</th>
+                    <th className="px-5 py-3">Requested</th>
+                  </tr>
+                </DashboardTableHead>
                 <tbody className="divide-y divide-border">
-                  {requests.map((r: any) => {
+                  {filteredRequests.map((r: any) => {
                     const ev = requestsData!.events[r.event_id];
                     return (
                       <tr key={r.id} className="hover:bg-muted/10">
@@ -257,9 +311,14 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
                       </tr>
                     );
                   })}
+                  {!filteredRequests.length && (
+                    <tr>
+                      <td colSpan={4} className="px-5 py-10 text-center text-muted-foreground">No requests match your filters.</td>
+                    </tr>
+                  )}
                 </tbody>
-              </table>
-            </div>
+              </DashboardTable>
+            </DashboardPanel>
           )
         ) : null}
       </div>

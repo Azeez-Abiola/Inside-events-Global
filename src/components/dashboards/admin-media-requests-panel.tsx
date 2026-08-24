@@ -4,8 +4,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Loader2, Newspaper } from "lucide-react";
 import { adminListMediaRequests, adminUpdateMediaRequestStatus } from "@/lib/media.functions";
-import { DashboardPanel, DashboardTable, DashboardTableHead, DashboardTabs } from "@/components/dashboards/dashboard-shell";
-import { DashboardDataToolbar } from "@/components/dashboards/dashboard-data-toolbar";
+import { DashboardPanel, DashboardTable, DashboardTableHead } from "@/components/dashboards/dashboard-shell";
+import { DashboardDataToolbar, DashboardFilterSelect } from "@/components/dashboards/dashboard-data-toolbar";
 import { DashboardTableSkeleton } from "@/components/dashboards/dashboard-skeletons";
 import { StatusPill } from "@/components/dashboards/shared";
 import { Button } from "@/components/ui/button";
@@ -97,12 +97,6 @@ export function AdminMediaRequestsPanel() {
 
   return (
     <div className="space-y-6">
-      <DashboardTabs
-        tabs={STATUS_TABS.map((t) => ({ id: t.id, label: t.label, count: counts[t.id] }))}
-        active={statusFilter}
-        onChange={(id) => setStatusFilter(id as StatusFilter)}
-      />
-
       <DashboardPanel
         title="Media coverage requests"
         description="Review and approve press credentials and coverage requests from media partners."
@@ -115,6 +109,14 @@ export function AdminMediaRequestsPanel() {
           onExport={exportCsv}
           exportDisabled={!filtered.length}
           exportCount={filtered.length}
+          filters={
+            <DashboardFilterSelect
+              label="Status"
+              value={statusFilter}
+              onChange={(id) => setStatusFilter(id as StatusFilter)}
+              options={STATUS_TABS.map((t) => ({ id: t.id, label: t.label, count: counts[t.id] }))}
+            />
+          }
         />
         {isLoading ? (
           <DashboardTableSkeleton rows={6} cols={7} />

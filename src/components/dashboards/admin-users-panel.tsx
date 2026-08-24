@@ -5,8 +5,8 @@ import { toast } from "sonner";
 import { ShieldOff, ShieldCheck, UserCog, Clock } from "lucide-react";
 import { DashboardTableSkeleton } from "@/components/dashboards/dashboard-skeletons";
 import { listPlatformUsers, setUserSuspended, getPlatformUserDetail, setUserApproved } from "@/lib/admin.functions";
-import { DashboardPanel, DashboardTable, DashboardTableHead, DashboardTabs } from "@/components/dashboards/dashboard-shell";
-import { DashboardDataToolbar } from "@/components/dashboards/dashboard-data-toolbar";
+import { DashboardPanel, DashboardTable, DashboardTableHead } from "@/components/dashboards/dashboard-shell";
+import { DashboardDataToolbar, DashboardFilterSelect } from "@/components/dashboards/dashboard-data-toolbar";
 import { StatusPill } from "@/components/dashboards/shared";
 import { Button } from "@/components/ui/button";
 import { useTableFilters } from "@/hooks/use-table-filters";
@@ -304,12 +304,6 @@ export function AdminUsersPanel() {
         </div>
       </div>
 
-      <DashboardTabs
-        tabs={STATUS_TABS.map((t) => ({ id: t.id, label: t.label, count: counts[t.id] }))}
-        active={statusFilter}
-        onChange={(id) => setStatusFilter(id as StatusFilter)}
-      />
-
       <DashboardPanel
         title="User management"
         description="Click a row to view signup details. Approve new accounts before they can access the dashboard."
@@ -322,6 +316,14 @@ export function AdminUsersPanel() {
           onExport={() => exportUsersCsv(filtered)}
           exportDisabled={!filtered.length}
           exportCount={filtered.length}
+          filters={
+            <DashboardFilterSelect
+              label="Status"
+              value={statusFilter}
+              onChange={(id) => setStatusFilter(id as StatusFilter)}
+              options={STATUS_TABS.map((t) => ({ id: t.id, label: t.label, count: counts[t.id] }))}
+            />
+          }
         />
         {isLoading ? (
           <DashboardTableSkeleton rows={8} cols={5} />

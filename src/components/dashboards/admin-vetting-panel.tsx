@@ -9,9 +9,9 @@ import {
 import { StatusBadge } from "@/components/app-shell";
 import { StatCard, StatusPill } from "@/components/dashboards/shared";
 import {
-  DashboardPanel, DashboardTable, DashboardTableHead, DashboardTabs,
+  DashboardPanel, DashboardTable, DashboardTableHead,
 } from "@/components/dashboards/dashboard-shell";
-import { DashboardDataToolbar } from "@/components/dashboards/dashboard-data-toolbar";
+import { DashboardDataToolbar, DashboardFilterSelect } from "@/components/dashboards/dashboard-data-toolbar";
 import { DashboardTableSkeleton, DashboardDrawerDetailSkeleton } from "@/components/dashboards/dashboard-skeletons";
 import { ImageLightbox } from "@/components/image-lightbox";
 import { useTableFilters } from "@/hooks/use-table-filters";
@@ -127,16 +127,6 @@ export function AdminVettingPanel({ onEventClick }: { onEventClick?: (id: string
         <StatCard icon={Pencil} label="Under review" value={counts.under_review} loading={isLoading} />
       </div>
 
-      <DashboardTabs
-        tabs={STATUS_TABS.map((t) => ({
-          id: t.id,
-          label: t.label,
-          count: counts[t.id],
-        }))}
-        active={statusFilter}
-        onChange={(id) => setStatusFilter(id as StatusFilter)}
-      />
-
       <DashboardPanel
         title="Event queue"
         description="Click a row to review full details, approve, reject, or request revisions."
@@ -149,6 +139,14 @@ export function AdminVettingPanel({ onEventClick }: { onEventClick?: (id: string
           onExport={() => exportVettingCsv(filtered)}
           exportDisabled={!filtered.length}
           exportCount={filtered.length}
+          filters={
+            <DashboardFilterSelect
+              label="Status"
+              value={statusFilter}
+              onChange={(id) => setStatusFilter(id as StatusFilter)}
+              options={STATUS_TABS.map((t) => ({ id: t.id, label: t.label, count: counts[t.id] }))}
+            />
+          }
         />
         {isLoading ? (
           <DashboardTableSkeleton rows={8} cols={7} />

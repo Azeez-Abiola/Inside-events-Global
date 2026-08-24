@@ -10,8 +10,7 @@ import {
 import { KpiTile, DonutBreakdown, FeaturedHeroCard, AgendaList } from "@/components/dashboards/voom-primitives";
 import { QuickLinkCard } from "@/components/dashboards/shared";
 import { WorkspacePage } from "@/components/dashboards/workspace-page";
-import { DashboardDataToolbar } from "@/components/dashboards/dashboard-data-toolbar";
-import { DashboardTabs } from "@/components/dashboards/dashboard-shell";
+import { DashboardDataToolbar, DashboardFilterSelect } from "@/components/dashboards/dashboard-data-toolbar";
 import { DashboardListSkeleton, DashboardTableSkeleton } from "@/components/dashboards/dashboard-skeletons";
 import { useDisplayCurrency } from "@/lib/display-currency-context";
 import { useTableFilters } from "@/hooks/use-table-filters";
@@ -377,15 +376,6 @@ export function ReferralDashboard({ section = "links" }: { section?: ReferralSec
             <KpiTile icon={Award} label={`Paid${labelSuffix}`} value={fmtUsd(data?.totals.paid ?? 0)} loading={isLoading} />
           </div>
           <div className="rounded-xl border border-border bg-card overflow-hidden">
-            <DashboardTabs
-              tabs={[
-                { id: "all", label: "All", count: payoutCounts.all },
-                { id: "pending", label: "Pending", count: payoutCounts.pending },
-                { id: "paid", label: "Paid", count: payoutCounts.paid },
-              ]}
-              active={payoutFilter}
-              onChange={setPayoutFilter}
-            />
             <DashboardDataToolbar
               search={commissionsSearch}
               onSearchChange={setCommissionsSearch}
@@ -393,6 +383,18 @@ export function ReferralDashboard({ section = "links" }: { section?: ReferralSec
               onExport={() => exportPayoutCsv(filteredCommissions, data?.events ?? {})}
               exportDisabled={!filteredCommissions.length}
               exportCount={filteredCommissions.length}
+              filters={
+                <DashboardFilterSelect
+                  label="Payout"
+                  value={payoutFilter}
+                  onChange={setPayoutFilter}
+                  options={[
+                    { id: "all", label: "All", count: payoutCounts.all },
+                    { id: "pending", label: "Pending", count: payoutCounts.pending },
+                    { id: "paid", label: "Paid", count: payoutCounts.paid },
+                  ]}
+                />
+              }
             />
             <div className="overflow-x-auto">
               {isLoading ? (

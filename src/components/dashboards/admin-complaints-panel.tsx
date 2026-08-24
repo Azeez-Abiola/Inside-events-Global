@@ -7,9 +7,8 @@ import {
   DashboardPanel,
   DashboardTable,
   DashboardTableHead,
-  DashboardTabs,
 } from "@/components/dashboards/dashboard-shell";
-import { DashboardDataToolbar } from "@/components/dashboards/dashboard-data-toolbar";
+import { DashboardDataToolbar, DashboardFilterSelect } from "@/components/dashboards/dashboard-data-toolbar";
 import { DashboardTableSkeleton } from "@/components/dashboards/dashboard-skeletons";
 import { StatusPill } from "@/components/dashboards/shared";
 import { useTableFilters } from "@/hooks/use-table-filters";
@@ -111,17 +110,6 @@ export function AdminComplaintsPanel() {
 
   return (
     <>
-      <DashboardTabs
-        tabs={[
-          { id: "all", label: "All", count: complaintRows.length },
-          { id: "new", label: "New", count: complaintRows.filter((r) => r.status === "new").length },
-          { id: "read", label: "Read", count: complaintRows.filter((r) => r.status === "read").length },
-          { id: "resolved", label: "Resolved", count: complaintRows.filter((r) => r.status === "resolved").length },
-        ]}
-        active={complaintStatus}
-        onChange={setComplaintStatus}
-      />
-
       {complaints.isLoading ? (
         <DashboardTableSkeleton rows={6} cols={6} />
       ) : !complaintRows.length ? (
@@ -149,6 +137,19 @@ export function AdminComplaintsPanel() {
             }
             exportDisabled={!filteredComplaints.length}
             exportCount={filteredComplaints.length}
+            filters={
+              <DashboardFilterSelect
+                label="Status"
+                value={complaintStatus}
+                onChange={setComplaintStatus}
+                options={[
+                  { id: "all", label: "All", count: complaintRows.length },
+                  { id: "new", label: "New", count: complaintRows.filter((r) => r.status === "new").length },
+                  { id: "read", label: "Read", count: complaintRows.filter((r) => r.status === "read").length },
+                  { id: "resolved", label: "Resolved", count: complaintRows.filter((r) => r.status === "resolved").length },
+                ]}
+              />
+            }
           />
           <DashboardTable>
             <DashboardTableHead>

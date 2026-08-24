@@ -58,6 +58,7 @@ export const DASHBOARD_TOUR_STEPS: Record<DashboardTourRole, DashboardTourStep[]
     { target: navTourTarget("/dashboard/pipeline"), title: "Pipeline", body: "Follow sponsor interest and deals tied to your events through to close." },
     { target: navTourTarget("/dashboard/documents"), title: "Documents", body: "Keep sponsorship decks, contracts, and shared files organised per event." },
     { target: navTourTarget("/dashboard/analytics"), title: "Analytics", body: "See views, inquiries, and performance signals for your listings." },
+    { target: navTourTarget("/dashboard/marketplace"), title: "Marketplace", body: "Browse other vetted events on the marketplace without leaving your workspace." },
     messages,
     notifications,
     profile,

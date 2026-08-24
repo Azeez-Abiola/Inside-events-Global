@@ -12,7 +12,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   CheckCircle2, XCircle, RefreshCw, Clock, Eye, ChevronRight,
-  AlertCircle, Loader2, Filter, User, CalendarDays,
+  AlertCircle, Loader2, User, CalendarDays,
 } from "lucide-react";
 import {
   listOnboardingApplications,
@@ -21,6 +21,10 @@ import {
   markApplicationUnderReview,
 } from "@/lib/onboarding.functions";
 import { ROLE_DISPLAY, getSectionsForRole, type OnboardingStatus } from "@/lib/onboarding-constants";
+import { DashboardDataToolbar, DashboardFilterSelect } from "@/components/dashboards/dashboard-data-toolbar";
+import { DashboardPanel, DashboardTable, DashboardTableHead } from "@/components/dashboards/dashboard-shell";
+import { DashboardTableSkeleton } from "@/components/dashboards/dashboard-skeletons";
+import { Button } from "@/components/ui/button";
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
 
@@ -433,20 +437,20 @@ function ApplicationDetailPanel({ userId, onClose, onReviewed }: DetailPanelProp
 // ─── Main vetting panel ───────────────────────────────────────────────────────
 
 const ROLE_FILTER_OPTIONS = [
-  { value: "all",              label: "All roles" },
-  { value: "organiser",        label: "🎪 Organiser" },
-  { value: "sponsor",          label: "🏢 Sponsor" },
-  { value: "referral_partner", label: "🤝 Referral" },
-  { value: "media_partner",    label: "📡 Media" },
+  { id: "all", label: "All roles" },
+  { id: "organiser", label: "Organiser" },
+  { id: "sponsor", label: "Sponsor" },
+  { id: "referral_partner", label: "Referral" },
+  { id: "media_partner", label: "Media" },
 ];
 
-const STATUS_FILTER_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: "all",              label: "All statuses" },
-  { value: "submitted",        label: "Submitted" },
-  { value: "under_review",     label: "Under review" },
-  { value: "changes_requested",label: "Changes requested" },
-  { value: "approved",         label: "Approved" },
-  { value: "rejected",         label: "Rejected" },
+const STATUS_FILTER_OPTIONS = [
+  { id: "all", label: "All statuses" },
+  { id: "submitted", label: "Submitted" },
+  { id: "under_review", label: "Under review" },
+  { id: "changes_requested", label: "Changes requested" },
+  { id: "approved", label: "Approved" },
+  { id: "rejected", label: "Rejected" },
 ];
 
 export function AdminOnboardingVettingPanel() {
@@ -523,58 +527,48 @@ export function AdminOnboardingVettingPanel() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
-        <Filter className="h-4 w-4 text-muted-foreground" />
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+      <DashboardPanel title="Applications" description="Filter by status and role, then open a row to review." bodyClassName="p-0">
+        <DashboardDataToolbar
+          filters={
+            <>
+              <DashboardFilterSelect
+                label="Status"
+                value={statusFilter}
+                onChange={setStatusFilter}
+                options={STATUS_FILTER_OPTIONS}
+              />
+              <DashboardFilterSelect
+                label="Role"
+                value={roleFilter}
+                onChange={setRoleFilter}
+                options={ROLE_FILTER_OPTIONS}
+              />
+            </>
+          }
         >
-          {STATUS_FILTER_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
-        <select
-          value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
-          className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
-        >
-          {ROLE_FILTER_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
-        <button
-          type="button"
-          onClick={() => refetch()}
-          className="ml-auto flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted"
-        >
-          <RefreshCw className="h-3.5 w-3.5" /> Refresh
-        </button>
-      </div>
-
-      {/* Application list */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      ) : apps.length === 0 ? (
-        <div className="rounded-xl border border-border bg-card p-12 text-center">
-          <CheckCircle2 className="mx-auto mb-3 h-8 w-8 text-muted-foreground/40" />
-          <p className="font-semibold text-foreground">No applications match this filter</p>
-          <p className="mt-1 text-sm text-muted-foreground">Adjust the filters or check back later.</p>
-        </div>
-      ) : (
-        <div className="overflow-hidden rounded-xl border border-border bg-card">
-          <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/30 text-xs font-semibold text-muted-foreground">
+          <Button type="button" variant="outline" size="sm" className="h-9 gap-1.5" onClick={() => refetch()}>
+            <RefreshCw className="h-3.5 w-3.5" /> Refresh
+          </Button>
+        </DashboardDataToolbar>
+        {isLoading ? (
+          <DashboardTableSkeleton rows={6} cols={5} />
+        ) : apps.length === 0 ? (
+          <div className="p-12 text-center">
+            <CheckCircle2 className="mx-auto mb-3 h-8 w-8 text-muted-foreground/40" />
+            <p className="font-semibold text-foreground">No applications match this filter</p>
+            <p className="mt-1 text-sm text-muted-foreground">Adjust the filters or check back later.</p>
+          </div>
+        ) : (
+          <DashboardTable>
+            <DashboardTableHead>
               <tr>
-                <th className="px-4 py-3 text-left">Applicant</th>
-                <th className="px-4 py-3 text-left">Role</th>
-                <th className="px-4 py-3 text-left">Status</th>
-                <th className="px-4 py-3 text-left">Submitted</th>
+                <th className="px-4 py-3">Applicant</th>
+                <th className="px-4 py-3">Role</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Submitted</th>
                 <th className="px-4 py-3 text-right"></th>
               </tr>
-            </thead>
+            </DashboardTableHead>
             <tbody className="divide-y divide-border">
               {apps.map((app) => {
                 const roleInfo = ROLE_DISPLAY[app.role as keyof typeof ROLE_DISPLAY];
@@ -612,9 +606,9 @@ export function AdminOnboardingVettingPanel() {
                 );
               })}
             </tbody>
-          </table>
-        </div>
-      )}
+          </DashboardTable>
+        )}
+      </DashboardPanel>
     </div>
   );
 }

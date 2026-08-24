@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { StatCard, StatusPill } from "@/components/dashboards/shared";
-import { DashboardHeader, DashboardTabs, DashboardPanel, DashboardTable, DashboardTableHead } from "@/components/dashboards/dashboard-shell";
+import { DashboardHeader, DashboardPanel, DashboardTable, DashboardTableHead } from "@/components/dashboards/dashboard-shell";
 import { DashboardPageSkeleton, DashboardTableSkeleton } from "@/components/dashboards/dashboard-skeletons";
 import { AdminAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
 import { AdminOverviewPanel } from "@/components/dashboards/admin-overview";
@@ -18,7 +18,7 @@ import { AdminWaitlistPanel } from "@/components/dashboards/admin-waitlist-panel
 import { AdminMediaRequestsPanel } from "@/components/dashboards/admin-media-requests-panel";
 import { AdminUsersPanel } from "@/components/dashboards/admin-users-panel";
 import { AdminVettingPanel, VettingDrawer } from "@/components/dashboards/admin-vetting-panel";
-import { DashboardDataToolbar } from "@/components/dashboards/dashboard-data-toolbar";
+import { DashboardDataToolbar, DashboardFilterSelect } from "@/components/dashboards/dashboard-data-toolbar";
 import { useTableFilters } from "@/hooks/use-table-filters";
 import { datedCsvFilename, downloadCsv } from "@/lib/csv-export";
 import { getAdminSectionMeta, greetingName } from "@/lib/dashboard-meta";
@@ -290,27 +290,24 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
               <StatCard icon={AlertTriangle} label="Account complaints" value={complaintCount} loading={complaintCountQuery.isLoading} />
             </div>
 
-            <DashboardTabs
-              tabs={[
-                { id: "contact", label: "Contact", count: contact.data?.length ?? 0 },
-                { id: "complaints", label: "Complaints", count: complaintCount },
-              ]}
-              active={submissionView}
-              onChange={(id) => setSubmissionView(id as "contact" | "complaints")}
-            />
+            <div className="rounded-2xl border border-border bg-card shadow-card overflow-hidden">
+              <DashboardDataToolbar
+                filters={
+                  <DashboardFilterSelect
+                    label="Inbox"
+                    value={submissionView}
+                    onChange={(id) => setSubmissionView(id as "contact" | "complaints")}
+                    options={[
+                      { id: "contact", label: "Contact", count: contact.data?.length ?? 0 },
+                      { id: "complaints", label: "Complaints", count: complaintCount },
+                    ]}
+                  />
+                }
+              />
+            </div>
 
             {submissionView === "contact" ? (
               <>
-                <DashboardTabs
-                  tabs={[
-                    { id: "all", label: "All", count: contact.data?.length ?? 0 },
-                    { id: "new", label: "New", count: (contact.data ?? []).filter((r: { status: string }) => r.status === "new").length },
-                    { id: "read", label: "Read", count: (contact.data ?? []).filter((r: { status: string }) => r.status === "read").length },
-                  ]}
-                  active={contactStatus}
-                  onChange={setContactStatus}
-                />
-
                 {contact.isLoading ? (
                   <DashboardTableSkeleton rows={6} cols={5} />
                 ) : !contact.data?.length ? (
@@ -332,6 +329,18 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                       }
                       exportDisabled={!filteredContact.length}
                       exportCount={filteredContact.length}
+                      filters={
+                        <DashboardFilterSelect
+                          label="Status"
+                          value={contactStatus}
+                          onChange={setContactStatus}
+                          options={[
+                            { id: "all", label: "All", count: contact.data?.length ?? 0 },
+                            { id: "new", label: "New", count: (contact.data ?? []).filter((r: { status: string }) => r.status === "new").length },
+                            { id: "read", label: "Read", count: (contact.data ?? []).filter((r: { status: string }) => r.status === "read").length },
+                          ]}
+                        />
+                      }
                     />
                     <DashboardTable>
                       <DashboardTableHead>
@@ -374,18 +383,6 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                 <AlertTriangle className="h-4 w-4 text-destructive" /> Fraud flags
               </h3>
               <p className="mt-1 text-xs text-muted-foreground">Self-referral and suspicious-attribution flags raised by the system.</p>
-              <div className="mt-4">
-                <DashboardTabs
-                  tabs={[
-                    { id: "all", label: "All", count: fraud.data?.flags?.length ?? 0 },
-                    { id: "open", label: "Open", count: (fraud.data?.flags ?? []).filter((f: { status: string }) => f.status === "open").length },
-                    { id: "actioned", label: "Actioned", count: (fraud.data?.flags ?? []).filter((f: { status: string }) => f.status === "actioned").length },
-                    { id: "dismissed", label: "Dismissed", count: (fraud.data?.flags ?? []).filter((f: { status: string }) => f.status === "dismissed").length },
-                  ]}
-                  active={fraudStatus}
-                  onChange={setFraudStatus}
-                />
-              </div>
               <DashboardPanel title="Flagged activity" bodyClassName="p-0" className="mt-4">
                 <DashboardDataToolbar
                   search={fraudSearch}
@@ -402,6 +399,19 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                   }
                   exportDisabled={!filteredFraud.length}
                   exportCount={filteredFraud.length}
+                  filters={
+                    <DashboardFilterSelect
+                      label="Status"
+                      value={fraudStatus}
+                      onChange={setFraudStatus}
+                      options={[
+                        { id: "all", label: "All", count: fraud.data?.flags?.length ?? 0 },
+                        { id: "open", label: "Open", count: (fraud.data?.flags ?? []).filter((f: { status: string }) => f.status === "open").length },
+                        { id: "actioned", label: "Actioned", count: (fraud.data?.flags ?? []).filter((f: { status: string }) => f.status === "actioned").length },
+                        { id: "dismissed", label: "Dismissed", count: (fraud.data?.flags ?? []).filter((f: { status: string }) => f.status === "dismissed").length },
+                      ]}
+                    />
+                  }
                 />
                 {fraud.isLoading ? (
                   <DashboardTableSkeleton rows={5} cols={4} />
@@ -666,18 +676,6 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                 <h3 className="font-display font-semibold text-base text-foreground">Deal pipeline</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">Set the deal value, advance the stage; commission auto-calculates at “payment received.”</p>
               </div>
-              <DashboardTabs
-                tabs={[
-                  { id: "all", label: "All", count: dealStatusCounts.all },
-                  ...DEAL_STATUSES.filter((s) => dealStatusCounts[s]).map((s) => ({
-                    id: s,
-                    label: s.replace(/_/g, " "),
-                    count: dealStatusCounts[s],
-                  })),
-                ]}
-                active={dealStatus}
-                onChange={setDealStatus}
-              />
               <DashboardDataToolbar
                 search={dealSearch}
                 onSearchChange={setDealSearch}
@@ -697,6 +695,21 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                 }
                 exportDisabled={!filteredDeals.length}
                 exportCount={filteredDeals.length}
+                filters={
+                  <DashboardFilterSelect
+                    label="Stage"
+                    value={dealStatus}
+                    onChange={setDealStatus}
+                    options={[
+                      { id: "all", label: "All", count: dealStatusCounts.all },
+                      ...DEAL_STATUSES.filter((s) => dealStatusCounts[s]).map((s) => ({
+                        id: s,
+                        label: s.replace(/_/g, " "),
+                        count: dealStatusCounts[s],
+                      })),
+                    ]}
+                  />
+                }
               />
               <div className="overflow-x-auto">
                 <table className="w-full text-sm min-w-[920px]">

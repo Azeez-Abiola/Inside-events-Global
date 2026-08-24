@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -7,7 +8,8 @@ import {
 import { DashboardCardGridSkeleton } from "@/components/dashboards/dashboard-skeletons";
 import { KpiTile, DonutBreakdown, FeaturedHeroCard, AgendaList } from "@/components/dashboards/voom-primitives";
 import { QuickLinkCard } from "@/components/dashboards/shared";
-import { DashboardEmpty } from "@/components/dashboards/dashboard-shell";
+import { DashboardEmpty, DashboardPanel, DashboardTable, DashboardTableHead } from "@/components/dashboards/dashboard-shell";
+import { DashboardDataToolbar } from "@/components/dashboards/dashboard-data-toolbar";
 import { SponsorAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
 import { SponsorBudgetPanel } from "@/components/dashboards/sponsor-budget-panel";
 import { SponsorPipelinePanel } from "@/components/dashboards/sponsor-pipeline-panel";
@@ -15,6 +17,7 @@ import { WorkspacePage } from "@/components/dashboards/workspace-page";
 import { getSponsorDashboard, getSponsorPipeline } from "@/lib/deals.functions";
 import { getSponsorBudgets } from "@/lib/budget.functions";
 import { fmtMoney } from "@/lib/currency";
+import { useTableFilters } from "@/hooks/use-table-filters";
 
 export function SponsorPipelinePage() {
   return (
@@ -268,21 +271,39 @@ function EventPreviewCard({ event: e, compact }: { event: any; compact?: boolean
 
 export function SponsorCommitmentsPage() {
   const { data, isLoading } = useSponsorData();
+  const [search, setSearch] = useState("");
+  const forms = data?.forms ?? [];
+  const filtered = useTableFilters({
+    rows: forms,
+    searchText: search,
+    search: (f: any) => {
+      const ev = data?.eventMap?.[f.event_id];
+      return [ev?.name, ev?.city, ev?.country, f.company_name].filter(Boolean).join(" ");
+    },
+  });
+
   return (
     <WorkspacePage title="My commitments" subtitle="Sponsorship commitment forms you've submitted to IGE.">
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[600px]">
-            <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
+      <DashboardPanel title="Commitments" bodyClassName="p-0">
+        <DashboardDataToolbar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search event or location…"
+        />
+        {isLoading ? (
+          <DashboardCardGridSkeleton count={3} />
+        ) : (
+          <DashboardTable className="min-w-[600px]">
+            <DashboardTableHead>
               <tr>
                 <th className="px-5 py-3">Event</th>
                 <th className="px-5 py-3">Proposed Budget</th>
                 <th className="px-5 py-3">Submitted</th>
                 <th className="px-5 py-3"></th>
               </tr>
-            </thead>
+            </DashboardTableHead>
             <tbody className="divide-y divide-border">
-              {(data?.forms ?? []).map((f: any) => {
+              {filtered.map((f: any) => {
                 const ev = data!.eventMap[f.event_id];
                 return (
                   <tr key={f.id} className="hover:bg-muted/10 transition-colors">
@@ -309,17 +330,22 @@ export function SponsorCommitmentsPage() {
                   </tr>
                 );
               })}
-              {!isLoading && !data?.forms?.length && (
+              {!forms.length && (
                 <tr>
                   <td colSpan={4} className="px-5 py-12 text-center text-muted-foreground">
                     No commitments yet. <Link to="/marketplace" className="text-primary hover:underline font-semibold">Browse marketplace</Link>
                   </td>
                 </tr>
               )}
+              {forms.length > 0 && !filtered.length && (
+                <tr>
+                  <td colSpan={4} className="px-5 py-12 text-center text-muted-foreground">No commitments match your search.</td>
+                </tr>
+              )}
             </tbody>
-          </table>
-        </div>
-      </div>
+          </DashboardTable>
+        )}
+      </DashboardPanel>
     </WorkspacePage>
   );
 }
