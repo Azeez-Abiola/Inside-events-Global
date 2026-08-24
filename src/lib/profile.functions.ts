@@ -26,9 +26,22 @@ export const upsertOrganiserProfile = createServerFn({ method: "POST" })
   .inputValidator((d) => OrganiserInput.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    // Profile photo is the org image — don't wipe an existing logo_url when the form omits it.
+    const { logo_url: _ignoredLogo, ...rest } = data;
+    const { data: existing } = await supabase
+      .from("organiser_profiles")
+      .select("logo_url")
+      .eq("user_id", userId)
+      .maybeSingle();
+    const { data: profile } = await supabase.from("profiles").select("avatar_url").eq("id", userId).maybeSingle();
+    const logo_url =
+      data.logo_url?.trim() ||
+      existing?.logo_url ||
+      profile?.avatar_url ||
+      null;
     const { error } = await supabase
       .from("organiser_profiles")
-      .upsert({ user_id: userId, ...data } as never, { onConflict: "user_id" });
+      .upsert({ user_id: userId, ...rest, logo_url } as never, { onConflict: "user_id" });
     if (error) throw new Error(error.message);
     await syncDisplayName(userId, data.org_name);
     const profile_complete = await syncProfileCompleteness(userId).catch(() => null);
@@ -190,6 +203,18 @@ export const updateBaseProfile = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { error } = await supabase.from("profiles").update(data as never).eq("id", userId);
     if (error) throw new Error(error.message);
+
+    // Organisers: profile photo doubles as the org image on public event listings.
+    if (data.avatar_url) {
+      const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+      if (roles?.some((r) => r.role === "organiser")) {
+        await supabase
+          .from("organiser_profiles")
+          .update({ logo_url: data.avatar_url } as never)
+          .eq("user_id", userId);
+      }
+    }
+
     const profile_complete = await syncProfileCompleteness(userId).catch(() => null);
     return { ok: true, profile_complete };
   });

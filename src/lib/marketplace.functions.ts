@@ -280,7 +280,7 @@ export const getPublicEventBySlug = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     if (!ev) return { event: null, tiers: [], organiser: null };
 
-    const [{ data: tiers }, { data: organiser }] = await Promise.all([
+    const [{ data: tiers }, { data: organiser }, { data: organiserAccount }] = await Promise.all([
       supabasePublic
         .from("event_sponsorship_tiers")
         .select("*")
@@ -293,9 +293,23 @@ export const getPublicEventBySlug = createServerFn({ method: "POST" })
             .eq("user_id", ev.organiser_id)
             .maybeSingle()
         : Promise.resolve({ data: null }),
+      ev.organiser_id
+        ? supabasePublic
+            .from("profiles")
+            .select("avatar_url")
+            .eq("id", ev.organiser_id)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
     ]);
 
-    return { event: ev, tiers: tiers ?? [], organiser: organiser ?? null };
+    const organiserWithImage = organiser
+      ? {
+          ...organiser,
+          logo_url: organiser.logo_url || organiserAccount?.avatar_url || null,
+        }
+      : null;
+
+    return { event: ev, tiers: tiers ?? [], organiser: organiserWithImage };
     } catch (e) {
       console.error("[getPublicEventBySlug]", e);
       return { event: null, tiers: [], organiser: null };

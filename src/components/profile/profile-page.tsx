@@ -157,6 +157,11 @@ export function ProfilePage({ initialTab = "general" }: { initialTab?: Tab }) {
           <span className="mt-2 inline-flex rounded-full bg-brand-soft px-3 py-0.5 text-xs font-semibold text-primary-deep">
             {roleLabel(roles)}
           </span>
+          {roles.includes("organiser") && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              This photo appears as your organisation image on public event listings.
+            </p>
+          )}
           {primaryRole !== "abw_admin" && primaryRole !== "super_admin" && (
             <div className="mt-4 max-w-sm text-left">
               <div className="mb-1.5 flex items-center justify-between text-xs">
@@ -307,7 +312,6 @@ function OrganiserProfileEdit({ data, onSaved }: { data: any; onSaved: () => voi
     bio: data?.bio ?? "",
     website: data?.website ?? "",
     event_history: data?.event_history ?? "",
-    logo_url: data?.logo_url ?? "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -330,9 +334,11 @@ function OrganiserProfileEdit({ data, onSaved }: { data: any; onSaved: () => voi
       }}
     >
       <h3 className="font-display text-lg font-bold">Organiser profile</h3>
+      <p className="text-sm text-muted-foreground">
+        Your organisation image on event listings uses the profile photo at the top of this page — no separate logo upload needed.
+      </p>
       <Field label="Organisation name" value={form.org_name} onChange={(v) => setForm({ ...form, org_name: v })} required />
       <Field label="Website" type="url" value={form.website} onChange={(v) => setForm({ ...form, website: v })} />
-      <Field label="Logo URL" type="url" placeholder="https://… or upload via profile photo" value={form.logo_url} onChange={(v) => setForm({ ...form, logo_url: v })} />
       <TextArea label="Short bio" rows={3} value={form.bio} onChange={(v) => setForm({ ...form, bio: v })} />
       <TextArea label="Event track record" rows={3} value={form.event_history} onChange={(v) => setForm({ ...form, event_history: v })} />
       <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save organiser profile"}</Button>

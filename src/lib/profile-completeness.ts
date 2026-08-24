@@ -47,11 +47,10 @@ export function computeProfileComplete(
 
   if (role === "organiser") {
     roleScore = scoreWeighted([
-      { weight: 30, ok: filled(rd.org_name) },
-      { weight: 20, ok: filled(rd.bio) },
-      { weight: 15, ok: filled(rd.website) },
+      { weight: 35, ok: filled(rd.org_name) },
+      { weight: 25, ok: filled(rd.bio) },
+      { weight: 20, ok: filled(rd.website) },
       { weight: 20, ok: filled(rd.event_history) },
-      { weight: 15, ok: filled(rd.logo_url) },
     ]);
   } else if (role === "sponsor") {
     roleScore = scoreWeighted([
