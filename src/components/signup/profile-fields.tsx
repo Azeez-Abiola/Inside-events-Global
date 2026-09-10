@@ -37,23 +37,36 @@ export function TextArea({
   onChange,
   rows = 3,
   placeholder,
+  maxLength,
+  hint,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   rows?: number;
   placeholder?: string;
+  maxLength?: number;
+  hint?: string;
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-medium">{label}</span>
+      <span className="mb-1.5 flex items-center justify-between gap-2 text-sm font-medium">
+        <span>{label}</span>
+        {maxLength != null && (
+          <span className={`text-xs font-normal ${value.length > maxLength ? "text-destructive" : "text-muted-foreground"}`}>
+            {value.length.toLocaleString()} / {maxLength.toLocaleString()}
+          </span>
+        )}
+      </span>
       <textarea
         rows={rows}
         value={value}
         placeholder={placeholder}
+        maxLength={maxLength}
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
       />
+      {hint && <span className="mt-1 block text-xs text-muted-foreground">{hint}</span>}
     </label>
   );
 }

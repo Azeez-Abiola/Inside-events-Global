@@ -15,10 +15,20 @@ async function syncDisplayName(userId: string, displayName: string) {
 
 const OrganiserInput = z.object({
   org_name: z.string().trim().min(1).max(160),
-  bio: z.string().trim().max(1000).optional().nullable(),
+  bio: z
+    .string()
+    .trim()
+    .max(5000, { message: "Short bio must be at most 5,000 characters." })
+    .optional()
+    .nullable(),
   website: z.string().trim().url().max(300).optional().nullable().or(z.literal("").transform(() => null)),
   logo_url: z.string().trim().max(500).optional().nullable(),
-  event_history: z.string().trim().max(1000).optional().nullable(),
+  event_history: z
+    .string()
+    .trim()
+    .max(10000, { message: "Event track record must be at most 10,000 characters." })
+    .optional()
+    .nullable(),
 });
 
 export const upsertOrganiserProfile = createServerFn({ method: "POST" })

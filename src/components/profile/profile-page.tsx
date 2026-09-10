@@ -339,8 +339,15 @@ function OrganiserProfileEdit({ data, onSaved }: { data: any; onSaved: () => voi
       </p>
       <Field label="Organisation name" value={form.org_name} onChange={(v) => setForm({ ...form, org_name: v })} required />
       <Field label="Website" type="url" value={form.website} onChange={(v) => setForm({ ...form, website: v })} />
-      <TextArea label="Short bio" rows={3} value={form.bio} onChange={(v) => setForm({ ...form, bio: v })} />
-      <TextArea label="Event track record" rows={3} value={form.event_history} onChange={(v) => setForm({ ...form, event_history: v })} />
+      <TextArea label="Short bio" rows={3} value={form.bio} onChange={(v) => setForm({ ...form, bio: v })} maxLength={5000} />
+      <TextArea
+        label="Event track record"
+        rows={6}
+        value={form.event_history}
+        onChange={(v) => setForm({ ...form, event_history: v })}
+        maxLength={10000}
+        hint="List past editions and key highlights — up to 10,000 characters."
+      />
       <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save organiser profile"}</Button>
     </form>
   );

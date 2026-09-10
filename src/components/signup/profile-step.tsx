@@ -24,6 +24,34 @@ import { ChipMulti, Field, SelectField, TextArea } from "@/components/signup/pro
 const signupPrimaryBtn =
   "inline-flex w-full items-center justify-center rounded-md bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition-transform hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-60";
 
+/** Turn Zod / server error payloads into a short toast message. */
+function friendlyFormError(err: unknown, fallback = "Could not save profile") {
+  const raw = err instanceof Error ? err.message : typeof err === "string" ? err : "";
+  if (!raw) return fallback;
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (Array.isArray(parsed) && parsed[0] && typeof parsed[0] === "object") {
+      const first = parsed[0] as { message?: string; path?: string[] };
+      if (first.message) {
+        const field = first.path?.[0];
+        if (field === "event_history") return first.message.includes("at most")
+          ? first.message
+          : "Event track record is too long. Please shorten it and try again.";
+        if (field === "bio") return first.message.includes("at most")
+          ? first.message
+          : "Short bio is too long. Please shorten it and try again.";
+        return first.message;
+      }
+    }
+  } catch {
+    /* not JSON */
+  }
+  if (raw.includes("too_big") && raw.includes("event_history")) {
+    return "Event track record must be at most 10,000 characters.";
+  }
+  return raw.length > 180 ? fallback : raw;
+}
+
 async function applyAccountDraft(
   updateProfile: (args: { data: { display_name?: string | null; phone?: string | null } }) => Promise<unknown>,
 ) {
@@ -106,7 +134,7 @@ function OrganiserForm({ onDone }: { onDone: () => void }) {
           toast.success("Profile saved");
           onDone();
         } catch (err: any) {
-          toast.error(err.message);
+          toast.error(friendlyFormError(err));
         } finally {
           setSaving(false);
         }
@@ -115,13 +143,22 @@ function OrganiserForm({ onDone }: { onDone: () => void }) {
     >
       <Field label="Organisation name" value={form.org_name} onChange={(v) => setForm({ ...form, org_name: v })} required />
       <Field label="Website" type="url" placeholder="https://…" value={form.website} onChange={(v) => setForm({ ...form, website: v })} />
-      <TextArea label="Short bio" rows={3} value={form.bio} onChange={(v) => setForm({ ...form, bio: v })} placeholder="What does your org do?" />
+      <TextArea
+        label="Short bio"
+        rows={3}
+        value={form.bio}
+        onChange={(v) => setForm({ ...form, bio: v })}
+        placeholder="What does your org do?"
+        maxLength={5000}
+      />
       <TextArea
         label="Event track record"
-        rows={3}
+        rows={6}
         value={form.event_history}
         onChange={(v) => setForm({ ...form, event_history: v })}
         placeholder="Past editions, notable speakers / sponsors…"
+        maxLength={10000}
+        hint="List past editions and key highlights — up to 10,000 characters."
       />
       <button type="submit" disabled={saving} className={signupPrimaryBtn}>
         {saving ? "Saving…" : "Finish & go to dashboard"}
