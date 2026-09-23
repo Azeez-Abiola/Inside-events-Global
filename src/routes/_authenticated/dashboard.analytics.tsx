@@ -14,9 +14,9 @@ export const Route = createFileRoute("/_authenticated/dashboard/analytics")({
 });
 
 function AnalyticsRoute() {
-  const { roles, loading } = useAuth();
+  const { roles, loading, rolesReady } = useAuth();
 
-  if (loading) {
+  if (loading || !rolesReady) {
     return (
       <AppShell>
         <DashboardPageSkeleton kpis={4} showCharts />

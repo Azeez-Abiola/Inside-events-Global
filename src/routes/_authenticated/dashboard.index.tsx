@@ -16,8 +16,8 @@ export const Route = createFileRoute("/_authenticated/dashboard/")({
 });
 
 function DashboardIndex() {
-  const { roles, loading } = useAuth();
-  if (loading) return <DashboardLoading />;
+  const { roles, loading, rolesReady } = useAuth();
+  if (loading || !rolesReady) return <DashboardLoading />;
   if (roles.includes("abw_admin") || roles.includes("super_admin")) return <AdminDashboard section="overview" />;
   if (roles.includes("organiser")) return <OrganiserEventsPage />;
   if (roles.includes("sponsor")) return <SponsorOverviewPage />;

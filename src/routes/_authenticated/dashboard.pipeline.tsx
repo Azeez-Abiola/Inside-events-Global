@@ -11,9 +11,9 @@ export const Route = createFileRoute("/_authenticated/dashboard/pipeline")({
 });
 
 function PipelineRoute() {
-  const { roles, loading } = useAuth();
+  const { roles, loading, rolesReady } = useAuth();
 
-  if (loading) {
+  if (loading || !rolesReady) {
     return (
       <AppShell>
         <DashboardPageSkeleton kpis={3} tableRows={5} tableCols={6} />

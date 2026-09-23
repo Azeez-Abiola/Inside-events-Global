@@ -19,6 +19,13 @@ type AuthCtx = {
   user: User | null;
   roles: Role[];
   loading: boolean;
+  /**
+   * True once `roles` reflects the signed-in user (or there is no user).
+   * `loading` only covers the session — roles land a round-trip later, so gates
+   * that branch on a role must wait for this or they'll treat an admin as an
+   * unapproved applicant and blank the screen.
+   */
+  rolesReady: boolean;
   isSuspended: boolean;
   suspensionReason: string | null;
   isPendingApproval: boolean;
@@ -32,6 +39,7 @@ const Ctx = createContext<AuthCtx>({
   user: null,
   roles: [],
   loading: true,
+  rolesReady: false,
   isSuspended: false,
   suspensionReason: null,
   isPendingApproval: false,
@@ -40,9 +48,32 @@ const Ctx = createContext<AuthCtx>({
   refreshRoles: async () => {},
 });
 
+/**
+ * The role read decides every gate in the app, so a request that never comes
+ * back leaves the whole UI parked on a loading spinner — indistinguishable from
+ * a blank page. Bound each attempt and retry rather than waiting forever.
+ */
+const ROLE_FETCH_TIMEOUT_MS = 5000;
+const ROLE_FETCH_ATTEMPTS = 3;
+
+async function fetchRoles(uid: string): Promise<Role[]> {
+  for (let attempt = 0; attempt < ROLE_FETCH_ATTEMPTS; attempt += 1) {
+    const settled = await Promise.race([
+      supabase.from("user_roles").select("role").eq("user_id", uid),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), ROLE_FETCH_TIMEOUT_MS)),
+    ]);
+    // `null` means the attempt timed out — the abandoned request may still land,
+    // but a fresh one is cheaper than blocking the app on it.
+    if (settled && !settled.error) return (settled.data ?? []).map((r) => r.role as Role);
+  }
+  return [];
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
+  // Which user id the current `roles` belong to — null until they've been fetched.
+  const [rolesForUserId, setRolesForUserId] = useState<string | null>(null);
   const [isSuspended, setIsSuspended] = useState(false);
   const [suspensionReason, setSuspensionReason] = useState<string | null>(null);
   const [isPendingApproval, setIsPendingApproval] = useState(false);
@@ -61,11 +92,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const devActive = DEV_AUTH_ENABLED && devRoles != null;
 
   async function applyProfileGateState(uid: string) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_suspended, suspension_reason, is_active")
-      .eq("id", uid)
-      .maybeSingle();
+    // Bounded for the same reason as fetchRoles — the bootstrap awaits this
+    // before clearing `loading`, so a stalled read would freeze the app.
+    const settled = await Promise.race([
+      supabase
+        .from("profiles")
+        .select("is_suspended, suspension_reason, is_active")
+        .eq("id", uid)
+        .maybeSingle(),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), ROLE_FETCH_TIMEOUT_MS)),
+    ]);
+    const profile = settled?.data ?? null;
     const suspended = Boolean(profile?.is_suspended);
     setIsSuspended(suspended);
     setSuspensionReason(suspended ? profile?.suspension_reason ?? null : null);
@@ -86,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else if (event === "SIGNED_OUT" || !s) {
         setSession(null);
         setRoles([]);
+        setRolesForUserId(null);
         setIsSuspended(false);
         setSuspensionReason(null);
         setIsPendingApproval(false);
@@ -95,19 +133,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(s);
       }
       if (s?.user) {
+        // INITIAL_SESSION is already covered by the getSession() bootstrap below.
+        // Running both fires the same two round-trips twice on every cold load —
+        // `user_roles` alone measured 6s there, and every role gate is blocked on
+        // it, so the app sits on a spinner long enough to read as a blank page.
+        if (event === "INITIAL_SESSION") {
+          router.invalidate();
+          queryClient.invalidateQueries();
+          return;
+        }
         // fetch roles asynchronously (not inside listener body)
         setTimeout(() => {
-          void applyProfileGateState(s.user.id);
-          supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", s.user.id)
-            .then(({ data }) => {
-              setRoles((data ?? []).map((r) => r.role as Role));
-            });
+          const uid = s.user.id;
+          void applyProfileGateState(uid);
+          void fetchRoles(uid).then((next) => {
+            setRoles(next);
+            // Mark ready even when every attempt failed — an empty role set is
+            // an answer, and leaving this false would hang every gate forever.
+            setRolesForUserId(uid);
+          });
         }, 0);
       } else {
         setRoles([]);
+        setRolesForUserId(null);
         setIsSuspended(false);
         setSuspensionReason(null);
         setIsPendingApproval(false);
@@ -117,7 +165,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     // 2) Then existing session — clear stale refresh tokens
-    supabase.auth.getSession().then(async ({ data, error }) => {
+    const resolved = supabase.auth.getSession().then(async ({ data, error }) => {
       if (error?.message?.toLowerCase().includes("refresh")) {
         await supabase.auth.signOut({ scope: "local" });
         setSession(null);
@@ -144,17 +192,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(data.session);
       if (data.session?.user) {
         const uid = data.session.user.id;
-        const { data: rolesData } = await supabase.from("user_roles").select("role").eq("user_id", uid);
+        const nextRoles = await fetchRoles(uid);
         await applyProfileGateState(uid);
-        setRoles((rolesData ?? []).map((r) => r.role as Role));
+        setRoles(nextRoles);
+        setRolesForUserId(uid);
         setLoading(false);
       } else {
+        setRolesForUserId(null);
         setIsSuspended(false);
         setSuspensionReason(null);
         setIsPendingApproval(false);
         setLoading(false);
       }
     });
+    // A network failure while resolving the session must not strand the app on
+    // the loading spinner — fall through and let the route guards decide.
+    void resolved.catch(() => setLoading(false));
 
     return () => subscription.unsubscribe();
   }, [router, queryClient, devActive]);
@@ -166,11 +219,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const uid = sessionData.session?.user?.id;
       if (!uid) {
         setRoles([]);
+        setRolesForUserId(null);
         return;
       }
       const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", uid);
       if (!error) {
         setRoles((data ?? []).map((r) => r.role as Role));
+        setRolesForUserId(uid);
         return;
       }
       const retryable =
@@ -202,6 +257,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: devActive ? mockUser : session?.user ?? null,
         roles: devActive ? (devRoles as Role[]) : roles,
         loading: devActive ? false : loading,
+        rolesReady: devActive ? true : !session?.user || rolesForUserId === session.user.id,
         isSuspended: devActive ? false : isSuspended,
         suspensionReason: devActive ? null : suspensionReason,
         isPendingApproval: devActive ? false : isPendingApproval,

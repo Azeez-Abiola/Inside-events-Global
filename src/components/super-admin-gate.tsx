@@ -10,9 +10,9 @@ export function SuperAdminGate({
   children: ReactNode;
   fallbackTo?: string;
 }) {
-  const { roles, loading } = useAuth();
+  const { roles, loading, rolesReady } = useAuth();
 
-  if (loading) {
+  if (loading || !rolesReady) {
     return <DashboardPageSkeleton kpis={3} tableRows={5} />;
   }
 

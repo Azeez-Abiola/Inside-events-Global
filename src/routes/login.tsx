@@ -103,6 +103,14 @@ function LoginPage() {
           value={password}
           onChange={(v) => setPassword(v)}
         />
+        <div className="flex justify-end">
+          <Link
+            to="/forgot-password"
+            className="text-xs font-semibold text-primary hover:text-primary-deep"
+          >
+            Forgot password?
+          </Link>
+        </div>
         <button
           type="submit"
           disabled={submitting}

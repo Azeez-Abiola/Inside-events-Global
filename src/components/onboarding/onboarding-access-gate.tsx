@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/auth-context";
 import { getMyOnboardingApplication } from "@/lib/onboarding.functions";
 
 export function OnboardingAccessGate({ children }: { children: React.ReactNode }) {
-  const { roles, loading } = useAuth();
+  const { roles, loading, rolesReady } = useAuth();
   const navigate = useNavigate();
   const getFn = useServerFn(getMyOnboardingApplication);
   const isStaff = roles.includes("abw_admin") || roles.includes("super_admin");
@@ -21,13 +21,15 @@ export function OnboardingAccessGate({ children }: { children: React.ReactNode }
     queryFn: () => getFn({ data: undefined as never }) as Promise<{
       application: { status: string } | null;
     }>,
-    enabled: !loading && !isStaff,
+    // Roles arrive after the session does. Asking before they land treats an
+    // admin as an applicant and redirects them off their own dashboard.
+    enabled: !loading && rolesReady && !isStaff,
   });
 
   const status = data?.application?.status;
 
   useEffect(() => {
-    if (loading || isStaff || isLoading) return;
+    if (loading || !rolesReady || isStaff || isLoading) return;
     if (!status) return;
     if (status === "approved") return;
     if (status === "draft" || status === "changes_requested") {
@@ -35,10 +37,10 @@ export function OnboardingAccessGate({ children }: { children: React.ReactNode }
       return;
     }
     void navigate({ to: "/onboarding/pending", replace: true });
-  }, [status, isStaff, isLoading, loading, navigate]);
+  }, [status, isStaff, isLoading, loading, rolesReady, navigate]);
 
   if (isStaff) return <>{children}</>;
-  if (loading || isLoading) {
+  if (loading || !rolesReady || isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-dashboard-canvas">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

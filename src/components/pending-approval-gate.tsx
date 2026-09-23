@@ -8,17 +8,19 @@ import { useAuth } from "@/lib/auth-context";
  * Admins skip this gate.
  */
 export function PendingApprovalGate({ children }: { children: React.ReactNode }) {
-  const { isPendingApproval, loading, roles } = useAuth();
+  const { isPendingApproval, loading, roles, rolesReady } = useAuth();
   const navigate = useNavigate();
   const isStaff = roles.includes("abw_admin") || roles.includes("super_admin");
-  const blocked = isPendingApproval && !isStaff;
+  // Roles land after the session, so `isStaff` is false for a moment on every
+  // sign-in — blocking on it would bounce admins to the pending screen.
+  const blocked = rolesReady && isPendingApproval && !isStaff;
 
   useEffect(() => {
     if (loading || !blocked) return;
     void navigate({ to: "/onboarding/pending", replace: true });
   }, [blocked, loading, navigate]);
 
-  if (loading) return <>{children}</>;
+  if (loading || !rolesReady) return <>{children}</>;
   if (!blocked) return <>{children}</>;
 
   return (

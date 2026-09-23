@@ -20,10 +20,10 @@ export function RoleGate({
   children: ReactNode;
   fallbackTo?: string;
 }) {
-  const { roles, loading } = useAuth();
+  const { roles, loading, rolesReady } = useAuth();
   const allowed = Array.isArray(allow) ? allow : [allow];
 
-  if (loading) {
+  if (loading || !rolesReady) {
     return <DashboardPageSkeleton kpis={3} tableRows={5} />;
   }
 
