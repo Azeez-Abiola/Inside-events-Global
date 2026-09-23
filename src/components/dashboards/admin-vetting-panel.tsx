@@ -19,6 +19,7 @@ import { datedCsvFilename, downloadCsv } from "@/lib/csv-export";
 import { useAuth } from "@/lib/auth-context";
 import { isSuperAdmin } from "@/lib/admin-permissions";
 import { listEventsForVetting, setEventVettingStatus, getEventForAdmin, adminDeleteEvent, setEventFeatured } from "@/lib/admin.functions";
+import { AdminAssistedEventsPanel } from "@/components/dashboards/admin-assisted-events-panel";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -121,6 +122,8 @@ export function AdminVettingPanel({ onEventClick }: { onEventClick?: (id: string
 
   return (
     <div className="space-y-6">
+      <AdminAssistedEventsPanel />
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard icon={ShieldCheck} label="In queue" value={inQueue} loading={isLoading} />
         <StatCard icon={Users} label="New submissions" value={counts.submitted} loading={isLoading} />

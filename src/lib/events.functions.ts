@@ -2,6 +2,36 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { getUserRoles } from "@/lib/admin-auth";
+import { isPlatformAdmin } from "@/lib/admin-permissions";
+
+// ───────────────────────────────────────────────────────────────
+// Edit authorisation
+// ───────────────────────────────────────────────────────────────
+/**
+ * The organiser always owns their listing. Platform admins may also edit a
+ * listing they built on an organiser's behalf (created_by_admin is set) —
+ * that is the launch-phase assist flow. Self-serve listings stay
+ * organiser-only, so an organiser's own work never changes under them.
+ */
+// NOTE: `created_by_admin` is not yet in the generated Supabase types (the
+// migration is new). Guard reads cast the row until `supabase gen types` is
+// re-run — same convention as onboarding.functions.ts.
+type EventGuardRow = {
+  organiser_id: string | null;
+  created_by_admin: string | null;
+  status: string;
+};
+type GuardResult<T> = { data: T; error: { message: string } | null };
+
+async function assertCanEditEvent(
+  userId: string,
+  ev: { organiser_id: string | null; created_by_admin?: string | null },
+) {
+  if (ev.organiser_id && ev.organiser_id === userId) return;
+  if (ev.created_by_admin && isPlatformAdmin(await getUserRoles(userId))) return;
+  throw new Error("Forbidden");
+}
 
 // ───────────────────────────────────────────────────────────────
 // Status state machine - server-side enforcement
@@ -121,13 +151,13 @@ export const autosaveEvent = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     // Verify ownership + status allows edit
-    const { data: ev, error: e1 } = await supabase
+    const { data: ev, error: e1 } = (await supabase
       .from("events")
-      .select("organiser_id, status")
+      .select("organiser_id, created_by_admin, status")
       .eq("id", data.id)
-      .single();
+      .single()) as GuardResult<EventGuardRow>;
     if (e1) throw new Error(e1.message);
-    if (ev.organiser_id !== userId) throw new Error("Forbidden");
+    await assertCanEditEvent(userId, ev);
     if (!["draft", "revision_requested"].includes(ev.status)) {
       throw new Error("Event can no longer be edited in current status");
     }
@@ -165,12 +195,13 @@ export const upsertTier = createServerFn({ method: "POST" })
   .inputValidator((d) => TierInput.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: ev } = await supabase
+    const { data: ev } = (await supabase
       .from("events")
-      .select("organiser_id, status")
+      .select("organiser_id, created_by_admin, status")
       .eq("id", data.event_id)
-      .single();
-    if (!ev || ev.organiser_id !== userId) throw new Error("Forbidden");
+      .single()) as GuardResult<EventGuardRow | null>;
+    if (!ev) throw new Error("Forbidden");
+    await assertCanEditEvent(userId, ev);
     if (!["draft", "revision_requested"].includes(ev.status)) {
       throw new Error("Event can no longer be edited in current status");
     }
@@ -238,13 +269,13 @@ export const deleteTier = createServerFn({ method: "POST" })
       .single();
     if (tierErr) throw new Error(tierErr.message);
 
-    const { data: ev, error: evErr } = await supabase
+    const { data: ev, error: evErr } = (await supabase
       .from("events")
-      .select("organiser_id, status")
+      .select("organiser_id, created_by_admin, status")
       .eq("id", tier.event_id)
-      .single();
+      .single()) as GuardResult<EventGuardRow>;
     if (evErr) throw new Error(evErr.message);
-    if (ev.organiser_id !== userId) throw new Error("Forbidden");
+    await assertCanEditEvent(userId, ev);
     if (!["draft", "revision_requested"].includes(ev.status)) {
       throw new Error("Event can no longer be edited in current status");
     }
@@ -262,13 +293,23 @@ export const submitEvent = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: ev, error } = await supabase
+    const { data: ev, error } = (await supabase
       .from("events")
-      .select("id, organiser_id, status, name, city, slug, consent_given, sponsorship_deck_url, banner_image_url")
+      .select("id, organiser_id, created_by_admin, status, name, city, slug, consent_given, sponsorship_deck_url, banner_image_url")
       .eq("id", data.id)
-      .single();
+      .single()) as GuardResult<
+      EventGuardRow & {
+        id: string;
+        name: string;
+        city: string | null;
+        slug: string | null;
+        consent_given: boolean;
+        sponsorship_deck_url: string | null;
+        banner_image_url: string | null;
+      }
+    >;
     if (error) throw new Error(error.message);
-    if (ev.organiser_id !== userId) throw new Error("Forbidden");
+    await assertCanEditEvent(userId, ev);
     const allowed = VALID_TRANSITIONS[ev.status] ?? [];
     if (!allowed.includes("submitted")) {
       throw new Error(`Cannot submit from status '${ev.status}'`);

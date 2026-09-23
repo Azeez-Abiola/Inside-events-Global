@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "db:media-requests": "node scripts/apply-media-requests.mjs",
-    "db:waitlist-media-partner": "node scripts/apply-waitlist-media-partner.mjs"
+    "db:waitlist-media-partner": "node scripts/apply-waitlist-media-partner.mjs",
+    "db:admin-assisted-events": "node scripts/apply-admin-assisted-events.mjs"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",

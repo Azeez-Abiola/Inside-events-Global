@@ -11,6 +11,9 @@ export type AdminAuditAction =
   | "user_declined"
   | "event_vetting_updated"
   | "event_deleted"
+  | "event_created_for_organiser"
+  | "organiser_account_created"
+  | "organiser_invite_sent"
   | "newsletter_sent"
   | "commission_rates_updated"
   | "fx_rates_updated"
@@ -26,6 +29,8 @@ const VITAL_ACTIONS = new Set<AdminAuditAction>([
   "user_reactivated",
   "event_vetting_updated",
   "event_deleted",
+  "event_created_for_organiser",
+  "organiser_account_created",
   "newsletter_sent",
   "commission_rates_updated",
   "fx_rates_updated",

@@ -7,18 +7,7 @@ import { flushEmailQueueInDev } from "@/lib/email/flush-queue-dev";
 import { getSiteUrl } from "@/lib/site-url";
 import { requireSuperAdmin, getActorProfile } from "@/lib/admin-auth";
 import { auditAdminAction } from "@/lib/admin-audit";
-
-function generateTempPassword(): string {
-  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-  const lower = "abcdefghijkmnpqrstuvwxyz";
-  const digits = "23456789";
-  const special = "!@#$";
-  const pick = (s: string) => s[Math.floor(Math.random() * s.length)]!;
-  const parts = [pick(upper), pick(lower), pick(digits), pick(special)];
-  const all = upper + lower + digits + special;
-  while (parts.length < 14) parts.push(pick(all));
-  return parts.sort(() => Math.random() - 0.5).join("");
-}
+import { generateTempPassword } from "@/lib/temp-password";
 
 const InviteInput = z.object({
   name: z.string().trim().min(1).max(120),
@@ -225,14 +214,19 @@ export const recordAdminLogin = createServerFn({ method: "POST" })
     const { userId } = context;
     const { data: rolesData } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", userId);
     const roles = (rolesData ?? []).map((r) => r.role);
-    if (!roles.includes("abw_admin") && !roles.includes("super_admin")) {
-      return { ok: false };
-    }
 
+    // Stamp the login for every role, not just admins. An admin-created
+    // organiser account is "unclaimed" until its first sign-in, and the
+    // assisted-listing panel reads this column to tell the two apart.
+    // Only the audit trail below stays admin-only.
     await supabaseAdmin
       .from("profiles")
       .update({ last_login_at: new Date().toISOString() } as never)
       .eq("id", userId);
+
+    if (!roles.includes("abw_admin") && !roles.includes("super_admin")) {
+      return { ok: true };
+    }
 
     const profile = await getActorProfile(userId);
     const roleLabel = roles.includes("super_admin") ? "Super admin" : "Sub-admin";
