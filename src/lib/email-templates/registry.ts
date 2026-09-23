@@ -19,6 +19,7 @@ import { template as welcome } from './welcome'
 import { template as adminInvite } from './admin-invite'
 import { template as organiserListingInvite } from './organiser-listing-invite'
 import { template as accountSuspended } from './account-suspended'
+import { template as accountRestored } from './account-restored'
 import { template as complaintInternal } from './complaint-internal'
 import { template as complaintReply } from './complaint-reply'
 import { template as newMessage } from './new-message'
@@ -42,6 +43,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'waitlist-rejected': waitlistRejected,
   welcome,
   'account-suspended': accountSuspended,
+  'account-restored': accountRestored,
   'admin-invite': adminInvite,
   'organiser-listing-invite': organiserListingInvite,
   'complaint-internal': complaintInternal,

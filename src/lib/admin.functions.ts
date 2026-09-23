@@ -378,6 +378,43 @@ export const setUserSuspended = createServerFn({ method: "POST" })
           console.error("[setUserSuspended] deactivation email failed", e);
         }
       }
+    } else {
+      // Someone told they were deactivated will not try signing in again on
+      // spec, so restoring access silently is the same as not restoring it.
+      const { data: targetProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("email, display_name")
+        .eq("id", data.user_id)
+        .maybeSingle();
+
+      await supabaseAdmin.from("notifications").insert({
+        user_id: data.user_id,
+        type: "account_restored",
+        title: "Account restored",
+        body: "Your IGE account is active again. Everything is just as you left it.",
+        data: {},
+      });
+
+      if (targetProfile?.email) {
+        try {
+          await sendTransactionalEmailServer({
+            templateName: "account-restored",
+            recipientEmail: targetProfile.email,
+            // Timestamped so a later deactivate/reactivate cycle isn't
+            // suppressed as a duplicate of this one.
+            idempotencyKey: `account-restored-${data.user_id}-${Date.now()}`,
+            templateData: {
+              name: targetProfile.display_name ?? undefined,
+              supportEmail: IGE_SUPPORT_EMAIL,
+              loginUrl: `${getSiteUrl()}/login`,
+              siteUrl: getSiteUrl(),
+            },
+          });
+          await flushEmailQueueInDev();
+        } catch (e) {
+          console.error("[setUserSuspended] reactivation email failed", e);
+        }
+      }
     }
 
     const actor = await getActorProfile(userId);
