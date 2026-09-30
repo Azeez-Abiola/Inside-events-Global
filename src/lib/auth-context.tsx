@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
@@ -56,6 +56,16 @@ const Ctx = createContext<AuthCtx>({
 const ROLE_FETCH_TIMEOUT_MS = 5000;
 const ROLE_FETCH_ATTEMPTS = 3;
 
+/**
+ * Hard deadline on the session bootstrap. Nothing else clears `loading`, and
+ * supabase-js takes a navigator lock inside getSession()/getUser() that can
+ * hang without ever rejecting — so a .catch() does not cover it. Public pages
+ * render a full-screen loader off this flag (/signup did, and stuck there), so
+ * it has to resolve on its own eventually. Generous, because a cold role read
+ * has been measured at 6s on a slow connection.
+ */
+const AUTH_BOOTSTRAP_TIMEOUT_MS = 12000;
+
 async function fetchRoles(uid: string): Promise<Role[]> {
   for (let attempt = 0; attempt < ROLE_FETCH_ATTEMPTS; attempt += 1) {
     const settled = await Promise.race([
@@ -110,12 +120,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { suspended, pending: !suspended && profile?.is_active === false };
   }
 
+  // The user id whose roles/profile are already being resolved, so the listener
+  // and the bootstrap below don't fire the same two round-trips twice.
+  const resolvingForUserId = useRef<string | null>(null);
+
+  function resolveUserContext(uid: string) {
+    if (resolvingForUserId.current === uid) return;
+    resolvingForUserId.current = uid;
+    void applyProfileGateState(uid);
+    void fetchRoles(uid).then((next) => {
+      setRoles(next);
+      // Mark ready even when every attempt failed — an empty role set is an
+      // answer, and leaving this false would hang every gate forever.
+      setRolesForUserId(uid);
+    });
+  }
+
   useEffect(() => {
     // In dev impersonation mode, bypass Supabase entirely.
     if (devActive) {
       setLoading(false);
       return;
     }
+
+    // Whatever else happens, stop showing a loading state eventually.
+    const bootstrapDeadline = setTimeout(() => setLoading(false), AUTH_BOOTSTRAP_TIMEOUT_MS);
+
     // 1) Listener FIRST (don't await inside)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
       if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN" || event === "INITIAL_SESSION") {
@@ -133,27 +163,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(s);
       }
       if (s?.user) {
-        // INITIAL_SESSION is already covered by the getSession() bootstrap below.
-        // Running both fires the same two round-trips twice on every cold load —
-        // `user_roles` alone measured 6s there, and every role gate is blocked on
-        // it, so the app sits on a spinner long enough to read as a blank page.
-        if (event === "INITIAL_SESSION") {
-          router.invalidate();
-          queryClient.invalidateQueries();
-          return;
-        }
+        // Deduped by user id rather than by event: the bootstrap below resolves
+        // the same user, and whichever gets there first wins. Keying off the
+        // event instead would mean a stalled bootstrap leaves roles unresolved
+        // forever, since INITIAL_SESSION would have deferred to it.
+        const uid = s.user.id;
         // fetch roles asynchronously (not inside listener body)
-        setTimeout(() => {
-          const uid = s.user.id;
-          void applyProfileGateState(uid);
-          void fetchRoles(uid).then((next) => {
-            setRoles(next);
-            // Mark ready even when every attempt failed — an empty role set is
-            // an answer, and leaving this false would hang every gate forever.
-            setRolesForUserId(uid);
-          });
-        }, 0);
+        setTimeout(() => resolveUserContext(uid), 0);
       } else {
+        resolvingForUserId.current = null;
         setRoles([]);
         setRolesForUserId(null);
         setIsSuspended(false);
@@ -191,25 +209,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setSession(data.session);
       if (data.session?.user) {
-        const uid = data.session.user.id;
-        const nextRoles = await fetchRoles(uid);
-        await applyProfileGateState(uid);
-        setRoles(nextRoles);
-        setRolesForUserId(uid);
-        setLoading(false);
+        // Fire and forget: `loading` covers the session, and the gates wait on
+        // `rolesReady` separately. Awaiting the role read here would put the
+        // whole app behind it again.
+        resolveUserContext(data.session.user.id);
       } else {
+        resolvingForUserId.current = null;
         setRolesForUserId(null);
         setIsSuspended(false);
         setSuspensionReason(null);
         setIsPendingApproval(false);
-        setLoading(false);
       }
+      setLoading(false);
     });
     // A network failure while resolving the session must not strand the app on
     // the loading spinner — fall through and let the route guards decide.
     void resolved.catch(() => setLoading(false));
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(bootstrapDeadline);
+      subscription.unsubscribe();
+    };
+    // resolveUserContext is deliberately omitted: it is redefined every render,
+    // and depending on it would tear down and re-register the auth listener
+    // each time. Its own ref guard makes repeat calls safe.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router, queryClient, devActive]);
 
   const refreshRoles = async () => {

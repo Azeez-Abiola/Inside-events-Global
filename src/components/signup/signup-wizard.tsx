@@ -121,7 +121,10 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
 
       if (primaryRole) {
         setRole(primaryRole);
-        const complete = await hasRoleProfile(user.id, primaryRole);
+        // Unguarded, a rejection here rejects the whole IIFE and `bootstrapping`
+        // never clears — the page sits on "Loading…" for good. Treat a failed
+        // check as "not complete" and let onboarding sort it out.
+        const complete = await hasRoleProfile(user.id, primaryRole).catch(() => false);
         if (complete) {
           navigate({ to: "/dashboard", replace: true });
           return;
@@ -139,7 +142,11 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
       if (initialStep === "profile") goToStep("role");
       else if (initialStep && initialStep !== "role") setStep(initialStep);
       setBootstrapping(false);
-    })();
+    })().catch(() => {
+      // Never leave the wizard stuck behind its loader: show the form and let
+      // the user carry on rather than stranding them on "Loading…".
+      setBootstrapping(false);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, user?.id, roles.join(",")]);
 
