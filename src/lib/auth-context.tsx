@@ -3,14 +3,23 @@ import type { Session, User } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { DEV_AUTH_ENABLED, DEV_USER, getDevRoles, onDevRolesChange, setDevRoles } from "@/lib/dev-auth";
+import {
+  DEV_AUTH_ENABLED,
+  DEV_USER,
+  getDevRoles,
+  onDevRolesChange,
+  setDevRoles,
+} from "@/lib/dev-auth";
 import { isEmailConfirmed } from "@/lib/auth-email";
+import { clearSessionMarkers } from "@/lib/session-policy";
 
 type Role =
   | "organiser"
   | "sponsor"
   | "referral_partner"
   | "media_partner"
+  | "partnerships_pro"
+  | "creative_hub"
   | "abw_admin"
   | "super_admin";
 
@@ -115,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const profile = settled?.data ?? null;
     const suspended = Boolean(profile?.is_suspended);
     setIsSuspended(suspended);
-    setSuspensionReason(suspended ? profile?.suspension_reason ?? null : null);
+    setSuspensionReason(suspended ? (profile?.suspension_reason ?? null) : null);
     setIsPendingApproval(!suspended && profile?.is_active === false);
     return { suspended, pending: !suspended && profile?.is_active === false };
   }
@@ -147,7 +156,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const bootstrapDeadline = setTimeout(() => setLoading(false), AUTH_BOOTSTRAP_TIMEOUT_MS);
 
     // 1) Listener FIRST (don't await inside)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, s) => {
       if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN" || event === "INITIAL_SESSION") {
         setSession(s);
       } else if (event === "SIGNED_OUT" || !s) {
@@ -268,6 +279,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await router.navigate({ to: "/login" });
       return;
     }
+    clearSessionMarkers();
     await supabase.auth.signOut();
     await router.navigate({ to: "/login" });
   };
@@ -278,7 +290,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <Ctx.Provider
       value={{
         session: devActive ? ({ user: mockUser } as unknown as Session) : session,
-        user: devActive ? mockUser : session?.user ?? null,
+        user: devActive ? mockUser : (session?.user ?? null),
         roles: devActive ? (devRoles as Role[]) : roles,
         loading: devActive ? false : loading,
         rolesReady: devActive ? true : !session?.user || rolesForUserId === session.user.id,

@@ -2,8 +2,11 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, FormEvent } from "react";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthShell } from "@/components/auth-shell";
+import { recordPasswordResetCompleted } from "@/lib/password-reset.functions";
+import { clearSessionMarkers } from "@/lib/session-policy";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({ meta: [{ title: "Set new password - IGE" }] }),
@@ -16,6 +19,7 @@ function ResetPassword() {
   const [pwd, setPwd] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
+  const recordCompleted = useServerFn(recordPasswordResetCompleted);
 
   useEffect(() => {
     // Supabase recovery flow: arrives with type=recovery in hash and sets a session.
@@ -37,8 +41,9 @@ function ResetPassword() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (pwd.length < 8) {
-      toast.error("Password must be at least 8 characters.");
+    // TAB 2 §2.3: minimum 8 characters with at least one letter and one number.
+    if (pwd.length < 8 || !/[A-Za-z]/.test(pwd) || !/[0-9]/.test(pwd)) {
+      toast.error("Password must be at least 8 characters and include a letter and a number.");
       return;
     }
     if (pwd !== confirm) {
@@ -52,8 +57,15 @@ function ResetPassword() {
       toast.error(error.message);
       return;
     }
+    // Record the completed half of the trail before signing out — the server
+    // function needs the session that the reset link established (TAB 2 §2.4).
+    await recordCompleted().catch(() => {});
+
     toast.success("Password updated. Please sign in again with your new password.");
-    await supabase.auth.signOut();
+    clearSessionMarkers();
+    // Global scope: §2.4 says every other active session is signed out on a
+    // successful reset.
+    await supabase.auth.signOut({ scope: "global" }).catch(() => {});
     navigate({ to: "/login" });
   }
 

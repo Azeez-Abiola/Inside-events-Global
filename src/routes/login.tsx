@@ -5,15 +5,19 @@ import { z } from "zod";
 import { Eye, EyeOff } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { AuthShell } from "@/components/auth-shell";
+import { AuthShell, GoogleButton, Divider } from "@/components/auth-shell";
 import { isEmailNotConfirmedError } from "@/lib/auth-email";
 import { recordAdminLogin } from "@/lib/admin-team.functions";
+import { startGoogleSignIn } from "@/lib/google-auth";
+import { markSignedIn, rememberedEmail, wasRemembered } from "@/lib/session-policy";
 
 const search = z.object({
   redirect: z.string().optional(),
   email: z.string().max(200).optional(),
   password: z.string().optional(),
   unconfirmed: z.enum(["1"]).optional(),
+  /** Set when the 24-hour session rule or a browser close ended the session. */
+  expired: z.enum(["max_age", "browser_closed"]).optional(),
 });
 
 export const Route = createFileRoute("/login")({
@@ -27,10 +31,19 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const navigate = useNavigate();
   const recordLogin = useServerFn(recordAdminLogin);
-  const { redirect, email: emailParam, password: passwordParam, unconfirmed } = useSearch({ from: "/login" });
-  const [email, setEmail] = useState(emailParam ?? "");
+  const {
+    redirect,
+    email: emailParam,
+    password: passwordParam,
+    unconfirmed,
+    expired,
+  } = useSearch({ from: "/login" });
+  // Remember me pre-fills the email next time (TAB 2 §2.4).
+  const [email, setEmail] = useState(emailParam ?? rememberedEmail());
   const [password, setPassword] = useState(passwordParam ?? "");
+  const [rememberMe, setRememberMe] = useState(() => wasRemembered());
   const [submitting, setSubmitting] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const demoPrefill = !!(emailParam && passwordParam);
 
   useEffect(() => {
@@ -45,15 +58,32 @@ function LoginPage() {
     setSubmitting(false);
     if (error) {
       if (isEmailNotConfirmedError(error.message)) {
-        toast.error("Confirm your email first — enter the verification code from your inbox on the signup page.");
+        toast.error(
+          "Confirm your email first — enter the verification code from your inbox on the signup page.",
+        );
       } else {
         toast.error(error.message);
       }
       return;
     }
+    markSignedIn({ rememberMe, email });
     toast.success("Welcome back");
     void recordLogin().catch(() => {});
     navigate({ to: redirect ?? "/dashboard" });
+  }
+
+  async function handleGoogle() {
+    setGoogleLoading(true);
+    // Remember me carries through the redirect: /auth/callback reads it back
+    // so a Google sign-in obeys the same browser-close rule as a password one.
+    const message = await startGoogleSignIn({
+      redirect: redirect ?? undefined,
+      rememberMe,
+    });
+    if (message) {
+      setGoogleLoading(false);
+      toast.error(message);
+    }
   }
 
   return (
@@ -63,15 +93,19 @@ function LoginPage() {
       footer={
         <>
           New to IGE?{" "}
-          <Link
-            to="/signup"
-            className="font-semibold text-primary hover:text-primary-deep"
-          >
+          <Link to="/signup" className="font-semibold text-primary hover:text-primary-deep">
             Create an account
           </Link>
         </>
       }
     >
+      {expired && (
+        <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-foreground">
+          {expired === "max_age"
+            ? "Your session reached its 24-hour limit. Sign in again to carry on."
+            : "You were signed out when the browser closed. Tick Remember me to stay signed in on this device."}
+        </p>
+      )}
       {unconfirmed === "1" && (
         <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-foreground">
           Your email isn&apos;t confirmed yet. Enter the verification code from your email on the{" "}
@@ -103,7 +137,16 @@ function LoginPage() {
           value={password}
           onChange={(v) => setPassword(v)}
         />
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between gap-3">
+          <label className="inline-flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="h-3.5 w-3.5 rounded border-input accent-[hsl(var(--primary))]"
+            />
+            Remember me
+          </label>
           <Link
             to="/forgot-password"
             className="text-xs font-semibold text-primary hover:text-primary-deep"
@@ -119,6 +162,12 @@ function LoginPage() {
           {submitting ? "Signing in…" : "Sign in"}
         </button>
       </form>
+      <Divider />
+      <GoogleButton onClick={() => void handleGoogle()} loading={googleLoading} />
+      <p className="mt-3 text-center text-[11px] leading-relaxed text-muted-foreground">
+        For security, every session ends 24 hours after you sign in, whether or not Remember me is
+        ticked.
+      </p>
     </AuthShell>
   );
 }

@@ -1,9 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, FormEvent } from "react";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { getAuthRedirectUrl } from "@/lib/site-url";
+import { useServerFn } from "@tanstack/react-start";
 import { AuthShell } from "@/components/auth-shell";
+import { requestPasswordReset } from "@/lib/password-reset.functions";
 
 export const Route = createFileRoute("/forgot-password")({
   head: () => ({ meta: [{ title: "Reset password - IGE" }] }),
@@ -14,18 +13,18 @@ function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const requestReset = useServerFn(requestPasswordReset);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${getAuthRedirectUrl()}/reset-password`,
-    });
+    // The server decides whether an account exists, sends the link to the
+    // address on file rather than the one typed here, and notifies Admin
+    // (TAB 2 §2.4). It never reports back which of those happened, and a
+    // thrown error is swallowed for the same reason: the screen must not
+    // become a way to find out who is registered.
+    await requestReset({ data: { email: email.trim() } }).catch(() => {});
     setLoading(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
     setSent(true);
   }
 
@@ -44,8 +43,9 @@ function ForgotPassword() {
     >
       {sent ? (
         <div className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
-          Check <span className="font-semibold text-foreground">{email}</span> for a reset link.
-          It expires in 1 hour.
+          If <span className="font-semibold text-foreground">{email}</span> has an IGE account, a
+          reset link is on its way to the email address registered on it. The link expires in 60
+          minutes.
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">

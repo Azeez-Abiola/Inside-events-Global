@@ -40,6 +40,7 @@ import { Route as OnboardingProfileRouteImport } from './routes/onboarding.profi
 import { Route as OnboardingPendingRouteImport } from './routes/onboarding.pending'
 import { Route as EventsSlugRouteImport } from './routes/events.$slug'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedReferralsRouteImport } from './routes/_authenticated/referrals'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
@@ -243,6 +244,11 @@ const EventsSlugRoute = EventsSlugRouteImport.update({
 const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   id: '/email/unsubscribe',
   path: '/email/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
@@ -563,6 +569,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/referrals': typeof AuthenticatedReferralsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/events/$slug': typeof EventsSlugRoute
   '/onboarding/pending': typeof OnboardingPendingRoute
@@ -643,6 +650,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/referrals': typeof AuthenticatedReferralsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/events/$slug': typeof EventsSlugRoute
   '/onboarding/pending': typeof OnboardingPendingRoute
@@ -727,6 +735,7 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/referrals': typeof AuthenticatedReferralsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/events/$slug': typeof EventsSlugRoute
   '/onboarding/pending': typeof OnboardingPendingRoute
@@ -811,6 +820,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/referrals'
     | '/settings'
+    | '/auth/callback'
     | '/email/unsubscribe'
     | '/events/$slug'
     | '/onboarding/pending'
@@ -891,6 +901,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/referrals'
     | '/settings'
+    | '/auth/callback'
     | '/email/unsubscribe'
     | '/events/$slug'
     | '/onboarding/pending'
@@ -974,6 +985,7 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/referrals'
     | '/_authenticated/settings'
+    | '/auth/callback'
     | '/email/unsubscribe'
     | '/events/$slug'
     | '/onboarding/pending'
@@ -1050,6 +1062,7 @@ export interface RootRouteChildren {
   UnsubscribeRoute: typeof UnsubscribeRoute
   WaitlistRoute: typeof WaitlistRoute
   WelcomeRoute: typeof WelcomeRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   EventsSlugRoute: typeof EventsSlugRoute
   RCodeRoute: typeof RCodeRoute
@@ -1283,6 +1296,13 @@ declare module '@tanstack/react-router' {
       path: '/email/unsubscribe'
       fullPath: '/email/unsubscribe'
       preLoaderRoute: typeof EmailUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/settings': {
@@ -1797,6 +1817,7 @@ const rootRouteChildren: RootRouteChildren = {
   UnsubscribeRoute: UnsubscribeRoute,
   WaitlistRoute: WaitlistRoute,
   WelcomeRoute: WelcomeRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   EventsSlugRoute: EventsSlugRoute,
   RCodeRoute: RCodeRoute,

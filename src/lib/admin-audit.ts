@@ -20,9 +20,13 @@ export type AdminAuditAction =
   | "fraud_flag_updated"
   | "complaint_reply_sent"
   | "waitlist_invited"
-  | "waitlist_rejected";
+  | "waitlist_rejected"
+  | "password_reset_requested"
+  | "password_reset_completed"
+  | "password_reset_by_admin";
 
 const VITAL_ACTIONS = new Set<AdminAuditAction>([
+  "password_reset_by_admin",
   "admin_login",
   "admin_invited",
   "user_suspended",
@@ -81,7 +85,9 @@ export async function notifySuperAdminsVital(input: {
 
   const actorRole = await getActorAdminRole(input.actorId);
   // Notify super admins when a sub-admin performs a vital action, or always for invites/suspensions
-  const alwaysNotify = ["admin_invited", "user_suspended", "user_reactivated"].includes(input.action);
+  const alwaysNotify = ["admin_invited", "user_suspended", "user_reactivated"].includes(
+    input.action,
+  );
   if (!alwaysNotify && !isSubAdmin([actorRole])) return;
 
   const { data: supers } = await supabaseAdmin
@@ -124,4 +130,31 @@ export async function auditAdminAction(input: {
       data: { resource_type: input.resourceType, resource_id: input.resourceId },
     });
   }
+}
+
+/**
+ * An audit entry with no admin behind it (TAB 2 §2.4: "Every reset request and
+ * every completed reset creates a notification in the Admin Inbox and an Audit
+ * Log entry"). `recordAdminAudit` deliberately drops anything from a non-admin
+ * actor, so system-originated events need their own door in.
+ */
+export async function recordSystemAudit(input: {
+  action: AdminAuditAction;
+  summary: string;
+  subjectId?: string | null;
+  subjectEmail?: string | null;
+  resourceType?: string;
+  resourceId?: string;
+  metadata?: Record<string, unknown>;
+}) {
+  await supabaseAdmin.from("admin_audit_log" as never).insert({
+    actor_id: input.subjectId ?? null,
+    actor_email: input.subjectEmail ?? null,
+    actor_role: "system",
+    action: input.action,
+    resource_type: input.resourceType ?? null,
+    resource_id: input.resourceId ?? null,
+    summary: input.summary,
+    metadata: input.metadata ?? {},
+  } as never);
 }

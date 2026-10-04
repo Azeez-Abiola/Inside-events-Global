@@ -8,6 +8,7 @@ import { getSiteUrl } from "@/lib/site-url";
 import { requireSuperAdmin, getActorProfile } from "@/lib/admin-auth";
 import { auditAdminAction } from "@/lib/admin-audit";
 import { generateTempPassword } from "@/lib/temp-password";
+import { assertAdminEmailDomain } from "@/lib/admin-domains";
 
 const InviteInput = z.object({
   name: z.string().trim().min(1).max(120),
@@ -53,7 +54,10 @@ async function deliverAdminInviteEmail(input: {
 }
 
 async function assertSubAdmin(userId: string) {
-  const { data: roles } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", userId);
+  const { data: roles } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId);
   const roleList = (roles ?? []).map((r) => r.role);
   if (!roleList.includes("abw_admin")) {
     throw new Error("This user is not a sub-admin.");
@@ -69,6 +73,8 @@ export const inviteSubAdmin = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await requireSuperAdmin(context.userId);
     const email = data.email.toLowerCase();
+    // TAB 2 §2.1 — admin accounts are limited to ABW and IGE company domains.
+    assertAdminEmailDomain(email);
     const password = generateTempPassword();
 
     const { data: existingProfile } = await supabaseAdmin
@@ -92,12 +98,17 @@ export const inviteSubAdmin = createServerFn({ method: "POST" })
       });
       if (pwdErr) throw new Error(pwdErr.message);
 
-      await supabaseAdmin.from("profiles").update({
-        display_name: data.name,
-        last_login_at: null,
-      } as never).eq("id", existingProfile.id);
+      await supabaseAdmin
+        .from("profiles")
+        .update({
+          display_name: data.name,
+          last_login_at: null,
+        } as never)
+        .eq("id", existingProfile.id);
       await supabaseAdmin.from("user_roles").delete().eq("user_id", existingProfile.id);
-      await supabaseAdmin.from("user_roles").insert({ user_id: existingProfile.id, role: "abw_admin" });
+      await supabaseAdmin
+        .from("user_roles")
+        .insert({ user_id: existingProfile.id, role: "abw_admin" });
     } else {
       const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
         email,
@@ -105,7 +116,8 @@ export const inviteSubAdmin = createServerFn({ method: "POST" })
         email_confirm: true,
         user_metadata: { role: "abw_admin", full_name: data.name },
       });
-      if (createErr || !created.user) throw new Error(createErr?.message ?? "Could not create admin user");
+      if (createErr || !created.user)
+        throw new Error(createErr?.message ?? "Could not create admin user");
 
       await supabaseAdmin.from("profiles").upsert({
         id: created.user.id,
@@ -113,7 +125,9 @@ export const inviteSubAdmin = createServerFn({ method: "POST" })
         display_name: data.name,
         last_login_at: null,
       } as never);
-      await supabaseAdmin.from("user_roles").insert({ user_id: created.user.id, role: "abw_admin" });
+      await supabaseAdmin
+        .from("user_roles")
+        .insert({ user_id: created.user.id, role: "abw_admin" });
     }
 
     await deliverAdminInviteEmail({
@@ -196,7 +210,10 @@ export const listSubAdmins = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await requireSuperAdmin(context.userId);
-    const { data: roles } = await supabaseAdmin.from("user_roles").select("user_id").eq("role", "abw_admin");
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "abw_admin");
     const ids = (roles ?? []).map((r) => r.user_id);
     if (!ids.length) return { admins: [] };
 
@@ -212,7 +229,10 @@ export const recordAdminLogin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const { data: rolesData } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", userId);
+    const { data: rolesData } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
     const roles = (rolesData ?? []).map((r) => r.role);
 
     // Stamp the login for every role, not just admins. An admin-created
@@ -238,7 +258,10 @@ export const recordAdminLogin = createServerFn({ method: "POST" })
       summary: `${roleLabel} signed in (${profile?.email ?? userId})`,
       resourceType: "session",
       metadata: { roles },
-      notifyTitle: roles.includes("abw_admin") && !roles.includes("super_admin") ? "Sub-admin signed in" : undefined,
+      notifyTitle:
+        roles.includes("abw_admin") && !roles.includes("super_admin")
+          ? "Sub-admin signed in"
+          : undefined,
       notifyBody:
         roles.includes("abw_admin") && !roles.includes("super_admin")
           ? `${profile?.display_name ?? profile?.email ?? "Sub-admin"} signed in to the admin dashboard.`
@@ -250,13 +273,20 @@ export const recordAdminLogin = createServerFn({ method: "POST" })
 
 export const listAdminAuditLog = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ limit: z.number().int().min(1).max(500).optional() }).optional().parse(d))
+  .inputValidator((d) =>
+    z
+      .object({ limit: z.number().int().min(1).max(500).optional() })
+      .optional()
+      .parse(d),
+  )
   .handler(async ({ context, data }) => {
     await requireSuperAdmin(context.userId);
     const limit = data?.limit ?? 200;
     const { data: rows, error } = await supabaseAdmin
       .from("admin_audit_log" as never)
-      .select("id, created_at, actor_id, actor_email, actor_role, action, resource_type, resource_id, summary, metadata")
+      .select(
+        "id, created_at, actor_id, actor_email, actor_role, action, resource_type, resource_id, summary, metadata",
+      )
       .order("created_at", { ascending: false })
       .limit(limit);
     if (error) throw new Error(error.message);
