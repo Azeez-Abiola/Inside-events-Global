@@ -3,6 +3,13 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+/**
+ * Thrown when the signed-in account no longer exists. The client watches for
+ * this exact string to clear the dead session rather than looping on it.
+ */
+export const STALE_SESSION_MESSAGE =
+  "Your session points at an account that no longer exists. Sign out and sign up again.";
+
 const SignupRoleSchema = z.enum([
   "organiser",
   "sponsor",
@@ -36,6 +43,14 @@ export const ensureSignupRole = createServerFn({ method: "POST" })
       role: data.role,
     } as never);
     if (insErr && !insErr.message.toLowerCase().includes("duplicate")) {
+      // A JWT stays signature-valid after its account is deleted, and
+      // getClaims only verifies the signature — it never asks whether the
+      // user still exists. The foreign key is where that surfaces, as a raw
+      // Postgres error the person cannot act on. Translate it into the one
+      // thing that actually fixes it.
+      if (insErr.message.includes("user_roles_user_id_fkey")) {
+        throw new Error(STALE_SESSION_MESSAGE);
+      }
       throw new Error(insErr.message);
     }
 

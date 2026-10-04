@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isEmailConfirmed } from "@/lib/auth-email";
+import { clearStaleSession } from "@/lib/stale-session";
 import { ensureSignupRole } from "@/lib/signup.functions";
 import { saveOnboardingSection } from "@/lib/onboarding.functions";
 import { AuthShell } from "@/components/auth-shell";
@@ -67,7 +68,20 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
   }
 
   async function startOnboarding(selected: SignupRole) {
-    await assignRole(selected);
+    try {
+      await assignRole(selected);
+    } catch (e) {
+      // Signed in as an account that has since been deleted. Clear the dead
+      // session so the next attempt starts from a clean slate instead of
+      // failing on the same foreign key forever.
+      if (await clearStaleSession(e)) {
+        bootstrappedFor.current = null;
+        toast.error("That session had expired. Please sign up again.");
+        navigate({ to: "/signup", search: {}, replace: true });
+        return;
+      }
+      throw e;
+    }
     await saveOnboarding({
       data: {
         role: selected,
