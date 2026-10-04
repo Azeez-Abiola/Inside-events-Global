@@ -1,44 +1,16 @@
 // Shared taxonomies for IGE event submission form
 
-export const EVENT_TYPES = [
-  "Conference / Summit / Business Forum",
-  "Trade Show / Expo",
-  "Industry Awards",
-  "Gala Dinner / Fundraiser",
-  "Networking Mixer",
-  "Hackathon / Pitch Competition",
-  "Workshop / Masterclass",
-  "Roundtable / Boardroom",
-  "Music Festival / Concert",
-  "Cultural Festival",
-  "Art Exhibition",
-  "Film Festival / Premiere",
-  "Fashion Show / Showcase",
-  "Sports Tournament",
-  "Charity / Non-Profit Gala",
-  "Government / Public Sector Forum",
-  "Diaspora / Community Gathering",
-  "Religious / Faith-Based Event",
-  "Health & Wellness Summit",
-  "Education / EdTech Forum",
-  "Tech Conference",
-  "Fintech / Banking Summit",
-  "Real Estate / PropTech Expo",
-  "Energy / Power Summit",
-  "Agriculture / AgriTech Event",
-  "Food & Beverage Event",
-  "Travel & Tourism Expo",
-  "Automotive / Mobility Event",
-  "Telecoms / ICT Forum",
-  "Media / Creator Conference",
-  "Beauty / Lifestyle Event",
-  "Real-time Sports Viewing",
-  "Investor / VC Day",
-  "Product Launch",
-  "Brand Activation",
-  "Pop-up Experience",
-  "Other",
-];
+/**
+ * The 37 IGE event types (Appendix B). Re-exported from the single source of
+ * truth — the sector-flavoured list this file used to carry was replaced in
+ * v6.4, and legacy values on existing listings are mapped by the
+ * 20261004091000_event_type_taxonomy migration.
+ */
+export {
+  EVENT_TYPE_VALUES as EVENT_TYPES,
+  IGE_EVENT_TYPES,
+  eventTypeDescription,
+} from "./event-types";
 
 export const COUNTRIES = [
   "Nigeria",
@@ -121,25 +93,14 @@ export const EXPOSURE_CHANNELS = [
   "Other",
 ];
 
-export const PAYMENT_TERMS = [
-  "50% upfront + 50% on event day",
-  "100% upfront",
-  "Custom",
-];
+export const PAYMENT_TERMS = ["50% upfront + 50% on event day", "100% upfront", "Custom"];
 
 export const CURRENCIES = ["NGN", "USD", "GBP", "EUR"] as const;
 export type Currency = (typeof CURRENCIES)[number];
 
 export const SECTOR_EXPERTISE = PRIMARY_SECTORS;
 
-export const COMPANY_SIZES = [
-  "1–10",
-  "11–50",
-  "51–200",
-  "201–500",
-  "501–1000",
-  "1000+",
-];
+export const COMPANY_SIZES = ["1–10", "11–50", "51–200", "201–500", "501–1000", "1000+"];
 
 export const STATUS_BADGE: Record<
   string,

@@ -3,16 +3,42 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Check, Loader2, Save, Send, Upload, X, Trash2, Plus } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Loader2,
+  Save,
+  Send,
+  Upload,
+  X,
+  Trash2,
+  Plus,
+} from "lucide-react";
 import { AppShell, StatusBadge } from "@/components/app-shell";
 import { Field, TextArea, SelectField, ChipMulti, Checkbox } from "@/routes/onboarding.profile";
 import {
-  autosaveEvent, getEventForEdit, submitEvent, upsertTier, deleteTier, pickAutosavePatch,
+  autosaveEvent,
+  getEventForEdit,
+  submitEvent,
+  upsertTier,
+  deleteTier,
+  pickAutosavePatch,
 } from "@/lib/events.functions";
 import {
-  COUNTRIES, EVENT_TYPES, PRIMARY_AUDIENCES, PRIMARY_SECTORS, SENIORITY,
-  GEOGRAPHIC_MIX, EXPOSURE_CHANNELS, PAYMENT_TERMS, CURRENCIES,
+  COUNTRIES,
+  EVENT_TYPES,
+  PRIMARY_AUDIENCES,
+  PRIMARY_SECTORS,
+  SENIORITY,
+  GEOGRAPHIC_MIX,
+  EXPOSURE_CHANNELS,
+  PAYMENT_TERMS,
+  CURRENCIES,
 } from "@/lib/event-taxonomy";
+import { eventTypeDescription, isLegacyEventType } from "@/lib/event-types";
+import { InfoTip } from "@/components/info-tip";
+import { EventVisibilityFields } from "@/components/events/event-visibility-fields";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/events/edit/$id")({
@@ -21,8 +47,15 @@ export const Route = createFileRoute("/_authenticated/events/edit/$id")({
 });
 
 const STEPS = [
-  "Basics", "Contacts", "Track record", "Audience", "Sector & theme",
-  "Sponsorship economics", "Tiers", "Assets", "Review & submit",
+  "Basics",
+  "Contacts",
+  "Track record",
+  "Audience",
+  "Sector & theme",
+  "Sponsorship economics",
+  "Tiers",
+  "Assets",
+  "Review & submit",
 ];
 
 function EventEditor() {
@@ -78,10 +111,16 @@ function EventEditor() {
   async function doSave(formSnapshot: Record<string, any>, nextStep = step) {
     if (!editable) return;
     try {
-      const res = await autosave({ data: { id, step: nextStep, patch: pickAutosavePatch(formSnapshot) } });
+      const res = await autosave({
+        data: { id, step: nextStep, patch: pickAutosavePatch(formSnapshot) },
+      });
       setSavedAt(res.savedAt);
-      setForm((f) => (f ? { ...f, form_step_completed: Math.max(f.form_step_completed ?? 0, nextStep) } : f));
-    } catch (e: any) { toast.error(`Autosave: ${e.message}`); }
+      setForm((f) =>
+        f ? { ...f, form_step_completed: Math.max(f.form_step_completed ?? 0, nextStep) } : f,
+      );
+    } catch (e: any) {
+      toast.error(`Autosave: ${e.message}`);
+    }
   }
 
   async function flushSave(nextStep = step) {
@@ -90,9 +129,13 @@ function EventEditor() {
       window.clearTimeout(debouncer.current);
       debouncer.current = null;
     }
-    const res = await autosave({ data: { id, step: nextStep, patch: pickAutosavePatch(formRef.current) } });
+    const res = await autosave({
+      data: { id, step: nextStep, patch: pickAutosavePatch(formRef.current) },
+    });
     setSavedAt(res.savedAt);
-    setForm((f) => (f ? { ...f, form_step_completed: Math.max(f.form_step_completed ?? 0, nextStep) } : f));
+    setForm((f) =>
+      f ? { ...f, form_step_completed: Math.max(f.form_step_completed ?? 0, nextStep) } : f,
+    );
   }
 
   async function handleSaveDraft(nextStep = step) {
@@ -144,19 +187,37 @@ function EventEditor() {
   });
 
   if (isLoading || !form) {
-    return <AppShell><div className="flex items-center text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading…</div></AppShell>;
+    return (
+      <AppShell>
+        <div className="flex items-center text-muted-foreground">
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading…
+        </div>
+      </AppShell>
+    );
   }
 
   return (
     <AppShell>
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <Link to="/dashboard" className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"><ArrowLeft className="h-3 w-3" /> Back to dashboard</Link>
-          <h1 className="mt-1 truncate font-display text-2xl font-bold tracking-tight">{form.name || "Untitled event"}</h1>
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-3 w-3" /> Back to dashboard
+          </Link>
+          <h1 className="mt-1 truncate font-display text-2xl font-bold tracking-tight">
+            {form.name || "Untitled event"}
+          </h1>
         </div>
         <div className="flex items-center gap-3">
           <StatusBadge status={data!.event.status} />
-          {savedAt && <span className="hidden text-xs text-muted-foreground sm:inline"><Save className="mr-1 inline h-3 w-3" /> Saved {new Date(savedAt).toLocaleTimeString()}</span>}
+          {savedAt && (
+            <span className="hidden text-xs text-muted-foreground sm:inline">
+              <Save className="mr-1 inline h-3 w-3" /> Saved{" "}
+              {new Date(savedAt).toLocaleTimeString()}
+            </span>
+          )}
           {editable && (
             <button
               type="button"
@@ -174,8 +235,12 @@ function EventEditor() {
       {!editable && (
         <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
           This event is <strong>{data!.event.status.replace(/_/g, " ")}</strong> - it is read-only.
-          {data!.event.vetting_notes && <div className="mt-1 text-xs">Reviewer notes: {data!.event.vetting_notes}</div>}
-          {data!.event.rejection_reason && <div className="mt-1 text-xs">Rejection reason: {data!.event.rejection_reason}</div>}
+          {data!.event.vetting_notes && (
+            <div className="mt-1 text-xs">Reviewer notes: {data!.event.vetting_notes}</div>
+          )}
+          {data!.event.rejection_reason && (
+            <div className="mt-1 text-xs">Rejection reason: {data!.event.rejection_reason}</div>
+          )}
         </div>
       )}
 
@@ -192,12 +257,22 @@ function EventEditor() {
                   onClick={() => goToStep(i)}
                   disabled={saving}
                   className={`flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm transition-colors ${
-                    active ? "bg-brand-soft font-semibold text-primary-deep" : "text-muted-foreground hover:bg-muted"
+                    active
+                      ? "bg-brand-soft font-semibold text-primary-deep"
+                      : "text-muted-foreground hover:bg-muted"
                   }`}
                 >
-                  <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
-                    active ? "bg-brand-gradient text-white" : done ? "bg-secondary/15 text-secondary-deep" : "bg-muted text-muted-foreground"
-                  }`}>{done ? <Check className="h-3 w-3" /> : i + 1}</span>
+                  <span
+                    className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
+                      active
+                        ? "bg-brand-gradient text-white"
+                        : done
+                          ? "bg-secondary/15 text-secondary-deep"
+                          : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {done ? <Check className="h-3 w-3" /> : i + 1}
+                  </span>
                   {s}
                 </button>
               </li>
@@ -216,13 +291,19 @@ function EventEditor() {
             {step === 5 && <StepEconomics form={form} update={update} />}
           </fieldset>
           {step === 6 && (
-            <StepTiers eventId={id} currency={form.currency || "NGN"} tiers={data!.tiers} editable={editable} />
+            <StepTiers
+              eventId={id}
+              currency={form.currency || "NGN"}
+              tiers={data!.tiers}
+              editable={editable}
+            />
           )}
           <fieldset disabled={!editable} className="space-y-5">
             {step === 7 && <StepAssets eventId={id} form={form} update={update} />}
             {step === 8 && (
               <StepReview
-                form={form} update={update}
+                form={form}
+                update={update}
                 tierCount={data!.tiers.length}
                 onSubmit={() => submitMutation.mutate()}
                 submitting={submitMutation.isPending}
@@ -231,7 +312,14 @@ function EventEditor() {
             )}
           </fieldset>
           <div className="mt-8 flex justify-between border-t border-border pt-5">
-            <button type="button" onClick={() => goToStep(Math.max(0, step - 1))} disabled={step === 0 || saving} className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-3 py-2 text-sm font-medium disabled:opacity-50"><ArrowLeft className="h-4 w-4" /> Back</button>
+            <button
+              type="button"
+              onClick={() => goToStep(Math.max(0, step - 1))}
+              disabled={step === 0 || saving}
+              className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-3 py-2 text-sm font-medium disabled:opacity-50"
+            >
+              <ArrowLeft className="h-4 w-4" /> Back
+            </button>
             <div className="flex items-center gap-2">
               {editable && (
                 <button
@@ -240,13 +328,28 @@ function EventEditor() {
                   disabled={saving}
                   className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-3 py-2 text-sm font-medium disabled:opacity-50"
                 >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  {saving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
                   Save draft
                 </button>
               )}
               {step < STEPS.length - 1 && (
-                <button type="button" onClick={() => goToStep(Math.min(STEPS.length - 1, step + 1))} disabled={saving} className="inline-flex items-center gap-1 rounded-md bg-brand-gradient px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Next <ArrowRight className="h-4 w-4" /></>}
+                <button
+                  type="button"
+                  onClick={() => goToStep(Math.min(STEPS.length - 1, step + 1))}
+                  disabled={saving}
+                  className="inline-flex items-center gap-1 rounded-md bg-brand-gradient px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                >
+                  {saving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      Next <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
                 </button>
               )}
             </div>
@@ -261,32 +364,112 @@ function EventEditor() {
 function StepBasics({ form, update }: any) {
   return (
     <>
-      <Field label="Event name" required value={form.name ?? ""} onChange={(v: string) => update({ name: v })} />
+      <Field
+        label="Event name"
+        required
+        value={form.name ?? ""}
+        onChange={(v: string) => update({ name: v })}
+      />
       <div className="grid gap-4 sm:grid-cols-2">
-        <SelectField label="Event type" value={form.event_type ?? ""} onChange={(v) => update({ event_type: v })} options={EVENT_TYPES} />
-        <SelectField label="Format" value={form.format ?? ""} onChange={(v) => update({ format: v })} options={["in-person", "virtual", "hybrid"]} />
+        <div>
+          <SelectField
+            label="Event type"
+            value={form.event_type ?? ""}
+            onChange={(v) => update({ event_type: v })}
+            // A listing saved before the v6.4 taxonomy keeps its old value in
+            // the list until the owner picks a new one, rather than silently
+            // resetting to blank.
+            options={
+              isLegacyEventType(form.event_type)
+                ? [form.event_type as string, ...EVENT_TYPES]
+                : EVENT_TYPES
+            }
+          />
+          {form.event_type && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {eventTypeDescription(form.event_type) ??
+                "This type predates the current taxonomy — pick the closest match from the list."}
+            </p>
+          )}
+        </div>
+        <SelectField
+          label="Format"
+          value={form.format ?? ""}
+          onChange={(v) => update({ format: v })}
+          options={["in-person", "virtual", "hybrid"]}
+        />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Start date" type="date" value={form.start_date ?? ""} onChange={(v: string) => update({ start_date: v })} />
-        <Field label="End date" type="date" value={form.end_date ?? ""} onChange={(v: string) => update({ end_date: v })} />
+        <Field
+          label="Start date"
+          type="date"
+          value={form.start_date ?? ""}
+          onChange={(v: string) => update({ start_date: v })}
+        />
+        <Field
+          label="End date"
+          type="date"
+          value={form.end_date ?? ""}
+          onChange={(v: string) => update({ end_date: v })}
+        />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <SelectField label="Country" value={form.country ?? ""} onChange={(v) => update({ country: v })} options={COUNTRIES} />
+        <SelectField
+          label="Country"
+          value={form.country ?? ""}
+          onChange={(v) => update({ country: v })}
+          options={COUNTRIES}
+        />
         <Field label="City" value={form.city ?? ""} onChange={(v: string) => update({ city: v })} />
       </div>
-      <Field label="Venue" value={form.venue ?? ""} onChange={(v: string) => update({ venue: v })} />
-      <Field label="Event website" type="url" placeholder="https://…" value={form.website ?? ""} onChange={(v: string) => update({ website: v })} />
+      <Field
+        label="Venue"
+        value={form.venue ?? ""}
+        onChange={(v: string) => update({ venue: v })}
+      />
+      <Field
+        label="Event website"
+        type="url"
+        placeholder="https://…"
+        value={form.website ?? ""}
+        onChange={(v: string) => update({ website: v })}
+      />
+
+      <div className="border-t border-border pt-5">
+        <h3 className="mb-3 flex items-center text-sm font-semibold text-foreground">
+          Visibility &amp; reach
+          <InfoTip tip="field.event_visibility" />
+        </h3>
+        <EventVisibilityFields form={form} update={update} />
+      </div>
     </>
   );
 }
 function StepContacts({ form, update }: any) {
   return (
     <>
-      <Field label="Contact name" value={form.organiser_contact_name ?? ""} onChange={(v: string) => update({ organiser_contact_name: v })} />
-      <Field label="Role / title" value={form.organiser_contact_role ?? ""} onChange={(v: string) => update({ organiser_contact_role: v })} />
+      <Field
+        label="Contact name"
+        value={form.organiser_contact_name ?? ""}
+        onChange={(v: string) => update({ organiser_contact_name: v })}
+      />
+      <Field
+        label="Role / title"
+        value={form.organiser_contact_role ?? ""}
+        onChange={(v: string) => update({ organiser_contact_role: v })}
+      />
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Email" type="email" value={form.organiser_contact_email ?? ""} onChange={(v: string) => update({ organiser_contact_email: v })} />
-        <Field label="Phone" value={form.organiser_contact_phone ?? ""} onChange={(v: string) => update({ organiser_contact_phone: v })} />
+        <Field
+          label="Email"
+          type="email"
+          value={form.organiser_contact_email ?? ""}
+          onChange={(v: string) => update({ organiser_contact_email: v })}
+        />
+        <Field
+          label="Phone"
+          value={form.organiser_contact_phone ?? ""}
+          onChange={(v: string) => update({ organiser_contact_phone: v })}
+        />
       </div>
     </>
   );
@@ -295,9 +478,24 @@ function StepTrackRecord({ form, update }: any) {
   return (
     <>
       <div className="grid gap-4 sm:grid-cols-3">
-        <Field label="Years running" type="number" value={form.years_running_event ?? ""} onChange={(v: string) => update({ years_running_event: v ? Number(v) : null })} />
-        <Field label="Past editions" type="number" value={form.past_editions ?? ""} onChange={(v: string) => update({ past_editions: v ? Number(v) : null })} />
-        <Field label="Expected attendance" type="number" value={form.attendance_size ?? ""} onChange={(v: string) => update({ attendance_size: v ? Number(v) : null })} />
+        <Field
+          label="Years running"
+          type="number"
+          value={form.years_running_event ?? ""}
+          onChange={(v: string) => update({ years_running_event: v ? Number(v) : null })}
+        />
+        <Field
+          label="Past editions"
+          type="number"
+          value={form.past_editions ?? ""}
+          onChange={(v: string) => update({ past_editions: v ? Number(v) : null })}
+        />
+        <Field
+          label="Expected attendance"
+          type="number"
+          value={form.attendance_size ?? ""}
+          onChange={(v: string) => update({ attendance_size: v ? Number(v) : null })}
+        />
       </div>
     </>
   );
@@ -305,12 +503,32 @@ function StepTrackRecord({ form, update }: any) {
 function StepAudience({ form, update }: any) {
   return (
     <>
-      <ChipMulti label="Primary audience" options={PRIMARY_AUDIENCES} value={form.primary_audience ?? []} onChange={(v) => update({ primary_audience: v })} />
+      <ChipMulti
+        label="Primary audience"
+        options={PRIMARY_AUDIENCES}
+        value={form.primary_audience ?? []}
+        onChange={(v) => update({ primary_audience: v })}
+      />
       <div className="grid gap-4 sm:grid-cols-2">
-        <SelectField label="Audience seniority" value={form.audience_seniority ?? ""} onChange={(v) => update({ audience_seniority: v })} options={SENIORITY} />
-        <Field label="% decision makers" type="number" value={form.decision_makers_pct ?? ""} onChange={(v: string) => update({ decision_makers_pct: v ? Number(v) : null })} />
+        <SelectField
+          label="Audience seniority"
+          value={form.audience_seniority ?? ""}
+          onChange={(v) => update({ audience_seniority: v })}
+          options={SENIORITY}
+        />
+        <Field
+          label="% decision makers"
+          type="number"
+          value={form.decision_makers_pct ?? ""}
+          onChange={(v: string) => update({ decision_makers_pct: v ? Number(v) : null })}
+        />
       </div>
-      <ChipMulti label="Geographic mix" options={GEOGRAPHIC_MIX} value={form.geographic_mix ?? []} onChange={(v) => update({ geographic_mix: v })} />
+      <ChipMulti
+        label="Geographic mix"
+        options={GEOGRAPHIC_MIX}
+        value={form.geographic_mix ?? []}
+        onChange={(v) => update({ geographic_mix: v })}
+      />
     </>
   );
 }
@@ -318,10 +536,24 @@ function StepSector({ form, update }: any) {
   return (
     <>
       <div className="grid gap-4 sm:grid-cols-2">
-        <SelectField label="Primary sector" value={form.primary_sector ?? ""} onChange={(v) => update({ primary_sector: v })} options={PRIMARY_SECTORS} />
-        <SelectField label="Secondary sector" value={form.secondary_sector ?? ""} onChange={(v) => update({ secondary_sector: v })} options={PRIMARY_SECTORS} />
+        <SelectField
+          label="Primary sector"
+          value={form.primary_sector ?? ""}
+          onChange={(v) => update({ primary_sector: v })}
+          options={PRIMARY_SECTORS}
+        />
+        <SelectField
+          label="Secondary sector"
+          value={form.secondary_sector ?? ""}
+          onChange={(v) => update({ secondary_sector: v })}
+          options={PRIMARY_SECTORS}
+        />
       </div>
-      <Field label="Event theme / tagline" value={form.event_theme ?? ""} onChange={(v: string) => update({ event_theme: v })} />
+      <Field
+        label="Event theme / tagline"
+        value={form.event_theme ?? ""}
+        onChange={(v: string) => update({ event_theme: v })}
+      />
     </>
   );
 }
@@ -329,25 +561,73 @@ function StepEconomics({ form, update }: any) {
   return (
     <>
       <div className="grid gap-4 sm:grid-cols-3">
-        <Field label="Minimum sponsorship spend" type="number" value={form.min_sponsorship_spend ?? ""} onChange={(v: string) => update({ min_sponsorship_spend: v ? Number(v) : null })} />
-        <SelectField label="Currency" value={form.currency ?? "NGN"} onChange={(v) => update({ currency: v })} options={[...CURRENCIES]} />
-        <Field label="Speaking slots" type="number" value={form.speaking_slots ?? ""} onChange={(v: string) => update({ speaking_slots: v ? Number(v) : null })} />
+        <Field
+          label="Minimum sponsorship spend"
+          type="number"
+          value={form.min_sponsorship_spend ?? ""}
+          onChange={(v: string) => update({ min_sponsorship_spend: v ? Number(v) : null })}
+        />
+        <SelectField
+          label="Currency"
+          value={form.currency ?? "NGN"}
+          onChange={(v) => update({ currency: v })}
+          options={[...CURRENCIES]}
+        />
+        <Field
+          label="Speaking slots"
+          type="number"
+          value={form.speaking_slots ?? ""}
+          onChange={(v: string) => update({ speaking_slots: v ? Number(v) : null })}
+        />
       </div>
-      <ChipMulti label="Exposure channels offered" options={EXPOSURE_CHANNELS} value={form.exposure_channels ?? []} onChange={(v) => update({ exposure_channels: v })} />
+      <ChipMulti
+        label="Exposure channels offered"
+        options={EXPOSURE_CHANNELS}
+        value={form.exposure_channels ?? []}
+        onChange={(v) => update({ exposure_channels: v })}
+      />
       <div className="grid gap-3 sm:grid-cols-3">
-        <Checkbox label="Speaking opportunities" checked={!!form.speaking_opps} onChange={(v) => update({ speaking_opps: v })} />
-        <Checkbox label="Lead capture provided" checked={!!form.lead_capture} onChange={(v) => update({ lead_capture: v })} />
-        <Checkbox label="Post-event report" checked={!!form.post_event_report} onChange={(v) => update({ post_event_report: v })} />
+        <Checkbox
+          label="Speaking opportunities"
+          checked={!!form.speaking_opps}
+          onChange={(v) => update({ speaking_opps: v })}
+        />
+        <Checkbox
+          label="Lead capture provided"
+          checked={!!form.lead_capture}
+          onChange={(v) => update({ lead_capture: v })}
+        />
+        <Checkbox
+          label="Post-event report"
+          checked={!!form.post_event_report}
+          onChange={(v) => update({ post_event_report: v })}
+        />
       </div>
     </>
   );
 }
 
-function StepTiers({ eventId, currency, tiers, editable }: { eventId: string; currency: string; tiers: any[]; editable: boolean }) {
+function StepTiers({
+  eventId,
+  currency,
+  tiers,
+  editable,
+}: {
+  eventId: string;
+  currency: string;
+  tiers: any[];
+  editable: boolean;
+}) {
   const qc = useQueryClient();
   const upsert = useServerFn(upsertTier);
   const remove = useServerFn(deleteTier);
-  const [draft, setDraft] = useState({ tier_name: "", price: "", slots_total: "1", is_exclusive: false, custom_options: "" });
+  const [draft, setDraft] = useState({
+    tier_name: "",
+    price: "",
+    slots_total: "1",
+    is_exclusive: false,
+    custom_options: "",
+  });
   const upsertMut = useMutation({
     mutationFn: (payload: any) => upsert({ data: payload }),
     onSuccess: (res) => {
@@ -360,7 +640,13 @@ function StepTiers({ eventId, currency, tiers, editable }: { eventId: string; cu
         return { ...old, tiers };
       });
       qc.invalidateQueries({ queryKey: ["event", eventId] });
-      setDraft({ tier_name: "", price: "", slots_total: "1", is_exclusive: false, custom_options: "" });
+      setDraft({
+        tier_name: "",
+        price: "",
+        slots_total: "1",
+        is_exclusive: false,
+        custom_options: "",
+      });
       toast.success("Tier saved");
     },
     onError: (e: any) => toast.error(e.message),
@@ -380,18 +666,30 @@ function StepTiers({ eventId, currency, tiers, editable }: { eventId: string; cu
   return (
     <>
       <div className="space-y-2">
-        {tiers.length === 0 && <p className="text-sm text-muted-foreground">No tiers yet - add your first one below.</p>}
+        {tiers.length === 0 && (
+          <p className="text-sm text-muted-foreground">No tiers yet - add your first one below.</p>
+        )}
         {tiers.map((t, i) => (
-          <div key={t.id} className="flex items-center justify-between rounded-lg border border-border bg-background p-3">
+          <div
+            key={t.id}
+            className="flex items-center justify-between rounded-lg border border-border bg-background p-3"
+          >
             <div>
               <div className="font-semibold">{t.tier_name}</div>
               <div className="text-xs text-muted-foreground">
-                {t.currency} {Number(t.price).toLocaleString()} · {t.slots_total} slot{t.slots_total === 1 ? "" : "s"}
+                {t.currency} {Number(t.price).toLocaleString()} · {t.slots_total} slot
+                {t.slots_total === 1 ? "" : "s"}
                 {t.is_exclusive && " · exclusive"}
               </div>
             </div>
             {editable && (
-              <button type="button" onClick={() => delMut.mutate(t.id)} className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
+              <button
+                type="button"
+                onClick={() => delMut.mutate(t.id)}
+                className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
             )}
           </div>
         ))}
@@ -399,26 +697,57 @@ function StepTiers({ eventId, currency, tiers, editable }: { eventId: string; cu
       {editable && (
         <div className="rounded-xl border border-dashed border-border p-4">
           <div className="grid gap-3 sm:grid-cols-3">
-            <Field label="Tier name" value={draft.tier_name} onChange={(v: string) => setDraft({ ...draft, tier_name: v })} />
-            <Field label={`Price (${currency})`} type="number" value={draft.price} onChange={(v: string) => setDraft({ ...draft, price: v })} />
-            <Field label="Total slots" type="number" value={draft.slots_total} onChange={(v: string) => setDraft({ ...draft, slots_total: v })} />
+            <Field
+              label="Tier name"
+              value={draft.tier_name}
+              onChange={(v: string) => setDraft({ ...draft, tier_name: v })}
+            />
+            <Field
+              label={`Price (${currency})`}
+              type="number"
+              value={draft.price}
+              onChange={(v: string) => setDraft({ ...draft, price: v })}
+            />
+            <Field
+              label="Total slots"
+              type="number"
+              value={draft.slots_total}
+              onChange={(v: string) => setDraft({ ...draft, slots_total: v })}
+            />
           </div>
           <div className="mt-3 flex items-center justify-between gap-3">
-            <Checkbox label="Exclusive (single slot only)" checked={draft.is_exclusive} onChange={(v) => setDraft({ ...draft, is_exclusive: v })} />
+            <Checkbox
+              label="Exclusive (single slot only)"
+              checked={draft.is_exclusive}
+              onChange={(v) => setDraft({ ...draft, is_exclusive: v })}
+            />
             <button
               type="button"
               disabled={upsertMut.isPending}
               onClick={() => {
-                if (!draft.tier_name.trim() || !draft.price) return toast.error("Tier name and price required");
+                if (!draft.tier_name.trim() || !draft.price)
+                  return toast.error("Tier name and price required");
                 upsertMut.mutate({
-                  event_id: eventId, tier_name: draft.tier_name.trim(),
-                  price: Number(draft.price), currency,
-                  slots_total: Number(draft.slots_total) || 1, is_exclusive: draft.is_exclusive,
-                  custom_options: draft.custom_options || null, display_order: tiers.length, assets: [],
+                  event_id: eventId,
+                  tier_name: draft.tier_name.trim(),
+                  price: Number(draft.price),
+                  currency,
+                  slots_total: Number(draft.slots_total) || 1,
+                  is_exclusive: draft.is_exclusive,
+                  custom_options: draft.custom_options || null,
+                  display_order: tiers.length,
+                  assets: [],
                 });
               }}
               className="inline-flex items-center gap-1 rounded-md bg-brand-gradient px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
-            >{upsertMut.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />} Add tier</button>
+            >
+              {upsertMut.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Plus className="h-3.5 w-3.5" />
+              )}{" "}
+              Add tier
+            </button>
           </div>
         </div>
       )}
@@ -429,20 +758,58 @@ function StepTiers({ eventId, currency, tiers, editable }: { eventId: string; cu
 function StepAssets({ eventId, form, update }: any) {
   return (
     <>
-      <AssetUpload label="Sponsorship deck (PDF)" accept=".pdf" eventId={eventId} field="sponsorship_deck_url" value={form.sponsorship_deck_url} update={update} />
-      <AssetUpload label="Banner image" accept="image/*" eventId={eventId} field="banner_image_url" value={form.banner_image_url} update={update} />
-      <AssetUpload label="Floor plan (optional)" accept="image/*,.pdf" eventId={eventId} field="floor_plan_url" value={form.floor_plan_url} update={update} />
+      <AssetUpload
+        label="Sponsorship deck (PDF)"
+        accept=".pdf"
+        eventId={eventId}
+        field="sponsorship_deck_url"
+        value={form.sponsorship_deck_url}
+        update={update}
+      />
+      <AssetUpload
+        label="Banner image"
+        accept="image/*"
+        eventId={eventId}
+        field="banner_image_url"
+        value={form.banner_image_url}
+        update={update}
+      />
+      <AssetUpload
+        label="Floor plan (optional)"
+        accept="image/*,.pdf"
+        eventId={eventId}
+        field="floor_plan_url"
+        value={form.floor_plan_url}
+        update={update}
+      />
     </>
   );
 }
 
-function AssetUpload({ label, accept, eventId, field, value, update }: { label: string; accept: string; eventId: string; field: string; value: string | null; update: (p: any) => void }) {
+function AssetUpload({
+  label,
+  accept,
+  eventId,
+  field,
+  value,
+  update,
+}: {
+  label: string;
+  accept: string;
+  eventId: string;
+  field: string;
+  value: string | null;
+  update: (p: any) => void;
+}) {
   const [uploading, setUploading] = useState(false);
   async function onFile(f: File | null) {
     if (!f) return;
     setUploading(true);
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
       if (authError || !user) throw new Error("You must be signed in to upload files");
 
       // Storage RLS requires the first path segment to be auth.uid().
@@ -467,14 +834,37 @@ function AssetUpload({ label, accept, eventId, field, value, update }: { label: 
       <div className="mb-1.5 text-sm font-medium">{label}</div>
       {value ? (
         <div className="flex items-center justify-between rounded-lg border border-border bg-background p-3 text-sm">
-          <a href={value} target="_blank" rel="noreferrer" className="truncate text-primary hover:underline">{value.split("/").pop()}</a>
-          <button onClick={() => update({ [field]: null })} className="rounded-md p-1 text-muted-foreground hover:bg-muted"><X className="h-4 w-4" /></button>
+          <a
+            href={value}
+            target="_blank"
+            rel="noreferrer"
+            className="truncate text-primary hover:underline"
+          >
+            {value.split("/").pop()}
+          </a>
+          <button
+            onClick={() => update({ [field]: null })}
+            className="rounded-md p-1 text-muted-foreground hover:bg-muted"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
       ) : (
-        <label className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-background p-6 text-sm text-muted-foreground hover:bg-muted ${uploading ? "opacity-60" : ""}`}>
-          {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+        <label
+          className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-background p-6 text-sm text-muted-foreground hover:bg-muted ${uploading ? "opacity-60" : ""}`}
+        >
+          {uploading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Upload className="h-4 w-4" />
+          )}
           {uploading ? "Uploading…" : "Click to upload"}
-          <input type="file" accept={accept} className="hidden" onChange={(e) => onFile(e.target.files?.[0] ?? null)} />
+          <input
+            type="file"
+            accept={accept}
+            className="hidden"
+            onChange={(e) => onFile(e.target.files?.[0] ?? null)}
+          />
         </label>
       )}
     </div>
@@ -484,7 +874,8 @@ function AssetUpload({ label, accept, eventId, field, value, update }: { label: 
 function getSubmitBlockers(form: Record<string, any>, tierCount: number) {
   const blockers: string[] = [];
   if (!form.consent_given) blockers.push("Confirm the accuracy consent checkbox");
-  if (!form.sponsorship_deck_url) blockers.push("Upload a sponsorship deck (PDF) in the Assets step");
+  if (!form.sponsorship_deck_url)
+    blockers.push("Upload a sponsorship deck (PDF) in the Assets step");
   if (!form.banner_image_url) blockers.push("Upload a banner image in the Assets step");
   if (tierCount < 1) blockers.push("Add at least one sponsorship tier in the Tiers step");
   return blockers;
@@ -508,7 +899,10 @@ function StepReview({ form, update, tierCount, onSubmit, submitting, editable }:
             : " You'll be notified when the IGE team completes the review."}
         </p>
         {form.slug && (form.status === "approved" || form.status === "listed") && (
-          <a href={`/events/${form.slug}`} className="mt-4 inline-block rounded-md bg-brand-gradient px-4 py-2 text-sm font-semibold text-white">
+          <a
+            href={`/events/${form.slug}`}
+            className="mt-4 inline-block rounded-md bg-brand-gradient px-4 py-2 text-sm font-semibold text-white"
+          >
             View public listing →
           </a>
         )}
@@ -519,24 +913,42 @@ function StepReview({ form, update, tierCount, onSubmit, submitting, editable }:
   return (
     <>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Sponsorship deadline" type="date" value={form.sponsorship_deadline ?? ""} onChange={(v: string) => update({ sponsorship_deadline: v })} />
-        <SelectField label="Payment terms" value={form.payment_terms ?? ""} onChange={(v) => update({ payment_terms: v })} options={PAYMENT_TERMS} />
+        <Field
+          label="Sponsorship deadline"
+          type="date"
+          value={form.sponsorship_deadline ?? ""}
+          onChange={(v: string) => update({ sponsorship_deadline: v })}
+        />
+        <SelectField
+          label="Payment terms"
+          value={form.payment_terms ?? ""}
+          onChange={(v) => update({ payment_terms: v })}
+          options={PAYMENT_TERMS}
+        />
       </div>
-      <Checkbox label="I'd like ABW to manage sponsorships on my behalf (optional)" checked={!!form.abw_management_requested} onChange={(v) => update({ abw_management_requested: v })} />
+      <Checkbox
+        label="I'd like ABW to manage sponsorships on my behalf (optional)"
+        checked={!!form.abw_management_requested}
+        onChange={(v) => update({ abw_management_requested: v })}
+      />
       <Checkbox
         label="I confirm I have the right to list this event and that the information provided is accurate."
-        checked={!!form.consent_given} onChange={(v) => update({ consent_given: v })}
+        checked={!!form.consent_given}
+        onChange={(v) => update({ consent_given: v })}
       />
       {blockers.length > 0 && (
         <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           <div className="font-semibold">Before you can submit:</div>
           <ul className="mt-2 list-disc space-y-1 pl-5">
-            {blockers.map((item) => <li key={item}>{item}</li>)}
+            {blockers.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
           </ul>
         </div>
       )}
       <div className="rounded-md border border-border bg-muted/30 p-4 text-xs text-muted-foreground">
-        Submitting moves your event into IGE's vetting queue. You'll be notified by email when it's approved, listed, or sent back for revisions.
+        Submitting moves your event into IGE's vetting queue. You'll be notified by email when it's
+        approved, listed, or sent back for revisions.
       </div>
       <button
         type="button"

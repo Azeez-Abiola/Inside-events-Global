@@ -12,6 +12,7 @@ import { fmtDual } from "@/lib/currency";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { useAuth } from "@/lib/auth-context";
 import { Search, SlidersHorizontal, MapPin, Calendar, Users, ShieldCheck, X } from "lucide-react";
+import { connectWithLabel } from "@/lib/connect-with";
 
 const FORMAT_LABELS: Record<string, string> = {
   in_person: "In person",
@@ -61,10 +62,7 @@ export function MarketplaceBrowser({
     queryFn: () => fetchFacets({ data: facetParams }),
   });
 
-  const params = useMemo(
-    () => ({ q: q || undefined, ...filters, per_page: 12 }),
-    [q, filters],
-  );
+  const params = useMemo(() => ({ q: q || undefined, ...filters, per_page: 12 }), [q, filters]);
   const { data, isLoading } = useQuery({
     queryKey: ["marketplace", params, isSponsor],
     queryFn: () =>
@@ -87,7 +85,8 @@ export function MarketplaceBrowser({
       const event_types = f.event_types.filter((v) => facets.event_types.includes(v));
       const sectors = f.sectors.filter((v) => facets.sectors.includes(v));
       const countries = f.countries.filter((v) => facets.countries.includes(v));
-      const format = f.format !== "all" && !facets.formats.includes(f.format) ? ("all" as const) : f.format;
+      const format =
+        f.format !== "all" && !facets.formats.includes(f.format) ? ("all" as const) : f.format;
       if (
         event_types.join() === f.event_types.join() &&
         sectors.join() === f.sectors.join() &&
@@ -108,21 +107,33 @@ export function MarketplaceBrowser({
     activeChips.push({
       key: `et-${t}`,
       label: t,
-      onRemove: () => toggle("event_types", filters.event_types.filter((x) => x !== t)),
+      onRemove: () =>
+        toggle(
+          "event_types",
+          filters.event_types.filter((x) => x !== t),
+        ),
     }),
   );
   filters.sectors.forEach((s) =>
     activeChips.push({
       key: `s-${s}`,
       label: s,
-      onRemove: () => toggle("sectors", filters.sectors.filter((x) => x !== s)),
+      onRemove: () =>
+        toggle(
+          "sectors",
+          filters.sectors.filter((x) => x !== s),
+        ),
     }),
   );
   filters.countries.forEach((c) =>
     activeChips.push({
       key: `c-${c}`,
       label: c,
-      onRemove: () => toggle("countries", filters.countries.filter((x) => x !== c)),
+      onRemove: () =>
+        toggle(
+          "countries",
+          filters.countries.filter((x) => x !== c),
+        ),
     }),
   );
   if (filters.format !== "all") {
@@ -151,7 +162,9 @@ export function MarketplaceBrowser({
               </p>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">{total.toLocaleString()} vetted events seeking sponsors</p>
+            <p className="text-sm text-muted-foreground">
+              {total.toLocaleString()} vetted events seeking sponsors
+            </p>
           )}
           <div className="flex items-center gap-2">
             <select
@@ -364,7 +377,9 @@ export function MarketplaceBrowser({
 function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="mb-5 border-b border-border pb-4">
-      <div className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </div>
       {children}
     </div>
   );
@@ -434,7 +449,9 @@ function MarketplaceEventCard({ event }: { event: any }) {
         <div className="mb-2 inline-flex rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-semibold text-primary-deep">
           {event.event_type ?? "Event"}
         </div>
-        <h3 className="line-clamp-2 font-display text-base font-bold leading-tight">{event.name}</h3>
+        <h3 className="line-clamp-2 font-display text-base font-bold leading-tight">
+          {event.name}
+        </h3>
         <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <MapPin className="h-3 w-3" />
@@ -460,6 +477,23 @@ function MarketplaceEventCard({ event }: { event: any }) {
             </span>
           )}
         </div>
+        {/* TAB 1 §1.5: "Each card also shows who the owner is looking to
+            connect with, as labels for one or more IGE user types." */}
+        {event.looking_to_connect_with?.length ? (
+          <div className="mt-2 flex flex-wrap items-center gap-1">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              Seeking
+            </span>
+            {event.looking_to_connect_with.map((who: string) => (
+              <span
+                key={who}
+                className="rounded-full border border-accent/40 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent"
+              >
+                {connectWithLabel(who)}
+              </span>
+            ))}
+          </div>
+        ) : null}
         {event.starting && (
           <div className="mt-3 border-t border-border pt-2 text-sm">
             <span className="text-muted-foreground">From </span>

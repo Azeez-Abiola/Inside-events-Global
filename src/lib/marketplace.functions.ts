@@ -43,37 +43,37 @@ export const getMarketplaceFilterOptions = createServerFn({ method: "POST" })
   .inputValidator((d) => FacetInput.parse(d ?? {}))
   .handler(async ({ data }) => {
     try {
-    let q = supabasePublic
-      .from("events")
-      .select("event_type, primary_sector, country, format, ige_vetted, decision_makers_pct")
-      .in("status", ["approved", "listed"]);
-
-    if (data.vetted_only) q = q.eq("ige_vetted", true);
-    if (data.featured_only) q = q.eq("is_featured", true);
-    if (data.decision_makers) q = q.gte("decision_makers_pct", 30);
-
-    const [{ data: events, error }, { data: allLive, error: allErr }] = await Promise.all([
-      q,
-      supabasePublic
+      let q = supabasePublic
         .from("events")
-        .select("ige_vetted, decision_makers_pct")
-        .in("status", ["approved", "listed"]),
-    ]);
-    if (error) throw new Error(error.message);
-    if (allErr) throw new Error(allErr.message);
+        .select("event_type, primary_sector, country, format, ige_vetted, decision_makers_pct")
+        .in("status", ["approved", "listed"]);
 
-    const rows = events ?? [];
-    const live = allLive ?? [];
+      if (data.vetted_only) q = q.eq("ige_vetted", true);
+      if (data.featured_only) q = q.eq("is_featured", true);
+      if (data.decision_makers) q = q.gte("decision_makers_pct", 30);
 
-    return {
-      event_types: uniqueSorted(rows.map((e) => e.event_type)),
-      sectors: uniqueSorted(rows.map((e) => e.primary_sector)),
-      countries: uniqueSorted(rows.map((e) => e.country)),
-      formats: uniqueSorted(rows.map((e) => e.format)),
-      has_vetted_events: live.some((e) => e.ige_vetted),
-      has_non_vetted_events: live.some((e) => !e.ige_vetted),
-      has_decision_maker_events: live.some((e) => (e.decision_makers_pct ?? 0) >= 30),
-    };
+      const [{ data: events, error }, { data: allLive, error: allErr }] = await Promise.all([
+        q,
+        supabasePublic
+          .from("events")
+          .select("ige_vetted, decision_makers_pct")
+          .in("status", ["approved", "listed"]),
+      ]);
+      if (error) throw new Error(error.message);
+      if (allErr) throw new Error(allErr.message);
+
+      const rows = events ?? [];
+      const live = allLive ?? [];
+
+      return {
+        event_types: uniqueSorted(rows.map((e) => e.event_type)),
+        sectors: uniqueSorted(rows.map((e) => e.primary_sector)),
+        countries: uniqueSorted(rows.map((e) => e.country)),
+        formats: uniqueSorted(rows.map((e) => e.format)),
+        has_vetted_events: live.some((e) => e.ige_vetted),
+        has_non_vetted_events: live.some((e) => !e.ige_vetted),
+        has_decision_maker_events: live.some((e) => (e.decision_makers_pct ?? 0) >= 30),
+      };
     } catch (e) {
       console.error("[getMarketplaceFilterOptions]", e);
       return {
@@ -92,81 +92,93 @@ export const listMarketplaceEvents = createServerFn({ method: "POST" })
   .inputValidator((d) => FilterInput.parse(d))
   .handler(async ({ data }) => {
     try {
-    let q = supabasePublic
-      .from("events")
-      .select(
-        "id, slug, name, event_type, format, start_date, end_date, city, country, primary_sector, attendance_size, decision_makers_pct, banner_image_url, ige_vetted, is_featured, currency, created_at, organiser_id",
-        { count: "exact" },
-      )
-      .in("status", ["approved", "listed"]);
+      let q = supabasePublic
+        .from("events")
+        .select(
+          "id, slug, name, event_type, format, start_date, end_date, city, country, primary_sector, attendance_size, decision_makers_pct, banner_image_url, ige_vetted, is_featured, currency, created_at, organiser_id, looking_to_connect_with",
+          { count: "exact" },
+        )
+        .in("status", ["approved", "listed"])
+        // RLS already excludes private events; this keeps the service-role and
+        // public paths behaving the same way (TAB 3 §3.6.1 Section B).
+        // `visibility` postdates the last `supabase gen types` run, hence the
+        // cast — the same one `is_featured` below already needs.
+        .eq("visibility" as never, "published");
 
-    if (data.vetted_only) q = q.eq("ige_vetted", true);
-    if (data.featured_only) q = q.eq("is_featured", true);
-    if (data.decision_makers) q = q.gte("decision_makers_pct", 30);
-    if (data.event_types?.length) q = q.in("event_type", data.event_types);
-    if (data.sectors?.length) q = q.in("primary_sector", data.sectors);
-    if (data.countries?.length) q = q.in("country", data.countries);
-    if (data.city) q = q.ilike("city", `%${data.city}%`);
-    if (data.format !== "all") q = q.eq("format", data.format);
-    if (data.date_from) q = q.gte("start_date", data.date_from);
-    if (data.date_to) q = q.lte("start_date", data.date_to);
-    if (data.audience_min !== undefined) q = q.gte("attendance_size", data.audience_min);
-    if (data.audience_max !== undefined) q = q.lte("attendance_size", data.audience_max);
-    if (data.q) {
-      const term = data.q.replace(/[%_]/g, " ");
-      q = q.or(
-        `name.ilike.%${term}%,event_theme.ilike.%${term}%,city.ilike.%${term}%,primary_sector.ilike.%${term}%`,
-      );
-    }
-
-    if (data.sort === "newest") q = q.order("created_at", { ascending: false });
-    else if (data.sort === "soonest") q = q.order("start_date", { ascending: true, nullsFirst: false });
-    else if (data.sort === "audience") q = q.order("attendance_size", { ascending: false, nullsFirst: false });
-    else q = q.order("created_at", { ascending: false });
-
-    const fetchPerPage = data.sort === "best_match" ? Math.min(48, data.per_page * 3) : data.per_page;
-    const from = data.sort === "best_match" ? 0 : (data.page - 1) * data.per_page;
-    q = q.range(from, from + fetchPerPage - 1);
-
-    const { data: events, error, count } = await q;
-    if (error) throw new Error(error.message);
-
-    // cheapest tier per event for "From X" pricing
-    const ids = (events ?? []).map((e) => e.id);
-    let priceMap: Record<string, { price: number; currency: string } | null> = {};
-    if (ids.length) {
-      const { data: tiers } = await supabasePublic
-        .from("event_sponsorship_tiers")
-        .select("event_id, price, currency")
-        .in("event_id", ids)
-        .order("price", { ascending: true });
-      for (const t of tiers ?? []) {
-        if (!priceMap[t.event_id]) priceMap[t.event_id] = { price: Number(t.price), currency: t.currency };
+      if (data.vetted_only) q = q.eq("ige_vetted", true);
+      if (data.featured_only) q = q.eq("is_featured", true);
+      if (data.decision_makers) q = q.gte("decision_makers_pct", 30);
+      if (data.event_types?.length) q = q.in("event_type", data.event_types);
+      if (data.sectors?.length) q = q.in("primary_sector", data.sectors);
+      if (data.countries?.length) q = q.in("country", data.countries);
+      if (data.city) q = q.ilike("city", `%${data.city}%`);
+      if (data.format !== "all") q = q.eq("format", data.format);
+      if (data.date_from) q = q.gte("start_date", data.date_from);
+      if (data.date_to) q = q.lte("start_date", data.date_to);
+      if (data.audience_min !== undefined) q = q.gte("attendance_size", data.audience_min);
+      if (data.audience_max !== undefined) q = q.lte("attendance_size", data.audience_max);
+      if (data.q) {
+        const term = data.q.replace(/[%_]/g, " ");
+        q = q.or(
+          `name.ilike.%${term}%,event_theme.ilike.%${term}%,city.ilike.%${term}%,primary_sector.ilike.%${term}%`,
+        );
       }
-    }
 
-    const organiserIds = Array.from(new Set((events ?? []).map((e) => e.organiser_id).filter(Boolean))) as string[];
-    let organiserCompleteMap: Record<string, number> = {};
-    if (organiserIds.length) {
-      const { data: orgProfiles } = await supabaseAdmin
-        .from("profiles")
-        .select("id, profile_complete")
-        .in("id", organiserIds);
-      for (const p of orgProfiles ?? []) organiserCompleteMap[p.id] = Number(p.profile_complete ?? 0);
-    }
+      if (data.sort === "newest") q = q.order("created_at", { ascending: false });
+      else if (data.sort === "soonest")
+        q = q.order("start_date", { ascending: true, nullsFirst: false });
+      else if (data.sort === "audience")
+        q = q.order("attendance_size", { ascending: false, nullsFirst: false });
+      else q = q.order("created_at", { ascending: false });
 
-    let mapped = (events ?? []).map((e) => ({ ...e, starting: priceMap[e.id] ?? null }));
+      const fetchPerPage =
+        data.sort === "best_match" ? Math.min(48, data.per_page * 3) : data.per_page;
+      const from = data.sort === "best_match" ? 0 : (data.page - 1) * data.per_page;
+      q = q.range(from, from + fetchPerPage - 1);
 
-    if (data.sort !== "best_match") {
-      mapped = applyOrganiserDiscoverability(mapped, organiserCompleteMap);
-    }
+      const { data: events, error, count } = await q;
+      if (error) throw new Error(error.message);
 
-    return {
-      events: mapped,
-      total: count ?? 0,
-      page: data.page,
-      per_page: data.per_page,
-    };
+      // cheapest tier per event for "From X" pricing
+      const ids = (events ?? []).map((e) => e.id);
+      let priceMap: Record<string, { price: number; currency: string } | null> = {};
+      if (ids.length) {
+        const { data: tiers } = await supabasePublic
+          .from("event_sponsorship_tiers")
+          .select("event_id, price, currency")
+          .in("event_id", ids)
+          .order("price", { ascending: true });
+        for (const t of tiers ?? []) {
+          if (!priceMap[t.event_id])
+            priceMap[t.event_id] = { price: Number(t.price), currency: t.currency };
+        }
+      }
+
+      const organiserIds = Array.from(
+        new Set((events ?? []).map((e) => e.organiser_id).filter(Boolean)),
+      ) as string[];
+      let organiserCompleteMap: Record<string, number> = {};
+      if (organiserIds.length) {
+        const { data: orgProfiles } = await supabaseAdmin
+          .from("profiles")
+          .select("id, profile_complete")
+          .in("id", organiserIds);
+        for (const p of orgProfiles ?? [])
+          organiserCompleteMap[p.id] = Number(p.profile_complete ?? 0);
+      }
+
+      let mapped = (events ?? []).map((e) => ({ ...e, starting: priceMap[e.id] ?? null }));
+
+      if (data.sort !== "best_match") {
+        mapped = applyOrganiserDiscoverability(mapped, organiserCompleteMap);
+      }
+
+      return {
+        events: mapped,
+        total: count ?? 0,
+        page: data.page,
+        per_page: data.per_page,
+      };
     } catch (e) {
       console.error("[listMarketplaceEvents]", e);
       return { events: [], total: 0, page: data.page, per_page: data.per_page };
@@ -218,14 +230,17 @@ export const listMarketplaceEventsForSponsor = createServerFn({ method: "POST" }
           .in("event_id", ids)
           .order("price", { ascending: true });
         for (const t of tiers ?? []) {
-          if (!priceMap[t.event_id]) priceMap[t.event_id] = { price: Number(t.price), currency: t.currency };
+          if (!priceMap[t.event_id])
+            priceMap[t.event_id] = { price: Number(t.price), currency: t.currency };
         }
       }
 
       const [{ data: sp }, { data: bp }] = await Promise.all([
         supabaseAdmin
           .from("sponsor_profiles")
-          .select("sponsorship_sectors, target_geographies, budget_range_min, budget_range_max, preferred_currency")
+          .select(
+            "sponsorship_sectors, target_geographies, budget_range_min, budget_range_max, preferred_currency",
+          )
           .eq("user_id", userId)
           .maybeSingle(),
         supabaseAdmin.from("profiles").select("profile_complete").eq("id", userId).maybeSingle(),
@@ -240,11 +255,17 @@ export const listMarketplaceEventsForSponsor = createServerFn({ method: "POST" }
         profile_complete: Number(bp?.profile_complete ?? 0),
       };
 
-      const organiserIds = Array.from(new Set((events ?? []).map((e) => e.organiser_id).filter(Boolean))) as string[];
+      const organiserIds = Array.from(
+        new Set((events ?? []).map((e) => e.organiser_id).filter(Boolean)),
+      ) as string[];
       let organiserCompleteMap: Record<string, number> = {};
       if (organiserIds.length) {
-        const { data: orgProfiles } = await supabaseAdmin.from("profiles").select("id, profile_complete").in("id", organiserIds);
-        for (const p of orgProfiles ?? []) organiserCompleteMap[p.id] = Number(p.profile_complete ?? 0);
+        const { data: orgProfiles } = await supabaseAdmin
+          .from("profiles")
+          .select("id, profile_complete")
+          .in("id", organiserIds);
+        for (const p of orgProfiles ?? [])
+          organiserCompleteMap[p.id] = Number(p.profile_complete ?? 0);
       }
 
       const withMeta = (events ?? []).map((e) => ({ ...e, starting: priceMap[e.id] ?? null }));
@@ -271,45 +292,47 @@ export const getPublicEventBySlug = createServerFn({ method: "POST" })
   .inputValidator((d: { slug: string }) => z.object({ slug: z.string().min(1).max(200) }).parse(d))
   .handler(async ({ data }) => {
     try {
-    const { data: ev, error } = await supabasePublic
-      .from("events")
-      .select("*")
-      .eq("slug", data.slug)
-      .in("status", ["approved", "listed"])
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!ev) return { event: null, tiers: [], organiser: null };
-
-    const [{ data: tiers }, { data: organiser }, { data: organiserAccount }] = await Promise.all([
-      supabasePublic
-        .from("event_sponsorship_tiers")
+      const { data: ev, error } = await supabasePublic
+        .from("events")
         .select("*")
-        .eq("event_id", ev.id)
-        .order("display_order"),
-      ev.organiser_id
-        ? supabasePublic
-            .from("organiser_profiles")
-            .select("org_name, logo_url, bio, website, track_record, event_history, past_sponsor_logos")
-            .eq("user_id", ev.organiser_id)
-            .maybeSingle()
-        : Promise.resolve({ data: null }),
-      ev.organiser_id
-        ? supabasePublic
-            .from("profiles")
-            .select("avatar_url")
-            .eq("id", ev.organiser_id)
-            .maybeSingle()
-        : Promise.resolve({ data: null }),
-    ]);
+        .eq("slug", data.slug)
+        .in("status", ["approved", "listed"])
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!ev) return { event: null, tiers: [], organiser: null };
 
-    const organiserWithImage = organiser
-      ? {
-          ...organiser,
-          logo_url: organiser.logo_url || organiserAccount?.avatar_url || null,
-        }
-      : null;
+      const [{ data: tiers }, { data: organiser }, { data: organiserAccount }] = await Promise.all([
+        supabasePublic
+          .from("event_sponsorship_tiers")
+          .select("*")
+          .eq("event_id", ev.id)
+          .order("display_order"),
+        ev.organiser_id
+          ? supabasePublic
+              .from("organiser_profiles")
+              .select(
+                "org_name, logo_url, bio, website, track_record, event_history, past_sponsor_logos",
+              )
+              .eq("user_id", ev.organiser_id)
+              .maybeSingle()
+          : Promise.resolve({ data: null }),
+        ev.organiser_id
+          ? supabasePublic
+              .from("profiles")
+              .select("avatar_url")
+              .eq("id", ev.organiser_id)
+              .maybeSingle()
+          : Promise.resolve({ data: null }),
+      ]);
 
-    return { event: ev, tiers: tiers ?? [], organiser: organiserWithImage };
+      const organiserWithImage = organiser
+        ? {
+            ...organiser,
+            logo_url: organiser.logo_url || organiserAccount?.avatar_url || null,
+          }
+        : null;
+
+      return { event: ev, tiers: tiers ?? [], organiser: organiserWithImage };
     } catch (e) {
       console.error("[getPublicEventBySlug]", e);
       return { event: null, tiers: [], organiser: null };
@@ -372,7 +395,8 @@ export const submitCommitmentForm = createServerFn({ method: "POST" })
       .eq("id", data.event_id)
       .single();
     if (evErr) throw new Error(evErr.message);
-    if (!["approved", "listed"].includes(ev.status)) throw new Error("Event not accepting inquiries");
+    if (!["approved", "listed"].includes(ev.status))
+      throw new Error("Event not accepting inquiries");
 
     // Lock rates
     const { data: rate } = await supabaseAdmin
@@ -483,7 +507,7 @@ export const submitCommitmentForm = createServerFn({ method: "POST" })
         body: `A sponsor submitted a commitment form for ${ev.name}.`,
         data: { event_id: ev.id, commitment_form_id: cf.id },
       });
-      await supabaseAdmin.rpc as any; // noop typing
+      (await supabaseAdmin.rpc) as any; // noop typing
       await supabaseAdmin
         .from("referral_links")
         .update({ conversion_count: 1 })
@@ -551,7 +575,9 @@ export const submitCommitmentForm = createServerFn({ method: "POST" })
       }
     }
 
-    await Promise.all(emailJobs.map((p) => p.catch((e) => console.error("[submitCommitmentForm] email", e))));
+    await Promise.all(
+      emailJobs.map((p) => p.catch((e) => console.error("[submitCommitmentForm] email", e))),
+    );
 
     return { ok: true, id: cf.id };
   });

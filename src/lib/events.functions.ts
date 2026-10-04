@@ -21,7 +21,21 @@ type EventGuardRow = {
   organiser_id: string | null;
   created_by_admin: string | null;
   status: string;
+  /** 'private' events never enter vetting, so the status gate does not apply. */
+  visibility?: string | null;
 };
+
+/**
+ * The vetting lifecycle locks an event once it is submitted. A private event
+ * is a workspace tool that never goes to vetting, so its owner keeps editing
+ * it indefinitely (TAB 3 §3.6.1 Section B).
+ */
+function assertStatusAllowsEdit(ev: EventGuardRow) {
+  if (ev.visibility === "private") return;
+  if (!["draft", "revision_requested"].includes(ev.status)) {
+    throw new Error("Event can no longer be edited in current status");
+  }
+}
 type GuardResult<T> = { data: T; error: { message: string } | null };
 
 async function assertCanEditEvent(
@@ -48,15 +62,49 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 // ───────────────────────────────────────────────────────────────
 // Organiser: my events
 // ───────────────────────────────────────────────────────────────
+/**
+ * `visibility` and `looking_to_connect_with` postdate the last
+ * `supabase gen types` run, so the generated row type rejects them and the
+ * whole select collapses to a SelectQueryError. Declaring the shape here keeps
+ * every caller typed; drop the cast once types are regenerated.
+ */
+export interface MyEventRow {
+  id: string;
+  name: string;
+  slug: string | null;
+  status: string;
+  visibility: string | null;
+  looking_to_connect_with: string[] | null;
+  start_date: string | null;
+  end_date: string | null;
+  city: string | null;
+  country: string | null;
+  event_type: string | null;
+  view_count: number | null;
+  save_count: number | null;
+  inquiry_count: number | null;
+  ige_vetted: boolean | null;
+  sponsorship_deck_url: string | null;
+  banner_image_url: string | null;
+  floor_plan_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export const getMyEvents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const { data, error } = await supabase
+    const { data, error } = (await supabase
       .from("events")
-      .select("id, name, slug, status, start_date, end_date, city, country, event_type, view_count, save_count, inquiry_count, ige_vetted, sponsorship_deck_url, banner_image_url, floor_plan_url, created_at, updated_at")
+      .select(
+        "id, name, slug, status, visibility, looking_to_connect_with, start_date, end_date, city, country, event_type, view_count, save_count, inquiry_count, ige_vetted, sponsorship_deck_url, banner_image_url, floor_plan_url, created_at, updated_at",
+      )
       .eq("organiser_id", userId)
-      .order("updated_at", { ascending: false });
+      .order("updated_at", { ascending: false })) as unknown as {
+      data: MyEventRow[] | null;
+      error: { message: string } | null;
+    };
     if (error) throw new Error(error.message);
     return { events: data ?? [] };
   });
@@ -111,28 +159,59 @@ export const getEventForEdit = createServerFn({ method: "GET" })
 // with explicit checks.
 export const AUTOSAVE_ALLOWED = new Set<string>([
   // Basics
-  "name", "event_type", "format", "start_date", "end_date", "country", "city", "venue", "website",
+  "name",
+  "event_type",
+  "format",
+  "start_date",
+  "end_date",
+  "country",
+  "city",
+  "venue",
+  "website",
+  // Visibility and reach (TAB 3 §3.6.1 Section B, v6.3/v6.4)
+  "visibility",
+  "looking_to_connect_with",
+  "connection_notes",
+  "open_to_cocreation",
   // Contacts
-  "organiser_contact_name", "organiser_contact_role", "organiser_contact_email", "organiser_contact_phone",
+  "organiser_contact_name",
+  "organiser_contact_role",
+  "organiser_contact_email",
+  "organiser_contact_phone",
   // Track record
-  "years_running_event", "past_editions", "attendance_size",
+  "years_running_event",
+  "past_editions",
+  "attendance_size",
   // Audience
-  "primary_audience", "audience_seniority", "decision_makers_pct", "geographic_mix",
+  "primary_audience",
+  "audience_seniority",
+  "decision_makers_pct",
+  "geographic_mix",
   // Sector & theme
-  "primary_sector", "secondary_sector", "event_theme",
+  "primary_sector",
+  "secondary_sector",
+  "event_theme",
   // Sponsorship economics
-  "min_sponsorship_spend", "currency", "speaking_slots", "exposure_channels",
-  "speaking_opps", "lead_capture", "post_event_report",
+  "min_sponsorship_spend",
+  "currency",
+  "speaking_slots",
+  "exposure_channels",
+  "speaking_opps",
+  "lead_capture",
+  "post_event_report",
   // Assets
-  "sponsorship_deck_url", "banner_image_url", "floor_plan_url",
+  "sponsorship_deck_url",
+  "banner_image_url",
+  "floor_plan_url",
   // Review & submit
-  "sponsorship_deadline", "payment_terms", "abw_management_requested", "consent_given",
+  "sponsorship_deadline",
+  "payment_terms",
+  "abw_management_requested",
+  "consent_given",
 ]);
 
 export function pickAutosavePatch(form: Record<string, unknown>) {
-  const patch = Object.fromEntries(
-    Object.entries(form).filter(([k]) => AUTOSAVE_ALLOWED.has(k)),
-  );
+  const patch = Object.fromEntries(Object.entries(form).filter(([k]) => AUTOSAVE_ALLOWED.has(k)));
   if (typeof patch.format === "string") {
     patch.format = patch.format.toLowerCase();
   }
@@ -153,14 +232,12 @@ export const autosaveEvent = createServerFn({ method: "POST" })
     // Verify ownership + status allows edit
     const { data: ev, error: e1 } = (await supabase
       .from("events")
-      .select("organiser_id, created_by_admin, status")
+      .select("organiser_id, created_by_admin, status, visibility")
       .eq("id", data.id)
       .single()) as GuardResult<EventGuardRow>;
     if (e1) throw new Error(e1.message);
     await assertCanEditEvent(userId, ev);
-    if (!["draft", "revision_requested"].includes(ev.status)) {
-      throw new Error("Event can no longer be edited in current status");
-    }
+    assertStatusAllowsEdit(ev);
     const safePatch = Object.fromEntries(
       Object.entries(data.patch).filter(([k]) => AUTOSAVE_ALLOWED.has(k)),
     );
@@ -197,14 +274,12 @@ export const upsertTier = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: ev } = (await supabase
       .from("events")
-      .select("organiser_id, created_by_admin, status")
+      .select("organiser_id, created_by_admin, status, visibility")
       .eq("id", data.event_id)
       .single()) as GuardResult<EventGuardRow | null>;
     if (!ev) throw new Error("Forbidden");
     await assertCanEditEvent(userId, ev);
-    if (!["draft", "revision_requested"].includes(ev.status)) {
-      throw new Error("Event can no longer be edited in current status");
-    }
+    assertStatusAllowsEdit(ev);
 
     const row = {
       event_id: data.event_id,
@@ -271,14 +346,12 @@ export const deleteTier = createServerFn({ method: "POST" })
 
     const { data: ev, error: evErr } = (await supabase
       .from("events")
-      .select("organiser_id, created_by_admin, status")
+      .select("organiser_id, created_by_admin, status, visibility")
       .eq("id", tier.event_id)
       .single()) as GuardResult<EventGuardRow>;
     if (evErr) throw new Error(evErr.message);
     await assertCanEditEvent(userId, ev);
-    if (!["draft", "revision_requested"].includes(ev.status)) {
-      throw new Error("Event can no longer be edited in current status");
-    }
+    assertStatusAllowsEdit(ev);
 
     const { error } = await supabase.from("event_sponsorship_tiers").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -295,7 +368,9 @@ export const submitEvent = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: ev, error } = (await supabase
       .from("events")
-      .select("id, organiser_id, created_by_admin, status, name, city, slug, consent_given, sponsorship_deck_url, banner_image_url")
+      .select(
+        "id, organiser_id, created_by_admin, status, visibility, looking_to_connect_with, name, city, slug, consent_given, sponsorship_deck_url, banner_image_url",
+      )
       .eq("id", data.id)
       .single()) as GuardResult<
       EventGuardRow & {
@@ -306,6 +381,7 @@ export const submitEvent = createServerFn({ method: "POST" })
         consent_given: boolean;
         sponsorship_deck_url: string | null;
         banner_image_url: string | null;
+        looking_to_connect_with: string[] | null;
       }
     >;
     if (error) throw new Error(error.message);
@@ -315,6 +391,15 @@ export const submitEvent = createServerFn({ method: "POST" })
       throw new Error(`Cannot submit from status '${ev.status}'`);
     }
     if (!ev.consent_given) throw new Error("Consent must be confirmed before submitting");
+    // Submitting is how a private event gets published, so flip it over rather
+    // than refusing — but only once the owner has said who it is for
+    // (TAB 3 §3.6.1 Section B: "A private event owner chooses these when
+    // publishing").
+    if (!ev.looking_to_connect_with?.length) {
+      throw new Error(
+        "Choose at least one user type under Looking to connect with before publishing.",
+      );
+    }
     if (!ev.sponsorship_deck_url) throw new Error("Sponsorship deck PDF is required");
     if (!ev.banner_image_url) throw new Error("Banner image is required");
 
@@ -340,9 +425,12 @@ export const submitEvent = createServerFn({ method: "POST" })
       .from("events")
       .update({
         status: "submitted",
+        // Submitting to vetting is the act of publishing, so a private event
+        // becomes published here rather than needing a second step.
+        visibility: "published",
         slug,
         consent_given_at: new Date().toISOString(),
-      })
+      } as never)
       .eq("id", ev.id);
     if (upErr) throw new Error(upErr.message);
 
@@ -357,7 +445,11 @@ export const deleteDraftEvent = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const { error } = await supabase.from("events").delete().eq("id", data.id).eq("status", "draft");
+    const { error } = await supabase
+      .from("events")
+      .delete()
+      .eq("id", data.id)
+      .eq("status", "draft");
     if (error) throw new Error(error.message);
     return { ok: true };
   });

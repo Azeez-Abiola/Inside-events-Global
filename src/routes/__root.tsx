@@ -12,6 +12,7 @@ import appCss from "../styles.css?url";
 import { WaitlistGate } from "@/components/waitlist-gate";
 import { AuthProvider } from "@/lib/auth-context";
 import { DevRoleSwitcher } from "@/components/dev-role-switcher";
+import { SessionGuard } from "@/components/session-guard";
 import { Toaster } from "@/components/ui/sonner";
 import { DisplayCurrencyProvider } from "@/lib/display-currency-context";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
@@ -79,15 +80,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "IGE — Event Sponsorship Marketplace | Find Sponsors, Sponsor B2B Events" },
-      { name: "description", content: "Inside Global Events (IGE) is the vetted event sponsorship marketplace connecting B2B event organisers, corporate sponsors, and referral partners across the Africa–Europe corridor and globally." },
+      {
+        name: "description",
+        content:
+          "Inside Global Events (IGE) is the vetted event sponsorship marketplace connecting B2B event organisers, corporate sponsors, and referral partners across the Africa–Europe corridor and globally.",
+      },
       { name: "author", content: "Inside Global Events" },
       { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1" },
       { property: "og:site_name", content: "Inside Global Events" },
       { property: "og:type", content: "website" },
       { property: "og:locale", content: "en_US" },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6410c0bf-c8c9-4d1e-b048-e98ce84ec6a2/id-preview-04099da8--0d1f4683-f826-450c-927b-386eaca7e044.lovable.app-1779749582346.png" },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6410c0bf-c8c9-4d1e-b048-e98ce84ec6a2/id-preview-04099da8--0d1f4683-f826-450c-927b-386eaca7e044.lovable.app-1779749582346.png",
+      },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6410c0bf-c8c9-4d1e-b048-e98ce84ec6a2/id-preview-04099da8--0d1f4683-f826-450c-927b-386eaca7e044.lovable.app-1779749582346.png" },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6410c0bf-c8c9-4d1e-b048-e98ce84ec6a2/id-preview-04099da8--0d1f4683-f826-450c-927b-386eaca7e044.lovable.app-1779749582346.png",
+      },
     ],
     links: [
       { rel: "icon", href: "/favicon.ico", sizes: "any" },
@@ -99,7 +112,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Lato:wght@300;400;700;900&family=JetBrains+Mono:wght@400;500;600&display=swap",
       },
       { rel: "stylesheet", href: appCss },
     ],
@@ -118,7 +131,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           alternateName: "IGE",
           url: "https://www.insideglobalevents.com",
           logo: "https://www.insideglobalevents.com/ige-icon-512.png",
-          description: "Vetted event sponsorship marketplace connecting B2B event organisers, corporate sponsors, and referral partners.",
+          description:
+            "Vetted event sponsorship marketplace connecting B2B event organisers, corporate sponsors, and referral partners.",
           sameAs: ["https://www.instagram.com/insideglobalevents"],
         }),
       } as any,
@@ -169,6 +183,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <SessionGuard />
         <DisplayCurrencyProvider>
           <WaitlistGate>
             <Outlet />

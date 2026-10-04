@@ -4,36 +4,76 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
-  Plus, Loader2, Trash2, CalendarDays, Eye, Bookmark, MessageSquare,
-  ShieldCheck, FolderOpen, ExternalLink, BarChart3, TrendingUp,
+  Plus,
+  Loader2,
+  Trash2,
+  CalendarDays,
+  Eye,
+  Bookmark,
+  MessageSquare,
+  ShieldCheck,
+  FolderOpen,
+  ExternalLink,
+  BarChart3,
+  TrendingUp,
+  Lock,
 } from "lucide-react";
 import { StatusBadge } from "@/components/app-shell";
+import { connectWithLabel } from "@/lib/connect-with";
 import { QuickLinkCard, fmtDateRange } from "@/components/dashboards/shared";
-import { KpiTile, DonutBreakdown, FeaturedHeroCard, AgendaList } from "@/components/dashboards/voom-primitives";
-import { DashboardCardGridSkeleton, DashboardTableSkeleton } from "@/components/dashboards/dashboard-skeletons";
 import {
-  DashboardEmpty, DashboardPanel, DashboardTable, DashboardTableHead, VettingTimeline,
+  KpiTile,
+  DonutBreakdown,
+  FeaturedHeroCard,
+  AgendaList,
+} from "@/components/dashboards/voom-primitives";
+import {
+  DashboardCardGridSkeleton,
+  DashboardTableSkeleton,
+} from "@/components/dashboards/dashboard-skeletons";
+import {
+  DashboardEmpty,
+  DashboardPanel,
+  DashboardTable,
+  DashboardTableHead,
+  VettingTimeline,
 } from "@/components/dashboards/dashboard-shell";
-import { DashboardDataToolbar, DashboardFilterSelect } from "@/components/dashboards/dashboard-data-toolbar";
+import {
+  DashboardDataToolbar,
+  DashboardFilterSelect,
+} from "@/components/dashboards/dashboard-data-toolbar";
 import { WorkspacePage } from "@/components/dashboards/workspace-page";
 import { OrganiserAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
 import {
-  createEventDraft, getMyEvents, deleteDraftEvent, getEventForEdit, autosaveEvent, pickAutosavePatch,
+  createEventDraft,
+  getMyEvents,
+  deleteDraftEvent,
+  getEventForEdit,
+  autosaveEvent,
+  pickAutosavePatch,
 } from "@/lib/events.functions";
 import { getOrganiserPipeline } from "@/lib/deals.functions";
 import { fmtMoney } from "@/lib/currency";
 import {
-  EVENT_STATUS_GROUPS, type EventStatusGroup, filterEventsByGroup, groupEventsByStatus,
+  EVENT_STATUS_GROUPS,
+  type EventStatusGroup,
+  filterEventsByGroup,
+  groupEventsByStatus,
 } from "@/lib/event-dashboard";
 import { COUNTRIES, PRIMARY_SECTORS } from "@/lib/event-taxonomy";
 import { useTableFilters } from "@/hooks/use-table-filters";
 import { Button } from "@/components/ui/button";
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet";
 
 const EVENT_TABS: { id: EventStatusGroup; label: string }[] = [
   { id: "all", label: "All events" },
+  { id: "private", label: "Private" },
   { id: "draft", label: "Drafts" },
   { id: "pending", label: "Pending vetting" },
   { id: "approved", label: "Approved" },
@@ -49,23 +89,41 @@ function useOrganiserEvents() {
   const fetchEvents = useServerFn(getMyEvents);
   const createDraft = useServerFn(createEventDraft);
   const removeDraft = useServerFn(deleteDraftEvent);
-  const { data: eventsData, isLoading: eventsLoading } = useQuery({ queryKey: ["events", "mine"], queryFn: () => fetchEvents() });
+  const { data: eventsData, isLoading: eventsLoading } = useQuery({
+    queryKey: ["events", "mine"],
+    queryFn: () => fetchEvents(),
+  });
   const create = useMutation({
     mutationFn: () => createDraft(),
-    onSuccess: ({ id }) => { qc.invalidateQueries({ queryKey: ["events", "mine"] }); navigate({ to: "/events/edit/$id", params: { id } }); },
+    onSuccess: ({ id }) => {
+      qc.invalidateQueries({ queryKey: ["events", "mine"] });
+      navigate({ to: "/events/edit/$id", params: { id } });
+    },
     onError: (e: any) => toast.error(e.message),
   });
   const del = useMutation({
     mutationFn: (id: string) => removeDraft({ data: { id } }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["events", "mine"] }); toast.success("Draft deleted"); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["events", "mine"] });
+      toast.success("Draft deleted");
+    },
     onError: (e: any) => toast.error(e.message),
   });
   const events = eventsData?.events ?? [];
   const { counts, buckets } = useMemo(() => groupEventsByStatus(events), [events]);
   const createBtn = (
-    <button type="button" onClick={() => create.mutate()} disabled={create.isPending}
-      className="inline-flex items-center gap-2 rounded-md bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-soft hover:-translate-y-0.5 transition-all disabled:opacity-60">
-      {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Create event
+    <button
+      type="button"
+      onClick={() => create.mutate()}
+      disabled={create.isPending}
+      className="inline-flex items-center gap-2 rounded-md bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-soft hover:-translate-y-0.5 transition-all disabled:opacity-60"
+    >
+      {create.isPending ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <Plus className="h-4 w-4" />
+      )}{" "}
+      Create event
     </button>
   );
   return { events, counts, buckets, eventsLoading, createBtn, create, del };
@@ -81,7 +139,10 @@ export function OrganiserEventsPage() {
     queryKey: ["org-pipeline"],
     queryFn: () => fetchPipeline(),
   });
-  const statusFiltered = useMemo(() => filterEventsByGroup(events, statusFilter), [events, statusFilter]);
+  const statusFiltered = useMemo(
+    () => filterEventsByGroup(events, statusFilter),
+    [events, statusFilter],
+  );
   const filteredEvents = useTableFilters({
     rows: statusFiltered,
     searchText: search,
@@ -122,23 +183,38 @@ export function OrganiserEventsPage() {
       return sum + (Number.isFinite(max) ? max : 0);
     }, 0);
     const closedUsd = deals
-      .filter((d: any) => ["payment_received", "contract_signed", "contract_sent"].includes(d.status))
+      .filter((d: any) =>
+        ["payment_received", "contract_signed", "contract_sent"].includes(d.status),
+      )
       .reduce((sum: number, d: any) => sum + Number(d.deal_value_usd ?? 0), 0);
     const fundingGap = Math.max(0, interestUsd - closedUsd);
-    const openInquiries = forms.filter((f: any) => !deals.some((d: any) => d.commitment_form_id === f.id)).length;
+    const openInquiries = forms.filter(
+      (f: any) => !deals.some((d: any) => d.commitment_form_id === f.id),
+    ).length;
     const stages = [
       { label: "Inquiries", count: forms.length },
       {
         label: "In negotiation",
         count: deals.filter((d: any) =>
-          ["inquiry_received", "qualification_call_scheduled", "proposal_sent", "negotiation"].includes(d.status),
+          [
+            "inquiry_received",
+            "qualification_call_scheduled",
+            "proposal_sent",
+            "negotiation",
+          ].includes(d.status),
         ).length,
       },
-      { label: "Committed", count: deals.filter((d: any) => ["contract_sent", "contract_signed"].includes(d.status)).length },
+      {
+        label: "Committed",
+        count: deals.filter((d: any) => ["contract_sent", "contract_signed"].includes(d.status))
+          .length,
+      },
       { label: "Paid", count: deals.filter((d: any) => d.status === "payment_received").length },
     ];
     const demandStrip = [...events]
-      .filter((e: any) => ["listed", "approved", "live"].includes(e.status) || (e.inquiry_count ?? 0) > 0)
+      .filter(
+        (e: any) => ["listed", "approved", "live"].includes(e.status) || (e.inquiry_count ?? 0) > 0,
+      )
       .slice(0, 6)
       .map((e: any) => {
         const views = Math.max(1, Number(e.view_count ?? 0));
@@ -157,22 +233,45 @@ export function OrganiserEventsPage() {
       showGreeting
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <KpiTile icon={CalendarDays} label="Active listings" value={activeEventsCount} loading={eventsLoading} trend={`${counts.live} live`} />
-        <KpiTile icon={ShieldCheck} label="Pending vetting" value={counts.pending} loading={eventsLoading} />
-        <KpiTile icon={MessageSquare} label="Sponsor inquiries" value={events.reduce((a: number, e: any) => a + (e.inquiry_count ?? 0), 0)} loading={eventsLoading} />
+        <KpiTile
+          icon={CalendarDays}
+          label="Active listings"
+          value={activeEventsCount}
+          loading={eventsLoading}
+          trend={`${counts.live} live`}
+        />
+        <KpiTile
+          icon={ShieldCheck}
+          label="Pending vetting"
+          value={counts.pending}
+          loading={eventsLoading}
+        />
+        <KpiTile
+          icon={MessageSquare}
+          label="Sponsor inquiries"
+          value={events.reduce((a: number, e: any) => a + (e.inquiry_count ?? 0), 0)}
+          loading={eventsLoading}
+        />
       </div>
 
       <div className="rounded-2xl bg-brand-gradient p-5 text-white shadow-soft sm:p-6">
-        <p className="text-xs font-semibold uppercase tracking-wider text-white/80">Estimated funding gap</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-white/80">
+          Estimated funding gap
+        </p>
         <p className="mt-1 font-display text-3xl font-bold tracking-tight">
           {pipelineLoading ? "…" : fmtMoney("USD", commandStats.fundingGap)}
         </p>
         <p className="mt-2 max-w-xl text-sm text-white/85">
           Interest from open inquiries minus committed deal value
-          {commandStats.openInquiries ? ` · ${commandStats.openInquiries} open inquiry${commandStats.openInquiries === 1 ? "" : "ies"}` : ""}.
-          Refine tiers on each event editor for a slot-level inventory view.
+          {commandStats.openInquiries
+            ? ` · ${commandStats.openInquiries} open inquiry${commandStats.openInquiries === 1 ? "" : "ies"}`
+            : ""}
+          . Refine tiers on each event editor for a slot-level inventory view.
         </p>
-        <Link to="/dashboard/pipeline" className="mt-4 inline-flex text-sm font-semibold text-white underline-offset-2 hover:underline">
+        <Link
+          to="/dashboard/pipeline"
+          className="mt-4 inline-flex text-sm font-semibold text-white underline-offset-2 hover:underline"
+        >
           Open sponsorship pipeline →
         </Link>
       </div>
@@ -184,27 +283,40 @@ export function OrganiserEventsPage() {
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {commandStats.stages.map((s) => (
               <div key={s.label} className="rounded-xl bg-muted/40 px-3 py-3 text-center">
-                <div className="font-display text-xl font-bold text-foreground">{pipelineLoading ? "—" : s.count}</div>
-                <div className="mt-0.5 text-[11px] font-medium text-muted-foreground">{s.label}</div>
+                <div className="font-display text-xl font-bold text-foreground">
+                  {pipelineLoading ? "—" : s.count}
+                </div>
+                <div className="mt-0.5 text-[11px] font-medium text-muted-foreground">
+                  {s.label}
+                </div>
               </div>
             ))}
           </div>
         </div>
         <div className="rounded-2xl bg-card p-5 shadow-card">
           <h3 className="font-display text-sm font-bold text-foreground">Demand fill</h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">Inquiry heat vs listing views (proxy until tier slots roll up)</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Inquiry heat vs listing views (proxy until tier slots roll up)
+          </p>
           <div className="mt-4 space-y-3">
             {eventsLoading || !commandStats.demandStrip.length ? (
-              <p className="text-sm text-muted-foreground italic">List or promote an event to see demand fill.</p>
+              <p className="text-sm text-muted-foreground italic">
+                List or promote an event to see demand fill.
+              </p>
             ) : (
               commandStats.demandStrip.map((row) => (
                 <div key={row.id}>
                   <div className="mb-1 flex items-center justify-between gap-2 text-xs">
                     <span className="truncate font-medium text-foreground">{row.name}</span>
-                    <span className="shrink-0 text-muted-foreground">{row.inquiries} inq · {row.fill}%</span>
+                    <span className="shrink-0 text-muted-foreground">
+                      {row.inquiries} inq · {row.fill}%
+                    </span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-muted">
-                    <div className="h-full rounded-full bg-brand-gradient" style={{ width: `${row.fill}%` }} />
+                    <div
+                      className="h-full rounded-full bg-brand-gradient"
+                      style={{ width: `${row.fill}%` }}
+                    />
                   </div>
                 </div>
               ))
@@ -227,8 +339,12 @@ export function OrganiserEventsPage() {
             />
           ) : (
             <div className="rounded-2xl bg-card p-5 shadow-card">
-              <h3 className="font-display text-sm font-bold text-foreground">Portfolio by status</h3>
-              <p className="mt-2 text-sm text-muted-foreground italic">Create events to see status distribution.</p>
+              <h3 className="font-display text-sm font-bold text-foreground">
+                Portfolio by status
+              </h3>
+              <p className="mt-2 text-sm text-muted-foreground italic">
+                Create events to see status distribution.
+              </p>
             </div>
           )}
         </div>
@@ -237,7 +353,11 @@ export function OrganiserEventsPage() {
           {featured ? (
             <FeaturedHeroCard
               imageUrl={featured.banner_image_url}
-              badge={featured.status === "revision_requested" ? "Action needed" : featured.status?.replace(/_/g, " ")}
+              badge={
+                featured.status === "revision_requested"
+                  ? "Action needed"
+                  : featured.status?.replace(/_/g, " ")
+              }
               title={featured.name || "Untitled event"}
               meta={[featured.city, featured.country].filter(Boolean).join(", ")}
               description={
@@ -245,7 +365,9 @@ export function OrganiserEventsPage() {
                   ? "IGE requested updates — open the editor and resubmit when ready."
                   : `${featured.view_count ?? 0} views · ${featured.inquiry_count ?? 0} inquiries`
               }
-              ctaLabel={featured.status === "revision_requested" ? "Continue editing" : "Open editor"}
+              ctaLabel={
+                featured.status === "revision_requested" ? "Continue editing" : "Open editor"
+              }
               ctaTo="/events/edit/$id"
               ctaParams={{ id: featured.id }}
             />
@@ -264,13 +386,32 @@ export function OrganiserEventsPage() {
 
       <div className="grid gap-5 lg:grid-cols-3">
         <div className="lg:col-span-1">
-          <AgendaList title="Upcoming start dates" items={agendaItems} empty="No scheduled events yet." />
+          <AgendaList
+            title="Upcoming start dates"
+            items={agendaItems}
+            empty="No scheduled events yet."
+          />
         </div>
         <div className="grid gap-2 sm:grid-cols-3 lg:col-span-2 lg:grid-cols-3">
           {[
-            { to: "/dashboard/pipeline", label: "Sponsorship pipeline", desc: "Inquiries & deal stages", icon: TrendingUp },
-            { to: "/dashboard/documents", label: "Documents", desc: "Decks & assets", icon: FolderOpen },
-            { to: "/dashboard/analytics", label: "Analytics", desc: "Views & conversions", icon: BarChart3 },
+            {
+              to: "/dashboard/pipeline",
+              label: "Sponsorship pipeline",
+              desc: "Inquiries & deal stages",
+              icon: TrendingUp,
+            },
+            {
+              to: "/dashboard/documents",
+              label: "Documents",
+              desc: "Decks & assets",
+              icon: FolderOpen,
+            },
+            {
+              to: "/dashboard/analytics",
+              label: "Analytics",
+              desc: "Views & conversions",
+              icon: BarChart3,
+            },
           ].map((item) => (
             <QuickLinkCard key={item.to} {...item} />
           ))}
@@ -352,20 +493,48 @@ export function OrganiserEventsPage() {
                         className="cursor-pointer transition-colors hover:bg-muted/40"
                       >
                         <td className="px-4 py-3">
-                          <div className="font-medium text-foreground">{e.name || "Untitled event"}</div>
+                          <div className="font-medium text-foreground">
+                            {e.name || "Untitled event"}
+                          </div>
                           {e.primary_sector && (
-                            <div className="mt-0.5 text-xs text-muted-foreground">{e.primary_sector}</div>
+                            <div className="mt-0.5 text-xs text-muted-foreground">
+                              {e.primary_sector}
+                            </div>
                           )}
                         </td>
-                        <td className="px-4 py-3"><StatusBadge status={e.status} /></td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {e.visibility === "private" ? (
+                              // A private event has no vetting status worth
+                              // showing — it never enters the queue.
+                              <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/60 px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                                <Lock className="h-3 w-3" aria-hidden /> Private
+                              </span>
+                            ) : (
+                              <StatusBadge status={e.status} />
+                            )}
+                          </div>
+                          {e.looking_to_connect_with?.length > 0 && (
+                            <div className="mt-1 text-[11px] text-muted-foreground">
+                              Seeking:{" "}
+                              {(e.looking_to_connect_with as string[])
+                                .map(connectWithLabel)
+                                .join(", ")}
+                            </div>
+                          )}
+                        </td>
                         <td className="px-4 py-3 text-xs text-muted-foreground">
                           {e.start_date ? fmtDateRange(e.start_date, e.end_date) : "—"}
                         </td>
                         <td className="px-4 py-3 text-xs text-muted-foreground">
                           {[e.city, e.country].filter(Boolean).join(", ") || "—"}
                         </td>
-                        <td className="px-4 py-3 text-xs tabular-nums text-muted-foreground">{e.view_count ?? 0}</td>
-                        <td className="px-4 py-3 text-xs tabular-nums text-muted-foreground">{e.inquiry_count ?? 0}</td>
+                        <td className="px-4 py-3 text-xs tabular-nums text-muted-foreground">
+                          {e.view_count ?? 0}
+                        </td>
+                        <td className="px-4 py-3 text-xs tabular-nums text-muted-foreground">
+                          {e.inquiry_count ?? 0}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -392,7 +561,10 @@ export function OrganiserEventsPage() {
 export function OrganiserPipelinePage() {
   const { createBtn } = useOrganiserEvents();
   const fetchPipeline = useServerFn(getOrganiserPipeline);
-  const { data: pipelineData, isLoading: pipelineLoading } = useQuery({ queryKey: ["org-pipeline"], queryFn: () => fetchPipeline() });
+  const { data: pipelineData, isLoading: pipelineLoading } = useQuery({
+    queryKey: ["org-pipeline"],
+    queryFn: () => fetchPipeline(),
+  });
   const [tab, setTab] = useState<"ige" | "mine">("ige");
 
   const dealByForm: Record<string, any> = {};
@@ -404,8 +576,15 @@ export function OrganiserPipelinePage() {
     tab === "ige" ? forms.filter((f) => !dealByForm[f.id]) : forms.filter((f) => dealByForm[f.id]);
 
   return (
-    <WorkspacePage title="Sponsorship pipeline" subtitle="Track IGE-verified sponsor leads and your active sponsor relationships.">
-      <DashboardPanel title="Pipeline" description="Switch between IGE leads and your active sponsor deals." bodyClassName="p-0">
+    <WorkspacePage
+      title="Sponsorship pipeline"
+      subtitle="Track IGE-verified sponsor leads and your active sponsor relationships."
+    >
+      <DashboardPanel
+        title="Pipeline"
+        description="Switch between IGE leads and your active sponsor deals."
+        bodyClassName="p-0"
+      >
         <DashboardDataToolbar
           filters={
             <DashboardFilterSelect
@@ -420,33 +599,49 @@ export function OrganiserPipelinePage() {
           }
         />
         <div className="p-5">
-      {pipelineLoading ? <DashboardTableSkeleton rows={5} cols={6} /> : !pipelineData?.events?.length ? (
-        <DashboardEmpty icon={MessageSquare} title="No live pipeline yet" description="Once an event is listed, sponsor inquiries will appear here." action={createBtn} />
-      ) : (
-        <div className="space-y-6">
-          {pipelineData.events.map((ev: any) => {
-            const forms = filterForms((pipelineData.forms ?? []).filter((f: any) => f.event_id === ev.id));
-            if (!forms.length) return null;
-            return (
-              <PipelineEventTable key={ev.id} event={ev}
-                partnerMap={pipelineData.partnerMap ?? {}}
-                forms={forms}
-                deals={(pipelineData.deals ?? []).filter((d: any) => d.event_id === ev.id)} />
-            );
-          })}
-          {!pipelineData.events.some((ev: any) =>
-            filterForms((pipelineData.forms ?? []).filter((f: any) => f.event_id === ev.id)).length > 0,
-          ) && (
+          {pipelineLoading ? (
+            <DashboardTableSkeleton rows={5} cols={6} />
+          ) : !pipelineData?.events?.length ? (
             <DashboardEmpty
               icon={MessageSquare}
-              title={tab === "ige" ? "No IGE sponsor leads yet" : "No active sponsor deals yet"}
-              description={tab === "ige"
-                ? "New commitment forms appear here while IGE verifies them before creating a deal."
-                : "Once IGE converts an inquiry to a deal, your sponsor relationships show here."}
+              title="No live pipeline yet"
+              description="Once an event is listed, sponsor inquiries will appear here."
+              action={createBtn}
             />
+          ) : (
+            <div className="space-y-6">
+              {pipelineData.events.map((ev: any) => {
+                const forms = filterForms(
+                  (pipelineData.forms ?? []).filter((f: any) => f.event_id === ev.id),
+                );
+                if (!forms.length) return null;
+                return (
+                  <PipelineEventTable
+                    key={ev.id}
+                    event={ev}
+                    partnerMap={pipelineData.partnerMap ?? {}}
+                    forms={forms}
+                    deals={(pipelineData.deals ?? []).filter((d: any) => d.event_id === ev.id)}
+                  />
+                );
+              })}
+              {!pipelineData.events.some(
+                (ev: any) =>
+                  filterForms((pipelineData.forms ?? []).filter((f: any) => f.event_id === ev.id))
+                    .length > 0,
+              ) && (
+                <DashboardEmpty
+                  icon={MessageSquare}
+                  title={tab === "ige" ? "No IGE sponsor leads yet" : "No active sponsor deals yet"}
+                  description={
+                    tab === "ige"
+                      ? "New commitment forms appear here while IGE verifies them before creating a deal."
+                      : "Once IGE converts an inquiry to a deal, your sponsor relationships show here."
+                  }
+                />
+              )}
+            </div>
           )}
-        </div>
-      )}
         </div>
       </DashboardPanel>
     </WorkspacePage>
@@ -455,22 +650,41 @@ export function OrganiserPipelinePage() {
 
 export function OrganiserDocumentsPage() {
   const { events, eventsLoading } = useOrganiserEvents();
-  const docs = events.filter((e: any) => e.sponsorship_deck_url || e.banner_image_url || e.floor_plan_url);
+  const docs = events.filter(
+    (e: any) => e.sponsorship_deck_url || e.banner_image_url || e.floor_plan_url,
+  );
 
   return (
-    <WorkspacePage title="Documents" subtitle="Sponsorship decks, banners, and floor plans across your events.">
-      {eventsLoading ? <DashboardCardGridSkeleton count={4} /> : docs.length === 0 ? (
-        <DashboardEmpty icon={FolderOpen} title="No documents yet" description="Upload decks and assets in the event editor when creating or editing a listing." />
+    <WorkspacePage
+      title="Documents"
+      subtitle="Sponsorship decks, banners, and floor plans across your events."
+    >
+      {eventsLoading ? (
+        <DashboardCardGridSkeleton count={4} />
+      ) : docs.length === 0 ? (
+        <DashboardEmpty
+          icon={FolderOpen}
+          title="No documents yet"
+          description="Upload decks and assets in the event editor when creating or editing a listing."
+        />
       ) : (
         <div className="space-y-4">
           {docs.map((e: any) => (
-            <DashboardPanel key={e.id} title={e.name || "Untitled event"} description={[e.city, e.country].filter(Boolean).join(", ")}>
+            <DashboardPanel
+              key={e.id}
+              title={e.name || "Untitled event"}
+              description={[e.city, e.country].filter(Boolean).join(", ")}
+            >
               <div className="grid gap-3 sm:grid-cols-3">
                 <DocLink label="Sponsorship deck" url={e.sponsorship_deck_url} />
                 <DocLink label="Banner image" url={e.banner_image_url} />
                 <DocLink label="Floor plan" url={e.floor_plan_url} />
               </div>
-              <Link to="/events/edit/$id" params={{ id: e.id }} className="mt-4 inline-flex text-xs font-semibold text-primary hover:underline">
+              <Link
+                to="/events/edit/$id"
+                params={{ id: e.id }}
+                className="mt-4 inline-flex text-xs font-semibold text-primary hover:underline"
+              >
                 Manage in editor →
               </Link>
             </DashboardPanel>
@@ -482,9 +696,19 @@ export function OrganiserDocumentsPage() {
 }
 
 function DocLink({ label, url }: { label: string; url?: string | null }) {
-  if (!url) return <div className="rounded-lg border border-dashed border-border px-4 py-3 text-xs text-muted-foreground">{label}: not uploaded</div>;
+  if (!url)
+    return (
+      <div className="rounded-lg border border-dashed border-border px-4 py-3 text-xs text-muted-foreground">
+        {label}: not uploaded
+      </div>
+    );
   return (
-    <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-lg border border-border bg-muted/20 px-4 py-3 text-sm font-medium text-primary hover:bg-muted transition-colors">
+    <a
+      href={url}
+      target="_blank"
+      rel="noreferrer"
+      className="flex items-center gap-2 rounded-lg border border-border bg-muted/20 px-4 py-3 text-sm font-medium text-primary hover:bg-muted transition-colors"
+    >
       <ExternalLink className="h-4 w-4 shrink-0" /> {label}
     </a>
   );
@@ -492,7 +716,10 @@ function DocLink({ label, url }: { label: string; url?: string | null }) {
 
 export function OrganiserAnalyticsPage() {
   return (
-    <WorkspacePage title="Analytics" subtitle="Views, saves, inquiries, and deal performance across your portfolio.">
+    <WorkspacePage
+      title="Analytics"
+      subtitle="Views, saves, inquiries, and deal performance across your portfolio."
+    >
       <OrganiserAnalyticsPanel />
     </WorkspacePage>
   );
@@ -604,10 +831,19 @@ function OrganiserEventDetailSheet({
   }
 
   const isLive = event?.status === "listed" || event?.status === "approved";
-  const showTimeline = event && ["submitted", "under_review", "approved", "revision_requested", "rejected", "listed"].includes(event.status);
+  const showTimeline =
+    event &&
+    ["submitted", "under_review", "approved", "revision_requested", "rejected", "listed"].includes(
+      event.status,
+    );
 
   return (
-    <Sheet open={!!eventId} onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Sheet
+      open={!!eventId}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
         {isLoading || !form ? (
           <div className="flex items-center justify-center py-16 text-sm text-muted-foreground">
@@ -672,7 +908,9 @@ function OrganiserEventDetailSheet({
                     >
                       <option value="">Select…</option>
                       {COUNTRIES.map((c) => (
-                        <option key={c} value={c}>{c}</option>
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
                       ))}
                     </select>
                   </SheetField>
@@ -706,7 +944,9 @@ function OrganiserEventDetailSheet({
                   >
                     <option value="">Select…</option>
                     {PRIMARY_SECTORS.map((s) => (
-                      <option key={s} value={s}>{s}</option>
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
                     ))}
                   </select>
                 </SheetField>
@@ -752,7 +992,11 @@ function OrganiserEventDetailSheet({
               </div>
               {(saving || savedAt) && editable && (
                 <p className="text-xs text-muted-foreground">
-                  {saving ? "Saving…" : savedAt ? `Last saved ${new Date(savedAt).toLocaleTimeString()}` : null}
+                  {saving
+                    ? "Saving…"
+                    : savedAt
+                      ? `Last saved ${new Date(savedAt).toLocaleTimeString()}`
+                      : null}
                 </p>
               )}
             </div>
@@ -766,26 +1010,53 @@ function OrganiserEventDetailSheet({
 function SheetField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
+      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </span>
       {children}
     </label>
   );
 }
 
-function PipelineEventTable({ event: ev, forms, deals, partnerMap }: { event: any; forms: any[]; deals: any[]; partnerMap: Record<string, string> }) {
+function PipelineEventTable({
+  event: ev,
+  forms,
+  deals,
+  partnerMap,
+}: {
+  event: any;
+  forms: any[];
+  deals: any[];
+  partnerMap: Record<string, string>;
+}) {
   const dealByForm: Record<string, any> = {};
   for (const d of deals) if (d.commitment_form_id) dealByForm[d.commitment_form_id] = d;
   return (
     <DashboardPanel title={ev.name} description={[ev.city, ev.country].filter(Boolean).join(", ")}>
       <div className="mb-4 flex gap-4 text-xs text-muted-foreground">
-        <span className="inline-flex items-center gap-1"><Eye className="h-3 w-3" /> {ev.view_count ?? 0} views</span>
-        <span className="inline-flex items-center gap-1"><Bookmark className="h-3 w-3" /> {ev.save_count ?? 0} saves</span>
-        <span className="inline-flex items-center gap-1"><MessageSquare className="h-3 w-3" /> {ev.inquiry_count ?? 0} inquiries</span>
+        <span className="inline-flex items-center gap-1">
+          <Eye className="h-3 w-3" /> {ev.view_count ?? 0} views
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <Bookmark className="h-3 w-3" /> {ev.save_count ?? 0} saves
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <MessageSquare className="h-3 w-3" /> {ev.inquiry_count ?? 0} inquiries
+        </span>
       </div>
       <div className="overflow-x-auto -mx-5 px-5">
         <table className="w-full min-w-[800px] text-sm">
           <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
-            <tr><th className="px-3 py-3">Company</th><th className="px-3 py-3">Contact</th><th className="px-3 py-3">Budget</th><th className="px-3 py-3">Referral</th><th className="px-3 py-3">Deal value</th><th className="px-3 py-3">Deal stage</th><th className="px-3 py-3">Submitted</th><th className="px-3 py-3"></th></tr>
+            <tr>
+              <th className="px-3 py-3">Company</th>
+              <th className="px-3 py-3">Contact</th>
+              <th className="px-3 py-3">Budget</th>
+              <th className="px-3 py-3">Referral</th>
+              <th className="px-3 py-3">Deal value</th>
+              <th className="px-3 py-3">Deal stage</th>
+              <th className="px-3 py-3">Submitted</th>
+              <th className="px-3 py-3"></th>
+            </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {forms.map((f: any) => {
@@ -795,29 +1066,69 @@ function PipelineEventTable({ event: ev, forms, deals, partnerMap }: { event: an
                 <tr key={f.id} className="hover:bg-muted/10">
                   <td className="px-3 py-3 font-medium">{f.company_name}</td>
                   <td className="px-3 py-3 text-muted-foreground">{f.contact_name}</td>
-                  <td className="px-3 py-3 text-xs font-semibold">{f.budget_range_min || f.budget_range_max ? `${fmtMoney(f.currency, Number(f.budget_range_min ?? 0))} – ${fmtMoney(f.currency, Number(f.budget_range_max ?? 0))}` : "—"}</td>
-                  <td className="px-3 py-3 text-xs text-muted-foreground">{partnerName ?? (f.referral_partner_id ? "Partner" : "Direct")}</td>
-                  <td className="px-3 py-3 text-xs font-semibold">{deal?.deal_value_native ? fmtMoney(deal.deal_currency, Number(deal.deal_value_native)) : "—"}</td>
+                  <td className="px-3 py-3 text-xs font-semibold">
+                    {f.budget_range_min || f.budget_range_max
+                      ? `${fmtMoney(f.currency, Number(f.budget_range_min ?? 0))} – ${fmtMoney(f.currency, Number(f.budget_range_max ?? 0))}`
+                      : "—"}
+                  </td>
+                  <td className="px-3 py-3 text-xs text-muted-foreground">
+                    {partnerName ?? (f.referral_partner_id ? "Partner" : "Direct")}
+                  </td>
+                  <td className="px-3 py-3 text-xs font-semibold">
+                    {deal?.deal_value_native
+                      ? fmtMoney(deal.deal_currency, Number(deal.deal_value_native))
+                      : "—"}
+                  </td>
                   <td className="px-3 py-3 capitalize">
                     {deal ? (
                       <div className="space-y-1">
-                        <span className="inline-flex rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary-deep">{deal.status.replace(/_/g, " ")}</span>
+                        <span className="inline-flex rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary-deep">
+                          {deal.status.replace(/_/g, " ")}
+                        </span>
                         {deal.contract_url && (
-                          <a href={deal.contract_url} target="_blank" rel="noreferrer" className="block text-[11px] font-semibold text-primary hover:underline">
+                          <a
+                            href={deal.contract_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="block text-[11px] font-semibold text-primary hover:underline"
+                          >
                             View contract →
                           </a>
                         )}
                       </div>
                     ) : (
-                      <span className="inline-flex rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">Awaiting deal</span>
+                      <span className="inline-flex rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
+                        Awaiting deal
+                      </span>
                     )}
                   </td>
-                  <td className="px-3 py-3 text-xs text-muted-foreground">{f.submitted_at ? new Date(f.submitted_at).toLocaleDateString() : "—"}</td>
-                  <td className="px-3 py-3 text-right">{f.sponsor_user_id && <Link to="/messages" search={{ to: f.sponsor_user_id, event_id: ev.id }} className="text-xs font-semibold text-primary hover:underline">Message →</Link>}</td>
+                  <td className="px-3 py-3 text-xs text-muted-foreground">
+                    {f.submitted_at ? new Date(f.submitted_at).toLocaleDateString() : "—"}
+                  </td>
+                  <td className="px-3 py-3 text-right">
+                    {f.sponsor_user_id && (
+                      <Link
+                        to="/messages"
+                        search={{ to: f.sponsor_user_id, event_id: ev.id }}
+                        className="text-xs font-semibold text-primary hover:underline"
+                      >
+                        Message →
+                      </Link>
+                    )}
+                  </td>
                 </tr>
               );
             })}
-            {!forms.length && <tr><td colSpan={8} className="px-3 py-8 text-center text-sm text-muted-foreground italic">No sponsor inquiries yet.</td></tr>}
+            {!forms.length && (
+              <tr>
+                <td
+                  colSpan={8}
+                  className="px-3 py-8 text-center text-sm text-muted-foreground italic"
+                >
+                  No sponsor inquiries yet.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

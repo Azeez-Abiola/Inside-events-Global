@@ -1,5 +1,6 @@
 export type EventStatusGroup =
   | "all"
+  | "private"
   | "draft"
   | "pending"
   | "approved"
@@ -12,6 +13,14 @@ export const EVENT_STATUS_GROUPS: Record<
   Exclude<EventStatusGroup, "all">,
   { label: string; statuses: string[]; description: string }
 > = {
+  // A private event never enters vetting, so it is grouped by visibility
+  // rather than status (TAB 3 §3.6.1 Section B). This entry comes first so it
+  // wins over the "draft" status a private event would otherwise fall into.
+  private: {
+    label: "Private",
+    statuses: [],
+    description: "Workspace only — not on the marketplace and not vetted.",
+  },
   draft: {
     label: "Drafts",
     statuses: ["draft"],
@@ -49,9 +58,24 @@ export const EVENT_STATUS_GROUPS: Record<
   },
 };
 
-export function groupEventsByStatus<T extends { status: string }>(events: T[]) {
+/** A private event is grouped by visibility; everything else by status. */
+type GroupableEvent = { status: string; visibility?: string | null };
+
+function groupFor(event: GroupableEvent): Exclude<EventStatusGroup, "all"> | null {
+  if (event.visibility === "private") return "private";
+  for (const [group, meta] of Object.entries(EVENT_STATUS_GROUPS) as [
+    Exclude<EventStatusGroup, "all">,
+    (typeof EVENT_STATUS_GROUPS)[Exclude<EventStatusGroup, "all">],
+  ][]) {
+    if (meta.statuses.includes(event.status)) return group;
+  }
+  return null;
+}
+
+export function groupEventsByStatus<T extends GroupableEvent>(events: T[]) {
   const counts: Record<EventStatusGroup, number> = {
     all: events.length,
+    private: 0,
     draft: 0,
     pending: 0,
     approved: 0,
@@ -62,6 +86,7 @@ export function groupEventsByStatus<T extends { status: string }>(events: T[]) {
   };
 
   const buckets: Record<Exclude<EventStatusGroup, "all">, T[]> = {
+    private: [],
     draft: [],
     pending: [],
     approved: [],
@@ -72,26 +97,19 @@ export function groupEventsByStatus<T extends { status: string }>(events: T[]) {
   };
 
   for (const event of events) {
-    for (const [group, meta] of Object.entries(EVENT_STATUS_GROUPS) as [
-      Exclude<EventStatusGroup, "all">,
-      (typeof EVENT_STATUS_GROUPS)[Exclude<EventStatusGroup, "all">],
-    ][]) {
-      if (meta.statuses.includes(event.status)) {
-        buckets[group].push(event);
-        counts[group]++;
-        break;
-      }
-    }
+    const group = groupFor(event);
+    if (!group) continue;
+    buckets[group].push(event);
+    counts[group]++;
   }
 
   return { counts, buckets };
 }
 
-export function filterEventsByGroup<T extends { status: string }>(
+export function filterEventsByGroup<T extends GroupableEvent>(
   events: T[],
   group: EventStatusGroup,
 ): T[] {
   if (group === "all") return events;
-  const statuses = EVENT_STATUS_GROUPS[group].statuses;
-  return events.filter((e) => statuses.includes(e.status));
+  return events.filter((e) => groupFor(e) === group);
 }
