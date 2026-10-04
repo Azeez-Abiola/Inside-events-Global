@@ -3,7 +3,14 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-const SignupRoleSchema = z.enum(["organiser", "sponsor", "referral_partner", "media_partner"]);
+const SignupRoleSchema = z.enum([
+  "organiser",
+  "sponsor",
+  "referral_partner",
+  "media_partner",
+  "partnerships_pro",
+  "creative_hub",
+]);
 
 /** Assign signup role via service role — client INSERT is blocked by RLS; trigger may already have run. */
 export const ensureSignupRole = createServerFn({ method: "POST" })

@@ -8,27 +8,43 @@
  * Final section Continue is labelled "Submit application".
  * Progress is saved to the server on every Continue click (save & resume, §3.12.1).
  */
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CheckCircle2, Circle, Loader2, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
+import {
+  CheckCircle2,
+  Circle,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  AlertCircle,
+} from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
+import { InfoTip } from "@/components/info-tip";
 import {
   getSectionsForRole,
   ROLE_DISPLAY,
   type OnboardingRole,
   type SectionDef,
 } from "@/lib/onboarding-constants";
-import { saveOnboardingSection, submitOnboardingApplication } from "@/lib/onboarding.functions";
+import {
+  saveOnboardingSection,
+  submitOnboardingApplication,
+  getOnboardingSectionConfig,
+} from "@/lib/onboarding.functions";
 import type { OrganiserSectionData } from "@/components/onboarding/sections/organiser-sections";
 import type { SponsorSectionData } from "@/components/onboarding/sections/sponsor-sections";
 import type { ReferralSectionData } from "@/components/onboarding/sections/referral-sections";
+import type { ProSectionData } from "@/components/onboarding/sections/partnerships-pro-sections";
+import type { CreativeSectionData } from "@/components/onboarding/sections/creative-hub-sections";
 import type { MediaSectionData } from "@/components/onboarding/sections/media-sections";
 import { OrganiserSection } from "@/components/onboarding/sections/organiser-sections";
 import { SponsorSection } from "@/components/onboarding/sections/sponsor-sections";
 import { ReferralSection } from "@/components/onboarding/sections/referral-sections";
+import { PartnershipsProSection } from "@/components/onboarding/sections/partnerships-pro-sections";
+import { CreativeHubSection } from "@/components/onboarding/sections/creative-hub-sections";
 import { MediaSection } from "@/components/onboarding/sections/media-sections";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -37,7 +53,9 @@ type AllSections =
   | OrganiserSectionData
   | SponsorSectionData
   | ReferralSectionData
-  | MediaSectionData;
+  | MediaSectionData
+  | ProSectionData
+  | CreativeSectionData;
 
 interface OnboardingWizardProps {
   role: OnboardingRole;
@@ -163,12 +181,48 @@ function SectionHeader({
       <p className="mb-1 font-mono text-xs font-medium tracking-widest text-muted-foreground">
         Section {sectionLetter} of {totalSections.toString()} · {roleLabel}
       </p>
-      <h2 className="font-display text-2xl font-bold text-foreground">{section.title}</h2>
-      {section.subtitle && (
-        <p className="mt-1 text-sm text-muted-foreground">{section.subtitle}</p>
-      )}
+      <div className="flex flex-wrap items-center gap-2">
+        <h2 className="font-display text-2xl font-bold text-foreground">
+          {section.title}
+          {/* TAB 3 §3.2: every section title carries an "i" tip. The component
+              renders nothing when the glossary has no copy for the key, so a
+              section without one simply has no icon. */}
+          <InfoTip tip={sectionTipKey(section.title)} className="ml-1.5 align-top" />
+        </h2>
+        {section.compulsory === false ? (
+          <span className="rounded-full border border-border bg-muted/50 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Can do later
+          </span>
+        ) : (
+          <span className="rounded-full border border-primary/30 bg-brand-soft/50 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-primary">
+            Compulsory
+          </span>
+        )}
+      </div>
+      {section.subtitle && <p className="mt-1 text-sm text-muted-foreground">{section.subtitle}</p>}
     </div>
   );
+}
+
+/**
+ * Section ids are letters and they differ per role, so tips are keyed off the
+ * section title instead — the shared sections carry the same title in every
+ * role's schema. A title with no entry simply has no tip.
+ */
+function sectionTipKey(title: string): string {
+  const slug = title
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "");
+  const aliases: Record<string, string> = {
+    matching_profile: "matching_profile",
+    verification_and_trust: "verification",
+    referral_and_consent: "referral_consent",
+    wishlist_and_support_needed: "wishlist",
+    abw_consulting: "abw_consulting",
+  };
+  return `section.${aliases[slug] ?? slug}`;
 }
 
 // ─── Main Wizard ──────────────────────────────────────────────────────────────
@@ -180,7 +234,21 @@ export function OnboardingWizard({
   reviewerNotes = {},
 }: OnboardingWizardProps) {
   const navigate = useNavigate();
-  const sections = getSectionsForRole(role);
+  const fetchConfig = useServerFn(getOnboardingSectionConfig);
+  // The compulsory/deferrable split is configuration (TAB 3 §3.2A), so it is
+  // read rather than hard-coded. Until it arrives every section renders as
+  // compulsory, which is the safe direction to be wrong in.
+  const { data: config } = useQuery({
+    queryKey: ["onboarding-section-config", role],
+    queryFn: () => fetchConfig({ data: { role } }),
+    staleTime: 5 * 60_000,
+  });
+  const sections = useMemo(() => {
+    const base = getSectionsForRole(role);
+    if (!config?.sections) return base;
+    const byKey = new Map(config.sections.map((c) => [c.key, c.compulsory]));
+    return base.map((s) => ({ ...s, compulsory: byKey.get(s.key) ?? true }));
+  }, [role, config]);
   const roleInfo = ROLE_DISPLAY[role];
   const [currentIdx, setCurrentIdx] = useState(resumeAt);
   const [sectionData, setSectionData] = useState<Record<string, AllSections>>(savedSections);
@@ -199,20 +267,23 @@ export function OnboardingWizard({
       isSubmit,
       dataConsent,
       termsConsent,
+      sectionProgress,
     }: {
       sectionKey: string;
       data: AllSections;
       isSubmit: boolean;
       dataConsent?: boolean;
       termsConsent?: boolean;
+      sectionProgress?: "complete" | "skipped";
     }) => {
       // Save this section
       await saveFn({
         data: {
           role,
           sectionKey,
-          sectionData: data as unknown as Record<string, unknown>,  // AllSections → unknown → Record
+          sectionData: data as unknown as Record<string, unknown>, // AllSections → unknown → Record
           currentSection: currentIdx,
+          sectionProgress: sectionProgress ?? "complete",
         },
       });
 
@@ -222,9 +293,9 @@ export function OnboardingWizard({
         }
         await submitFn({
           data: {
-            dataConsentAccepted:  true,
+            dataConsentAccepted: true,
             termsConsentAccepted: true,
-            clientIp:             typeof window !== "undefined" ? "" : "server",
+            clientIp: typeof window !== "undefined" ? "" : "server",
           },
         });
       }
@@ -249,15 +320,29 @@ export function OnboardingWizard({
       const key = currentSection.key;
       setSectionData((prev) => ({ ...prev, [key]: data as unknown as AllSections }));
       saveAndAdvance.mutate({
-        sectionKey:   key,
+        sectionKey: key,
         data,
-        isSubmit:     isLastSection,
-        dataConsent:  extra?.dataConsent,
+        isSubmit: isLastSection,
+        dataConsent: extra?.dataConsent,
         termsConsent: extra?.termsConsent,
       });
     },
     [currentSection.key, isLastSection, saveAndAdvance],
   );
+
+  /**
+   * Deferrable sections (§3.2A) can be left for later. The section is recorded
+   * as skipped rather than complete, so the dashboard completion bar and the
+   * feature locks still know it is outstanding.
+   */
+  const handleSkip = useCallback(() => {
+    saveAndAdvance.mutate({
+      sectionKey: currentSection.key,
+      data: {} as AllSections,
+      isSubmit: isLastSection,
+      sectionProgress: "skipped",
+    });
+  }, [currentSection.key, isLastSection, saveAndAdvance]);
 
   const handleBack = () => {
     setError(null);
@@ -268,10 +353,14 @@ export function OnboardingWizard({
   const sectionNote = reviewerNotes[currentSection.key];
 
   function renderSection() {
-    const initial = sectionData[currentSection.key] as unknown as Record<string, unknown> | undefined;
+    const initial = sectionData[currentSection.key] as unknown as
+      | Record<string, unknown>
+      | undefined;
     const pending = saveAndAdvance.isPending;
     const isLast = isLastSection;
     const note = sectionNote;
+    // Only a section the config marks deferrable offers Skip for now.
+    const onSkip = currentSection.compulsory === false ? handleSkip : undefined;
 
     if (role === "organiser") {
       return (
@@ -282,6 +371,7 @@ export function OnboardingWizard({
           isLastSection={isLast}
           saving={pending}
           onContinue={handleContinue}
+          onSkip={onSkip}
         />
       );
     }
@@ -294,6 +384,7 @@ export function OnboardingWizard({
           isLastSection={isLast}
           saving={pending}
           onContinue={handleContinue}
+          onSkip={onSkip}
         />
       );
     }
@@ -306,6 +397,7 @@ export function OnboardingWizard({
           isLastSection={isLast}
           saving={pending}
           onContinue={handleContinue}
+          onSkip={onSkip}
         />
       );
     }
@@ -318,6 +410,33 @@ export function OnboardingWizard({
           isLastSection={isLast}
           saving={pending}
           onContinue={handleContinue}
+          onSkip={onSkip}
+        />
+      );
+    }
+    if (role === "partnerships_pro") {
+      return (
+        <PartnershipsProSection
+          sectionKey={currentSection.key}
+          initial={initial}
+          reviewerNote={note}
+          isLastSection={isLast}
+          saving={pending}
+          onContinue={handleContinue}
+          onSkip={onSkip}
+        />
+      );
+    }
+    if (role === "creative_hub") {
+      return (
+        <CreativeHubSection
+          sectionKey={currentSection.key}
+          initial={initial}
+          reviewerNote={note}
+          isLastSection={isLast}
+          saving={pending}
+          onContinue={handleContinue}
+          onSkip={onSkip}
         />
       );
     }
@@ -404,7 +523,10 @@ export function OnboardingWizard({
               Back to sign-in
             </Link>{" "}
             ·{" "}
-            <a href="mailto:hi@insideglobalevents.com" className="font-semibold text-primary hover:underline">
+            <a
+              href="mailto:hi@insideglobalevents.com"
+              className="font-semibold text-primary hover:underline"
+            >
               Contact support
             </a>
           </p>
@@ -419,24 +541,48 @@ export function OnboardingWizard({
 export function ContinueButton({
   saving,
   isLastSection,
+  /** Deferrable sections get a Skip for now link beside Continue (§3.2A). */
+  onSkip,
+  /** The last compulsory section leads to the dashboard, not a submission. */
+  finishLabel,
 }: {
   saving: boolean;
   isLastSection: boolean;
+  onSkip?: () => void;
+  finishLabel?: string;
 }) {
   return (
-    <button
-      type="submit"
-      disabled={saving}
-      className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-soft transition-transform hover:-translate-y-0.5 disabled:opacity-60"
-    >
-      {saving ? (
-        <><Loader2 className="h-4 w-4 animate-spin" /> Saving…</>
-      ) : isLastSection ? (
-        <>Submit application <ChevronRight className="h-4 w-4" /></>
-      ) : (
-        <>Continue <ChevronRight className="h-4 w-4" /></>
+    <div className="flex flex-wrap items-center gap-3">
+      <button
+        type="submit"
+        disabled={saving}
+        className="inline-flex flex-1 items-center justify-center gap-2 rounded-md bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-soft transition-transform hover:-translate-y-0.5 disabled:opacity-60"
+      >
+        {saving ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+          </>
+        ) : isLastSection ? (
+          <>
+            {finishLabel ?? "Submit application"} <ChevronRight className="h-4 w-4" />
+          </>
+        ) : (
+          <>
+            Continue <ChevronRight className="h-4 w-4" />
+          </>
+        )}
+      </button>
+      {onSkip && (
+        <button
+          type="button"
+          onClick={onSkip}
+          disabled={saving}
+          className="text-sm font-semibold text-muted-foreground underline underline-offset-4 hover:text-foreground disabled:opacity-60"
+        >
+          Skip for now
+        </button>
       )}
-    </button>
+    </div>
   );
 }
 

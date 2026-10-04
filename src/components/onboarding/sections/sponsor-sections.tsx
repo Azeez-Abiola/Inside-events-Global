@@ -286,17 +286,18 @@ interface SponsorSectionProps {
   reviewerNote?: string;
   saving: boolean;
   isLastSection: boolean;
+  onSkip?: () => void;
   onContinue: (d: SponsorSectionData, extra?: { dataConsent: boolean; termsConsent: boolean }) => void;
 }
 
-export function SponsorSection({ sectionKey, initial, reviewerNote, saving, isLastSection, onContinue }: SponsorSectionProps) {
-  const props = { initial: initial as any, reviewerNote, saving, isLastSection, onContinue: onContinue as any };
+export function SponsorSection({ sectionKey, initial, reviewerNote, saving, isLastSection, onSkip, onContinue }: SponsorSectionProps) {
+  const props = { initial: initial as any, reviewerNote, saving, isLastSection, onSkip, onContinue: onContinue as any };
   switch (sectionKey) {
     case "a": return <SectionA {...props} />;
     case "b": return <SectionB {...props} />;
     case "c": return <SectionC {...props} />;
     case "d": return <SectionD {...props} />;
-    case "e": return <MatchingProfileSection {...props} />;
+    case "e": return <MatchingProfileSection {...props} role="sponsor" />;
     case "f": return <WishlistSection {...props} />;
     case "g": return <VerificationSection {...props} />;
     case "h": return <ReferralConsentSection {...{ ...props, showSpecificEventField: true }} />;

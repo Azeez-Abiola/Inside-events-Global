@@ -65,23 +65,24 @@ const ROLES: Array<{
     desc: "Platform oversight — vetting, revenue, users, match quality, fraud controls, and market intelligence.",
     features: ["Vetting Queue", "Revenue", "Match Engine", "Audit Log"],
     live: false,
-    adminNote: "Admin access is invite-only — selecting it routes you to a short access-request form instead of full onboarding.",
+    adminNote:
+      "Admin access is invite-only — selecting it routes you to a short access-request form instead of full onboarding.",
   },
   {
     id: "partnerships_pro",
     icon: "🌍",
     label: "Partnerships Pro",
-    desc: "ABW affiliate professionals managing multiple clients — track pipeline, outreach, and commissions across all brands.",
+    desc: "You are a partnerships professional, affiliate, consultant, business developer or partnerships executive, in any sector, not only events. Choose this if you want a full CRM to manage contacts, clients, outreach, pipeline and commission every day, with reports you can download for your manager or clients.",
     features: ["Multi-Client CRM", "Pipeline", "Commission"],
-    live: false,
+    live: true,
   },
   {
     id: "creative_hub",
     icon: "🎬",
     label: "Creative Hub",
-    desc: "Connect your creative project with brand sponsors and partners — IGE matches your content, reach, and audience with brands actively budgeting for creative sponsorship.",
+    desc: "You are a filmmaker, producer, director, artist, influencer or content creator with a production, show, series or project that brands could appear in. Choose this if you want to list sponsorship and brand placement opportunities in your work for brands around the world to discover.",
     features: ["Product Placement", "Content Pipeline", "CRM", "Analytics"],
-    live: false,
+    live: true,
   },
 ];
 
@@ -104,8 +105,10 @@ export function RoleSelectionScreen() {
 
   const selectRole = useMutation({
     mutationFn: async (role: OnboardingRole) => {
-      if (role !== "organiser" && role !== "sponsor" && role !== "referral_partner" && role !== "media_partner") {
-        throw new Error("That role is not open for public onboarding yet.");
+      // Every public role has a schema and a dashboard as of v6.2; only the
+      // Admin pseudo-role still routes elsewhere.
+      if (role === "ige_admin") {
+        throw new Error("Admin access is invite-only. Email Admin to request it.");
       }
       await ensureRole({ data: { role } });
       await saveFn({
@@ -139,7 +142,9 @@ export function RoleSelectionScreen() {
       <header className="border-b border-border bg-card px-6 py-4">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <BrandLogo size="sm" />
-          <span className="font-mono text-xs text-muted-foreground">Step 3 of 8 — Role selection</span>
+          <span className="font-mono text-xs text-muted-foreground">
+            Step 3 of 8 — Role selection
+          </span>
         </div>
       </header>
 
@@ -172,15 +177,18 @@ export function RoleSelectionScreen() {
                   <span className="text-3xl">{role.icon}</span>
                   <div className="flex-1">
                     <p className="font-semibold text-foreground">{role.label}</p>
-                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{role.desc}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                      {role.desc}
+                    </p>
                   </div>
-                  {isSelected && (
-                    <span className="shrink-0 text-primary">✓</span>
-                  )}
+                  {isSelected && <span className="shrink-0 text-primary">✓</span>}
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {role.features.map((f) => (
-                    <span key={f} className="rounded-full border border-border bg-background px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                    <span
+                      key={f}
+                      className="rounded-full border border-border bg-background px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground"
+                    >
                       {f}
                     </span>
                   ))}
@@ -226,14 +234,20 @@ export function RoleSelectionScreen() {
             className="inline-flex items-center gap-2 rounded-xl bg-brand-gradient px-8 py-3.5 text-sm font-bold text-white shadow-soft transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {selectRole.isPending ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Setting up…</>
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Setting up…
+              </>
             ) : (
-              <>Continue <ChevronRight className="h-4 w-4" /></>
+              <>
+                Continue <ChevronRight className="h-4 w-4" />
+              </>
             )}
           </button>
         </div>
         {!selected && (
-          <p className="mt-3 text-center text-xs text-muted-foreground">Select a role above to continue.</p>
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            Select a role above to continue.
+          </p>
         )}
       </main>
     </div>

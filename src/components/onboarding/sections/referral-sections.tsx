@@ -258,11 +258,12 @@ interface ReferralSectionProps {
   reviewerNote?: string;
   saving: boolean;
   isLastSection: boolean;
+  onSkip?: () => void;
   onContinue: (d: ReferralSectionData, extra?: { dataConsent: boolean; termsConsent: boolean }) => void;
 }
 
-export function ReferralSection({ sectionKey, initial, reviewerNote, saving, isLastSection, onContinue }: ReferralSectionProps) {
-  const props = { initial: initial as any, reviewerNote, saving, isLastSection, onContinue: onContinue as any };
+export function ReferralSection({ sectionKey, initial, reviewerNote, saving, isLastSection, onSkip, onContinue }: ReferralSectionProps) {
+  const props = { initial: initial as any, reviewerNote, saving, isLastSection, onSkip, onContinue: onContinue as any };
   switch (sectionKey) {
     case "a": return <SectionA {...props} />;
     case "b": return <SectionB {...props} />;

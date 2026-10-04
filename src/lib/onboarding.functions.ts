@@ -14,6 +14,11 @@ import { sendTransactionalEmailServer } from "@/lib/email/server-send";
 import { flushEmailQueueInDev } from "@/lib/email/flush-queue-dev";
 import { requirePlatformAdmin, getActorProfile } from "@/lib/admin-auth";
 import { auditAdminAction } from "@/lib/admin-audit";
+import {
+  DEFERRABLE_SECTIONS,
+  getSectionsForRole,
+  type OnboardingRole,
+} from "@/lib/onboarding-constants";
 
 const SITE_URL = process.env.VITE_SITE_URL || "https://www.insideglobalevents.com";
 
@@ -29,6 +34,7 @@ interface OARow {
   role: string;
   status: string;
   sections: Record<string, Record<string, string | string[] | number | boolean | null>>;
+  section_status: Record<string, string>;
   current_section: number;
   reviewer_notes: Record<string, string>;
   reviewed_at: string | null;
@@ -43,6 +49,8 @@ const SaveSectionInput = z.object({
   sectionKey:     z.string().min(1).max(8),
   sectionData:    z.record(z.unknown()),
   currentSection: z.number().int().min(0),
+  /** "skipped" is only valid for a deferrable section (TAB 3 §3.2A). */
+  sectionProgress: z.enum(["complete", "skipped"]).optional().default("complete"),
 });
 
 export const saveOnboardingSection = createServerFn({ method: "POST" })
@@ -53,12 +61,16 @@ export const saveOnboardingSection = createServerFn({ method: "POST" })
 
     const { data: existing } = await odb()
       .from("onboarding_applications")
-      .select("id, sections, status")
+      .select("id, sections, section_status, status")
       .eq("user_id", userId)
       .maybeSingle() as { data: OARow | null };
 
     const currentSections = existing?.sections ?? {};
     const newSections = { ...currentSections, [data.sectionKey]: data.sectionData };
+    // Progress is tracked separately from the answers: a skipped section has no
+    // answers but is still a section the completion bar has to mention.
+    const currentStatus = (existing?.section_status ?? {}) as Record<string, string>;
+    const newStatus = { ...currentStatus, [data.sectionKey]: data.sectionProgress };
 
     if (!existing) {
       const { error } = await odb()
@@ -67,6 +79,7 @@ export const saveOnboardingSection = createServerFn({ method: "POST" })
           user_id:         userId,
           role:            data.role,
           sections:        newSections,
+          section_status:  newStatus,
           current_section: data.currentSection,
           status:          "draft",
         }) as { error: { message: string } | null };
@@ -79,6 +92,7 @@ export const saveOnboardingSection = createServerFn({ method: "POST" })
         .from("onboarding_applications")
         .update({
           sections:        newSections,
+          section_status:  newStatus,
           current_section: data.currentSection,
           role:            data.role,
         })
@@ -191,6 +205,50 @@ export const getMyOnboardingApplication = createServerFn({ method: "POST" })
       .maybeSingle();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     return { application: (res.data ?? null) as OARow | null };
+  });
+
+// ─── Section configuration (TAB 3 §3.2A) ──────────────────────────────────────
+
+/**
+ * Which sections are compulsory for a role. The table wins so ABW can change
+ * the split without a release; DEFERRABLE_SECTIONS covers any section the table
+ * has no row for, and a failed read falls back to it entirely rather than
+ * leaving the wizard unable to tell compulsory from deferrable.
+ */
+export const getOnboardingSectionConfig = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { role: string }) =>
+    z.object({
+      role: z.enum([
+        "organiser","sponsor","referral_partner","media_partner","partnerships_pro","creative_hub",
+      ]),
+    }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const fallback = DEFERRABLE_SECTIONS[data.role as OnboardingRole] ?? [];
+    const sections = getSectionsForRole(data.role as OnboardingRole);
+
+    const { data: rows, error } = (await odb()
+      .from("onboarding_section_config")
+      .select("section_key, compulsory")
+      .eq("role", data.role)) as {
+      data: { section_key: string; compulsory: boolean }[] | null;
+      error: { message: string } | null;
+    };
+
+    const configured = new Map((rows ?? []).map((r) => [r.section_key, r.compulsory]));
+    return {
+      sections: sections.map((s) => ({
+        key: s.key,
+        title: s.title,
+        subtitle: s.subtitle,
+        compulsory: error
+          ? !fallback.includes(s.key)
+          : configured.get(s.key) ?? !fallback.includes(s.key),
+      })),
+      /** True when the table could not be read and the code map was used. */
+      usedFallback: Boolean(error),
+    };
   });
 
 // ─── Admin: list all applications ─────────────────────────────────────────────

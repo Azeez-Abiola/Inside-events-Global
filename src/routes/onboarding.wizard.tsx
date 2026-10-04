@@ -6,7 +6,12 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { useState } from "react";
+import { useRouter } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
+import { CreativeTypePicker } from "@/components/onboarding/sections/creative-hub-sections";
+import { saveOnboardingSection } from "@/lib/onboarding.functions";
 import type { OnboardingRole } from "@/lib/onboarding-constants";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -74,12 +79,42 @@ function WizardPage() {
     );
   }
 
+  // Creative Hub picks its creative type before the wizard starts (TAB 3 §3.1).
+  if (app.role === "creative_hub" && !(app.sections as Record<string, unknown>).ctype) {
+    return <CreativeTypeStep />;
+  }
+
   return (
     <OnboardingWizard
       role={app.role as OnboardingRole}
       savedSections={(app.sections as Record<string, never>) ?? {}}
       resumeAt={app.current_section ?? 0}
       reviewerNotes={(app.reviewer_notes as Record<string, string>) ?? {}}
+    />
+  );
+}
+
+function CreativeTypeStep() {
+  const router = useRouter();
+  const save = useServerFn(saveOnboardingSection);
+  const [saving, setSaving] = useState(false);
+
+  return (
+    <CreativeTypePicker
+      saving={saving}
+      onPick={(creativeType) => {
+        setSaving(true);
+        void save({
+          data: {
+            role: "creative_hub",
+            sectionKey: "ctype",
+            sectionData: { creative_type: creativeType },
+            currentSection: 0,
+          },
+        })
+          .then(() => router.invalidate())
+          .finally(() => setSaving(false));
+      }}
     />
   );
 }

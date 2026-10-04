@@ -65,6 +65,7 @@ interface SectionProps<T> {
   reviewerNote?: string;
   saving: boolean;
   isLastSection: boolean;
+  onSkip?: () => void;
   onContinue: (d: T, extra?: { dataConsent: boolean; termsConsent: boolean }) => void;
 }
 
@@ -392,18 +393,19 @@ interface OrganiserSectionProps {
   reviewerNote?: string;
   saving: boolean;
   isLastSection: boolean;
+  onSkip?: () => void;
   onContinue: (d: OrganiserSectionData, extra?: { dataConsent: boolean; termsConsent: boolean }) => void;
 }
 
-export function OrganiserSection({ sectionKey, initial, reviewerNote, saving, isLastSection, onContinue }: OrganiserSectionProps) {
-  const props = { initial: initial as any, reviewerNote, saving, isLastSection, onContinue: onContinue as any };
+export function OrganiserSection({ sectionKey, initial, reviewerNote, saving, isLastSection, onSkip, onContinue }: OrganiserSectionProps) {
+  const props = { initial: initial as any, reviewerNote, saving, isLastSection, onSkip, onContinue: onContinue as any };
   switch (sectionKey) {
     case "a": return <SectionA {...props} />;
     case "b": return <SectionB {...props} />;
     case "c": return <SectionC {...props} />;
     case "d": return <SectionD {...props} />;
     case "e": return <SectionE {...props} />;
-    case "f": return <MatchingProfileSection {...props} />;
+    case "f": return <MatchingProfileSection {...props} role="organiser" />;
     case "g": return <WishlistSection {...props} />;
     case "h": return <VerificationSection {...props} />;
     case "i": return <ReferralConsentSection {...props} />;
