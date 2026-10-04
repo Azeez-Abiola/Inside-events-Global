@@ -154,8 +154,38 @@ export function clearSignupAccountDraft() {
   }
 }
 
+/**
+ * Has this person already got past onboarding?
+ *
+ * The onboarding application is the real answer now. The per-role profile
+ * tables predate the v6.2 wizard and are only written by the older flows, so
+ * checking them alone reported "not started" for someone who had just
+ * finished — which sent them straight back into onboarding, in a loop.
+ */
 export async function hasRoleProfile(userId: string, role: SignupRole): Promise<boolean> {
   const { supabase } = await import("@/integrations/supabase/client");
+
+  // `onboarding_applications` is not in the generated Supabase types yet;
+  // same cast convention as odb()/adb() on the server side.
+  const { data: application } = await (
+    supabase as unknown as {
+      from: (t: string) => {
+        select: (c: string) => {
+          eq: (
+            c: string,
+            v: string,
+          ) => { maybeSingle: () => Promise<{ data: { status?: string } | null }> };
+        };
+      };
+    }
+  )
+    .from("onboarding_applications")
+    .select("status")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const status = application?.status;
+  if (status && ["submitted", "under_review", "approved"].includes(status)) return true;
+
   // Media, Partnerships Pro and Creative Hub keep everything in the
   // onboarding application; they have no separate profile table to check.
   if (role === "media_partner" || role === "partnerships_pro" || role === "creative_hub") {

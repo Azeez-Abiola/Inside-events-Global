@@ -2,11 +2,17 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  AUTH_EMAIL_OTP_LENGTH,
   AUTH_EMAIL_OTP_MAX,
   isValidEmailOtp,
   normalizeEmailOtp,
 } from "@/lib/auth-email";
-import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSeparator,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 
 type Props = {
   email: string;
@@ -58,8 +64,8 @@ export function SignupOtpStep({ email, onVerified, onResend }: Props) {
   return (
     <div className="space-y-6">
       <p className="text-sm text-muted-foreground">
-        We sent a verification code to <strong className="text-foreground">{email}</strong>.
-        Enter all {AUTH_EMAIL_OTP_MAX} digits from your email.
+        We sent a verification code to <strong className="text-foreground">{email}</strong>. Enter
+        all {AUTH_EMAIL_OTP_MAX} digits from your email.
       </p>
 
       <div className="flex flex-col items-center gap-4">
@@ -68,29 +74,32 @@ export function SignupOtpStep({ email, onVerified, onResend }: Props) {
           value={otp}
           onChange={(value) => {
             setOtp(value);
-            if (normalizeEmailOtp(value).length === AUTH_EMAIL_OTP_MAX) {
+            // Auto-submit at the project's configured length. Verify stays
+            // available from the minimum, so a shorter code is never stuck.
+            if (normalizeEmailOtp(value).length === AUTH_EMAIL_OTP_LENGTH) {
               void handleVerify(value);
             }
           }}
           disabled={verifying}
         >
+          {/* Drawn from the configured length rather than a fixed eight, and
+              split in half only when that divides evenly. */}
           <InputOTPGroup>
-            <InputOTPSlot index={0} />
-            <InputOTPSlot index={1} />
-            <InputOTPSlot index={2} />
-            <InputOTPSlot index={3} />
+            {Array.from({ length: Math.ceil(AUTH_EMAIL_OTP_LENGTH / 2) }, (_, i) => (
+              <InputOTPSlot key={i} index={i} />
+            ))}
           </InputOTPGroup>
           <InputOTPSeparator />
           <InputOTPGroup>
-            <InputOTPSlot index={4} />
-            <InputOTPSlot index={5} />
-            <InputOTPSlot index={6} />
-            <InputOTPSlot index={7} />
+            {Array.from(
+              { length: Math.floor(AUTH_EMAIL_OTP_LENGTH / 2) },
+              (_, i) => i + Math.ceil(AUTH_EMAIL_OTP_LENGTH / 2),
+            ).map((i) => (
+              <InputOTPSlot key={i} index={i} />
+            ))}
           </InputOTPGroup>
         </InputOTP>
-        {verifying && (
-          <p className="text-xs text-muted-foreground">Verifying…</p>
-        )}
+        {verifying && <p className="text-xs text-muted-foreground">Verifying…</p>}
       </div>
 
       <button

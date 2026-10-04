@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
@@ -39,6 +39,8 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
   const saveOnboarding = useServerFn(saveOnboardingSection);
   const [step, setStep] = useState<SignupStep>(initialStep ?? "role");
   const [role, setRole] = useState<SignupRole>("sponsor");
+  /** Which user id the bootstrap below has already run for. */
+  const bootstrappedFor = useRef<string | null>(null);
   const [bootstrapping, setBootstrapping] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -80,6 +82,14 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
 
   useEffect(() => {
     if (loading) return;
+
+    // startOnboarding assigns the role, refreshes auth state and navigates.
+    // Refreshing auth state re-runs this effect, so without a latch the
+    // bootstrap re-enters itself: the console fills with hundreds of paired
+    // ensureSignupRole / saveOnboardingSection calls and the page never
+    // leaves "Loading…". Latch per user so switching account still works.
+    if (bootstrappedFor.current === (user?.id ?? "anon")) return;
+    bootstrappedFor.current = user?.id ?? "anon";
 
     (async () => {
       if (!user) {
