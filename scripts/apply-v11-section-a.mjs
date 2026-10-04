@@ -4,6 +4,7 @@
 //   20261004091000_event_type_taxonomy.sql legacy event types -> the 37 (Appendix B)
 //   20261004092000_event_visibility.sql    private/published + Looking to connect with
 //   20261004093000_new_roles.sql           partnerships_pro + creative_hub on app_role
+//   20261004100000_workspace_layer.sql     workspaces, seats and the Manager role
 //
 // Run:  npm run db:v11-section-a
 import { readFileSync, existsSync } from "node:fs";
@@ -18,6 +19,7 @@ const MIGRATIONS = [
   "supabase/migrations/20261004091000_event_type_taxonomy.sql",
   "supabase/migrations/20261004092000_event_visibility.sql",
   "supabase/migrations/20261004093000_new_roles.sql",
+  "supabase/migrations/20261004100000_workspace_layer.sql",
 ];
 
 function loadEnvFile() {
@@ -47,11 +49,12 @@ if (!url || !key) {
 
 async function schemaInPlace() {
   const headers = { apikey: key, Authorization: `Bearer ${key}` };
-  const [glossary, visibility] = await Promise.all([
+  const [glossary, visibility, workspaces] = await Promise.all([
     fetch(`${url}/rest/v1/glossary_tips?select=tip_key&limit=1`, { headers }),
     fetch(`${url}/rest/v1/events?select=visibility,looking_to_connect_with&limit=1`, { headers }),
+    fetch(`${url}/rest/v1/workspace_members?select=role&limit=1`, { headers }),
   ]);
-  return glossary.ok && visibility.ok;
+  return glossary.ok && visibility.ok && workspaces.ok;
 }
 
 async function applyViaPg() {
@@ -85,7 +88,8 @@ async function main() {
   const projectRef = process.env.SUPABASE_PROJECT_ID || url.match(/https:\/\/([^.]+)/)?.[1];
   console.log(`
 Version 1.1 Section A schema is MISSING. Without it: no info tips, no event
-visibility, and the Partnerships Pro / Creative Hub roles cannot be assigned.
+visibility, no workspaces or team seats, and the Partnerships Pro / Creative
+Hub roles cannot be assigned.
 
 Option A — Supabase Dashboard (recommended)
   Open https://supabase.com/dashboard/project/${projectRef}/sql/new
@@ -99,6 +103,9 @@ Option B — CLI with database password
 The event-type migration prints a NOTICE for any listing whose type has no
 honest home in the 37 (the taxonomy has no sports type). Reclassify those in
 Admin rather than leaving them to show blank in the editor.
+
+The workspace migration backfills an Individual workspace for every existing
+account, so it is safe to re-run but slow in proportion to the user table.
 
 After applying, re-run \`supabase gen types\` so the generated types pick up the
 new columns and the odb()/adb()/gdb() casts can go.

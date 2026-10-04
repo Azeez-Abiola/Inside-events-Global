@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AuthShell } from "@/components/auth-shell";
 import { ensureSignupRole } from "@/lib/signup.functions";
 import { recordAdminLogin } from "@/lib/admin-team.functions";
+import { claimPendingInvites } from "@/lib/workspace.functions";
 import { markSignedIn } from "@/lib/session-policy";
 import { isSignupRole, stashSignupRole } from "@/lib/signup-roles";
 
@@ -43,6 +44,7 @@ function AuthCallbackPage() {
   });
   const ensureRole = useServerFn(ensureSignupRole);
   const recordLogin = useServerFn(recordAdminLogin);
+  const claimInvites = useServerFn(claimPendingInvites);
   const [failure, setFailure] = useState<string | null>(
     error ? (error_description ?? "Google sign-in was cancelled or failed.") : null,
   );
@@ -102,6 +104,9 @@ function AuthCallbackPage() {
       }
 
       void recordLogin().catch(() => {});
+      // Google sign-up is the likeliest way an invited colleague first
+      // arrives, so claim their seat before routing them anywhere.
+      await claimInvites().catch(() => {});
 
       if (cancelled) return;
       if (redirect) navigate({ to: redirect, replace: true });
@@ -112,7 +117,7 @@ function AuthCallbackPage() {
     return () => {
       cancelled = true;
     };
-  }, [failure, role, redirect, remember, ensureRole, recordLogin, navigate]);
+  }, [failure, role, redirect, remember, ensureRole, recordLogin, claimInvites, navigate]);
 
   if (failure) {
     return (

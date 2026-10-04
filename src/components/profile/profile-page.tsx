@@ -2,7 +2,11 @@ import { useRef, useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Camera, Compass, Loader2, Lock, Shield, User } from "lucide-react";
+import { Activity, Building2, Camera, Compass, Loader2, Lock, Shield, User } from "lucide-react";
+import { WorkspaceSettings } from "@/components/workspace/workspace-settings";
+import { TeamActivity } from "@/components/workspace/team-activity";
+import { getMyWorkspaces } from "@/lib/workspace.functions";
+import { can } from "@/lib/workspace-permissions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { useDashboardTour } from "@/lib/dashboard-tour-context";
@@ -31,9 +35,17 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
-type Tab = "general" | "role" | "security";
+type Tab = "general" | "role" | "workspace" | "activity" | "security";
 
-const OUTLET_TYPES = ["Publication", "Podcast", "Newsletter", "Creator", "Agency", "Freelance", "Other"];
+const OUTLET_TYPES = [
+  "Publication",
+  "Podcast",
+  "Newsletter",
+  "Creator",
+  "Agency",
+  "Freelance",
+  "Other",
+];
 
 export function ProfilePage({ initialTab = "general" }: { initialTab?: Tab }) {
   const { user, roles, signOut } = useAuth();
@@ -41,6 +53,14 @@ export function ProfilePage({ initialTab = "general" }: { initialTab?: Tab }) {
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [tab, setTab] = useState<Tab>(initialTab);
+  // Which seat the person holds decides whether Team Activity is offered at
+  // all — a Viewer or Editor should not see a tab they cannot open.
+  const fetchWorkspaces = useServerFn(getMyWorkspaces);
+  const { data: workspaceCtx } = useQuery({
+    queryKey: ["my-workspaces"],
+    queryFn: () => fetchWorkspaces(),
+  });
+  const canSeeTeamActivity = can(workspaceCtx?.myRole ?? null, "team.activity");
   const [uploading, setUploading] = useState(false);
 
   const fetchProfile = useServerFn(getMyProfileSummary);
@@ -98,6 +118,13 @@ export function ProfilePage({ initialTab = "general" }: { initialTab?: Tab }) {
   const tabs: { id: Tab; label: string; icon: typeof User }[] = [
     { id: "general", label: "Account", icon: User },
     { id: "role", label: "Role profile", icon: Shield },
+    { id: "workspace", label: "Workspace & team", icon: Building2 },
+    // Team Activity is the Manager seat's whole purpose, so it gets its own
+    // tab rather than hiding below the team list (TAB 4 §4.3). Hidden for
+    // seats that cannot see it, which is Viewer and Editor.
+    ...(canSeeTeamActivity
+      ? [{ id: "activity" as Tab, label: "Team activity", icon: Activity }]
+      : []),
     { id: "security", label: "Security", icon: Lock },
   ];
 
@@ -107,7 +134,8 @@ export function ProfilePage({ initialTab = "general" }: { initialTab?: Tab }) {
         <div>
           <h1 className="font-display text-3xl font-bold text-foreground">Profile</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Manage your account details, {roleLabel(roles).toLowerCase()} profile, and security settings.
+            Manage your account details, {roleLabel(roles).toLowerCase()} profile, and security
+            settings.
           </p>
         </div>
         {tourRole && (
@@ -128,7 +156,9 @@ export function ProfilePage({ initialTab = "general" }: { initialTab?: Tab }) {
         <div className="relative">
           <Avatar className="h-24 w-24 ring-4 ring-primary/10">
             {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
-            <AvatarFallback className="bg-brand-soft text-2xl font-bold text-primary-deep">{initials}</AvatarFallback>
+            <AvatarFallback className="bg-brand-soft text-2xl font-bold text-primary-deep">
+              {initials}
+            </AvatarFallback>
           </Avatar>
           <button
             type="button"
@@ -137,7 +167,11 @@ export function ProfilePage({ initialTab = "general" }: { initialTab?: Tab }) {
             className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card shadow-sm hover:bg-muted disabled:opacity-50"
             aria-label="Change photo"
           >
-            {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+            {uploading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Camera className="h-3.5 w-3.5" />
+            )}
           </button>
           <input
             ref={fileRef}
@@ -184,7 +218,9 @@ export function ProfilePage({ initialTab = "general" }: { initialTab?: Tab }) {
             onClick={() => setTab(t.id)}
             className={cn(
               "flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-              tab === t.id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+              tab === t.id
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             <t.icon className="h-4 w-4" />
@@ -208,6 +244,10 @@ export function ProfilePage({ initialTab = "general" }: { initialTab?: Tab }) {
         />
       ) : tab === "role" ? (
         <RoleProfileForm role={primaryRole} data={data} onSaved={() => refetch()} />
+      ) : tab === "workspace" ? (
+        <WorkspaceSettings />
+      ) : tab === "activity" ? (
+        <TeamActivity />
       ) : (
         <SecuritySection onPasswordChanged={signOut} />
       )}
@@ -258,13 +298,32 @@ function GeneralProfileForm({
       }}
     >
       <h3 className="font-display text-lg font-bold">Account details</h3>
-      <Field label="Display name" value={form.display_name} onChange={(v) => setForm({ ...form, display_name: v })} />
+      <Field
+        label="Display name"
+        value={form.display_name}
+        onChange={(v) => setForm({ ...form, display_name: v })}
+      />
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium text-muted-foreground">Email</span>
-        <input value={email} disabled className="w-full rounded-md border border-input bg-muted/40 px-3 py-2.5 text-sm text-muted-foreground" />
+        <input
+          value={email}
+          disabled
+          className="w-full rounded-md border border-input bg-muted/40 px-3 py-2.5 text-sm text-muted-foreground"
+        />
       </label>
-      <Field label="Phone" type="tel" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
-      <Field label="LinkedIn URL" type="url" placeholder="https://linkedin.com/in/…" value={form.linkedin_url} onChange={(v) => setForm({ ...form, linkedin_url: v })} />
+      <Field
+        label="Phone"
+        type="tel"
+        value={form.phone}
+        onChange={(v) => setForm({ ...form, phone: v })}
+      />
+      <Field
+        label="LinkedIn URL"
+        type="url"
+        placeholder="https://linkedin.com/in/…"
+        value={form.linkedin_url}
+        onChange={(v) => setForm({ ...form, linkedin_url: v })}
+      />
       <Button type="submit" disabled={saving} className="w-full sm:w-auto">
         {saving ? "Saving…" : "Save changes"}
       </Button>
@@ -278,25 +337,30 @@ function RoleProfileForm({
   onSaved,
 }: {
   role: string;
-  data: {
-    organiser?: unknown;
-    sponsor?: unknown;
-    referral?: unknown;
-    media?: unknown;
-    profile?: unknown;
-  } | undefined;
+  data:
+    | {
+        organiser?: unknown;
+        sponsor?: unknown;
+        referral?: unknown;
+        media?: unknown;
+        profile?: unknown;
+      }
+    | undefined;
   onSaved: () => void;
 }) {
   if (role === "abw_admin" || role === "super_admin") {
     return (
       <div className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">
-        Admin accounts use platform-wide settings from the dashboard. Update your display name and photo in the Account tab.
+        Admin accounts use platform-wide settings from the dashboard. Update your display name and
+        photo in the Account tab.
       </div>
     );
   }
-  if (role === "organiser") return <OrganiserProfileEdit data={data?.organiser} onSaved={onSaved} />;
+  if (role === "organiser")
+    return <OrganiserProfileEdit data={data?.organiser} onSaved={onSaved} />;
   if (role === "sponsor") return <SponsorProfileEdit data={data?.sponsor} onSaved={onSaved} />;
-  if (role === "referral_partner") return <ReferralProfileEdit data={data?.referral} profile={data?.profile} onSaved={onSaved} />;
+  if (role === "referral_partner")
+    return <ReferralProfileEdit data={data?.referral} profile={data?.profile} onSaved={onSaved} />;
   if (role === "media_partner") return <MediaProfileEdit data={data?.media} onSaved={onSaved} />;
   return (
     <div className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">
@@ -335,11 +399,28 @@ function OrganiserProfileEdit({ data, onSaved }: { data: any; onSaved: () => voi
     >
       <h3 className="font-display text-lg font-bold">Organiser profile</h3>
       <p className="text-sm text-muted-foreground">
-        Your organisation image on event listings uses the profile photo at the top of this page — no separate logo upload needed.
+        Your organisation image on event listings uses the profile photo at the top of this page —
+        no separate logo upload needed.
       </p>
-      <Field label="Organisation name" value={form.org_name} onChange={(v) => setForm({ ...form, org_name: v })} required />
-      <Field label="Website" type="url" value={form.website} onChange={(v) => setForm({ ...form, website: v })} />
-      <TextArea label="Short bio" rows={3} value={form.bio} onChange={(v) => setForm({ ...form, bio: v })} maxLength={5000} />
+      <Field
+        label="Organisation name"
+        value={form.org_name}
+        onChange={(v) => setForm({ ...form, org_name: v })}
+        required
+      />
+      <Field
+        label="Website"
+        type="url"
+        value={form.website}
+        onChange={(v) => setForm({ ...form, website: v })}
+      />
+      <TextArea
+        label="Short bio"
+        rows={3}
+        value={form.bio}
+        onChange={(v) => setForm({ ...form, bio: v })}
+        maxLength={5000}
+      />
       <TextArea
         label="Event track record"
         rows={6}
@@ -348,7 +429,9 @@ function OrganiserProfileEdit({ data, onSaved }: { data: any; onSaved: () => voi
         maxLength={10000}
         hint="List past editions and key highlights — up to 10,000 characters."
       />
-      <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save organiser profile"}</Button>
+      <Button type="submit" disabled={saving}>
+        {saving ? "Saving…" : "Save organiser profile"}
+      </Button>
     </form>
   );
 }
@@ -395,27 +478,90 @@ function SponsorProfileEdit({ data, onSaved }: { data: any; onSaved: () => void 
       }}
     >
       <h3 className="font-display text-lg font-bold">Sponsor profile</h3>
-      <Field label="Brand name" value={form.brand_name} onChange={(v) => setForm({ ...form, brand_name: v })} required />
-      <Field label="Industry" value={form.industry} onChange={(v) => setForm({ ...form, industry: v })} />
+      <Field
+        label="Brand name"
+        value={form.brand_name}
+        onChange={(v) => setForm({ ...form, brand_name: v })}
+        required
+      />
+      <Field
+        label="Industry"
+        value={form.industry}
+        onChange={(v) => setForm({ ...form, industry: v })}
+      />
       <div className="grid gap-4 sm:grid-cols-2">
-        <SelectField label="Company size" value={form.company_size} onChange={(v) => setForm({ ...form, company_size: v })} options={COMPANY_SIZES} />
-        <SelectField label="HQ country" value={form.hq_country} onChange={(v) => setForm({ ...form, hq_country: v })} options={COUNTRIES} />
+        <SelectField
+          label="Company size"
+          value={form.company_size}
+          onChange={(v) => setForm({ ...form, company_size: v })}
+          options={COMPANY_SIZES}
+        />
+        <SelectField
+          label="HQ country"
+          value={form.hq_country}
+          onChange={(v) => setForm({ ...form, hq_country: v })}
+          options={COUNTRIES}
+        />
       </div>
-      <Field label="HQ city" value={form.hq_city} onChange={(v) => setForm({ ...form, hq_city: v })} />
-      <ChipMulti label="Sponsorship sectors" options={PRIMARY_SECTORS} value={form.sponsorship_sectors} onChange={(v) => setForm({ ...form, sponsorship_sectors: v })} />
-      <ChipMulti label="Target geographies" options={GEOGRAPHIC_MIX} value={form.target_geographies} onChange={(v) => setForm({ ...form, target_geographies: v })} />
-      <ChipMulti label="Audience types" options={PRIMARY_AUDIENCES} value={form.audience_types} onChange={(v) => setForm({ ...form, audience_types: v })} />
+      <Field
+        label="HQ city"
+        value={form.hq_city}
+        onChange={(v) => setForm({ ...form, hq_city: v })}
+      />
+      <ChipMulti
+        label="Sponsorship sectors"
+        options={PRIMARY_SECTORS}
+        value={form.sponsorship_sectors}
+        onChange={(v) => setForm({ ...form, sponsorship_sectors: v })}
+      />
+      <ChipMulti
+        label="Target geographies"
+        options={GEOGRAPHIC_MIX}
+        value={form.target_geographies}
+        onChange={(v) => setForm({ ...form, target_geographies: v })}
+      />
+      <ChipMulti
+        label="Audience types"
+        options={PRIMARY_AUDIENCES}
+        value={form.audience_types}
+        onChange={(v) => setForm({ ...form, audience_types: v })}
+      />
       <div className="grid gap-4 sm:grid-cols-3">
-        <Field label="Min budget" type="number" value={form.budget_range_min} onChange={(v) => setForm({ ...form, budget_range_min: v })} />
-        <Field label="Max budget" type="number" value={form.budget_range_max} onChange={(v) => setForm({ ...form, budget_range_max: v })} />
-        <SelectField label="Currency" value={form.preferred_currency} onChange={(v) => setForm({ ...form, preferred_currency: v })} options={[...CURRENCIES]} />
+        <Field
+          label="Min budget"
+          type="number"
+          value={form.budget_range_min}
+          onChange={(v) => setForm({ ...form, budget_range_min: v })}
+        />
+        <Field
+          label="Max budget"
+          type="number"
+          value={form.budget_range_max}
+          onChange={(v) => setForm({ ...form, budget_range_max: v })}
+        />
+        <SelectField
+          label="Currency"
+          value={form.preferred_currency}
+          onChange={(v) => setForm({ ...form, preferred_currency: v })}
+          options={[...CURRENCIES]}
+        />
       </div>
-      <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save sponsor profile"}</Button>
+      <Button type="submit" disabled={saving}>
+        {saving ? "Saving…" : "Save sponsor profile"}
+      </Button>
     </form>
   );
 }
 
-function ReferralProfileEdit({ data, profile, onSaved }: { data: any; profile: any; onSaved: () => void }) {
+function ReferralProfileEdit({
+  data,
+  profile,
+  onSaved,
+}: {
+  data: any;
+  profile: any;
+  onSaved: () => void;
+}) {
   const submit = useServerFn(upsertReferralProfile);
   const [form, setForm] = useState({
     full_name: data?.full_name ?? "",
@@ -447,14 +593,50 @@ function ReferralProfileEdit({ data, profile, onSaved }: { data: any; profile: a
       }}
     >
       <h3 className="font-display text-lg font-bold">Referral partner profile</h3>
-      <Field label="Full name" value={form.full_name} onChange={(v) => setForm({ ...form, full_name: v })} required />
-      <Field label="Professional title" value={form.professional_title} onChange={(v) => setForm({ ...form, professional_title: v })} />
-      <Field label="LinkedIn URL" type="url" value={form.linkedin_url} onChange={(v) => setForm({ ...form, linkedin_url: v })} />
-      <ChipMulti label="Sector expertise" options={SECTOR_EXPERTISE} value={form.sector_expertise} onChange={(v) => setForm({ ...form, sector_expertise: v })} />
-      <TextArea label="Professional background" rows={3} value={form.professional_bg} onChange={(v) => setForm({ ...form, professional_bg: v })} />
-      <TextArea label="Sponsor network" rows={3} value={form.sponsor_network_desc} onChange={(v) => setForm({ ...form, sponsor_network_desc: v })} />
-      <SelectField label="Payout currency" value={form.payout_currency} onChange={(v) => setForm({ ...form, payout_currency: v })} options={["NGN", "USD", "GBP", "EUR"]} />
-      <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save referral profile"}</Button>
+      <Field
+        label="Full name"
+        value={form.full_name}
+        onChange={(v) => setForm({ ...form, full_name: v })}
+        required
+      />
+      <Field
+        label="Professional title"
+        value={form.professional_title}
+        onChange={(v) => setForm({ ...form, professional_title: v })}
+      />
+      <Field
+        label="LinkedIn URL"
+        type="url"
+        value={form.linkedin_url}
+        onChange={(v) => setForm({ ...form, linkedin_url: v })}
+      />
+      <ChipMulti
+        label="Sector expertise"
+        options={SECTOR_EXPERTISE}
+        value={form.sector_expertise}
+        onChange={(v) => setForm({ ...form, sector_expertise: v })}
+      />
+      <TextArea
+        label="Professional background"
+        rows={3}
+        value={form.professional_bg}
+        onChange={(v) => setForm({ ...form, professional_bg: v })}
+      />
+      <TextArea
+        label="Sponsor network"
+        rows={3}
+        value={form.sponsor_network_desc}
+        onChange={(v) => setForm({ ...form, sponsor_network_desc: v })}
+      />
+      <SelectField
+        label="Payout currency"
+        value={form.payout_currency}
+        onChange={(v) => setForm({ ...form, payout_currency: v })}
+        options={["NGN", "USD", "GBP", "EUR"]}
+      />
+      <Button type="submit" disabled={saving}>
+        {saving ? "Saving…" : "Save referral profile"}
+      </Button>
     </form>
   );
 }
@@ -489,12 +671,40 @@ function MediaProfileEdit({ data, onSaved }: { data: any; onSaved: () => void })
       }}
     >
       <h3 className="font-display text-lg font-bold">Media partner profile</h3>
-      <Field label="Outlet / publication name" value={form.outlet_name} onChange={(v) => setForm({ ...form, outlet_name: v })} required />
-      <SelectField label="Outlet type" value={form.outlet_type} onChange={(v) => setForm({ ...form, outlet_type: v })} options={OUTLET_TYPES} />
-      <Field label="Portfolio / website" type="url" value={form.portfolio_url} onChange={(v) => setForm({ ...form, portfolio_url: v })} />
-      <ChipMulti label="Coverage beats" options={PRIMARY_SECTORS} value={form.beat_sectors} onChange={(v) => setForm({ ...form, beat_sectors: v })} />
-      <TextArea label="Bio" rows={4} value={form.bio} onChange={(v) => setForm({ ...form, bio: v })} placeholder="What do you cover and who is your audience?" />
-      <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save media profile"}</Button>
+      <Field
+        label="Outlet / publication name"
+        value={form.outlet_name}
+        onChange={(v) => setForm({ ...form, outlet_name: v })}
+        required
+      />
+      <SelectField
+        label="Outlet type"
+        value={form.outlet_type}
+        onChange={(v) => setForm({ ...form, outlet_type: v })}
+        options={OUTLET_TYPES}
+      />
+      <Field
+        label="Portfolio / website"
+        type="url"
+        value={form.portfolio_url}
+        onChange={(v) => setForm({ ...form, portfolio_url: v })}
+      />
+      <ChipMulti
+        label="Coverage beats"
+        options={PRIMARY_SECTORS}
+        value={form.beat_sectors}
+        onChange={(v) => setForm({ ...form, beat_sectors: v })}
+      />
+      <TextArea
+        label="Bio"
+        rows={4}
+        value={form.bio}
+        onChange={(v) => setForm({ ...form, bio: v })}
+        placeholder="What do you cover and who is your audience?"
+      />
+      <Button type="submit" disabled={saving}>
+        {saving ? "Saving…" : "Save media profile"}
+      </Button>
     </form>
   );
 }
@@ -528,9 +738,21 @@ function SecuritySection({ onPasswordChanged }: { onPasswordChanged: () => Promi
       <p className="text-sm text-muted-foreground">
         After updating your password you will be signed out and asked to sign in again.
       </p>
-      <Field label="New password" type="password" value={pw.next} onChange={(v) => setPw({ ...pw, next: v })} />
-      <Field label="Confirm new password" type="password" value={pw.confirm} onChange={(v) => setPw({ ...pw, confirm: v })} />
-      <Button type="submit" disabled={changing}>{changing ? "Updating…" : "Update password"}</Button>
+      <Field
+        label="New password"
+        type="password"
+        value={pw.next}
+        onChange={(v) => setPw({ ...pw, next: v })}
+      />
+      <Field
+        label="Confirm new password"
+        type="password"
+        value={pw.confirm}
+        onChange={(v) => setPw({ ...pw, confirm: v })}
+      />
+      <Button type="submit" disabled={changing}>
+        {changing ? "Updating…" : "Update password"}
+      </Button>
     </form>
   );
 }

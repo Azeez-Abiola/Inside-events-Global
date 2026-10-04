@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AuthShell, GoogleButton, Divider } from "@/components/auth-shell";
 import { isEmailNotConfirmedError } from "@/lib/auth-email";
 import { recordAdminLogin } from "@/lib/admin-team.functions";
+import { claimPendingInvites } from "@/lib/workspace.functions";
 import { startGoogleSignIn } from "@/lib/google-auth";
 import { markSignedIn, rememberedEmail, wasRemembered } from "@/lib/session-policy";
 
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const navigate = useNavigate();
   const recordLogin = useServerFn(recordAdminLogin);
+  const claimInvites = useServerFn(claimPendingInvites);
   const {
     redirect,
     email: emailParam,
@@ -69,6 +71,9 @@ function LoginPage() {
     markSignedIn({ rememberMe, email });
     toast.success("Welcome back");
     void recordLogin().catch(() => {});
+    // A seat invited before this account existed has no user_id to point at;
+    // sign-in is the first moment it can be claimed (TAB 4 §4.3).
+    void claimInvites().catch(() => {});
     navigate({ to: redirect ?? "/dashboard" });
   }
 

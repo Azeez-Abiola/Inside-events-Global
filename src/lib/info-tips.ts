@@ -109,6 +109,16 @@ export const INFO_TIPS: Record<string, string> = {
   "field.production_stage":
     "Where the project is now. Brands pay differently for something in development than for something already shot.",
 
+  // ── Workspace and team (TAB 4 §4.3) ────────────────────────────────────────
+  "settings.workspace_switcher":
+    "A workspace holds your events, contacts, budgets and deals. Agencies and people who work across several organisations will have more than one; everything you create belongs to whichever one you are in at the time.",
+  "settings.team":
+    "Who can act in this workspace and at what level. Owner controls everything including payouts. Manager is read-only oversight — they see all the work and the weekly report but change nothing. Editor does the day-to-day work and can manage seats. Viewer can only look.",
+  "settings.upgrade_organisation":
+    "Adds named seats with their own permissions and a shared budget pool. Nothing moves and nothing is re-entered — it is the same workspace, with more people in it. There is no cost: IGE is free to use until at least May 2027.",
+  "settings.team_activity":
+    "What each person moved in the period. Built for the question a manager actually asks: who did what this week.",
+
   // ── Dashboard and platform ─────────────────────────────────────────────────
   "dash.profile_completion":
     "What is still outstanding on your profile and which feature each remaining item unlocks.",
