@@ -96,8 +96,12 @@ export const saveOnboardingSection = createServerFn({ method: "POST" })
       })) as { error: { message: string } | null };
       if (error) throw new Error(error.message);
     } else {
-      if (["submitted", "under_review", "approved"].includes(existing.status)) {
-        throw new Error("Application already submitted — cannot modify.");
+      // 'approved' is now the terminal state of a *finished* onboarding, not a
+      // locked one: Verification & trust is deferrable and §3.2A says it "can
+      // be completed at any time from the dashboard". Blocking it here would
+      // mean skipping a section made it permanently unfinishable.
+      if (["submitted", "under_review"].includes(existing.status)) {
+        throw new Error("Application is under review — cannot modify right now.");
       }
       const { error } = (await odb()
         .from("onboarding_applications")
@@ -272,6 +276,12 @@ export const submitOnboardingApplication = createServerFn({ method: "POST" })
 
 // ─── Get my application (for resume + pending screen) ─────────────────────────
 
+export interface OutstandingSection {
+  key: string;
+  title: string;
+  compulsory: boolean;
+}
+
 /**
  * What the dashboard gate needs, in one round trip (TAB 3 §3.2A, §3.3).
  *
@@ -323,7 +333,16 @@ export const getOnboardingGateState = createServerFn({ method: "POST" })
     return {
       hasApplication: true,
       progress: deriveOnboardingProgress(resolved, sectionStatus),
-      outstanding: resolved.filter((s) => sectionStatus[s.key] !== "complete").map((s) => s.title),
+      // The completion bar links straight to each outstanding section, so it
+      // needs the key as well as the title.
+      outstanding: resolved
+        .filter((s) => sectionStatus[s.key] !== "complete")
+        .map((s) => ({ key: s.key, title: s.title, compulsory: s.compulsory })),
+      verificationStatus: (app.verification_status as string | null) ?? "not_submitted",
+      // Verification is section G for most roles and H for organisers, so the
+      // locks resolve it rather than hardcoding a letter (§3.2A).
+      verificationSectionKey:
+        sections.find((x) => x.title.toLowerCase().startsWith("verification"))?.key ?? null,
     };
   });
 

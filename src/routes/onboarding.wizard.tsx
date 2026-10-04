@@ -3,6 +3,7 @@
  * then renders the OnboardingWizard shell with the correct role schema.
  */
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -12,10 +13,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
 import { CreativeTypePicker } from "@/components/onboarding/sections/creative-hub-sections";
 import { saveOnboardingSection } from "@/lib/onboarding.functions";
-import type { OnboardingRole } from "@/lib/onboarding-constants";
+import { getSectionsForRole, type OnboardingRole } from "@/lib/onboarding-constants";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function odb(): any { return supabaseAdmin as any; }
+function odb(): any {
+  return supabaseAdmin as any;
+}
 
 const loadWizardState = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -28,30 +31,40 @@ const loadWizardState = createServerFn({ method: "POST" })
       .eq("user_id", userId)
       .maybeSingle();
     // Cast to a JSON-serializable type so ServerFn is happy
-    const app = data ? {
-      role:            (data as {role:string}).role,
-      current_section: (data as {current_section:number}).current_section,
-      status:          (data as {status:string}).status,
-      reviewer_notes:  (data as {reviewer_notes:Record<string,string>}).reviewer_notes ?? {},
-      sections:        (data as {sections:Record<string,Record<string,string>>}).sections ?? {},
-    } : null;
+    const app = data
+      ? {
+          role: (data as { role: string }).role,
+          current_section: (data as { current_section: number }).current_section,
+          status: (data as { status: string }).status,
+          reviewer_notes: (data as { reviewer_notes: Record<string, string> }).reviewer_notes ?? {},
+          sections: (data as { sections: Record<string, Record<string, string>> }).sections ?? {},
+        }
+      : null;
     return { app };
   });
 
 export const Route = createFileRoute("/onboarding/wizard")({
+  // `?section=h` opens that section directly, which is how the profile
+  // completion bar and every feature lock link back in (§3.2A).
+  validateSearch: z.object({ section: z.string().max(4).optional() }),
   head: () => ({ meta: [{ title: "Onboarding — IGE" }] }),
   loader: async () => {
     try {
-      const result = await loadWizardState({ data: undefined as never }) as { app: {
-        role: string; sections: Record<string, unknown>; current_section: number;
-        status: string; reviewer_notes: Record<string, string>;
-      } | null };
+      const result = (await loadWizardState({ data: undefined as never })) as {
+        app: {
+          role: string;
+          sections: Record<string, unknown>;
+          current_section: number;
+          status: string;
+          reviewer_notes: Record<string, string>;
+        } | null;
+      };
       if (result.app?.status === "submitted" || result.app?.status === "under_review") {
         throw redirect({ to: "/onboarding/pending" });
       }
-      if (result.app?.status === "approved") {
-        throw redirect({ to: "/dashboard" });
-      }
+      // A finished account is deliberately NOT bounced out: the completion bar
+      // and the feature locks both deep-link back here to finish a deferred
+      // section (§3.2A, "can be completed at any time from the dashboard").
       if (!result.app) {
         throw redirect({ to: "/onboarding/role" });
       }
@@ -66,7 +79,15 @@ export const Route = createFileRoute("/onboarding/wizard")({
 
 function WizardPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { app } = (Route as any).useLoaderData() as { app: { role: string; sections: Record<string, unknown>; current_section: number; reviewer_notes: Record<string, string> } | null };
+  const { app } = (Route as any).useLoaderData() as {
+    app: {
+      role: string;
+      sections: Record<string, unknown>;
+      current_section: number;
+      reviewer_notes: Record<string, string>;
+    } | null;
+  };
+  const { section } = Route.useSearch();
 
   if (!app) {
     // No application yet — redirect to role selection
@@ -84,11 +105,17 @@ function WizardPage() {
     return <CreativeTypeStep />;
   }
 
+  // An explicit ?section= wins over the saved resume point. An unknown key
+  // falls back to resume rather than dropping someone on section A.
+  const requestedIdx = section
+    ? getSectionsForRole(app.role as OnboardingRole).findIndex((s) => s.key === section)
+    : -1;
+
   return (
     <OnboardingWizard
       role={app.role as OnboardingRole}
       savedSections={(app.sections as Record<string, never>) ?? {}}
-      resumeAt={app.current_section ?? 0}
+      resumeAt={requestedIdx >= 0 ? requestedIdx : (app.current_section ?? 0)}
       reviewerNotes={(app.reviewer_notes as Record<string, string>) ?? {}}
     />
   );

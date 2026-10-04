@@ -10,15 +10,35 @@ import { useAuth } from "@/lib/auth-context";
 import { ensureAccessToken, isAuthError } from "@/lib/auth-session";
 import { demoLoginSearch } from "@/lib/demo-accounts";
 import { StatCard } from "@/components/dashboards/shared";
-import { DashboardHeader, DashboardPanel, DashboardTable, DashboardTableHead } from "@/components/dashboards/dashboard-shell";
-import { DashboardDataToolbar, DashboardFilterSelect } from "@/components/dashboards/dashboard-data-toolbar";
-import { DashboardCardGridSkeleton, DashboardTableSkeleton } from "@/components/dashboards/dashboard-skeletons";
+import {
+  DashboardHeader,
+  DashboardPanel,
+  DashboardTable,
+  DashboardTableHead,
+} from "@/components/dashboards/dashboard-shell";
+import {
+  DashboardDataToolbar,
+  DashboardFilterSelect,
+} from "@/components/dashboards/dashboard-data-toolbar";
+import {
+  DashboardCardGridSkeleton,
+  DashboardTableSkeleton,
+} from "@/components/dashboards/dashboard-skeletons";
 import { MediaAnalyticsPanel } from "@/components/dashboards/dashboard-analytics";
 import { listMarketplaceEvents, toggleSaveEvent } from "@/lib/marketplace.functions";
-import { submitMediaRequest, getMyMediaRequests, getMediaPartnerSaves } from "@/lib/media.functions";
+import {
+  submitMediaRequest,
+  getMyMediaRequests,
+  getMediaPartnerSaves,
+} from "@/lib/media.functions";
 import { useTableFilters } from "@/hooks/use-table-filters";
+import { ProfileCompletionBar } from "@/components/onboarding/profile-completion-bar";
 
-export function MediaPartnerDashboard({ section = "explore" }: { section?: "overview" | "explore" | "saved" | "requests" | "analytics" }) {
+export function MediaPartnerDashboard({
+  section = "explore",
+}: {
+  section?: "overview" | "explore" | "saved" | "requests" | "analytics";
+}) {
   const [requestEvent, setRequestEvent] = useState<{ id: string; name: string } | null>(null);
   const [requestSearch, setRequestSearch] = useState("");
   const [requestStatus, setRequestStatus] = useState("all");
@@ -41,7 +61,9 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
   });
 
   const events = marketplaceData?.events ?? [];
-  const savedEvents = (savesData?.saves ?? []).map((s: any) => savesData?.eventMap[s.event_id]).filter(Boolean);
+  const savedEvents = (savesData?.saves ?? [])
+    .map((s: any) => savesData?.eventMap[s.event_id])
+    .filter(Boolean);
   const requests = (requestsData?.requests ?? []) as unknown as Array<{
     id: string;
     event_id: string;
@@ -78,10 +100,28 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
           subtitle="Coverage requests, saved opportunities, and reach signals across vetted events."
         />
 
+        {/* §3.2 — persistent profile completion bar. */}
+        <ProfileCompletionBar />
+
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <StatCard icon={CalendarDays} label="Events to cover" value={events.length} loading={exploreLoading} />
-          <StatCard icon={Bookmark} label="Saved opportunities" value={savedEvents.length} loading={savesLoading} />
-          <StatCard icon={Newspaper} label="My requests" value={requests.length} loading={requestsLoading} />
+          <StatCard
+            icon={CalendarDays}
+            label="Events to cover"
+            value={events.length}
+            loading={exploreLoading}
+          />
+          <StatCard
+            icon={Bookmark}
+            label="Saved opportunities"
+            value={savedEvents.length}
+            loading={savesLoading}
+          />
+          <StatCard
+            icon={Newspaper}
+            label="My requests"
+            value={requests.length}
+            loading={requestsLoading}
+          />
         </div>
 
         {section === "overview" && (
@@ -93,7 +133,11 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
                 { to: "/dashboard/requests", label: "My requests", desc: "Coverage requests" },
                 { to: "/dashboard/analytics", label: "Analytics", desc: "Sector & request trends" },
               ].map((item) => (
-                <Link key={item.to} to={item.to} className="rounded-xl border border-border bg-card p-5 hover:border-primary hover:shadow-soft transition-all">
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className="rounded-xl border border-border bg-card p-5 hover:border-primary hover:shadow-soft transition-all"
+                >
                   <div className="font-semibold">{item.label}</div>
                   <div className="mt-1 text-sm text-muted-foreground">{item.desc}</div>
                 </Link>
@@ -107,7 +151,10 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
                     <h3 className="font-display text-sm font-bold">Coverage requests</h3>
                     <p className="text-xs text-muted-foreground">Latest submissions and status</p>
                   </div>
-                  <Link to="/dashboard/requests" className="text-xs font-semibold text-primary hover:underline">
+                  <Link
+                    to="/dashboard/requests"
+                    className="text-xs font-semibold text-primary hover:underline"
+                  >
                     View all →
                   </Link>
                 </div>
@@ -115,17 +162,26 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
                   {requestsLoading ? (
                     <p className="px-5 py-8 text-sm text-muted-foreground">Loading…</p>
                   ) : requests.length === 0 ? (
-                    <p className="px-5 py-8 text-sm text-muted-foreground italic">No coverage requests yet.</p>
+                    <p className="px-5 py-8 text-sm text-muted-foreground italic">
+                      No coverage requests yet.
+                    </p>
                   ) : (
                     requests.slice(0, 5).map((r: any) => {
                       const ev = requestsData?.events?.[r.event_id];
                       return (
-                        <div key={r.id} className="flex items-start justify-between gap-3 px-5 py-3.5">
+                        <div
+                          key={r.id}
+                          className="flex items-start justify-between gap-3 px-5 py-3.5"
+                        >
                           <div className="min-w-0">
-                            <div className="truncate text-sm font-semibold">{ev?.name ?? "Event"}</div>
+                            <div className="truncate text-sm font-semibold">
+                              {ev?.name ?? "Event"}
+                            </div>
                             <div className="mt-0.5 text-xs text-muted-foreground capitalize">
                               {(r.request_type ?? "coverage").replace(/_/g, " ")}
-                              {r.created_at ? ` · ${new Date(r.created_at).toLocaleDateString()}` : ""}
+                              {r.created_at
+                                ? ` · ${new Date(r.created_at).toLocaleDateString()}`
+                                : ""}
                             </div>
                           </div>
                           <span className="shrink-0 rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-semibold capitalize text-muted-foreground">
@@ -144,7 +200,10 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
                     <h3 className="font-display text-sm font-bold">Saved events</h3>
                     <p className="text-xs text-muted-foreground">Bookmarks for coverage planning</p>
                   </div>
-                  <Link to="/dashboard/saved" className="text-xs font-semibold text-primary hover:underline">
+                  <Link
+                    to="/dashboard/saved"
+                    className="text-xs font-semibold text-primary hover:underline"
+                  >
                     View all →
                   </Link>
                 </div>
@@ -152,7 +211,9 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
                   {savesLoading ? (
                     <p className="px-5 py-8 text-sm text-muted-foreground">Loading…</p>
                   ) : savedEvents.length === 0 ? (
-                    <p className="px-5 py-8 text-sm text-muted-foreground italic">No saved opportunities yet.</p>
+                    <p className="px-5 py-8 text-sm text-muted-foreground italic">
+                      No saved opportunities yet.
+                    </p>
                   ) : (
                     savedEvents.slice(0, 5).map((ev: any) => (
                       <Link
@@ -162,7 +223,11 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
                         className="flex items-center gap-3 px-5 py-3.5 hover:bg-muted/30"
                       >
                         {ev.banner_image_url ? (
-                          <img src={ev.banner_image_url} alt="" className="h-10 w-14 shrink-0 rounded object-cover" />
+                          <img
+                            src={ev.banner_image_url}
+                            alt=""
+                            className="h-10 w-14 shrink-0 rounded object-cover"
+                          />
                         ) : (
                           <div className="flex h-10 w-14 shrink-0 items-center justify-center rounded bg-muted">
                             <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -184,7 +249,8 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
             <div className="rounded-2xl border border-dashed border-border bg-muted/20 p-5">
               <h3 className="font-display text-sm font-bold">Reach signals</h3>
               <p className="mt-1 text-xs text-muted-foreground">
-                Audience reach metrics will appear here as coverage outcomes are logged. For now, use request volume and saves as leading indicators.
+                Audience reach metrics will appear here as coverage outcomes are logged. For now,
+                use request volume and saves as leading indicators.
               </p>
               <div className="mt-4 grid grid-cols-3 gap-3">
                 <div className="rounded-xl bg-card px-3 py-3 text-center shadow-soft">
@@ -212,16 +278,29 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {events.map((e: any) => (
-                <div key={e.id} className="overflow-hidden rounded-xl border border-border bg-card hover:shadow-soft transition-all duration-300">
+                <div
+                  key={e.id}
+                  className="overflow-hidden rounded-xl border border-border bg-card hover:shadow-soft transition-all duration-300"
+                >
                   <Link to="/events/$slug" params={{ slug: e.slug }} className="group block">
                     {e.banner_image_url ? (
-                      <img src={e.banner_image_url} alt={e.name} className="h-32 w-full object-cover group-hover:scale-[1.02] transition-transform duration-300" />
+                      <img
+                        src={e.banner_image_url}
+                        alt={e.name}
+                        className="h-32 w-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                      />
                     ) : (
-                      <div className="h-32 bg-muted flex items-center justify-center text-muted-foreground"><Calendar className="h-8 w-8" /></div>
+                      <div className="h-32 bg-muted flex items-center justify-center text-muted-foreground">
+                        <Calendar className="h-8 w-8" />
+                      </div>
                     )}
                     <div className="p-4 pb-2">
-                      <div className="font-bold text-foreground truncate group-hover:text-primary-deep transition-colors">{e.name}</div>
-                      <div className="mt-1 text-xs text-muted-foreground truncate">{e.primary_sector} · {[e.city, e.country].filter(Boolean).join(", ")}</div>
+                      <div className="font-bold text-foreground truncate group-hover:text-primary-deep transition-colors">
+                        {e.name}
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground truncate">
+                        {e.primary_sector} · {[e.city, e.country].filter(Boolean).join(", ")}
+                      </div>
                     </div>
                   </Link>
                   <div className="px-4 pb-4 flex gap-2">
@@ -242,19 +321,36 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
           savesLoading ? (
             <DashboardCardGridSkeleton count={6} />
           ) : savedEvents.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border p-12 text-center"><p className="text-muted-foreground text-sm">No saved opportunities yet.</p></div>
+            <div className="rounded-xl border border-dashed border-border p-12 text-center">
+              <p className="text-muted-foreground text-sm">No saved opportunities yet.</p>
+            </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {savedEvents.map((ev: any) => (
-                <Link key={ev.id} to="/events/$slug" params={{ slug: ev.slug }} className="group overflow-hidden rounded-xl border border-border bg-card transition-all hover:-translate-y-0.5 hover:shadow-soft hover:border-primary">
+                <Link
+                  key={ev.id}
+                  to="/events/$slug"
+                  params={{ slug: ev.slug }}
+                  className="group overflow-hidden rounded-xl border border-border bg-card transition-all hover:-translate-y-0.5 hover:shadow-soft hover:border-primary"
+                >
                   {ev.banner_image_url ? (
-                    <img src={ev.banner_image_url} alt={ev.name} className="h-32 w-full object-cover group-hover:scale-[1.02] transition-transform duration-300" />
+                    <img
+                      src={ev.banner_image_url}
+                      alt={ev.name}
+                      className="h-32 w-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                    />
                   ) : (
-                    <div className="h-32 bg-muted flex items-center justify-center text-muted-foreground"><Calendar className="h-8 w-8" /></div>
+                    <div className="h-32 bg-muted flex items-center justify-center text-muted-foreground">
+                      <Calendar className="h-8 w-8" />
+                    </div>
                   )}
                   <div className="p-4">
-                    <div className="font-bold text-foreground group-hover:text-primary-deep transition-colors truncate">{ev.name}</div>
-                    <div className="mt-1 text-xs text-muted-foreground">{[ev.city, ev.country].filter(Boolean).join(", ")}</div>
+                    <div className="font-bold text-foreground group-hover:text-primary-deep transition-colors truncate">
+                      {ev.name}
+                    </div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      {[ev.city, ev.country].filter(Boolean).join(", ")}
+                    </div>
                   </div>
                 </Link>
               ))}
@@ -265,7 +361,9 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
             <DashboardTableSkeleton rows={5} cols={4} />
           ) : requests.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border p-12 text-center">
-              <p className="text-muted-foreground text-sm">No coverage requests yet. Browse Explore and request coverage on an event.</p>
+              <p className="text-muted-foreground text-sm">
+                No coverage requests yet. Browse Explore and request coverage on an event.
+              </p>
             </div>
           ) : (
             <DashboardPanel title="My coverage requests" bodyClassName="p-0">
@@ -302,18 +400,30 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
                     const ev = requestsData!.events[r.event_id];
                     return (
                       <tr key={r.id} className="hover:bg-muted/10">
-                        <td className="px-5 py-3.5 font-medium text-foreground">{ev?.name ?? "—"}</td>
-                        <td className="px-5 py-3.5 capitalize text-muted-foreground">{r.request_type.replace(/_/g, " ")}</td>
-                        <td className="px-5 py-3.5">
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${r.status === "approved" ? "bg-emerald-100 text-emerald-800" : r.status === "declined" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>{r.status}</span>
+                        <td className="px-5 py-3.5 font-medium text-foreground">
+                          {ev?.name ?? "—"}
                         </td>
-                        <td className="px-5 py-3.5 text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</td>
+                        <td className="px-5 py-3.5 capitalize text-muted-foreground">
+                          {r.request_type.replace(/_/g, " ")}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${r.status === "approved" ? "bg-emerald-100 text-emerald-800" : r.status === "declined" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}
+                          >
+                            {r.status}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5 text-xs text-muted-foreground">
+                          {new Date(r.created_at).toLocaleDateString()}
+                        </td>
                       </tr>
                     );
                   })}
                   {!filteredRequests.length && (
                     <tr>
-                      <td colSpan={4} className="px-5 py-10 text-center text-muted-foreground">No requests match your filters.</td>
+                      <td colSpan={4} className="px-5 py-10 text-center text-muted-foreground">
+                        No requests match your filters.
+                      </td>
                     </tr>
                   )}
                 </tbody>
@@ -323,7 +433,9 @@ export function MediaPartnerDashboard({ section = "explore" }: { section?: "over
         ) : null}
       </div>
 
-      {requestEvent && <CoverageRequestModal event={requestEvent} onClose={() => setRequestEvent(null)} />}
+      {requestEvent && (
+        <CoverageRequestModal event={requestEvent} onClose={() => setRequestEvent(null)} />
+      )}
     </AppShell>
   );
 }
@@ -335,7 +447,11 @@ function EventSaveButton({ eventId, compact }: { eventId: string; compact?: bool
   const { data: isSaved } = useQuery({
     queryKey: ["event-saved", eventId, user?.id],
     queryFn: async () => {
-      const { data } = await supabase.from("event_saves").select("id").eq("event_id", eventId).maybeSingle();
+      const { data } = await supabase
+        .from("event_saves")
+        .select("id")
+        .eq("event_id", eventId)
+        .maybeSingle();
       return !!data;
     },
     enabled: !!user,
@@ -367,7 +483,13 @@ function EventSaveButton({ eventId, compact }: { eventId: string; compact?: bool
   );
 }
 
-export function CoverageRequestModal({ event, onClose }: { event: { id: string; name: string }; onClose: () => void }) {
+export function CoverageRequestModal({
+  event,
+  onClose,
+}: {
+  event: { id: string; name: string };
+  onClose: () => void;
+}) {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { isDevImpersonating } = useAuth();
@@ -378,7 +500,9 @@ export function CoverageRequestModal({ event, onClose }: { event: { id: string; 
   const mut = useMutation({
     mutationFn: async () => {
       if (isDevImpersonating) {
-        throw new Error("Sign in with media@ige.test — the DEV role switcher cannot submit requests.");
+        throw new Error(
+          "Sign in with media@ige.test — the DEV role switcher cannot submit requests.",
+        );
       }
       await ensureAccessToken();
       return submit({ data: { event_id: event.id, request_type: type, message: message || null } });
@@ -398,20 +522,33 @@ export function CoverageRequestModal({ event, onClose }: { event: { id: string; 
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
-      <div className="w-full max-w-md rounded-xl bg-card p-6 shadow-2xl border border-border" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-xl bg-card p-6 shadow-2xl border border-border"
+        onClick={(e) => e.stopPropagation()}
+      >
         <h3 className="font-display text-xl font-bold text-foreground">Request coverage</h3>
-        <p className="mt-1 text-sm text-muted-foreground">For <span className="font-semibold text-foreground">{event.name}</span></p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          For <span className="font-semibold text-foreground">{event.name}</span>
+        </p>
 
         {isDevImpersonating && (
           <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100">
-            DEV role switcher is active. Sign in with <strong>media@ige.test</strong> to submit real requests.
+            DEV role switcher is active. Sign in with <strong>media@ige.test</strong> to submit real
+            requests.
           </p>
         )}
 
         <label className="mt-5 block text-sm">
           <span className="mb-1.5 block font-medium">Request type</span>
-          <select value={type} onChange={(e) => setType(e.target.value as any)} className="w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm">
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value as any)}
+            className="w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm"
+          >
             <option value="coverage">Event coverage</option>
             <option value="press_credentials">Press credentials</option>
             <option value="content">Content / documentary</option>
@@ -420,12 +557,27 @@ export function CoverageRequestModal({ event, onClose }: { event: { id: string; 
 
         <label className="mt-4 block text-sm">
           <span className="mb-1.5 block font-medium">Message (optional)</span>
-          <textarea rows={3} value={message} onChange={(e) => setMessage(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="Tell the IGE team about your outlet and what you'd cover…" />
+          <textarea
+            rows={3}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            placeholder="Tell the IGE team about your outlet and what you'd cover…"
+          />
         </label>
 
         <div className="mt-6 flex justify-end gap-3">
-          <button onClick={onClose} className="rounded-md px-4 py-2 text-sm font-medium hover:bg-muted">Cancel</button>
-          <button onClick={() => mut.mutate()} disabled={mut.isPending} className="inline-flex items-center gap-1.5 rounded-md bg-brand-gradient px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+          <button
+            onClick={onClose}
+            className="rounded-md px-4 py-2 text-sm font-medium hover:bg-muted"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => mut.mutate()}
+            disabled={mut.isPending}
+            className="inline-flex items-center gap-1.5 rounded-md bg-brand-gradient px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          >
             <Send className="h-3.5 w-3.5" /> {mut.isPending ? "Sending…" : "Send request"}
           </button>
         </div>

@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Activity, Building2, Camera, Compass, Loader2, Lock, Shield, User } from "lucide-react";
+import { VerifiedBadge } from "@/components/onboarding/verified-badge";
 import { WorkspaceSettings } from "@/components/workspace/workspace-settings";
 import { TeamActivity } from "@/components/workspace/team-activity";
 import { getMyWorkspaces } from "@/lib/workspace.functions";
@@ -188,8 +189,11 @@ export function ProfilePage({ initialTab = "general" }: { initialTab?: Tab }) {
         <div className="text-center sm:text-left sm:flex-1">
           <h2 className="text-xl font-bold text-foreground">{displayName}</h2>
           <p className="text-sm text-muted-foreground">{user?.email}</p>
-          <span className="mt-2 inline-flex rounded-full bg-brand-soft px-3 py-0.5 text-xs font-semibold text-primary-deep">
-            {roleLabel(roles)}
+          <span className="mt-2 inline-flex flex-wrap items-center gap-2">
+            <span className="inline-flex rounded-full bg-brand-soft px-3 py-0.5 text-xs font-semibold text-primary-deep">
+              {roleLabel(roles)}
+            </span>
+            <VerifiedBadge />
           </span>
           {roles.includes("organiser") && (
             <p className="mt-2 text-xs text-muted-foreground">
