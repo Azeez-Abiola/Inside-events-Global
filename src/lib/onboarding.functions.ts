@@ -16,15 +16,20 @@ import { requirePlatformAdmin, getActorProfile } from "@/lib/admin-auth";
 import { auditAdminAction } from "@/lib/admin-audit";
 import {
   DEFERRABLE_SECTIONS,
+  deriveOnboardingProgress,
   getSectionsForRole,
+  ROLE_DISPLAY,
   type OnboardingRole,
+  type SectionProgress,
 } from "@/lib/onboarding-constants";
 
 const SITE_URL = process.env.VITE_SITE_URL || "https://www.insideglobalevents.com";
 
 // Helper: cast supabaseAdmin to `any` so unregistered tables don't produce type errors.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function odb(): any { return supabaseAdmin as any; }
+function odb(): any {
+  return supabaseAdmin as any;
+}
 
 // ─── Row type for onboarding_applications ─────────────────────────────────────
 
@@ -45,9 +50,17 @@ interface OARow {
 // ─── Save a single section (save & resume) ────────────────────────────────────
 
 const SaveSectionInput = z.object({
-  role:           z.enum(["organiser","sponsor","referral_partner","media_partner","partnerships_pro","creative_hub","ige_admin"]),
-  sectionKey:     z.string().min(1).max(8),
-  sectionData:    z.record(z.unknown()),
+  role: z.enum([
+    "organiser",
+    "sponsor",
+    "referral_partner",
+    "media_partner",
+    "partnerships_pro",
+    "creative_hub",
+    "ige_admin",
+  ]),
+  sectionKey: z.string().min(1).max(8),
+  sectionData: z.record(z.unknown()),
   currentSection: z.number().int().min(0),
   /** "skipped" is only valid for a deferrable section (TAB 3 §3.2A). */
   sectionProgress: z.enum(["complete", "skipped"]).optional().default("complete"),
@@ -59,11 +72,11 @@ export const saveOnboardingSection = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { userId } = context;
 
-    const { data: existing } = await odb()
+    const { data: existing } = (await odb()
       .from("onboarding_applications")
       .select("id, sections, section_status, status")
       .eq("user_id", userId)
-      .maybeSingle() as { data: OARow | null };
+      .maybeSingle()) as { data: OARow | null };
 
     const currentSections = existing?.sections ?? {};
     const newSections = { ...currentSections, [data.sectionKey]: data.sectionData };
@@ -73,42 +86,92 @@ export const saveOnboardingSection = createServerFn({ method: "POST" })
     const newStatus = { ...currentStatus, [data.sectionKey]: data.sectionProgress };
 
     if (!existing) {
-      const { error } = await odb()
-        .from("onboarding_applications")
-        .insert({
-          user_id:         userId,
-          role:            data.role,
-          sections:        newSections,
-          section_status:  newStatus,
-          current_section: data.currentSection,
-          status:          "draft",
-        }) as { error: { message: string } | null };
+      const { error } = (await odb().from("onboarding_applications").insert({
+        user_id: userId,
+        role: data.role,
+        sections: newSections,
+        section_status: newStatus,
+        current_section: data.currentSection,
+        status: "draft",
+      })) as { error: { message: string } | null };
       if (error) throw new Error(error.message);
     } else {
       if (["submitted", "under_review", "approved"].includes(existing.status)) {
         throw new Error("Application already submitted — cannot modify.");
       }
-      const { error } = await odb()
+      const { error } = (await odb()
         .from("onboarding_applications")
         .update({
-          sections:        newSections,
-          section_status:  newStatus,
+          sections: newSections,
+          section_status: newStatus,
           current_section: data.currentSection,
-          role:            data.role,
+          role: data.role,
         })
-        .eq("user_id", userId) as { error: { message: string } | null };
+        .eq("user_id", userId)) as { error: { message: string } | null };
       if (error) throw new Error(error.message);
     }
+
+    // Account-level state, recomputed on every save. This is what unlocks the
+    // dashboard (TAB 3 §3.2A, §3.3) — the gate reads it rather than waiting
+    // for an admin, so it has to be written here and not only on submit.
+    await syncOnboardingStatus(userId, data.role as OnboardingRole, newStatus);
 
     return { ok: true };
   });
 
+/**
+ * Mirrors section_status up to profiles.onboarding_status.
+ *
+ * Resolved against the live section config, not the code default, so moving a
+ * section between compulsory and deferrable changes who gets into the
+ * dashboard without a release — which is the whole point of §3.2A.
+ *
+ * Deliberately non-fatal: a failure here must not lose the section the person
+ * just filled in. The gate re-derives from section_status when the column
+ * disagrees, so the worst case is one stale read.
+ */
+async function syncOnboardingStatus(
+  userId: string,
+  role: OnboardingRole,
+  sectionStatus: Record<string, string>,
+) {
+  try {
+    const sections = getSectionsForRole(role);
+    const fallback = DEFERRABLE_SECTIONS[role] ?? [];
+    const { data: config } = await odb()
+      .from("onboarding_section_config")
+      .select("section_key, compulsory")
+      .eq("role", role);
+
+    const byKey = new Map(
+      ((config ?? []) as { section_key: string; compulsory: boolean }[]).map((r) => [
+        r.section_key,
+        r.compulsory,
+      ]),
+    );
+
+    const resolved = sections.map((s) => ({
+      key: s.key,
+      compulsory: byKey.get(s.key) ?? !fallback.includes(s.key),
+    }));
+
+    const progress = deriveOnboardingProgress(
+      resolved,
+      sectionStatus as Record<string, SectionProgress>,
+    );
+
+    await odb().from("profiles").update({ onboarding_status: progress }).eq("id", userId);
+  } catch {
+    /* see docblock — never fail a save over the derived column */
+  }
+}
+
 // ─── Submit application ────────────────────────────────────────────────────────
 
 const SubmitInput = z.object({
-  dataConsentAccepted:  z.boolean(),
+  dataConsentAccepted: z.boolean(),
   termsConsentAccepted: z.boolean(),
-  clientIp:             z.string().optional(),
+  clientIp: z.string().optional(),
 });
 
 export const submitOnboardingApplication = createServerFn({ method: "POST" })
@@ -122,35 +185,42 @@ export const submitOnboardingApplication = createServerFn({ method: "POST" })
 
     const now = new Date().toISOString();
 
-    const { data: app } = await odb()
+    const { data: app } = (await odb()
       .from("onboarding_applications")
       .select("id, sections, status, role")
       .eq("user_id", userId)
-      .maybeSingle() as { data: OARow | null };
+      .maybeSingle()) as { data: OARow | null };
 
     if (!app) throw new Error("No application found — please complete the wizard first.");
     if (["submitted", "under_review", "approved"].includes(app.status)) {
       throw new Error("Application already submitted.");
     }
 
-    const { error: updateErr } = await odb()
+    // v6.2 §3.2A removed Admin approval from accounts: "No Admin approval to
+    // sign up, sign in or use the dashboard. Admin vets an event only when it
+    // is published to the marketplace." The application is therefore complete
+    // the moment the person finishes it, not when someone reviews it.
+    //
+    // 'approved' is reused rather than adding an enum value, because every
+    // existing reader — the admin console, the vetting panel, the resume
+    // logic — already treats it as the terminal state.
+    const { error: updateErr } = (await odb()
       .from("onboarding_applications")
       .update({
-        status:           "submitted",
-        submitted_at:     now,
-        data_consent_at:  now,
-        data_consent_ip:  data.clientIp ?? "unknown",
+        status: "approved",
+        submitted_at: now,
+        reviewed_at: now,
+        data_consent_at: now,
+        data_consent_ip: data.clientIp ?? "unknown",
         terms_consent_at: now,
         terms_consent_ip: data.clientIp ?? "unknown",
       })
-      .eq("user_id", userId) as { error: { message: string } | null };
+      .eq("user_id", userId)) as { error: { message: string } | null };
     if (updateErr) throw new Error(updateErr.message);
 
-    // Set profile as pending approval
-    await supabaseAdmin
-      .from("profiles")
-      .update({ is_active: false } as never)
-      .eq("id", userId);
+    // Deliberately NOT setting is_active = false. That is what used to happen
+    // here, and it meant finishing onboarding deactivated your own account
+    // and parked you on the pending screen indefinitely.
 
     // Fetch profile for emails
     const { data: profile } = await supabaseAdmin
@@ -162,10 +232,18 @@ export const submitOnboardingApplication = createServerFn({ method: "POST" })
     if (profile?.email) {
       try {
         await sendTransactionalEmailServer({
-          templateName: "account-pending-approval",
+          templateName: "welcome",
           recipientEmail: profile.email,
-          idempotencyKey: `onboarding-pending-${userId}`,
-          templateData: { name: profile.display_name ?? undefined, siteUrl: SITE_URL },
+          idempotencyKey: `onboarding-complete-${userId}`,
+          templateData: {
+            name: profile.display_name ?? undefined,
+            role: app.role,
+            roleLabel: ROLE_DISPLAY[app.role as OnboardingRole]?.label ?? "workspace",
+            siteUrl: SITE_URL,
+            dashboardUrl: `${SITE_URL}/dashboard`,
+            messagesUrl: `${SITE_URL}/messages`,
+            marketplaceUrl: `${SITE_URL}/marketplace`,
+          },
         });
         await flushEmailQueueInDev();
       } catch (e) {
@@ -179,12 +257,13 @@ export const submitOnboardingApplication = createServerFn({ method: "POST" })
       .select("user_id")
       .in("role", ["super_admin", "abw_admin"]);
     for (const a of admins ?? []) {
+      // Informational now, not a queue item: nothing is waiting on Admin.
       await supabaseAdmin.from("notifications").insert({
         user_id: a.user_id,
-        type:    "user_pending_approval",
-        title:   "New onboarding submission",
-        body:    `${profile?.display_name ?? profile?.email ?? "A user"} submitted their ${app.role} application.`,
-        data:    { user_id: userId, role: app.role },
+        type: "user_onboarding_complete",
+        title: "Onboarding completed",
+        body: `${profile?.display_name ?? profile?.email ?? "A user"} finished their ${app.role} onboarding.`,
+        data: { user_id: userId, role: app.role },
       } as never);
     }
 
@@ -192,6 +271,61 @@ export const submitOnboardingApplication = createServerFn({ method: "POST" })
   });
 
 // ─── Get my application (for resume + pending screen) ─────────────────────────
+
+/**
+ * What the dashboard gate needs, in one round trip (TAB 3 §3.2A, §3.3).
+ *
+ * Derives the verdict from section_status rather than trusting
+ * profiles.onboarding_status alone, so a row written before the column
+ * existed — or one whose sync failed — still resolves correctly instead of
+ * stranding someone outside their own dashboard.
+ */
+export const getOnboardingGateState = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+    const userId = (context as any).userId as string;
+
+    const { data: app } = await odb()
+      .from("onboarding_applications")
+      .select("role, section_status, status")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    // No application at all: a legacy account, or someone who has not picked
+    // a role yet. Neither is ours to block here.
+    if (!app?.role) {
+      return { hasApplication: false, progress: null, outstanding: [] as string[] };
+    }
+
+    const role = app.role as OnboardingRole;
+    const sectionStatus = (app.section_status ?? {}) as Record<string, SectionProgress>;
+    const sections = getSectionsForRole(role);
+    const fallback = DEFERRABLE_SECTIONS[role] ?? [];
+
+    const { data: config } = await odb()
+      .from("onboarding_section_config")
+      .select("section_key, compulsory")
+      .eq("role", role);
+    const byKey = new Map(
+      ((config ?? []) as { section_key: string; compulsory: boolean }[]).map((r) => [
+        r.section_key,
+        r.compulsory,
+      ]),
+    );
+
+    const resolved = sections.map((s) => ({
+      key: s.key,
+      title: s.title,
+      compulsory: byKey.get(s.key) ?? !fallback.includes(s.key),
+    }));
+
+    return {
+      hasApplication: true,
+      progress: deriveOnboardingProgress(resolved, sectionStatus),
+      outstanding: resolved.filter((s) => sectionStatus[s.key] !== "complete").map((s) => s.title),
+    };
+  });
 
 export const getMyOnboardingApplication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -218,11 +352,18 @@ export const getMyOnboardingApplication = createServerFn({ method: "POST" })
 export const getOnboardingSectionConfig = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { role: string }) =>
-    z.object({
-      role: z.enum([
-        "organiser","sponsor","referral_partner","media_partner","partnerships_pro","creative_hub",
-      ]),
-    }).parse(d),
+    z
+      .object({
+        role: z.enum([
+          "organiser",
+          "sponsor",
+          "referral_partner",
+          "media_partner",
+          "partnerships_pro",
+          "creative_hub",
+        ]),
+      })
+      .parse(d),
   )
   .handler(async ({ data }) => {
     const fallback = DEFERRABLE_SECTIONS[data.role as OnboardingRole] ?? [];
@@ -244,7 +385,7 @@ export const getOnboardingSectionConfig = createServerFn({ method: "POST" })
         subtitle: s.subtitle,
         compulsory: error
           ? !fallback.includes(s.key)
-          : configured.get(s.key) ?? !fallback.includes(s.key),
+          : (configured.get(s.key) ?? !fallback.includes(s.key)),
       })),
       /** True when the table could not be read and the code map was used. */
       usedFallback: Boolean(error),
@@ -256,12 +397,17 @@ export const getOnboardingSectionConfig = createServerFn({ method: "POST" })
 export const listOnboardingApplications = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { status?: string; role?: string; limit?: number; offset?: number }) =>
-    z.object({
-      status: z.enum(["all","submitted","under_review","approved","rejected","changes_requested"]).optional().default("all"),
-      role:   z.string().optional(),
-      limit:  z.number().int().min(1).max(200).optional().default(100),
-      offset: z.number().int().min(0).optional().default(0),
-    }).parse(d ?? {}),
+    z
+      .object({
+        status: z
+          .enum(["all", "submitted", "under_review", "approved", "rejected", "changes_requested"])
+          .optional()
+          .default("all"),
+        role: z.string().optional(),
+        limit: z.number().int().min(1).max(200).optional().default(100),
+        offset: z.number().int().min(0).optional().default(0),
+      })
+      .parse(d ?? {}),
   )
   .handler(async ({ data, context }) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
@@ -270,14 +416,16 @@ export const listOnboardingApplications = createServerFn({ method: "POST" })
 
     let query = odb()
       .from("onboarding_applications")
-      .select("id, user_id, role, status, submitted_at, reviewed_at, current_section, reviewer_notes, sections, created_at")
+      .select(
+        "id, user_id, role, status, submitted_at, reviewed_at, current_section, reviewer_notes, sections, created_at",
+      )
       .order("submitted_at", { ascending: false })
       .range(data.offset, data.offset + data.limit - 1);
 
     if (data.status !== "all") query = query.eq("status", data.status);
     if (data.role) query = query.eq("role", data.role);
 
-    const { data: apps } = await query as { data: OARow[] | null };
+    const { data: apps } = (await query) as { data: OARow[] | null };
 
     const userIds = (apps ?? []).map((a) => a.user_id);
     const profileMap: Record<string, { email: string | null; display_name: string | null }> = {};
@@ -286,7 +434,8 @@ export const listOnboardingApplications = createServerFn({ method: "POST" })
         .from("profiles")
         .select("id, email, display_name")
         .in("id", userIds);
-      for (const p of profiles ?? []) profileMap[p.id] = { email: p.email, display_name: p.display_name };
+      for (const p of profiles ?? [])
+        profileMap[p.id] = { email: p.email, display_name: p.display_name };
     }
 
     return {
@@ -307,12 +456,12 @@ export const getOnboardingApplicationDetail = createServerFn({ method: "POST" })
     const userId = (context as any).userId as string;
     await requirePlatformAdmin(userId);
 
-    const { data: app } = await odb()
+    const { data: app } = (await odb()
       .from("onboarding_applications")
       .select("*")
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
       .eq("user_id", (data as any).user_id)
-      .single() as { data: OARow | null };
+      .single()) as { data: OARow | null };
 
     if (!app) throw new Error("Application not found.");
 
@@ -329,9 +478,9 @@ export const getOnboardingApplicationDetail = createServerFn({ method: "POST" })
 // ─── Admin: review (approve / reject / request changes) ───────────────────────
 
 const ReviewInput = z.object({
-  user_id:        z.string().uuid(),
-  action:         z.enum(["approve", "reject", "request_changes"]),
-  notes:          z.record(z.string()).optional(),
+  user_id: z.string().uuid(),
+  action: z.enum(["approve", "reject", "request_changes"]),
+  notes: z.record(z.string()).optional(),
   rejection_note: z.string().max(2000).optional(),
 });
 
@@ -342,30 +491,32 @@ export const reviewOnboardingApplication = createServerFn({ method: "POST" })
     const { userId } = context;
     await requirePlatformAdmin(userId);
 
-    const { data: app } = await odb()
+    const { data: app } = (await odb()
       .from("onboarding_applications")
       .select("role, status, user_id")
       .eq("user_id", data.user_id)
-      .maybeSingle() as { data: OARow | null };
+      .maybeSingle()) as { data: OARow | null };
 
     if (!app) throw new Error("Application not found.");
-    if (!["submitted","under_review","changes_requested"].includes(app.status)) {
+    if (!["submitted", "under_review", "changes_requested"].includes(app.status)) {
       throw new Error(`Cannot review application with status "${app.status}".`);
     }
 
     const now = new Date().toISOString();
     const newStatus =
-      data.action === "approve"        ? "approved" :
-      data.action === "reject"         ? "rejected" :
-      "changes_requested";
+      data.action === "approve"
+        ? "approved"
+        : data.action === "reject"
+          ? "rejected"
+          : "changes_requested";
 
     await odb()
       .from("onboarding_applications")
       .update({
-        status:         newStatus,
-        reviewer_id:    userId,
+        status: newStatus,
+        reviewer_id: userId,
         reviewer_notes: data.notes ?? {},
-        reviewed_at:    now,
+        reviewed_at: now,
       })
       .eq("user_id", data.user_id);
 
@@ -387,14 +538,23 @@ export const reviewOnboardingApplication = createServerFn({ method: "POST" })
             templateName: "account-approved",
             recipientEmail: profile.email,
             idempotencyKey: `onboarding-approved-${data.user_id}`,
-            templateData: { name: profile.display_name ?? undefined, dashboardUrl: `${SITE_URL}/dashboard`, siteUrl: SITE_URL },
+            templateData: {
+              name: profile.display_name ?? undefined,
+              dashboardUrl: `${SITE_URL}/dashboard`,
+              siteUrl: SITE_URL,
+            },
           });
           await flushEmailQueueInDev();
-        } catch (e) { console.error(e); }
+        } catch (e) {
+          console.error(e);
+        }
       }
       await supabaseAdmin.from("notifications").insert({
-        user_id: data.user_id, type: "account_approved",
-        title: "Application approved", body: "Your IGE application has been approved.", data: {},
+        user_id: data.user_id,
+        type: "account_approved",
+        title: "Application approved",
+        body: "Your IGE application has been approved.",
+        data: {},
       } as never);
     }
 
@@ -405,13 +565,20 @@ export const reviewOnboardingApplication = createServerFn({ method: "POST" })
             templateName: "account-declined",
             recipientEmail: profile.email,
             idempotencyKey: `onboarding-rejected-${data.user_id}`,
-            templateData: { name: profile.display_name ?? undefined, reason: data.rejection_note, siteUrl: SITE_URL },
+            templateData: {
+              name: profile.display_name ?? undefined,
+              reason: data.rejection_note,
+              siteUrl: SITE_URL,
+            },
           });
           await flushEmailQueueInDev();
-        } catch (e) { console.error(e); }
+        } catch (e) {
+          console.error(e);
+        }
       }
       await supabaseAdmin.from("notifications").insert({
-        user_id: data.user_id, type: "account_declined",
+        user_id: data.user_id,
+        type: "account_declined",
         title: "Application outcome",
         body: data.rejection_note ?? "Your IGE application was not approved at this time.",
         data: {},
@@ -420,7 +587,8 @@ export const reviewOnboardingApplication = createServerFn({ method: "POST" })
 
     if (data.action === "request_changes") {
       await supabaseAdmin.from("notifications").insert({
-        user_id: data.user_id, type: "onboarding_changes_requested",
+        user_id: data.user_id,
+        type: "onboarding_changes_requested",
         title: "Revisions requested for your application",
         body: "An IGE reviewer has requested changes. Sign in to review and resubmit.",
         data: { reviewer_notes: data.notes ?? {} },
@@ -429,12 +597,17 @@ export const reviewOnboardingApplication = createServerFn({ method: "POST" })
 
     const actor = await getActorProfile(userId);
     await auditAdminAction({
-      actorId:      userId,
-      actorEmail:   actor?.email,
-      action:       data.action === "approve" ? "user_approved" : data.action === "reject" ? "user_declined" : "user_unapproved",
-      summary:      `${data.action} onboarding application for ${profile?.email ?? data.user_id}`,
+      actorId: userId,
+      actorEmail: actor?.email,
+      action:
+        data.action === "approve"
+          ? "user_approved"
+          : data.action === "reject"
+            ? "user_declined"
+            : "user_unapproved",
+      summary: `${data.action} onboarding application for ${profile?.email ?? data.user_id}`,
       resourceType: "onboarding_application",
-      resourceId:   data.user_id,
+      resourceId: data.user_id,
     });
 
     return { ok: true, newStatus };

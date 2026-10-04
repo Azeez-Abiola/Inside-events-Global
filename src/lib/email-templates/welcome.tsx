@@ -20,6 +20,8 @@ type RoleKey =
   | "sponsor"
   | "referral_partner"
   | "media_partner"
+  | "partnerships_pro"
+  | "creative_hub"
   | "abw_admin"
   | "super_admin";
 
@@ -48,6 +50,22 @@ const ROLE_COPY: Record<RoleKey, { headline: string; bullets: string[] }> = {
       "Browse vetted B2B events on the marketplace",
       "Save shortlists and submit sponsorship commitments",
       "Message organisers to close deals faster",
+    ],
+  },
+  partnerships_pro: {
+    headline: "Your Partnerships Pro workspace is ready",
+    bullets: [
+      "Manage contacts, clients, outreach and pipeline in one place",
+      "Track commission across every client and currency you work in",
+      "Download a weekly activity report for your manager or your clients",
+    ],
+  },
+  creative_hub: {
+    headline: "Your Creative Hub workspace is ready",
+    bullets: [
+      "List the productions and projects brands could appear in",
+      "Set out the placement opportunities inside each one",
+      "Get introduced to brands budgeting for creative sponsorship",
     ],
   },
   referral_partner: {
@@ -108,8 +126,8 @@ function WelcomeEmail({
             <Heading style={h1}>{copy.headline}</Heading>
             <Text style={lead}>
               {firstName ? `Hi ${firstName},` : "Hi there,"} thanks for joining{" "}
-              <strong>{SITE_NAME}</strong> as a <strong>{roleLabel}</strong>. Your account is
-              set up — here&apos;s what you can do next:
+              <strong>{SITE_NAME}</strong> as a <strong>{roleLabel}</strong>. Your account is set up
+              — here&apos;s what you can do next:
             </Text>
           </Section>
           <Section style={card}>
@@ -179,7 +197,13 @@ const hero = {
   borderRadius: "12px 12px 0 0",
   padding: "24px 24px 28px",
 };
-const h1 = { margin: "0 0 12px", fontSize: "24px", fontWeight: 700, color: "#ffffff", lineHeight: 1.3 };
+const h1 = {
+  margin: "0 0 12px",
+  fontSize: "24px",
+  fontWeight: 700,
+  color: "#ffffff",
+  lineHeight: 1.3,
+};
 const lead = { margin: 0, fontSize: "14px", color: "rgba(255,255,255,0.92)", lineHeight: 1.6 };
 const card = {
   backgroundColor: "#ffffff",

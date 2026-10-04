@@ -26,6 +26,7 @@ import { InfoTip } from "@/components/info-tip";
 import {
   getSectionsForRole,
   ROLE_DISPLAY,
+  VERIFICATION_LOCKED_FEATURES,
   type OnboardingRole,
   type SectionDef,
 } from "@/lib/onboarding-constants";
@@ -260,6 +261,17 @@ export function OnboardingWizard({
   const isLastSection = currentIdx === sections.length - 1;
   const currentSection = sections[currentIdx];
 
+  /**
+   * §3.2: on the last compulsory section, remind someone once what they left
+   * behind. Rendered in the shell rather than threaded through all six role
+   * dispatchers, since it is the same notice for every role.
+   */
+  const deferredOutstanding = useMemo(
+    () =>
+      isLastSection ? sections.filter((s) => s.compulsory === false && !sectionData[s.key]) : [],
+    [isLastSection, sections, sectionData],
+  );
+
   const saveAndAdvance = useMutation({
     mutationFn: async ({
       sectionKey,
@@ -303,7 +315,11 @@ export function OnboardingWizard({
     onSuccess: (_res, vars) => {
       setError(null);
       if (vars.isSubmit) {
-        navigate({ to: "/onboarding/pending" as never });
+        // §3.2: the last compulsory section's button says "Go to my
+        // dashboard", and it has to actually go there. It used to land on
+        // the pending screen, where nobody ever got approved.
+        toast.success("You're all set — welcome to IGE.");
+        navigate({ to: "/dashboard" });
         return;
       }
       setCurrentIdx((prev) => prev + 1);
@@ -496,6 +512,19 @@ export function OnboardingWizard({
             </div>
           )}
 
+          {deferredOutstanding.length > 0 && (
+            <div className="mb-6 rounded-xl border border-primary/25 bg-brand-soft px-4 py-3.5">
+              <p className="text-sm font-semibold text-primary-deep">
+                You can finish {listSections(deferredOutstanding)} later
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-primary-deep/80">
+                Your dashboard is unlocked either way. Until verification is complete these stay
+                locked: {VERIFICATION_LOCKED_FEATURES.map((f) => f.label).join(" · ")}. You can
+                complete it any time from your dashboard.
+              </p>
+            </div>
+          )}
+
           {renderSection()}
 
           {/* Navigation buttons */}
@@ -564,7 +593,7 @@ export function ContinueButton({
           </>
         ) : isLastSection ? (
           <>
-            {finishLabel ?? "Submit application"} <ChevronRight className="h-4 w-4" />
+            {finishLabel ?? "Go to my dashboard"} <ChevronRight className="h-4 w-4" />
           </>
         ) : (
           <>
@@ -603,4 +632,11 @@ export function validateRequired(
     }
   }
   return null;
+}
+
+/** "Verification & trust" / "Verification & trust and Wishlist" / "A, B and C". */
+function listSections(sections: SectionDef[]): string {
+  const titles = sections.map((s) => s.title);
+  if (titles.length <= 1) return titles[0] ?? "";
+  return `${titles.slice(0, -1).join(", ")} and ${titles[titles.length - 1]}`;
 }

@@ -5,6 +5,8 @@
 //   20261004092000_event_visibility.sql    private/published + Looking to connect with
 //   20261004093000_new_roles.sql           partnerships_pro + creative_hub on app_role
 //   20261004100000_workspace_layer.sql     workspaces, seats and the Manager role
+//   20261004110000_backfill_section_status.sql  so existing drafts are not
+//                                          sent back through a finished wizard
 //
 // Run:  npm run db:v11-section-a
 import { readFileSync, existsSync } from "node:fs";
@@ -20,6 +22,7 @@ const MIGRATIONS = [
   "supabase/migrations/20261004092000_event_visibility.sql",
   "supabase/migrations/20261004093000_new_roles.sql",
   "supabase/migrations/20261004100000_workspace_layer.sql",
+  "supabase/migrations/20261004110000_backfill_section_status.sql",
 ];
 
 function loadEnvFile() {

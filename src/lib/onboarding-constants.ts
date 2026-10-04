@@ -211,6 +211,10 @@ export const MULTI_YEAR_INTEREST = [
 
 // Wishlist support needs — shared (all roles)
 export const WISHLIST_SUPPORT = [
+  // §3.2A: the field requires at least one selection, so there has to be an
+  // honest way to say you need nothing. Without it people pick at random and
+  // IGE acts on support requests nobody made.
+  "Nothing right now",
   "Volunteers",
   "Project manager",
   "Videographer",
