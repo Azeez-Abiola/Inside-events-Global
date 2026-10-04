@@ -188,61 +188,101 @@ export function DashboardLoading({
   return <DashboardPageSkeleton kpis={kpis} tableRows={tableRows} showTabs={showTabs} showCharts={showCharts} />;
 }
 
+/**
+ * The three vetting nodes (TAB 3 §3.2): "a 3-node tracker on the event:
+ * Submitted, Under review, Approved and live."
+ *
+ * Draft is not a node — nothing has been sent yet — and approved/listed
+ * collapse into one, because from the owner's side there is no meaningful
+ * difference between vetted and visible.
+ */
 export const VETTING_STEPS = [
-  { key: "draft", label: "Draft" },
-  { key: "submitted", label: "Submitted" },
-  { key: "under_review", label: "Under review" },
-  { key: "approved", label: "Approved" },
-  { key: "listed", label: "Listed" },
+  { key: "submitted", label: "Submitted", statuses: ["submitted"] },
+  { key: "under_review", label: "Under review", statuses: ["under_review"] },
+  { key: "live", label: "Approved and live", statuses: ["approved", "listed"] },
 ] as const;
 
-export function VettingTimeline({ status }: { status: string }) {
-  const terminal = ["revision_requested", "rejected", "closed", "archived"].includes(status);
-  const activeIdx = VETTING_STEPS.findIndex((s) => s.key === status);
+export function VettingTimeline({
+  status,
+  visibility,
+}: {
+  status: string;
+  /** A private event never enters vetting, so it has no tracker. */
+  visibility?: string | null;
+}) {
+  if (visibility === "private" || status === "draft") return null;
+
   const revision = status === "revision_requested";
   const rejected = status === "rejected";
 
-  if (terminal && !revision && !rejected && !VETTING_STEPS.some((s) => s.key === status)) {
-    return null;
+  // These two sit outside the three nodes and matter more than them. Drawing
+  // them as "stuck between node 1 and 2" would be misleading.
+  if (revision || rejected) {
+    return (
+      <div
+        className={`mt-3 rounded-xl border px-4 py-3 ${
+          revision
+            ? "border-amber-300 bg-amber-50 text-amber-950"
+            : "border-destructive/30 bg-destructive/5 text-foreground"
+        }`}
+      >
+        <p className="text-sm font-semibold">
+          {revision ? "Changes requested" : "Not approved for listing"}
+        </p>
+        <p className="mt-0.5 text-xs leading-relaxed opacity-90">
+          {revision
+            ? "IGE has asked for updates before this can be approved. Make the changes and resubmit — your place in the queue is kept."
+            : "The reviewer's notes are on the event editor. Address them and resubmit, or email hi@insideglobalevents.com to talk it through."}
+        </p>
+      </div>
+    );
   }
+
+  const activeIdx = VETTING_STEPS.findIndex((s) =>
+    (s.statuses as readonly string[]).includes(status),
+  );
+  if (activeIdx < 0) return null;
 
   return (
     <div className="mt-3 rounded-xl border border-border/70 bg-muted/20 p-3">
       <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         Vetting progress
       </div>
-      {revision && (
-        <p className="mt-1 text-xs text-amber-800">
-          IGE requested revisions — update your listing and resubmit when ready.
-        </p>
-      )}
-      {rejected && (
-        <p className="mt-1 text-xs text-red-800">
-          This listing was not approved. Check reviewer notes on the event editor.
-        </p>
-      )}
-      {!revision && !rejected && (
-        <ol className="mt-2 flex flex-wrap gap-2">
-          {VETTING_STEPS.map((step, i) => {
-            const done = activeIdx > i;
-            const current = activeIdx === i;
-            return (
-              <li
-                key={step.key}
-                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                  current
-                    ? "bg-brand-gradient text-white"
-                    : done
-                      ? "bg-secondary/15 text-secondary-deep"
-                      : "bg-muted text-muted-foreground"
+      <ol className="mt-2 flex items-center gap-2" aria-label="Vetting progress">
+        {VETTING_STEPS.map((step, i) => {
+          const done = activeIdx > i;
+          const current = activeIdx === i;
+          return (
+            <li key={step.key} className="flex min-w-0 flex-1 items-center gap-2">
+              <span
+                aria-current={current ? "step" : undefined}
+                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold ${
+                  done
+                    ? "border-secondary bg-secondary text-white"
+                    : current
+                      ? "border-primary bg-brand-soft text-primary-deep"
+                      : "border-border bg-card text-muted-foreground"
+                }`}
+              >
+                {done ? "\u2713" : i + 1}
+              </span>
+              <span
+                className={`truncate text-[11px] ${
+                  current ? "font-semibold text-foreground" : "text-muted-foreground"
                 }`}
               >
                 {step.label}
-              </li>
-            );
-          })}
-        </ol>
-      )}
+              </span>
+              {i < VETTING_STEPS.length - 1 && (
+                <span
+                  aria-hidden
+                  className={`hidden h-px flex-1 sm:block ${done ? "bg-secondary" : "bg-border"}`}
+                />
+              )}
+            </li>
+          );
+        })}
+      </ol>
     </div>
   );
 }

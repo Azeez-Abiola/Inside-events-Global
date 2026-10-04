@@ -225,6 +225,17 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
       }
       return;
     }
+    // Supabase will not say "that email is taken" — it returns a fake success
+    // with no session so the screen cannot be used to discover who is
+    // registered. The giveaway is an empty `identities` array. Without this
+    // check the person is sent to the OTP screen to wait for a code that was
+    // never sent, which is exactly what it looks like when signup is broken.
+    if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      toast.error("That email already has an IGE account. Sign in instead.");
+      navigate({ to: "/login", search: { email } });
+      return;
+    }
+
     toast.success("Check your inbox for your verification code.");
     goToStep("verify");
   }
@@ -298,23 +309,32 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
                   type="button"
                   key={r.key}
                   onClick={() => setRole(r.key)}
-                  className={`flex items-center gap-3 rounded-xl border p-3.5 text-left transition-colors ${
+                  aria-pressed={isSel}
+                  className={`flex items-start gap-3 rounded-xl border p-3.5 text-left transition-colors ${
                     isSel ? "border-primary bg-brand-soft" : "border-border bg-card hover:bg-muted"
                   }`}
                 >
                   <span
-                    className={`flex h-9 w-9 items-center justify-center rounded-lg ${
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
                       isSel ? "bg-brand-gradient text-white" : "bg-muted text-muted-foreground"
                     }`}
                   >
                     <r.icon className="h-4 w-4" />
                   </span>
-                  <span className="flex-1">
+                  <span className="min-w-0 flex-1">
                     <span className="block text-sm font-semibold text-foreground">{r.title}</span>
-                    <span className="block text-xs text-muted-foreground">{r.desc}</span>
+                    {/* The one-liner is always visible; TAB 2 §2.2's full
+                        description is a tap away, so the grid stays scannable
+                        instead of six paragraphs deep. */}
+                    <span className="block text-xs text-muted-foreground">{r.tagline}</span>
+                    {isSel && (
+                      <span className="mt-2 block border-t border-primary/20 pt-2 text-xs leading-relaxed text-primary-deep">
+                        {r.desc}
+                      </span>
+                    )}
                   </span>
                   <span
-                    className={`h-4 w-4 rounded-full border ${
+                    className={`mt-0.5 h-4 w-4 shrink-0 self-start rounded-full border ${
                       isSel ? "border-primary bg-primary" : "border-border"
                     }`}
                   />
@@ -344,7 +364,8 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
           ) : (
             <>
               <p className="mb-4 rounded-lg border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-                Signing up as <span className="font-semibold text-foreground">{roleMeta.title}</span>
+                Signing up as{" "}
+                <span className="font-semibold text-foreground">{roleMeta.title}</span>
                 {" — "}
                 <button
                   type="button"
@@ -372,7 +393,9 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
                   onChange={setEmail}
                 />
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-foreground">Phone *</label>
+                  <label className="mb-1.5 block text-sm font-medium text-foreground">
+                    Phone *
+                  </label>
                   <div className="flex gap-2">
                     <span className="inline-flex h-10 items-center rounded-md border border-input bg-muted px-3 text-sm font-medium text-muted-foreground">
                       +234
@@ -389,12 +412,14 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
                   </div>
                 </div>
                 <div>
-                  <span className="mb-1.5 block text-sm font-medium text-foreground">Account type</span>
+                  <span className="mb-1.5 block text-sm font-medium text-foreground">
+                    Account type
+                  </span>
                   <div className="grid grid-cols-2 gap-2">
-                    {([
+                    {[
                       { id: "individual" as const, label: "Individual" },
                       { id: "organisation" as const, label: "Organisation" },
-                    ]).map((opt) => (
+                    ].map((opt) => (
                       <button
                         key={opt.id}
                         type="button"
@@ -421,7 +446,9 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
                   />
                 )}
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-foreground">Password</label>
+                  <label className="mb-1.5 block text-sm font-medium text-foreground">
+                    Password
+                  </label>
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
@@ -475,11 +502,7 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
       )}
 
       {step === "verify" && (
-        <SignupOtpStep
-          email={email}
-          onVerified={handleOtpVerified}
-          onResend={handleResendOtp}
-        />
+        <SignupOtpStep email={email} onVerified={handleOtpVerified} onResend={handleResendOtp} />
       )}
 
       {step === "profile" && user && isEmailConfirmed(user) && (

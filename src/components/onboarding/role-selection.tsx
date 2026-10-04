@@ -105,10 +105,12 @@ export function RoleSelectionScreen() {
 
   const selectRole = useMutation({
     mutationFn: async (role: OnboardingRole) => {
-      // Every public role has a schema and a dashboard as of v6.2; only the
-      // Admin pseudo-role still routes elsewhere.
+      // Every public role has a schema and a dashboard as of v6.2. Admin is
+      // the exception: invite-only, and §3.6.7 routes it to a short
+      // access-request form rather than the wizard.
       if (role === "ige_admin") {
-        throw new Error("Admin access is invite-only. Email Admin to request it.");
+        navigate({ to: "/onboarding/admin-access" });
+        return;
       }
       await ensureRole({ data: { role } });
       await saveFn({
@@ -175,11 +177,24 @@ export function RoleSelectionScreen() {
               >
                 <div className="flex items-start gap-3">
                   <span className="text-3xl">{role.icon}</span>
-                  <div className="flex-1">
+                  <div className="min-w-0 flex-1">
                     <p className="font-semibold text-foreground">{role.label}</p>
-                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    {/* Collapsed to two lines until chosen. The full TAB 2 §2.2
+                        copy is what makes a first-time visitor sure of their
+                        choice, but six of them side by side is a wall nobody
+                        reads — so it opens on the card they are considering. */}
+                    <p
+                      className={`mt-1 text-sm leading-relaxed text-muted-foreground ${
+                        isSelected ? "" : "line-clamp-2"
+                      }`}
+                    >
                       {role.desc}
                     </p>
+                    {!isSelected && (
+                      <span className="mt-1 inline-block text-xs font-semibold text-primary opacity-0 transition-opacity group-hover:opacity-100">
+                        Tap to read more
+                      </span>
+                    )}
                   </div>
                   {isSelected && <span className="shrink-0 text-primary">✓</span>}
                 </div>

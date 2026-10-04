@@ -879,7 +879,9 @@ function OrganiserEventDetailSheet({
                 </div>
               </div>
 
-              {showTimeline && <VettingTimeline status={form.status} />}
+              {showTimeline && (
+                <VettingTimeline status={form.status} visibility={form.visibility} />
+              )}
 
               <div className="space-y-3">
                 <SheetField label="Event name">

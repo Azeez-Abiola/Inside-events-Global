@@ -38,6 +38,7 @@ import { Route as OnboardingWizardRouteImport } from './routes/onboarding.wizard
 import { Route as OnboardingRoleRouteImport } from './routes/onboarding.role'
 import { Route as OnboardingProfileRouteImport } from './routes/onboarding.profile'
 import { Route as OnboardingPendingRouteImport } from './routes/onboarding.pending'
+import { Route as OnboardingAdminAccessRouteImport } from './routes/onboarding.admin-access'
 import { Route as EventsSlugRouteImport } from './routes/events.$slug'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
@@ -234,6 +235,11 @@ const OnboardingProfileRoute = OnboardingProfileRouteImport.update({
 const OnboardingPendingRoute = OnboardingPendingRouteImport.update({
   id: '/pending',
   path: '/pending',
+  getParentRoute: () => OnboardingRoute,
+} as any)
+const OnboardingAdminAccessRoute = OnboardingAdminAccessRouteImport.update({
+  id: '/admin-access',
+  path: '/admin-access',
   getParentRoute: () => OnboardingRoute,
 } as any)
 const EventsSlugRoute = EventsSlugRouteImport.update({
@@ -572,6 +578,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/events/$slug': typeof EventsSlugRoute
+  '/onboarding/admin-access': typeof OnboardingAdminAccessRoute
   '/onboarding/pending': typeof OnboardingPendingRoute
   '/onboarding/profile': typeof OnboardingProfileRoute
   '/onboarding/role': typeof OnboardingRoleRoute
@@ -653,6 +660,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/events/$slug': typeof EventsSlugRoute
+  '/onboarding/admin-access': typeof OnboardingAdminAccessRoute
   '/onboarding/pending': typeof OnboardingPendingRoute
   '/onboarding/profile': typeof OnboardingProfileRoute
   '/onboarding/role': typeof OnboardingRoleRoute
@@ -738,6 +746,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/events/$slug': typeof EventsSlugRoute
+  '/onboarding/admin-access': typeof OnboardingAdminAccessRoute
   '/onboarding/pending': typeof OnboardingPendingRoute
   '/onboarding/profile': typeof OnboardingProfileRoute
   '/onboarding/role': typeof OnboardingRoleRoute
@@ -823,6 +832,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/email/unsubscribe'
     | '/events/$slug'
+    | '/onboarding/admin-access'
     | '/onboarding/pending'
     | '/onboarding/profile'
     | '/onboarding/role'
@@ -904,6 +914,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/email/unsubscribe'
     | '/events/$slug'
+    | '/onboarding/admin-access'
     | '/onboarding/pending'
     | '/onboarding/profile'
     | '/onboarding/role'
@@ -988,6 +999,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/email/unsubscribe'
     | '/events/$slug'
+    | '/onboarding/admin-access'
     | '/onboarding/pending'
     | '/onboarding/profile'
     | '/onboarding/role'
@@ -1282,6 +1294,13 @@ declare module '@tanstack/react-router' {
       path: '/pending'
       fullPath: '/onboarding/pending'
       preLoaderRoute: typeof OnboardingPendingRouteImport
+      parentRoute: typeof OnboardingRoute
+    }
+    '/onboarding/admin-access': {
+      id: '/onboarding/admin-access'
+      path: '/admin-access'
+      fullPath: '/onboarding/admin-access'
+      preLoaderRoute: typeof OnboardingAdminAccessRouteImport
       parentRoute: typeof OnboardingRoute
     }
     '/events/$slug': {
@@ -1775,6 +1794,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 interface OnboardingRouteChildren {
+  OnboardingAdminAccessRoute: typeof OnboardingAdminAccessRoute
   OnboardingPendingRoute: typeof OnboardingPendingRoute
   OnboardingProfileRoute: typeof OnboardingProfileRoute
   OnboardingRoleRoute: typeof OnboardingRoleRoute
@@ -1782,6 +1802,7 @@ interface OnboardingRouteChildren {
 }
 
 const OnboardingRouteChildren: OnboardingRouteChildren = {
+  OnboardingAdminAccessRoute: OnboardingAdminAccessRoute,
   OnboardingPendingRoute: OnboardingPendingRoute,
   OnboardingProfileRoute: OnboardingProfileRoute,
   OnboardingRoleRoute: OnboardingRoleRoute,
