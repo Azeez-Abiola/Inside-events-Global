@@ -9,6 +9,7 @@
  * opportunities, primary platform and amount sought.
  */
 import { useState } from "react";
+import { InfoTip } from "@/components/info-tip";
 import { Field, TextArea, SelectField, ChipMulti } from "@/components/signup/profile-fields";
 import {
   MatchingBadge,
@@ -175,12 +176,18 @@ function SectionA({
           onChange={(v) => setForm({ ...form, phone: v })}
           required
         />
-        <SelectField
-          label="Country"
-          value={form.country}
-          onChange={(v) => setForm({ ...form, country: v })}
-          options={[...ONBOARDING_COUNTRIES]}
-        />
+        <div>
+          <div className="mb-1 flex items-center gap-1 text-sm font-medium">
+            Country
+            <InfoTip tip="field.country" />
+          </div>
+          <SelectField
+            label=""
+            value={form.country}
+            onChange={(v) => setForm({ ...form, country: v })}
+            options={[...ONBOARDING_COUNTRIES]}
+          />
+        </div>
         <Field
           label="Portfolio / showreel link"
           value={form.portfolio_url}

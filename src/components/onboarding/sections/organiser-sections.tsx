@@ -202,12 +202,18 @@ function SectionA({
           required
         />
       </div>
-      <SelectField
-        label="Country of operation"
-        value={form.country}
-        onChange={set("country")}
-        options={[...ONBOARDING_COUNTRIES]}
-      />
+      <div>
+        <div className="mb-1 flex items-center gap-1 text-sm font-medium">
+          Country of operation
+          <InfoTip tip="field.country" />
+        </div>
+        <SelectField
+          label=""
+          value={form.country}
+          onChange={set("country")}
+          options={[...ONBOARDING_COUNTRIES]}
+        />
+      </div>
       <div className="grid gap-5 sm:grid-cols-2">
         <Field
           label="LinkedIn profile URL (optional)"
@@ -447,13 +453,19 @@ function SectionC({
       {reviewerNote && <ReviewerNote note={reviewerNote} />}
       {err && <ErrorBanner msg={err} />}
       <div className="grid gap-5 sm:grid-cols-2">
-        <Field
-          label="Expected attendance (this edition)"
-          type="number"
-          value={form.expected_attendance}
-          onChange={set("expected_attendance")}
-          required
-        />
+        <div>
+          <div className="mb-1 flex items-center gap-1 text-sm font-medium">
+            Expected attendance (this edition)
+            <InfoTip tip="field.expected_attendance" />
+          </div>
+          <Field
+            label=""
+            type="number"
+            value={form.expected_attendance}
+            onChange={set("expected_attendance")}
+            required
+          />
+        </div>
         <Field
           label="Past attendance (most recent edition, optional)"
           type="number"

@@ -4,6 +4,7 @@
  * E=Matching profile, F=Wishlist, G=Verification, H=Referral & consent
  */
 import { useState } from "react";
+import { InfoTip } from "@/components/info-tip";
 import { Field, TextArea, SelectField, ChipMulti } from "@/components/signup/profile-fields";
 import {
   MatchingBadge,
@@ -220,12 +221,18 @@ function SectionA({
           onChange={set("company_size")}
           options={[...COMPANY_SIZES_OB]}
         />
-        <SelectField
-          label="Primary HQ country"
-          value={form.hq_country}
-          onChange={set("hq_country")}
-          options={[...ONBOARDING_COUNTRIES]}
-        />
+        <div>
+          <div className="mb-1 flex items-center gap-1 text-sm font-medium">
+            Primary HQ country
+            <InfoTip tip="field.country" />
+          </div>
+          <SelectField
+            label=""
+            value={form.hq_country}
+            onChange={set("hq_country")}
+            options={[...ONBOARDING_COUNTRIES]}
+          />
+        </div>
       </div>
       <ChipMulti
         label="Countries of operation"

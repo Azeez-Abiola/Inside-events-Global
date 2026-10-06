@@ -36,6 +36,8 @@ export const INFO_TIPS: Record<string, string> = {
     "A few sentences in your own words on what a partner gets from working with you. Admin reads this and summarises it in approved match notifications.",
   "field.roi_offered":
     "What a sponsor actually receives from you, grouped by the three value pillars the sponsorship industry measures against: value for money, value for brand, value for business.",
+  "field.want_from_partner":
+    "What you are hoping to get. Paired against what the other side said they can offer, so the honest answer produces better matches than the ambitious one.",
   "field.roi_expected":
     "What you want back from a sponsorship, using the same three pillars. This sets the weighting in your Return on Objectives report.",
   "field.country":

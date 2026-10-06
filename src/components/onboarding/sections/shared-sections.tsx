@@ -158,12 +158,18 @@ export function MatchingProfileSection({
         </p>
       )}
 
-      <SelectField
-        label="Primary goal for this partnership"
-        value={form.primary_goal}
-        onChange={(v) => setForm({ ...form, primary_goal: v })}
-        options={[...PARTNERSHIP_GOALS]}
-      />
+      <div>
+        <div className="mb-1 flex items-center gap-1 text-sm font-medium">
+          Primary goal for this partnership
+          <InfoTip tip="field.primary_goal" />
+        </div>
+        <SelectField
+          label=""
+          value={form.primary_goal}
+          onChange={(v) => setForm({ ...form, primary_goal: v })}
+          options={[...PARTNERSHIP_GOALS]}
+        />
+      </div>
 
       <div>
         <div className="mb-1 flex items-center gap-1 text-sm font-medium">
@@ -178,16 +184,23 @@ export function MatchingProfileSection({
         />
       </div>
 
-      <SelectField
-        label="Minimum acceptable ROI / value multiple"
-        value={form.roi_multiple}
-        onChange={(v) => setForm({ ...form, roi_multiple: v })}
-        options={[...ROI_MULTIPLES]}
-      />
+      <div>
+        <div className="mb-1 flex items-center gap-1 text-sm font-medium">
+          Minimum acceptable ROI / value multiple
+          <InfoTip tip="field.roi_multiple" />
+        </div>
+        <SelectField
+          label=""
+          value={form.roi_multiple}
+          onChange={(v) => setForm({ ...form, roi_multiple: v })}
+          options={[...ROI_MULTIPLES]}
+        />
+      </div>
 
       <div>
         <div className="mb-1 flex items-center gap-1 text-sm font-medium">
           Interest in a multi-year / repeat partnership
+          <InfoTip tip="field.multi_year" />
           <MatchingBadge />
         </div>
         <SelectField
@@ -201,6 +214,7 @@ export function MatchingProfileSection({
       <div>
         <div className="mb-1 flex items-center gap-1 text-sm font-medium">
           What can you offer a partner?
+          <InfoTip tip="field.can_offer_partner" />
           <MatchingBadge />
         </div>
         <ChipMulti
@@ -211,13 +225,19 @@ export function MatchingProfileSection({
         />
       </div>
 
-      <TextArea
-        label="Tell partners what you would give back (optional)"
-        value={form.give_back_text}
-        onChange={(v) => setForm({ ...form, give_back_text: v })}
-        rows={3}
-        placeholder="Summarised for Admin and included in approved match notifications"
-      />
+      <div>
+        <div className="mb-1 flex items-center gap-1 text-sm font-medium">
+          Tell partners what you would give back (optional)
+          <InfoTip tip="field.offer_narrative" />
+        </div>
+        <TextArea
+          label=""
+          value={form.give_back_text}
+          onChange={(v) => setForm({ ...form, give_back_text: v })}
+          rows={3}
+          placeholder="Summarised for Admin and included in approved match notifications"
+        />
+      </div>
 
       {isOrganiser && (
         <RoiPillarPicker
@@ -239,6 +259,7 @@ export function MatchingProfileSection({
         <div>
           <div className="mb-1 flex items-center gap-1 text-sm font-medium">
             What you want from a partner
+            <InfoTip tip="field.want_from_partner" />
             <MatchingBadge />
           </div>
           <ChipMulti

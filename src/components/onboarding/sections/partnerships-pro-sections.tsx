@@ -8,6 +8,7 @@
  * than anything event-specific.
  */
 import { useState } from "react";
+import { InfoTip } from "@/components/info-tip";
 import { Field, TextArea, SelectField, ChipMulti } from "@/components/signup/profile-fields";
 import {
   MatchingBadge,
@@ -171,12 +172,18 @@ function SectionA({
           onChange={(v) => setForm({ ...form, phone: v })}
           required
         />
-        <SelectField
-          label="Country"
-          value={form.country}
-          onChange={(v) => setForm({ ...form, country: v })}
-          options={[...ONBOARDING_COUNTRIES]}
-        />
+        <div>
+          <div className="mb-1 flex items-center gap-1 text-sm font-medium">
+            Country
+            <InfoTip tip="field.country" />
+          </div>
+          <SelectField
+            label=""
+            value={form.country}
+            onChange={(v) => setForm({ ...form, country: v })}
+            options={[...ONBOARDING_COUNTRIES]}
+          />
+        </div>
         <Field
           label="LinkedIn profile URL (optional)"
           value={form.linkedin_url}
@@ -378,12 +385,18 @@ function SectionC({
     <form onSubmit={handleSubmit} className="space-y-6">
       <Banner reviewerNote={reviewerNote} err={err} />
       <div className="grid gap-4 sm:grid-cols-2">
-        <SelectField
-          label="Commission structure preference (optional)"
-          value={form.commission_preference}
-          onChange={(v) => setForm({ ...form, commission_preference: v })}
-          options={[...REFERRAL_COMMISSION_STRUCTURES]}
-        />
+        <div>
+          <div className="mb-1 flex items-center gap-1 text-sm font-medium">
+            Commission structure preference (optional)
+            <InfoTip tip="field.commission_structure" />
+          </div>
+          <SelectField
+            label=""
+            value={form.commission_preference}
+            onChange={(v) => setForm({ ...form, commission_preference: v })}
+            options={[...REFERRAL_COMMISSION_STRUCTURES]}
+          />
+        </div>
         <SelectField
           label="Target introductions per month (optional)"
           value={form.intros_per_month}
@@ -397,12 +410,18 @@ function SectionC({
           options={[...ONBOARDING_CURRENCIES]}
         />
         <div>
-          <SelectField
-            label="Who do you report your work to? (optional)"
-            value={form.reports_to}
-            onChange={(v) => setForm({ ...form, reports_to: v })}
-            options={[...PRO_REPORTS_TO]}
-          />
+          <div>
+            <div className="mb-1 flex items-center gap-1 text-sm font-medium">
+              Who do you report your work to? (optional)
+              <InfoTip tip="field.pro_reports_to" />
+            </div>
+            <SelectField
+              label=""
+              value={form.reports_to}
+              onChange={(v) => setForm({ ...form, reports_to: v })}
+              options={[...PRO_REPORTS_TO]}
+            />
+          </div>
           <p className="mt-1 text-xs text-muted-foreground">
             Sets the default format of your Weekly Activity Report.
           </p>
