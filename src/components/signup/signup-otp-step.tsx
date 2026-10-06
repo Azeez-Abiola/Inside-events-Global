@@ -33,24 +33,29 @@ export function SignupOtpStep({ email, onVerified, onResend }: Props) {
     if (!isValidEmailOtp(code)) return;
     setVerifying(true);
 
-    // The digits we emailed are ours, not Supabase's. Exchange them for the
-    // token_hash Supabase issued for this signup, then let Supabase do the
-    // confirming and the session minting exactly as before.
-    let tokenHash: string;
+    // Two kinds of code can legitimately arrive, so try both.
+    //
+    // Ours: minted by the send-email hook and exchanged for the token_hash
+    // Supabase issued for the same signup. Supabase's: the longer token it
+    // sends whenever our hook has not minted one — any environment running an
+    // older deploy, and any code issued before this change. Without the
+    // fallback, every code in flight at deploy time would stop working, and
+    // local development would be unable to verify at all, since Supabase
+    // calls the hook at the public URL and can never reach localhost.
+    let error: { message: string } | null = null;
     try {
       const res = await redeem({ data: { email: email.trim(), code } });
-      tokenHash = res.tokenHash;
-    } catch (e) {
-      setVerifying(false);
-      toast.error(e instanceof Error ? e.message : "That code did not work.");
-      setOtp("");
-      return;
+      ({ error } = await supabase.auth.verifyOtp({
+        token_hash: res.tokenHash,
+        type: "signup",
+      }));
+    } catch {
+      ({ error } = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token: code,
+        type: "signup",
+      }));
     }
-
-    const { error } = await supabase.auth.verifyOtp({
-      token_hash: tokenHash,
-      type: "signup",
-    });
     setVerifying(false);
     if (error) {
       toast.error(error.message);
