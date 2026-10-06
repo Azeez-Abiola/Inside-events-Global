@@ -65,7 +65,7 @@ export function SignupOtpStep({ email, onVerified, onResend }: Props) {
     <div className="space-y-6">
       <p className="text-sm text-muted-foreground">
         We sent a verification code to <strong className="text-foreground">{email}</strong>. Enter
-        all {AUTH_EMAIL_OTP_MAX} digits from your email.
+        all {AUTH_EMAIL_OTP_LENGTH} digits from your email.
       </p>
 
       <div className="flex flex-col items-center gap-4">

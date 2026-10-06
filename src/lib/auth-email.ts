@@ -22,14 +22,22 @@ export function isEmailNotConfirmedError(message: string): boolean {
 export const AUTH_EMAIL_OTP_MIN = 4;
 export const AUTH_EMAIL_OTP_MAX = 8;
 
-/** How many boxes to draw. Defaults to Supabase's own default of 6. */
+/**
+ * How many boxes to draw, and the number the copy promises.
+ *
+ * This must match "Email OTP Length" in Supabase (Auth > Providers > Email),
+ * which accepts 6 to 10 and is set to 8 on this project. Guessing lower
+ * renders too few boxes and a correct code cannot be typed at all; guessing
+ * higher asks for digits that were never sent. Override with
+ * VITE_AUTH_OTP_LENGTH if that setting changes.
+ */
 export const AUTH_EMAIL_OTP_LENGTH = (() => {
   const raw =
     typeof import.meta !== "undefined"
       ? (import.meta.env?.VITE_AUTH_OTP_LENGTH as string | undefined)
       : undefined;
   const n = Number(raw);
-  return Number.isFinite(n) && n >= AUTH_EMAIL_OTP_MIN && n <= AUTH_EMAIL_OTP_MAX ? n : 6;
+  return Number.isFinite(n) && n >= AUTH_EMAIL_OTP_MIN && n <= AUTH_EMAIL_OTP_MAX ? n : 8;
 })();
 
 export function normalizeEmailOtp(input: string): string {
