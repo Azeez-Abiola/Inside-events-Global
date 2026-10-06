@@ -1,8 +1,31 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  LayoutDashboard, CalendarRange, Inbox, Bookmark, Compass, BarChart3, MessageSquare,
-  ShieldCheck, Users, DollarSign, SlidersHorizontal, Handshake, TrendingUp, Newspaper, Send, Wallet,
-  ClipboardList, FileText, Coins, UserCheck, UserCircle, Radio, Mail, ScrollText, UserCog,
+  LayoutDashboard,
+  CalendarRange,
+  Inbox,
+  Bookmark,
+  Compass,
+  BarChart3,
+  MessageSquare,
+  ShieldCheck,
+  Users,
+  DollarSign,
+  SlidersHorizontal,
+  Handshake,
+  TrendingUp,
+  Newspaper,
+  Send,
+  Wallet,
+  ClipboardList,
+  FileText,
+  Coins,
+  UserCheck,
+  UserCircle,
+  Radio,
+  Mail,
+  ScrollText,
+  UserCog,
+  Contact,
 } from "lucide-react";
 import { canAccessAdminRoute, isSuperAdmin } from "@/lib/admin-permissions";
 
@@ -83,6 +106,12 @@ export function getWorkspaceNav(roles: string[]): WorkspaceNavItem[] {
     items.push({ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard });
   }
 
+  // §4.4.2 makes Contacts and CRM a tool for every public role, so it sits in
+  // the shared tail rather than being repeated in each branch. Admins are the
+  // exception: they work the platform, not a book of their own contacts.
+  if (!isAdmin) {
+    items.push({ to: "/dashboard/crm", label: "Contacts & CRM", icon: Contact });
+  }
   items.push({ to: "/messages", label: "Messages", icon: MessageSquare });
   items.push({ to: "/profile", label: "Profile", icon: UserCircle });
   return items;

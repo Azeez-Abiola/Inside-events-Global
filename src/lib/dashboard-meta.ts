@@ -12,7 +12,8 @@ const ADMIN_SECTIONS: Record<string, DashboardMeta> = {
   },
   vetting: {
     title: "Event queue",
-    subtitle: "Review submitted listings, request revisions, and approve events for the marketplace.",
+    subtitle:
+      "Review submitted listings, request revisions, and approve events for the marketplace.",
     breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Event queue" }],
   },
   submissions: {
@@ -93,6 +94,11 @@ const PATH_META: Record<string, DashboardMeta> = {
     title: "Documents",
     subtitle: "Sponsorship decks, banners, and floor plans.",
     breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Documents" }],
+  },
+  "/dashboard/crm": {
+    title: "Contacts & CRM",
+    subtitle: "Your contacts, clients and deals.",
+    breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Contacts & CRM" }],
   },
   "/dashboard/pipeline": {
     title: "Pipeline",

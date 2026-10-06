@@ -60,6 +60,7 @@ import { Route as AuthenticatedDashboardBudgetRouteImport } from './routes/_auth
 import { Route as AuthenticatedDashboardCommissionsRouteImport } from './routes/_authenticated/dashboard.commissions'
 import { Route as AuthenticatedDashboardCommitmentsRouteImport } from './routes/_authenticated/dashboard.commitments'
 import { Route as AuthenticatedDashboardControlsRouteImport } from './routes/_authenticated/dashboard.controls'
+import { Route as AuthenticatedDashboardCrmRouteImport } from './routes/_authenticated/dashboard.crm'
 import { Route as AuthenticatedDashboardDealsRouteImport } from './routes/_authenticated/dashboard.deals'
 import { Route as AuthenticatedDashboardDiscoverRouteImport } from './routes/_authenticated/dashboard.discover'
 import { Route as AuthenticatedDashboardDocumentsRouteImport } from './routes/_authenticated/dashboard.documents'
@@ -357,6 +358,12 @@ const AuthenticatedDashboardControlsRoute =
     path: '/controls',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardCrmRoute =
+  AuthenticatedDashboardCrmRouteImport.update({
+    id: '/crm',
+    path: '/crm',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedDashboardDealsRoute =
   AuthenticatedDashboardDealsRouteImport.update({
     id: '/deals',
@@ -593,6 +600,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/commissions': typeof AuthenticatedDashboardCommissionsRoute
   '/dashboard/commitments': typeof AuthenticatedDashboardCommitmentsRoute
   '/dashboard/controls': typeof AuthenticatedDashboardControlsRoute
+  '/dashboard/crm': typeof AuthenticatedDashboardCrmRoute
   '/dashboard/deals': typeof AuthenticatedDashboardDealsRoute
   '/dashboard/discover': typeof AuthenticatedDashboardDiscoverRoute
   '/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
@@ -675,6 +683,7 @@ export interface FileRoutesByTo {
   '/dashboard/commissions': typeof AuthenticatedDashboardCommissionsRoute
   '/dashboard/commitments': typeof AuthenticatedDashboardCommitmentsRoute
   '/dashboard/controls': typeof AuthenticatedDashboardControlsRoute
+  '/dashboard/crm': typeof AuthenticatedDashboardCrmRoute
   '/dashboard/deals': typeof AuthenticatedDashboardDealsRoute
   '/dashboard/discover': typeof AuthenticatedDashboardDiscoverRoute
   '/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
@@ -761,6 +770,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/commissions': typeof AuthenticatedDashboardCommissionsRoute
   '/_authenticated/dashboard/commitments': typeof AuthenticatedDashboardCommitmentsRoute
   '/_authenticated/dashboard/controls': typeof AuthenticatedDashboardControlsRoute
+  '/_authenticated/dashboard/crm': typeof AuthenticatedDashboardCrmRoute
   '/_authenticated/dashboard/deals': typeof AuthenticatedDashboardDealsRoute
   '/_authenticated/dashboard/discover': typeof AuthenticatedDashboardDiscoverRoute
   '/_authenticated/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
@@ -847,6 +857,7 @@ export interface FileRouteTypes {
     | '/dashboard/commissions'
     | '/dashboard/commitments'
     | '/dashboard/controls'
+    | '/dashboard/crm'
     | '/dashboard/deals'
     | '/dashboard/discover'
     | '/dashboard/documents'
@@ -929,6 +940,7 @@ export interface FileRouteTypes {
     | '/dashboard/commissions'
     | '/dashboard/commitments'
     | '/dashboard/controls'
+    | '/dashboard/crm'
     | '/dashboard/deals'
     | '/dashboard/discover'
     | '/dashboard/documents'
@@ -1014,6 +1026,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/commissions'
     | '/_authenticated/dashboard/commitments'
     | '/_authenticated/dashboard/controls'
+    | '/_authenticated/dashboard/crm'
     | '/_authenticated/dashboard/deals'
     | '/_authenticated/dashboard/discover'
     | '/_authenticated/dashboard/documents'
@@ -1450,6 +1463,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardControlsRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/crm': {
+      id: '/_authenticated/dashboard/crm'
+      path: '/crm'
+      fullPath: '/dashboard/crm'
+      preLoaderRoute: typeof AuthenticatedDashboardCrmRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/dashboard/deals': {
       id: '/_authenticated/dashboard/deals'
       path: '/deals'
@@ -1684,6 +1704,7 @@ interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardCommissionsRoute: typeof AuthenticatedDashboardCommissionsRoute
   AuthenticatedDashboardCommitmentsRoute: typeof AuthenticatedDashboardCommitmentsRoute
   AuthenticatedDashboardControlsRoute: typeof AuthenticatedDashboardControlsRoute
+  AuthenticatedDashboardCrmRoute: typeof AuthenticatedDashboardCrmRoute
   AuthenticatedDashboardDealsRoute: typeof AuthenticatedDashboardDealsRoute
   AuthenticatedDashboardDiscoverRoute: typeof AuthenticatedDashboardDiscoverRoute
   AuthenticatedDashboardDocumentsRoute: typeof AuthenticatedDashboardDocumentsRoute
@@ -1716,6 +1737,7 @@ const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
     AuthenticatedDashboardCommitmentsRoute:
       AuthenticatedDashboardCommitmentsRoute,
     AuthenticatedDashboardControlsRoute: AuthenticatedDashboardControlsRoute,
+    AuthenticatedDashboardCrmRoute: AuthenticatedDashboardCrmRoute,
     AuthenticatedDashboardDealsRoute: AuthenticatedDashboardDealsRoute,
     AuthenticatedDashboardDiscoverRoute: AuthenticatedDashboardDiscoverRoute,
     AuthenticatedDashboardDocumentsRoute: AuthenticatedDashboardDocumentsRoute,
