@@ -11,25 +11,24 @@ export function isEmailNotConfirmedError(message: string): boolean {
 }
 
 /**
- * Supabase email OTP length is a per-project setting, so the input accepts a
- * range rather than assuming one. Hardcoding the maximum meant the field
- * showed eight boxes and only submitted at eight — a shorter real code could
- * never be entered, which looks exactly like "the code does not work".
+ * Accepted length range for a typed verification code.
  *
- * Set VITE_AUTH_OTP_LENGTH to the project's configured length to render that
- * many boxes; the range still governs what is accepted.
+ * The lower bound is the short code we now issue ourselves; the upper bound
+ * covers Supabase's own 6-to-10 digit tokens, which still arrive for any flow
+ * we have not shortened and for codes minted before this change.
  */
 export const AUTH_EMAIL_OTP_MIN = 4;
-export const AUTH_EMAIL_OTP_MAX = 8;
+export const AUTH_EMAIL_OTP_MAX = 10;
 
 /**
  * How many boxes to draw, and the number the copy promises.
  *
- * This must match "Email OTP Length" in Supabase (Auth > Providers > Email),
- * which accepts 6 to 10 and is set to 8 on this project. Guessing lower
- * renders too few boxes and a correct code cannot be typed at all; guessing
- * higher asks for digits that were never sent. Override with
- * VITE_AUTH_OTP_LENGTH if that setting changes.
+ * Signup codes are minted by the send-email hook (see email/short-otp.ts), so
+ * this is our number to choose rather than Supabase's — it has to match
+ * SHORT_OTP_LENGTH on the server. Keep VITE_AUTH_OTP_LENGTH and the server's
+ * AUTH_OTP_LENGTH in step if either moves: too few boxes and a correct code
+ * cannot be typed at all, too many and the field asks for digits nobody was
+ * sent.
  */
 export const AUTH_EMAIL_OTP_LENGTH = (() => {
   const raw =
@@ -37,7 +36,7 @@ export const AUTH_EMAIL_OTP_LENGTH = (() => {
       ? (import.meta.env?.VITE_AUTH_OTP_LENGTH as string | undefined)
       : undefined;
   const n = Number(raw);
-  return Number.isFinite(n) && n >= AUTH_EMAIL_OTP_MIN && n <= AUTH_EMAIL_OTP_MAX ? n : 8;
+  return Number.isFinite(n) && n >= AUTH_EMAIL_OTP_MIN && n <= AUTH_EMAIL_OTP_MAX ? n : 4;
 })();
 
 export function normalizeEmailOtp(input: string): string {

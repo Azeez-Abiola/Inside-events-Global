@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { redeemEmailOtp } from "@/lib/email-otp.functions";
 import {
   AUTH_EMAIL_OTP_LENGTH,
   AUTH_EMAIL_OTP_MAX,
@@ -21,6 +23,7 @@ type Props = {
 };
 
 export function SignupOtpStep({ email, onVerified, onResend }: Props) {
+  const redeem = useServerFn(redeemEmailOtp);
   const [otp, setOtp] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
@@ -29,9 +32,23 @@ export function SignupOtpStep({ email, onVerified, onResend }: Props) {
     const code = normalizeEmailOtp(raw);
     if (!isValidEmailOtp(code)) return;
     setVerifying(true);
+
+    // The digits we emailed are ours, not Supabase's. Exchange them for the
+    // token_hash Supabase issued for this signup, then let Supabase do the
+    // confirming and the session minting exactly as before.
+    let tokenHash: string;
+    try {
+      const res = await redeem({ data: { email: email.trim(), code } });
+      tokenHash = res.tokenHash;
+    } catch (e) {
+      setVerifying(false);
+      toast.error(e instanceof Error ? e.message : "That code did not work.");
+      setOtp("");
+      return;
+    }
+
     const { error } = await supabase.auth.verifyOtp({
-      email: email.trim(),
-      token: code,
+      token_hash: tokenHash,
       type: "signup",
     });
     setVerifying(false);

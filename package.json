@@ -14,7 +14,8 @@
     "db:waitlist-media-partner": "node scripts/apply-waitlist-media-partner.mjs",
     "db:admin-assisted-events": "node scripts/apply-admin-assisted-events.mjs",
     "db:progressive-onboarding": "node scripts/apply-progressive-onboarding.mjs",
-    "db:v11-section-a": "node scripts/apply-v11-section-a.mjs"
+    "db:v11-section-a": "node scripts/apply-v11-section-a.mjs",
+    "db:short-otp": "node scripts/apply-short-otp.mjs"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",
