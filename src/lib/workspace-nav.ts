@@ -27,6 +27,7 @@ import {
   UserCog,
   Contact,
   CalendarDays,
+  ClipboardCheck,
 } from "lucide-react";
 import { canAccessAdminRoute, isSuperAdmin } from "@/lib/admin-permissions";
 
@@ -115,6 +116,7 @@ export function getWorkspaceNav(roles: string[]): WorkspaceNavItem[] {
     // shared tail rather than being repeated in each branch.
     items.push({ to: "/dashboard/calendar", label: "Calendar", icon: CalendarDays });
     items.push({ to: "/dashboard/crm", label: "Contacts & CRM", icon: Contact });
+    items.push({ to: "/dashboard/activations", label: "Activations", icon: ClipboardCheck });
   }
   items.push({ to: "/messages", label: "Messages", icon: MessageSquare });
   items.push({ to: "/profile", label: "Profile", icon: UserCircle });

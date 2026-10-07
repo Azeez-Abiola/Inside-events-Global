@@ -100,6 +100,11 @@ const PATH_META: Record<string, DashboardMeta> = {
     subtitle: "Plan ahead across months, quarters and the year.",
     breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Calendar" }],
   },
+  "/dashboard/activations": {
+    title: "Activations",
+    subtitle: "Who owns each activation, what it costs, and what proof came back.",
+    breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Activations" }],
+  },
   "/dashboard/crm": {
     title: "Contacts & CRM",
     subtitle: "Your contacts, clients and deals.",

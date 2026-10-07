@@ -39,3 +39,6 @@ dist-ssr
 
 # Confidential docs — keep local
 docs/*.docx
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat

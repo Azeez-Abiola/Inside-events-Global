@@ -131,6 +131,14 @@ export const INFO_TIPS: Record<string, string> = {
   "calendar.cocreation":
     "Tells IGE you want to build something with this event. IGE reviews it and, if it fits, introduces you both and sets up the meeting. You never contact the organiser directly.",
 
+  // ── Activations (TAB 4, Module 4A) ─────────────────────────
+  "activation.tracker":
+    "Project management for the things you actually have to deliver at an event — a sampling run, a booth, a stage moment. Linked to an event or a deal, or standing on its own.",
+  "activation.owner":
+    "One named person from this workspace. Somebody has to be answerable on the day, and a team is not somebody.",
+  "activation.evidence":
+    "Photos, attendance counts and notes captured as the activation happens. Sponsorships lose renewals for want of proof of delivery, not for underperforming — this is that proof, and the Investment Report will be built from it.",
+
   // ── Dashboard and platform ─────────────────────────────────────────────────
   "dash.profile_completion":
     "What is still outstanding on your profile and which feature each remaining item unlocks.",

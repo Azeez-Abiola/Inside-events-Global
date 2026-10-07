@@ -4,8 +4,8 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
-    "build": "vite build",
+    "dev": "node api.js && vite dev",
+    "build": "node api.js && vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
@@ -18,7 +18,8 @@
     "db:short-otp": "node scripts/apply-short-otp.mjs",
     "db:workspace-account-type": "node scripts/apply-workspace-account-type.mjs",
     "db:crm": "node scripts/apply-crm.mjs",
-    "db:calendar": "node scripts/apply-event-calendar.mjs"
+    "db:calendar": "node scripts/apply-event-calendar.mjs",
+    "db:activations": "node scripts/apply-activations.mjs"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",
