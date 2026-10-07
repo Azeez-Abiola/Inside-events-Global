@@ -26,6 +26,7 @@ import {
   ScrollText,
   UserCog,
   Contact,
+  CalendarDays,
 } from "lucide-react";
 import { canAccessAdminRoute, isSuperAdmin } from "@/lib/admin-permissions";
 
@@ -110,6 +111,9 @@ export function getWorkspaceNav(roles: string[]): WorkspaceNavItem[] {
   // the shared tail rather than being repeated in each branch. Admins are the
   // exception: they work the platform, not a book of their own contacts.
   if (!isAdmin) {
+    // §4.4.1 and §4.4.2 are tools for every public role, so they sit in the
+    // shared tail rather than being repeated in each branch.
+    items.push({ to: "/dashboard/calendar", label: "Calendar", icon: CalendarDays });
     items.push({ to: "/dashboard/crm", label: "Contacts & CRM", icon: Contact });
   }
   items.push({ to: "/messages", label: "Messages", icon: MessageSquare });

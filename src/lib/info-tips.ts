@@ -121,6 +121,16 @@ export const INFO_TIPS: Record<string, string> = {
   "settings.team_activity":
     "What each person moved in the period. Built for the question a manager actually asks: who did what this week.",
 
+  // ── Calendar (TAB 4 §4.4.1) ────────────────────────────────────────────────
+  "calendar.forward_events":
+    "Events other people are planning months ahead. Coming in early means shaping what the sponsorship actually is, rather than buying a package somebody already designed.",
+  "calendar.planning_status":
+    "Where your event is in your own planning — Idea, Planning, Confirmed or Live. Separate from IGE's vetting status, which is about the listing rather than the event.",
+  "calendar.budget_window":
+    "When your money is actually available. IGE prioritises forward events that land inside your windows, so you see the ones you could still act on.",
+  "calendar.cocreation":
+    "Tells IGE you want to build something with this event. IGE reviews it and, if it fits, introduces you both and sets up the meeting. You never contact the organiser directly.",
+
   // ── Dashboard and platform ─────────────────────────────────────────────────
   "dash.profile_completion":
     "What is still outstanding on your profile and which feature each remaining item unlocks.",

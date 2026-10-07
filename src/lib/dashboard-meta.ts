@@ -95,6 +95,11 @@ const PATH_META: Record<string, DashboardMeta> = {
     subtitle: "Sponsorship decks, banners, and floor plans.",
     breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Documents" }],
   },
+  "/dashboard/calendar": {
+    title: "Event Calendar",
+    subtitle: "Plan ahead across months, quarters and the year.",
+    breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Calendar" }],
+  },
   "/dashboard/crm": {
     title: "Contacts & CRM",
     subtitle: "Your contacts, clients and deals.",

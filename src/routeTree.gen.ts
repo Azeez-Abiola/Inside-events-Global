@@ -57,6 +57,7 @@ import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedDashboardAnalyticsRouteImport } from './routes/_authenticated/dashboard.analytics'
 import { Route as AuthenticatedDashboardAuditRouteImport } from './routes/_authenticated/dashboard.audit'
 import { Route as AuthenticatedDashboardBudgetRouteImport } from './routes/_authenticated/dashboard.budget'
+import { Route as AuthenticatedDashboardCalendarRouteImport } from './routes/_authenticated/dashboard.calendar'
 import { Route as AuthenticatedDashboardCommissionsRouteImport } from './routes/_authenticated/dashboard.commissions'
 import { Route as AuthenticatedDashboardCommitmentsRouteImport } from './routes/_authenticated/dashboard.commitments'
 import { Route as AuthenticatedDashboardControlsRouteImport } from './routes/_authenticated/dashboard.controls'
@@ -82,6 +83,7 @@ import { Route as AuthenticatedDashboardVettingRouteImport } from './routes/_aut
 import { Route as AuthenticatedDashboardWaitlistRouteImport } from './routes/_authenticated/dashboard.waitlist'
 import { Route as AuthenticatedEventsIndexRouteImport } from './routes/_authenticated/events.index'
 import { Route as ApiAuthSendEmailHookRouteImport } from './routes/api/auth/send-email-hook'
+import { Route as ApiCalendarTokenRouteImport } from './routes/api/calendar/$token'
 import { Route as ApiPublicContactRouteImport } from './routes/api/public/contact'
 import { Route as ApiPublicWaitlistNotifyRouteImport } from './routes/api/public/waitlist-notify'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
@@ -340,6 +342,12 @@ const AuthenticatedDashboardBudgetRoute =
     path: '/budget',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardCalendarRoute =
+  AuthenticatedDashboardCalendarRouteImport.update({
+    id: '/calendar',
+    path: '/calendar',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedDashboardCommissionsRoute =
   AuthenticatedDashboardCommissionsRouteImport.update({
     id: '/commissions',
@@ -489,6 +497,11 @@ const ApiAuthSendEmailHookRoute = ApiAuthSendEmailHookRouteImport.update({
   path: '/api/auth/send-email-hook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCalendarTokenRoute = ApiCalendarTokenRouteImport.update({
+  id: '/api/calendar/$token',
+  path: '/api/calendar/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicContactRoute = ApiPublicContactRouteImport.update({
   id: '/api/public/contact',
   path: '/api/public/contact',
@@ -597,6 +610,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/analytics': typeof AuthenticatedDashboardAnalyticsRoute
   '/dashboard/audit': typeof AuthenticatedDashboardAuditRoute
   '/dashboard/budget': typeof AuthenticatedDashboardBudgetRoute
+  '/dashboard/calendar': typeof AuthenticatedDashboardCalendarRoute
   '/dashboard/commissions': typeof AuthenticatedDashboardCommissionsRoute
   '/dashboard/commitments': typeof AuthenticatedDashboardCommitmentsRoute
   '/dashboard/controls': typeof AuthenticatedDashboardControlsRoute
@@ -621,6 +635,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/vetting': typeof AuthenticatedDashboardVettingRoute
   '/dashboard/waitlist': typeof AuthenticatedDashboardWaitlistRoute
   '/api/auth/send-email-hook': typeof ApiAuthSendEmailHookRoute
+  '/api/calendar/$token': typeof ApiCalendarTokenRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/waitlist-notify': typeof ApiPublicWaitlistNotifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -680,6 +695,7 @@ export interface FileRoutesByTo {
   '/dashboard/analytics': typeof AuthenticatedDashboardAnalyticsRoute
   '/dashboard/audit': typeof AuthenticatedDashboardAuditRoute
   '/dashboard/budget': typeof AuthenticatedDashboardBudgetRoute
+  '/dashboard/calendar': typeof AuthenticatedDashboardCalendarRoute
   '/dashboard/commissions': typeof AuthenticatedDashboardCommissionsRoute
   '/dashboard/commitments': typeof AuthenticatedDashboardCommitmentsRoute
   '/dashboard/controls': typeof AuthenticatedDashboardControlsRoute
@@ -704,6 +720,7 @@ export interface FileRoutesByTo {
   '/dashboard/vetting': typeof AuthenticatedDashboardVettingRoute
   '/dashboard/waitlist': typeof AuthenticatedDashboardWaitlistRoute
   '/api/auth/send-email-hook': typeof ApiAuthSendEmailHookRoute
+  '/api/calendar/$token': typeof ApiCalendarTokenRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/waitlist-notify': typeof ApiPublicWaitlistNotifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -767,6 +784,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/analytics': typeof AuthenticatedDashboardAnalyticsRoute
   '/_authenticated/dashboard/audit': typeof AuthenticatedDashboardAuditRoute
   '/_authenticated/dashboard/budget': typeof AuthenticatedDashboardBudgetRoute
+  '/_authenticated/dashboard/calendar': typeof AuthenticatedDashboardCalendarRoute
   '/_authenticated/dashboard/commissions': typeof AuthenticatedDashboardCommissionsRoute
   '/_authenticated/dashboard/commitments': typeof AuthenticatedDashboardCommitmentsRoute
   '/_authenticated/dashboard/controls': typeof AuthenticatedDashboardControlsRoute
@@ -791,6 +809,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/vetting': typeof AuthenticatedDashboardVettingRoute
   '/_authenticated/dashboard/waitlist': typeof AuthenticatedDashboardWaitlistRoute
   '/api/auth/send-email-hook': typeof ApiAuthSendEmailHookRoute
+  '/api/calendar/$token': typeof ApiCalendarTokenRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/waitlist-notify': typeof ApiPublicWaitlistNotifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -854,6 +873,7 @@ export interface FileRouteTypes {
     | '/dashboard/analytics'
     | '/dashboard/audit'
     | '/dashboard/budget'
+    | '/dashboard/calendar'
     | '/dashboard/commissions'
     | '/dashboard/commitments'
     | '/dashboard/controls'
@@ -878,6 +898,7 @@ export interface FileRouteTypes {
     | '/dashboard/vetting'
     | '/dashboard/waitlist'
     | '/api/auth/send-email-hook'
+    | '/api/calendar/$token'
     | '/api/public/contact'
     | '/api/public/waitlist-notify'
     | '/lovable/email/suppression'
@@ -937,6 +958,7 @@ export interface FileRouteTypes {
     | '/dashboard/analytics'
     | '/dashboard/audit'
     | '/dashboard/budget'
+    | '/dashboard/calendar'
     | '/dashboard/commissions'
     | '/dashboard/commitments'
     | '/dashboard/controls'
@@ -961,6 +983,7 @@ export interface FileRouteTypes {
     | '/dashboard/vetting'
     | '/dashboard/waitlist'
     | '/api/auth/send-email-hook'
+    | '/api/calendar/$token'
     | '/api/public/contact'
     | '/api/public/waitlist-notify'
     | '/lovable/email/suppression'
@@ -1023,6 +1046,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/analytics'
     | '/_authenticated/dashboard/audit'
     | '/_authenticated/dashboard/budget'
+    | '/_authenticated/dashboard/calendar'
     | '/_authenticated/dashboard/commissions'
     | '/_authenticated/dashboard/commitments'
     | '/_authenticated/dashboard/controls'
@@ -1047,6 +1071,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/vetting'
     | '/_authenticated/dashboard/waitlist'
     | '/api/auth/send-email-hook'
+    | '/api/calendar/$token'
     | '/api/public/contact'
     | '/api/public/waitlist-notify'
     | '/lovable/email/suppression'
@@ -1092,6 +1117,7 @@ export interface RootRouteChildren {
   EventsSlugRoute: typeof EventsSlugRoute
   RCodeRoute: typeof RCodeRoute
   ApiAuthSendEmailHookRoute: typeof ApiAuthSendEmailHookRoute
+  ApiCalendarTokenRoute: typeof ApiCalendarTokenRoute
   ApiPublicContactRoute: typeof ApiPublicContactRoute
   ApiPublicWaitlistNotifyRoute: typeof ApiPublicWaitlistNotifyRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
@@ -1442,6 +1468,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardBudgetRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/calendar': {
+      id: '/_authenticated/dashboard/calendar'
+      path: '/calendar'
+      fullPath: '/dashboard/calendar'
+      preLoaderRoute: typeof AuthenticatedDashboardCalendarRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/dashboard/commissions': {
       id: '/_authenticated/dashboard/commissions'
       path: '/commissions'
@@ -1617,6 +1650,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSendEmailHookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/calendar/$token': {
+      id: '/api/calendar/$token'
+      path: '/api/calendar/$token'
+      fullPath: '/api/calendar/$token'
+      preLoaderRoute: typeof ApiCalendarTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/contact': {
       id: '/api/public/contact'
       path: '/api/public/contact'
@@ -1701,6 +1741,7 @@ interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardAnalyticsRoute: typeof AuthenticatedDashboardAnalyticsRoute
   AuthenticatedDashboardAuditRoute: typeof AuthenticatedDashboardAuditRoute
   AuthenticatedDashboardBudgetRoute: typeof AuthenticatedDashboardBudgetRoute
+  AuthenticatedDashboardCalendarRoute: typeof AuthenticatedDashboardCalendarRoute
   AuthenticatedDashboardCommissionsRoute: typeof AuthenticatedDashboardCommissionsRoute
   AuthenticatedDashboardCommitmentsRoute: typeof AuthenticatedDashboardCommitmentsRoute
   AuthenticatedDashboardControlsRoute: typeof AuthenticatedDashboardControlsRoute
@@ -1732,6 +1773,7 @@ const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
     AuthenticatedDashboardAnalyticsRoute: AuthenticatedDashboardAnalyticsRoute,
     AuthenticatedDashboardAuditRoute: AuthenticatedDashboardAuditRoute,
     AuthenticatedDashboardBudgetRoute: AuthenticatedDashboardBudgetRoute,
+    AuthenticatedDashboardCalendarRoute: AuthenticatedDashboardCalendarRoute,
     AuthenticatedDashboardCommissionsRoute:
       AuthenticatedDashboardCommissionsRoute,
     AuthenticatedDashboardCommitmentsRoute:
@@ -1865,6 +1907,7 @@ const rootRouteChildren: RootRouteChildren = {
   EventsSlugRoute: EventsSlugRoute,
   RCodeRoute: RCodeRoute,
   ApiAuthSendEmailHookRoute: ApiAuthSendEmailHookRoute,
+  ApiCalendarTokenRoute: ApiCalendarTokenRoute,
   ApiPublicContactRoute: ApiPublicContactRoute,
   ApiPublicWaitlistNotifyRoute: ApiPublicWaitlistNotifyRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
