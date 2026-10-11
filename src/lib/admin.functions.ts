@@ -10,6 +10,9 @@ import { requirePlatformAdmin, requireSuperAdmin, getActorProfile } from "@/lib/
 import { auditAdminAction } from "@/lib/admin-audit";
 import { isSubAdmin } from "@/lib/admin-permissions";
 import { notifyEventListed } from "@/lib/email/notify-event-listed";
+import { recordAdminAudit } from "@/lib/admin-audit";
+import { openDualControl } from "@/lib/dual-control.server";
+import { performSuspension } from "@/lib/suspension.server";
 
 const SITE_URL = process.env.VITE_SITE_URL || "https://www.insideglobalevents.com";
 
@@ -336,117 +339,33 @@ export const setUserSuspended = createServerFn({ method: "POST" })
     const { data: targetRoles } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", data.user_id);
     if (targetRoles?.some((r) => r.role === "super_admin")) throw new Error("Cannot suspend a super admin");
 
-    const { error } = await supabaseAdmin
-      .from("profiles")
-      .update({
-        is_suspended: data.suspended,
-        suspension_reason: data.suspended ? (data.reason ?? "Suspended by admin") : null,
-      } as never)
-      .eq("id", data.user_id);
-    if (error) throw new Error(error.message);
-
+    // Dual control (TAB 6 §6.9): suspending waits for a second Super Admin;
+    // restoring access does not.
     if (data.suspended) {
-      const { data: targetProfile } = await supabaseAdmin
-        .from("profiles")
-        .select("email, display_name")
-        .eq("id", data.user_id)
-        .maybeSingle();
-
-      await supabaseAdmin.from("notifications").insert({
-        user_id: data.user_id,
-        type: "account_suspended",
-        title: "Account deactivated",
-        body: data.reason ?? "Your IGE account has been deactivated. Contact support if you believe this is an error.",
-        data: {},
+      await openDualControl({
+        action: "suspend_user",
+        targetUserId: data.user_id,
+        requestedBy: userId,
+        reason: data.reason?.trim() || "Suspended by admin",
       });
-
-      if (targetProfile?.email) {
-        try {
-          await sendTransactionalEmailServer({
-            templateName: "account-suspended",
-            recipientEmail: targetProfile.email,
-            idempotencyKey: `account-suspended-${data.user_id}`,
-            templateData: {
-              name: targetProfile.display_name ?? undefined,
-              reason: data.reason ?? "Your account has been deactivated by the IGE team.",
-              supportEmail: IGE_SUPPORT_EMAIL,
-              siteUrl: getSiteUrl(),
-            },
-          });
-          await flushEmailQueueInDev();
-        } catch (e) {
-          console.error("[setUserSuspended] deactivation email failed", e);
-        }
-      }
-    } else {
-      // Someone told they were deactivated will not try signing in again on
-      // spec, so restoring access silently is the same as not restoring it.
-      const { data: targetProfile } = await supabaseAdmin
-        .from("profiles")
-        .select("email, display_name")
-        .eq("id", data.user_id)
-        .maybeSingle();
-
-      await supabaseAdmin.from("notifications").insert({
-        user_id: data.user_id,
-        type: "account_restored",
-        title: "Account restored",
-        body: "Your IGE account is active again. Everything is just as you left it.",
-        data: {},
-      });
-
-      if (targetProfile?.email) {
-        try {
-          await sendTransactionalEmailServer({
-            templateName: "account-restored",
-            recipientEmail: targetProfile.email,
-            // Timestamped so a later deactivate/reactivate cycle isn't
-            // suppressed as a duplicate of this one.
-            idempotencyKey: `account-restored-${data.user_id}-${Date.now()}`,
-            templateData: {
-              name: targetProfile.display_name ?? undefined,
-              supportEmail: IGE_SUPPORT_EMAIL,
-              loginUrl: `${getSiteUrl()}/login`,
-              siteUrl: getSiteUrl(),
-            },
-          });
-          await flushEmailQueueInDev();
-        } catch (e) {
-          console.error("[setUserSuspended] reactivation email failed", e);
-        }
-      }
+      return { ok: true, pending: true };
     }
-
-    const actor = await getActorProfile(userId);
-    const { data: targetProfile } = await supabaseAdmin
-      .from("profiles")
-      .select("email, display_name")
-      .eq("id", data.user_id)
-      .maybeSingle();
-
-    await auditAdminAction({
-      actorId: userId,
-      actorEmail: actor?.email,
-      action: data.suspended ? "user_suspended" : "user_reactivated",
-      summary: data.suspended
-        ? `Deactivated ${targetProfile?.email ?? data.user_id}`
-        : `Reactivated ${targetProfile?.email ?? data.user_id}`,
-      resourceType: "user",
-      resourceId: data.user_id,
-      metadata: { reason: data.reason ?? null },
-      notifyTitle: data.suspended ? "User account deactivated" : "User account reactivated",
-      notifyBody: data.suspended
-        ? `${actor?.display_name ?? actor?.email ?? "Admin"} deactivated ${targetProfile?.display_name ?? targetProfile?.email ?? "a user"}.`
-        : `${actor?.display_name ?? actor?.email ?? "Admin"} reactivated ${targetProfile?.display_name ?? targetProfile?.email ?? "a user"}.`,
-    });
-
-    return { ok: true };
+    await performSuspension(userId, data);
+    return { ok: true, pending: false };
   });
 
 export const setEventFeatured = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
-    z.object({ id: z.string().uuid(), is_featured: z.boolean() }).parse(d),
+    z
+      .object({
+        id: z.string().uuid(),
+        is_featured: z.boolean(),
+        /** §6.1A: optional window after which the event reverts automatically. */
+        feature_expires_at: z.string().max(40).nullish(),
+        reason: z.string().trim().max(500).optional(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -467,6 +386,28 @@ export const setEventFeatured = createServerFn({ method: "POST" })
       .update({ is_featured: data.is_featured } as never)
       .eq("id", data.id);
     if (upErr) throw new Error(upErr.message);
+
+    // Who featured it, when, and until when (§6.1A). These columns arrive with
+    // 20261011180000_public_site.sql; until then the toggle still works.
+    await supabaseAdmin
+      .from("events")
+      .update({
+        featured_by_admin_id: data.is_featured ? userId : null,
+        featured_at: data.is_featured ? new Date().toISOString() : null,
+        feature_expires_at: data.is_featured ? (data.feature_expires_at ?? null) : null,
+      } as never)
+      .eq("id", data.id);
+
+    // Featuring is a discretionary editorial act, so it is always explainable
+    // after the fact (§6.1A audit trail).
+    await recordAdminAudit({
+      actorId: userId,
+      action: data.is_featured ? "event_featured" : "event_unfeatured",
+      summary: `${data.is_featured ? "Featured" : "Un-featured"} "${ev.name}"${data.reason ? `: ${data.reason}` : ""}`,
+      resourceType: "event",
+      resourceId: ev.id,
+      metadata: { feature_expires_at: data.feature_expires_at ?? null },
+    }).catch(() => {});
 
     return { ok: true };
   });

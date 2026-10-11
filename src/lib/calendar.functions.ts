@@ -21,7 +21,7 @@ import { assertCan, type WorkspaceRole } from "@/lib/workspace-permissions";
 const kdb = (): any => supabaseAdmin as any;
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-export type CalendarSource = "event" | "entry" | "follow_up" | "meeting";
+export type CalendarSource = "event" | "entry" | "follow_up" | "meeting" | "payment" | "delivery";
 
 export interface CalendarItem {
   id: string;
@@ -112,37 +112,56 @@ export const getCalendar = createServerFn({ method: "POST" })
       .map((m) => m.user_id)
       .filter((id): id is string => !!id);
 
-    const [events, entries, followUps, meetings, windows] = await Promise.all([
-      memberIds.length
-        ? kdb()
-            .from("events")
-            .select("id, name, start_date, end_date, planning_status, visibility, status")
-            .in("organiser_id", memberIds)
-            .not("start_date", "is", null)
-            .gte("start_date", data.from)
-            .lte("start_date", data.to)
-        : Promise.resolve({ data: [] }),
-      kdb()
-        .from("calendar_entries")
-        .select("*")
-        .eq("workspace_id", workspaceId)
-        .gte("starts_at", data.from)
-        .lte("starts_at", data.to),
-      kdb()
-        .from("crm_outreach")
-        .select("id, contact_id, next_follow_up, outcome, channel")
-        .eq("workspace_id", workspaceId)
-        .not("next_follow_up", "is", null)
-        .gte("next_follow_up", data.from)
-        .lte("next_follow_up", data.to),
-      kdb()
-        .from("crm_meetings")
-        .select("id, contact_id, held_at, attendees, notes")
-        .eq("workspace_id", workspaceId)
-        .gte("held_at", data.from)
-        .lte("held_at", data.to),
-      kdb().from("budget_windows").select("*").eq("workspace_id", workspaceId).order("starts_on"),
-    ]);
+    const [events, entries, followUps, meetings, windows, duePayments, deliveries] =
+      await Promise.all([
+        memberIds.length
+          ? kdb()
+              .from("events")
+              .select("id, name, start_date, end_date, planning_status, visibility, status")
+              .in("organiser_id", memberIds)
+              .not("start_date", "is", null)
+              .gte("start_date", data.from)
+              .lte("start_date", data.to)
+          : Promise.resolve({ data: [] }),
+        kdb()
+          .from("calendar_entries")
+          .select("*")
+          .eq("workspace_id", workspaceId)
+          .gte("starts_at", data.from)
+          .lte("starts_at", data.to),
+        kdb()
+          .from("crm_outreach")
+          .select("id, contact_id, next_follow_up, outcome, channel")
+          .eq("workspace_id", workspaceId)
+          .not("next_follow_up", "is", null)
+          .gte("next_follow_up", data.from)
+          .lte("next_follow_up", data.to),
+        kdb()
+          .from("crm_meetings")
+          .select("id, contact_id, held_at, attendees, notes")
+          .eq("workspace_id", workspaceId)
+          .gte("held_at", data.from)
+          .lte("held_at", data.to),
+        kdb().from("budget_windows").select("*").eq("workspace_id", workspaceId).order("starts_on"),
+        // §4.4.6: unpaid payments surface on their due date as a reminder, and
+        // vendor deliveries on theirs. Read live, like follow-ups, so a date
+        // changed on the payment cannot disagree with the calendar.
+        kdb()
+          .from("workspace_payments")
+          .select("id, direction, description, counterparty, amount, currency, due_on, event_id")
+          .eq("workspace_id", workspaceId)
+          .neq("status", "paid")
+          .not("due_on", "is", null)
+          .gte("due_on", data.from)
+          .lte("due_on", data.to),
+        kdb()
+          .from("vendor_assignments")
+          .select("id, deliverable, delivery_on, event_id, vendors(name)")
+          .eq("workspace_id", workspaceId)
+          .not("delivery_on", "is", null)
+          .gte("delivery_on", data.from)
+          .lte("delivery_on", data.to),
+      ]);
 
     const items: CalendarItem[] = [];
 
@@ -206,6 +225,45 @@ export const getCalendar = createServerFn({ method: "POST" })
         event_id: null,
         contact_id: m.contact_id ?? null,
         notes: m.notes ?? null,
+        is_private: false,
+      });
+    }
+
+    for (const p of (duePayments.data ?? []) as Record<string, string | number | null>[]) {
+      const label = (p.description as string) || (p.counterparty as string) || "Payment";
+      items.push({
+        id: `payment:${p.id}`,
+        source: "payment",
+        title: `${p.direction === "out" ? "Pay" : "Expect"}: ${label} (${String(p.currency).split(" ")[0]} ${Number(p.amount).toLocaleString()})`,
+        starts_at: p.due_on as string,
+        ends_at: null,
+        all_day: true,
+        kind: p.direction as string,
+        event_id: (p.event_id as string) ?? null,
+        contact_id: null,
+        notes: null,
+        is_private: false,
+      });
+    }
+
+    for (const d of (deliveries.data ?? []) as {
+      id: string;
+      deliverable: string;
+      delivery_on: string;
+      event_id: string | null;
+      vendors: { name: string } | null;
+    }[]) {
+      items.push({
+        id: `delivery:${d.id}`,
+        source: "delivery",
+        title: `${d.vendors?.name ? `${d.vendors.name}: ` : ""}${d.deliverable}`,
+        starts_at: d.delivery_on,
+        ends_at: null,
+        all_day: true,
+        kind: "vendor_delivery",
+        event_id: d.event_id,
+        contact_id: null,
+        notes: null,
         is_private: false,
       });
     }

@@ -218,6 +218,7 @@ export function VettingDrawer({ id, onClose }: { id: string; onClose: () => void
   });
   const [note, setNote] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
+  const [featureUntil, setFeatureUntil] = useState("");
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -257,7 +258,15 @@ export function VettingDrawer({ id, onClose }: { id: string; onClose: () => void
   });
 
   const featuredMut = useMutation({
-    mutationFn: (next: boolean) => toggleFeatured({ data: { id, is_featured: next } }),
+    mutationFn: (next: boolean) =>
+      toggleFeatured({
+        data: {
+          id,
+          is_featured: next,
+          feature_expires_at: next && featureUntil ? `${featureUntil}T23:59:59Z` : null,
+          reason: note.trim() || undefined,
+        },
+      }),
     onSuccess: (_res, next) => {
       setIsFeatured(next);
       toast.success(next ? "Event marked as featured" : "Removed from featured");
@@ -355,7 +364,20 @@ export function VettingDrawer({ id, onClose }: { id: string; onClose: () => void
                     <span>
                       <span className="font-semibold text-foreground">Featured event</span>
                       <span className="mt-0.5 block text-xs text-muted-foreground">
-                        Show in featured sections on the marketplace and welcome page when listed.
+                        Pinned at the top of the marketplace for signed-in users. An editorial
+                        choice, logged in the Audit Log with your notes as the reason.
+                      </span>
+                      <span className="mt-2 flex items-center gap-2 text-xs">
+                        Feature until
+                        <input
+                          type="date"
+                          value={featureUntil}
+                          min={new Date().toISOString().slice(0, 10)}
+                          onChange={(e) => setFeatureUntil(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="rounded border border-border bg-background px-2 py-0.5"
+                        />
+                        <span className="text-muted-foreground">(optional — set before ticking)</span>
                       </span>
                     </span>
                   </label>

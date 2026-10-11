@@ -119,6 +119,43 @@ export function clearSignupRole() {
   }
 }
 
+/**
+ * Where to land after signup or sign-in (TAB 1 §1.5: "After sign up or sign in
+ * they land on the page they were trying to reach"). Only same-site paths are
+ * accepted, so this can never become an open redirect.
+ */
+const RETURN_TO_KEY = "ige:return-to";
+
+export function safeReturnPath(path: string | null | undefined): string | null {
+  if (!path || !path.startsWith("/") || path.startsWith("//") || path.startsWith("/\\")) {
+    return null;
+  }
+  // The auth pages themselves are never a destination.
+  if (/^\/(signup|login|auth|onboarding)(\/|\?|$)/.test(path)) return null;
+  return path.slice(0, 500);
+}
+
+export function stashReturnTo(path: string | null | undefined) {
+  const safe = safeReturnPath(path);
+  if (!safe) return;
+  try {
+    sessionStorage.setItem(RETURN_TO_KEY, safe);
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Reads and clears the stored destination. */
+export function takeReturnTo(): string | null {
+  try {
+    const v = safeReturnPath(sessionStorage.getItem(RETURN_TO_KEY));
+    sessionStorage.removeItem(RETURN_TO_KEY);
+    return v;
+  } catch {
+    return null;
+  }
+}
+
 const ACCOUNT_DRAFT_KEY = "ige:signup-account-draft";
 
 export type SignupAccountDraft = {

@@ -12,24 +12,58 @@ const HI_EMAIL = "hi@insideglobalevents.com";
 const IG_URL = "https://www.instagram.com/insideglobalevents";
 const LINKEDIN_URL = "https://www.linkedin.com/company/inside-global-events";
 
-const PLATFORM_LINKS = [
-  { to: "/how-it-works" as const, label: "How it Works" },
-  { to: "/marketplace" as const, label: "Marketplace" },
-  { to: "/pricing" as const, label: "Pricing" },
-  // { to: "/knowledge-base" as const, label: "Intelligence" },
-];
+// TAB 1 §1.13 (v6.2–6.4): four columns plus a newsletter strip. The Partner
+// Of strip is deliberately not built yet.
+const PODCAST_URL = "https://www.youtube.com/@alexboyoworld";
+const TRIBE_FORM_URL =
+  "https://docs.google.com/forms/d/e/1FAIpQLSeNzRDQHA4zjwDYgf_bbZDDpiD_WA2LQY-_hy5T6ZteNE-G_w/viewform";
+const ABW_URL = "https://alexboyoworld.com";
 
-const COMPANY_LINKS = [
-  { to: "/about" as const, label: "About" },
-  { href: "https://www.instagram.com/insideglobalevents", label: "PartnerUp Podcast", external: true },
-  { href: `mailto:${HI_EMAIL}?subject=Careers%20at%20IGE`, label: "Careers", external: true },
-  { href: `mailto:${HI_EMAIL}`, label: "Contact", external: true },
-];
+type FooterLink = { label: string; to?: string; hash?: string; href?: string };
 
-const LEGAL_LINKS = [
-  { to: "/terms" as const, label: "Terms" },
-  { to: "/privacy" as const, label: "Privacy" },
-  { to: "/privacy" as const, label: "NDPR / GDPR" },
+const COLUMNS: { title: string; links: FooterLink[] }[] = [
+  {
+    title: "Platform",
+    links: [
+      { to: "/", hash: "how", label: "How It Works" },
+      { to: "/marketplace", label: "Marketplace (sign in required)" },
+      { to: "/past-events", label: "Past Events" },
+      { to: "/organisers", label: "For Organisers" },
+      { to: "/sponsors", label: "For Sponsors" },
+      { to: "/partners", label: "For Professionals" },
+      { to: "/services", label: "IGE Services" },
+      { to: "/login", label: "Sign In" },
+      { to: "/signup", label: "Join IGE" },
+    ],
+  },
+  {
+    title: "Community",
+    links: [
+      { href: TRIBE_FORM_URL, label: "Join the ABW PartnerUp Tribe" },
+      { href: PODCAST_URL, label: "PartnerUp Podcast" },
+      { href: IG_URL, label: "Follow us on Instagram" },
+      { href: LINKEDIN_URL, label: "Follow us on LinkedIn" },
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      { to: "/about", label: "About" },
+      { to: "/services", label: "IGE Services" },
+      { href: ABW_URL, label: "AlexBoyo World (sister company)" },
+      { href: `mailto:${HI_EMAIL}?subject=Careers%20at%20IGE`, label: "Careers" },
+      { to: "/contact", label: "Contact" },
+      { href: `mailto:${HI_EMAIL}`, label: "Email Admin" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { to: "/terms", label: "Terms" },
+      { to: "/privacy", label: "Privacy" },
+      { to: "/privacy", hash: "ndpr-gdpr", label: "NDPR and GDPR" },
+    ],
+  },
 ];
 
 export function SiteFooter() {
@@ -60,82 +94,66 @@ export function SiteFooter() {
     <footer className="border-t border-border/60 bg-background">
       <div className="mx-auto max-w-7xl px-6 py-14">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-foreground">Platform</p>
-            <ul className="mt-4 space-y-2.5">
-              {PLATFORM_LINKS.map((l) => (
-                <li key={l.label}>
-                  <Link to={l.to} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {COLUMNS.map((col) => (
+            <div key={col.title}>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-foreground">
+                {col.title}
+              </p>
+              <ul className="mt-4 space-y-2.5">
+                {col.links.map((l) => (
+                  <li key={l.label}>
+                    {l.to ? (
+                      <Link
+                        to={l.to}
+                        hash={l.hash}
+                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        {l.label}
+                      </Link>
+                    ) : (
+                      <a
+                        href={l.href}
+                        {...(l.href && !l.href.startsWith("mailto:")
+                          ? { target: "_blank", rel: "noreferrer" }
+                          : {})}
+                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        {l.label}
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
 
+        <div className="mt-12 flex flex-col gap-4 rounded-2xl border border-border bg-muted/30 p-6 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-foreground">Company</p>
-            <ul className="mt-4 space-y-2.5">
-              {COMPANY_LINKS.map((l) => (
-                <li key={l.label}>
-                  {"to" in l && l.to ? (
-                    <Link to={l.to} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                      {l.label}
-                    </Link>
-                  ) : (
-                    <a
-                      href={l.href}
-                      {...(l.external && !l.href.startsWith("mailto:")
-                        ? { target: "_blank", rel: "noreferrer" }
-                        : {})}
-                      className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      {l.label}
-                    </a>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-foreground">Legal</p>
-            <ul className="mt-4 space-y-2.5">
-              {LEGAL_LINKS.map((l) => (
-                <li key={l.label}>
-                  <Link to={l.to} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-foreground">Newsletter</p>
-            <p className="mt-3 text-sm text-muted-foreground">
-              Marketplace updates and featured events.
+            <p className="font-semibold text-foreground">Newsletter</p>
+            <p className="text-sm text-muted-foreground">
+              Upcoming events, intelligence reports and what we are building.
             </p>
-            <form onSubmit={handleSubscribe} className="mt-4 flex flex-col gap-2">
-              <Input
-                type="email"
-                name="email"
-                placeholder="you@company.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="h-10 rounded-lg border-border bg-muted/40"
-                autoComplete="email"
-                required
-              />
-              <Button
-                type="submit"
-                disabled={submitting}
-                className="h-10 rounded-lg bg-brand-gradient font-semibold text-white"
-              >
-                {submitting ? "Subscribing…" : "Subscribe"}
-              </Button>
-            </form>
           </div>
+          <form onSubmit={handleSubscribe} className="flex w-full gap-2 md:w-auto">
+            <Input
+              type="email"
+              name="email"
+              placeholder="you@company.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-10 rounded-lg border-border bg-background md:w-72"
+              autoComplete="email"
+              required
+            />
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="h-10 rounded-lg bg-brand-gradient font-semibold text-white"
+            >
+              {submitting ? "Subscribing…" : "Subscribe"}
+            </Button>
+          </form>
         </div>
       </div>
 
@@ -144,7 +162,7 @@ export function SiteFooter() {
           <div className="flex items-center gap-3">
             <BrandLogo size="sm" />
             <p className="text-xs text-muted-foreground">
-              © 2026 Inside Global Events, an AlexBoyo World company.
+              Copyright 2026 Inside Global Events, an AlexBoyo World company.
             </p>
           </div>
           <div className="flex items-center gap-3">

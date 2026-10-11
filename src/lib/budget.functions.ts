@@ -31,7 +31,9 @@ export const getSponsorBudgets = createServerFn({ method: "GET" })
         .order("created_at", { ascending: true }),
       supabaseAdmin
         .from("deals")
-        .select("status, deal_value_native, deal_currency, deal_value_usd")
+        .select(
+          "status, deal_value_native, deal_currency, deal_value_usd, created_at, updated_at, paid_at",
+        )
         .eq("sponsor_user_id", userId),
       supabaseAdmin
         .from("exchange_rates")
@@ -43,11 +45,24 @@ export const getSponsorBudgets = createServerFn({ method: "GET" })
 
     let committedUsd = 0;
     let paidUsd = 0;
+    // Dated spend, so the planner can bucket it into the brand's own fiscal
+    // quarters and work out pace (Module 1, Burn Rate & Pace Indicator).
+    const spend: { date: string; usd: number; kind: "committed" | "paid" }[] = [];
     for (const d of deals ?? []) {
       if (d.status === "payment_received") {
-        paidUsd += Number(d.deal_value_usd ?? 0) || toUsd(Number(d.deal_value_native ?? 0), d.deal_currency, rate);
+        const usd =
+          Number(d.deal_value_usd ?? 0) ||
+          toUsd(Number(d.deal_value_native ?? 0), d.deal_currency, rate);
+        paidUsd += usd;
+        spend.push({
+          date: (d.paid_at ?? d.updated_at ?? d.created_at) as string,
+          usd,
+          kind: "paid",
+        });
       } else if (COMMITTED_STATUSES.includes(d.status)) {
-        committedUsd += toUsd(Number(d.deal_value_native ?? 0), d.deal_currency, rate);
+        const usd = toUsd(Number(d.deal_value_native ?? 0), d.deal_currency, rate);
+        committedUsd += usd;
+        spend.push({ date: (d.updated_at ?? d.created_at) as string, usd, kind: "committed" });
       }
     }
 
@@ -59,6 +74,8 @@ export const getSponsorBudgets = createServerFn({ method: "GET" })
 
     return {
       markets: markets ?? [],
+      spend,
+      rate: rate ?? null,
       portfolio: {
         totalUsd,
         committedUsd,
@@ -79,6 +96,8 @@ const BudgetInput = z.object({
   q2_allocation: z.number().nonnegative().default(0),
   q3_allocation: z.number().nonnegative().default(0),
   q4_allocation: z.number().nonnegative().default(0),
+  sector_tags: z.array(z.string().max(80)).max(40).optional(),
+  event_type_tags: z.array(z.string().max(80)).max(40).optional(),
 });
 
 export const upsertMarketBudget = createServerFn({ method: "POST" })
@@ -87,7 +106,18 @@ export const upsertMarketBudget = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const market_name = `${data.budget_name} (${data.region})`;
-    const row = { ...data, market_name, sponsor_user_id: userId };
+    // Tag columns arrive with 20261011130000_budget_tags.sql. The client only
+    // sends tags once the column exists or the user picked some, so saving
+    // keeps working on a database that has not run it yet.
+    const { sector_tags, event_type_tags, ...rest } = data;
+    const row = {
+      ...rest,
+      market_name,
+      sponsor_user_id: userId,
+      ...(sector_tags !== undefined || event_type_tags !== undefined
+        ? { sector_tags: sector_tags ?? [], event_type_tags: event_type_tags ?? [] }
+        : {}),
+    };
     const { error } = await db(supabase)
       .from("market_budgets")
       .upsert(row, { onConflict: "sponsor_user_id,market_name" });

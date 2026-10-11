@@ -11,6 +11,7 @@ export type AdminPermission =
   | "partners"
   | "analytics"
   | "users_view"
+  | "users_edit"
   | "users_suspend"
   | "newsletter_draft"
   | "newsletter_send"
@@ -29,6 +30,7 @@ export const SUB_ADMIN_PERMISSIONS: AdminPermission[] = [
   "partners",
   "analytics",
   "users_view",
+  "users_edit",
   "newsletter_draft",
 ];
 
@@ -45,8 +47,14 @@ export const ADMIN_ROUTE_PERMISSIONS: Record<string, AdminPermission> = {
   "/dashboard": "dashboard",
   "/dashboard/onboarding-vetting": "vetting",
   "/dashboard/vetting": "vetting",
+  "/dashboard/match-queue": "vetting",
+  "/dashboard/production-queue": "vetting",
+  "/dashboard/home-events": "vetting",
+  "/dashboard/compliance": "revenue",
   "/dashboard/waitlist": "waitlist",
   "/dashboard/submissions": "contact",
+  "/dashboard/inbox": "contact",
+  "/dashboard/help-gaps": "contact",
   "/dashboard/media-requests": "media_requests",
   "/dashboard/revenue": "revenue",
   "/dashboard/partners": "partners",
@@ -92,13 +100,16 @@ export const ADMIN_PERMISSION_AUDIT = {
     "Review media partner requests",
     "View and update revenue & deals pipeline (status, assignments, payment links)",
     "View referral partners and commission summaries",
-    "View platform users (read-only — cannot deactivate accounts)",
+    "View platform users and View as User (read-only — cannot deactivate accounts)",
+    "Edit a user's onboarding fields and upload files on their behalf (audited; the user is told)",
+    "Request Act as User (a second Super Admin must approve)",
     "Create and save newsletter drafts",
   ],
   super_admin_only: [
     "Invite and manage sub-admin accounts",
     "View full audit log (logins and all admin actions)",
     "Deactivate or reactivate user accounts",
+    "Approve or deny another admin's Act as User request (dual control)",
     "Send or resend newsletter campaigns",
     "Fraud flags, commission rates, and FX rate controls",
     "Delete events from the platform",

@@ -18,6 +18,7 @@ import { getSponsorDashboard, getSponsorPipeline } from "@/lib/deals.functions";
 import { getSponsorBudgets } from "@/lib/budget.functions";
 import { fmtMoney } from "@/lib/currency";
 import { useTableFilters } from "@/hooks/use-table-filters";
+import { MatchNotificationsPanel } from "@/components/matches/match-notifications-panel";
 
 export function SponsorPipelinePage() {
   return (
@@ -215,6 +216,7 @@ export function SponsorOverviewPage() {
           </div>
         </div>
       </div>
+      <MatchNotificationsPanel />
     </WorkspacePage>
   );
 }
@@ -324,7 +326,7 @@ export function SponsorCommitmentsPage() {
                         <Link to="/events/$slug" params={{ slug: ev.slug }} className="text-xs text-primary font-bold hover:underline">View event →</Link>
                       )}
                       {ev?.organiser_id && (
-                        <Link to="/messages" search={{ to: ev.organiser_id, event_id: ev.id }} className="text-xs text-primary font-bold hover:underline">Message organiser →</Link>
+                        <Link to="/messages" search={{ kind: "request", subject: `Introduction to the organiser of ${ev.name ?? "this event"}` }} className="text-xs text-primary font-bold hover:underline">Ask IGE to introduce us →</Link>
                       )}
                     </td>
                   </tr>

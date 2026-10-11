@@ -2,7 +2,8 @@ import { useRef, useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Activity, Building2, Camera, Compass, Loader2, Lock, Shield, User } from "lucide-react";
+import { Activity, Bell, Building2, Camera, Compass, CreditCard, Loader2, Lock, Shield, User } from "lucide-react";
+import { NotificationsTab, PaymentDetailsTab } from "@/components/profile/account-settings-tabs";
 import { VerifiedBadge } from "@/components/onboarding/verified-badge";
 import { WorkspaceSettings } from "@/components/workspace/workspace-settings";
 import { TeamActivity } from "@/components/workspace/team-activity";
@@ -36,7 +37,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
-type Tab = "general" | "role" | "workspace" | "activity" | "security";
+type Tab = "general" | "role" | "workspace" | "activity" | "payments" | "notifications" | "security";
 
 const OUTLET_TYPES = [
   "Publication",
@@ -126,6 +127,11 @@ export function ProfilePage({ initialTab = "general" }: { initialTab?: Tab }) {
     ...(canSeeTeamActivity
       ? [{ id: "activity" as Tab, label: "Team activity", icon: Activity }]
       : []),
+    // Payment Details is the Owner seat's alone (Account Settings spec).
+    ...(can(workspaceCtx?.myRole ?? null, "payments.manage")
+      ? [{ id: "payments" as Tab, label: "Payment details", icon: CreditCard }]
+      : []),
+    { id: "notifications", label: "Notifications", icon: Bell },
     { id: "security", label: "Security", icon: Lock },
   ];
 
@@ -252,6 +258,10 @@ export function ProfilePage({ initialTab = "general" }: { initialTab?: Tab }) {
         <WorkspaceSettings />
       ) : tab === "activity" ? (
         <TeamActivity />
+      ) : tab === "payments" ? (
+        <PaymentDetailsTab />
+      ) : tab === "notifications" ? (
+        <NotificationsTab />
       ) : (
         <SecuritySection onPasswordChanged={signOut} />
       )}

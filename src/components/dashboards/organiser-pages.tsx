@@ -70,6 +70,8 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import { FundingGapHero } from "@/components/fundraising/funding-gap-hero";
+import { MatchNotificationsPanel } from "@/components/matches/match-notifications-panel";
 
 const EVENT_TABS: { id: EventStatusGroup; label: string }[] = [
   { id: "all", label: "All events" },
@@ -232,6 +234,8 @@ export function OrganiserEventsPage() {
       action={createBtn}
       showGreeting
     >
+      {/* TAB 5 §5.1: the funding gap is the hero number. */}
+      <FundingGapHero />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <KpiTile
           icon={CalendarDays}
@@ -554,6 +558,7 @@ export function OrganiserEventsPage() {
           }
         }}
       />
+      <MatchNotificationsPanel />
     </WorkspacePage>
   );
 }
@@ -1111,10 +1116,10 @@ function PipelineEventTable({
                     {f.sponsor_user_id && (
                       <Link
                         to="/messages"
-                        search={{ to: f.sponsor_user_id, event_id: ev.id }}
+                        search={{ kind: "request", subject: `Introduction to a sponsor for ${ev.name ?? "my event"}` }}
                         className="text-xs font-semibold text-primary hover:underline"
                       >
-                        Message →
+                        Ask IGE to introduce us →
                       </Link>
                     )}
                   </td>

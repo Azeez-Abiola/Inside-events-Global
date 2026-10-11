@@ -23,7 +23,29 @@ export type AdminAuditAction =
   | "waitlist_rejected"
   | "password_reset_requested"
   | "password_reset_completed"
-  | "password_reset_by_admin";
+  | "password_reset_by_admin"
+  | "inbox_reply"
+  | "inbox_update"
+  | "event_featured"
+  | "event_unfeatured"
+  | "home_event_updated"
+  | "match_approved"
+  | "match_adjusted"
+  | "match_rejected"
+  | "match_created"
+  | "user_profile_edited"
+  | "covered_event_updated"
+  | "user_file_uploaded"
+  | "user_viewed_as"
+  | "act_as_requested"
+  | "act_as_decided"
+  | "act_as_used"
+  | "dual_control_requested"
+  | "dual_control_decided"
+  | "user_signed_out"
+  | "user_data_exported"
+  | "user_merged"
+  | "user_erased";
 
 const VITAL_ACTIONS = new Set<AdminAuditAction>([
   "password_reset_by_admin",
@@ -40,6 +62,15 @@ const VITAL_ACTIONS = new Set<AdminAuditAction>([
   "fx_rates_updated",
   "fraud_flag_updated",
   "complaint_reply_sent",
+  "event_featured",
+  "event_unfeatured",
+  "match_approved",
+  "user_profile_edited",
+  "act_as_decided",
+  "act_as_used",
+  "dual_control_decided",
+  "user_merged",
+  "user_erased",
 ]);
 
 export async function getActorAdminRole(userId: string): Promise<string> {

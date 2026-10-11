@@ -37,9 +37,13 @@ export function AdminMediaRequestsPanel() {
   const mut = useMutation({
     mutationFn: (v: { id: string; status: "approved" | "declined" | "completed" }) =>
       updateStatus({ data: v }),
-    onSuccess: () => {
+    onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ["admin-media-requests"] });
-      toast.success("Request updated");
+      toast.success(
+        res?.matchQueued
+          ? "Approved — the introduction is in the Match queue. Offer meeting times there to notify both sides."
+          : "Request updated",
+      );
     },
     onError: (e: Error) => toast.error(e.message),
   });

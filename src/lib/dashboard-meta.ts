@@ -105,6 +105,31 @@ const PATH_META: Record<string, DashboardMeta> = {
     subtitle: "Who owns each activation, what it costs, and what proof came back.",
     breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Activations" }],
   },
+  "/dashboard/payments": {
+    title: "Vendors & Payments",
+    subtitle: "The vendors you work with and the money moving in and out of every event.",
+    breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Payments" }],
+  },
+  "/dashboard/reports": {
+    title: "Reports",
+    subtitle: "Download your activity and performance as Excel, CSV or PDF.",
+    breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Reports" }],
+  },
+  "/dashboard/roi": {
+    title: "Sponsorship ROI",
+    subtitle: "Objectives, the Business Case and the Investment Report for every sponsorship.",
+    breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "ROI" }],
+  },
+  "/dashboard/fundraising": {
+    title: "Fundraising Tracker",
+    subtitle: "Target minus committed minus paid, against the days left.",
+    breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Fundraising" }],
+  },
+  "/dashboard/readiness": {
+    title: "Brand-Readiness Coach",
+    subtitle: "Your readiness score and what to fix next. Free.",
+    breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Brand-Readiness" }],
+  },
   "/dashboard/crm": {
     title: "Contacts & CRM",
     subtitle: "Your contacts, clients and deals.",
@@ -136,9 +161,14 @@ const PATH_META: Record<string, DashboardMeta> = {
     breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Deal pipeline" }],
   },
   "/messages": {
-    title: "Messages",
-    subtitle: "Conversations with sponsors, organisers, and partners.",
-    breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Messages" }],
+    title: "Message IGE",
+    subtitle: "Your direct line to the IGE team.",
+    breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Message IGE" }],
+  },
+  "/dashboard/inbox": {
+    title: "Admin Inbox",
+    subtitle: "Every message, request and notice that needs the team.",
+    breadcrumbs: [{ label: "Dashboard", to: "/dashboard" }, { label: "Inbox" }],
   },
 };
 

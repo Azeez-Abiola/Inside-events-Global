@@ -610,7 +610,16 @@ export const getTeamActivity = createServerFn({ method: "POST" })
       return { since, rows: [], untracked: UNTRACKED_ACTIVITY };
     }
 
-    const [profilesRes, eventsRes, dealsRes, movesRes] = await Promise.all([
+    const [
+      profilesRes,
+      eventsRes,
+      dealsRes,
+      movesRes,
+      outreachRes,
+      meetingsRes,
+      activationsRes,
+      tasksRes,
+    ] = await Promise.all([
       wdb().from("profiles").select("id, display_name, email, last_login_at").in("id", userIds),
       wdb()
         .from("events")
@@ -627,6 +636,28 @@ export const getTeamActivity = createServerFn({ method: "POST" })
         .select("changed_by")
         .in("changed_by", userIds)
         .gte("changed_at", since),
+      // The shared daily tools (§4.4) now record these, scoped to this workspace.
+      wdb()
+        .from("crm_outreach")
+        .select("created_by")
+        .eq("workspace_id", data.workspace_id)
+        .gte("occurred_at", since),
+      wdb()
+        .from("crm_meetings")
+        .select("created_by")
+        .eq("workspace_id", data.workspace_id)
+        .gte("held_at", since),
+      wdb()
+        .from("activations")
+        .select("owner_id")
+        .eq("workspace_id", data.workspace_id)
+        .eq("status", "done")
+        .gte("updated_at", since),
+      wdb()
+        .from("activation_milestones")
+        .select("assignee_id, created_by")
+        .eq("workspace_id", data.workspace_id)
+        .gte("completed_at", since),
     ]);
 
     const count = (rows: unknown[] | null, key: string) => {
@@ -641,6 +672,18 @@ export const getTeamActivity = createServerFn({ method: "POST" })
     const eventsBy = count(eventsRes.data, "organiser_id");
     const dealsBy = count(dealsRes.data, "organiser_id");
     const movesBy = count(movesRes.data, "changed_by");
+    const outreachBy = count(outreachRes.data, "created_by");
+    const meetingsBy = count(meetingsRes.data, "created_by");
+    const activationsBy = count(activationsRes.data, "owner_id");
+    // A task counts for whoever it was assigned to, else whoever made it.
+    const tasksBy = count(
+      ((tasksRes.data ?? []) as { assignee_id: string | null; created_by: string | null }[]).map(
+        (t) => ({
+          who: t.assignee_id ?? t.created_by,
+        }),
+      ),
+      "who",
+    );
     const profileById = new Map(
       (
         (profilesRes.data ?? []) as {
@@ -664,16 +707,15 @@ export const getTeamActivity = createServerFn({ method: "POST" })
           listings_created: eventsBy.get(seat.user_id) ?? 0,
           deals_opened: dealsBy.get(seat.user_id) ?? 0,
           pipeline_moves: movesBy.get(seat.user_id) ?? 0,
+          outreach_logged: outreachBy.get(seat.user_id) ?? 0,
+          meetings_held: meetingsBy.get(seat.user_id) ?? 0,
+          activations_delivered: activationsBy.get(seat.user_id) ?? 0,
+          tasks_completed: tasksBy.get(seat.user_id) ?? 0,
         };
       }),
       untracked: UNTRACKED_ACTIVITY,
     };
   });
 
-/** Named so the UI states what is missing instead of rendering a silent zero. */
-const UNTRACKED_ACTIVITY = [
-  "Outreach logged",
-  "Meetings held",
-  "Activations delivered",
-  "Tasks completed",
-] as const;
+/** Everything §4.3 asks for is now recorded; kept so the UI contract holds. */
+const UNTRACKED_ACTIVITY: readonly string[] = [];

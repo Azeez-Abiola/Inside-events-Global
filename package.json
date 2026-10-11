@@ -19,9 +19,11 @@
     "db:workspace-account-type": "node scripts/apply-workspace-account-type.mjs",
     "db:crm": "node scripts/apply-crm.mjs",
     "db:calendar": "node scripts/apply-event-calendar.mjs",
-    "db:activations": "node scripts/apply-activations.mjs"
+    "db:activations": "node scripts/apply-activations.mjs",
+    "db:pending": "node scripts/apply-pending.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
     "@cloudflare/vite-plugin": "^1.25.5",
     "@hookform/resolvers": "^5.2.2",
     "@lovable.dev/cloud-auth-js": "^1.1.2",

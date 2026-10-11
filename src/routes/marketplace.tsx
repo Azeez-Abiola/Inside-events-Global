@@ -4,7 +4,7 @@ import { MarketplaceBrowser } from "@/components/marketplace/marketplace-browser
 import { ensureMarketplaceAccess } from "@/lib/marketplace-visibility";
 
 export const Route = createFileRoute("/marketplace")({
-  beforeLoad: () => ensureMarketplaceAccess(),
+  beforeLoad: ({ location }) => ensureMarketplaceAccess(location),
   head: () => ({
     meta: [
       { title: "Event Sponsorship Marketplace — Browse Vetted B2B Events | IGE" },

@@ -16,6 +16,8 @@ const SOURCE_STYLE: Record<string, string> = {
   entry: "bg-accent/15 text-accent",
   follow_up: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
   meeting: "bg-secondary/15 text-secondary-deep",
+  payment: "bg-destructive/10 text-destructive",
+  delivery: "bg-primary/10 text-primary-deep",
 };
 
 function startOfMonth(d: Date) {

@@ -47,6 +47,7 @@ import { ReferralSection } from "@/components/onboarding/sections/referral-secti
 import { PartnershipsProSection } from "@/components/onboarding/sections/partnerships-pro-sections";
 import { CreativeHubSection } from "@/components/onboarding/sections/creative-hub-sections";
 import { MediaSection } from "@/components/onboarding/sections/media-sections";
+import { takeReturnTo } from "@/lib/signup-roles";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -319,7 +320,10 @@ export function OnboardingWizard({
         // dashboard", and it has to actually go there. It used to land on
         // the pending screen, where nobody ever got approved.
         toast.success("You're all set — welcome to IGE.");
-        navigate({ to: "/dashboard" });
+        // Back to wherever they were heading before signup, if anywhere.
+        const back = takeReturnTo();
+        if (back) navigate({ href: back });
+        else navigate({ to: "/dashboard" });
         return;
       }
       setCurrentIdx((prev) => prev + 1);

@@ -139,6 +139,75 @@ export const INFO_TIPS: Record<string, string> = {
   "activation.evidence":
     "Photos, attendance counts and notes captured as the activation happens. Sponsorships lose renewals for want of proof of delivery, not for underperforming — this is that proof, and the Investment Report will be built from it.",
 
+  // ── Vendors and Payments (TAB 4 §4.4.6) ─────────────────
+  "payments.tracker":
+    "Every payment in and out of your events, with its due date and receipt. IGE records these; it does not move the money for you.",
+  "payments.receipt":
+    "A link to the receipt or proof of payment, for example a Google Drive file. Keep it with the payment so nobody has to hunt for it later.",
+  "payments.budget_vs_actual":
+    "For each event: the budget you planned, what is committed but unpaid, what has gone out, what has come in, and what is left of the plan.",
+  "vendors.directory":
+    "The suppliers you pay to deliver your events — venue, décor, sound, catering and so on. Private to your workspace.",
+  "vendors.payment_reference":
+    "Where this vendor's bank or payment details can be found, such as their invoice number. Do not type the account number here: IGE never stores bank account numbers.",
+  "vendors.quotes":
+    "Quotes, invoices and contracts for this vendor. Tie a quote to an event to compare it against other vendors' quotes for the same job, then mark the one you chose.",
+  "vendors.assignments":
+    "What this vendor is delivering and when. Delivery dates show on your Event Calendar.",
+
+  // ── Message IGE and the Admin Inbox (TAB 4 §4.4.4, TAB 6 §6.10) ─────
+  "messages.ige":
+    "Your direct line to the IGE team for messages, requests and questions. Only IGE sees what you send. Users never message each other on IGE; if you want to meet someone, IGE arranges it.",
+  "admin.inbox":
+    "Every message, form and notice that needs the team, in one place. Assign a thread, move it through New, In progress and Resolved, and watch the SLA timer. Internal notes are never shown to the user.",
+
+  "reports.downloads":
+    "Pick a report and a period, then download it. Excel keeps every section as its own sheet; CSV gives the main table; PDF opens a print-ready page you can save. Money is totalled per currency, never mixed.",
+
+  "budget.year_start":
+    "The month your annual year begins. IGE counts Q1 to Q4 from it, and every slider, pace indicator and report uses those quarters. Only the workspace Owner should change it.",
+  "budget.pace":
+    "How your committed and paid spend this quarter compares with where it should be by today. More than 15% either way is flagged amber; more than 30% red.",
+
+  // ── Fundraising Tracker (TAB 4 §4.2 Module 1) ─────────────
+  "fundraising.gap":
+    "Your sponsorship target minus what sponsors have committed and paid. It is the one number to check first each morning. Totals are kept per currency.",
+  "fundraising.tiers":
+    "How many slots in each sponsorship tier are taken. Set the slot numbers on your event's sponsorship tiers.",
+  "fundraising.share_fill":
+    "Off by default. When on, prospective sponsors may see how full your tiers are — never your target or the amounts.",
+
+  "readiness.score":
+    "How ready your event is for sponsors, scored 0–100 across the six dimensions of the IGE Brand-Readiness Framework. It is worked out from what is on your listing, so it climbs as you fill the gaps. A guide, not a vetting decision.",
+
+  "crm.outreach":
+    "Every outreach touch you log on a contact, and the follow-ups still open. Follow-ups also appear on your Event Calendar.",
+  "crm.commission":
+    "Commission you expect and have earned, per deal, in whatever currency it is paid in. Totals are kept per currency.",
+
+  // ── Matchmaking (TAB 19) ──────────────────────────────────
+  "matches.how":
+    "IGE scores possible partners automatically, then the team reviews every one before anyone is introduced. You only hear about a match once it is approved, and you meet on a call IGE sets up — no one gets your contact details.",
+  "matches.queue":
+    "Candidates the engine scored above threshold, best first. Open one to see both full profiles side by side. Approving notifies both sides and offers meeting times; nothing reaches a user before that.",
+  "matches.adjust":
+    "Untick an overlap that is technically true but not a real reason to meet. Only ticked reasons appear in the Why line users see. Ranking itself never takes Managed Service status into account.",
+
+  // ── Creative Hub productions (TAB 5 §5.6) ─────────────────
+  "productions.pitch_deck":
+    "Private. Only you and the IGE team can open it — brands never see it unless a match is approved.",
+  "productions.placements":
+    "Each brand opportunity inside the production: what it is, its price and how many slots there are. Once a slot is taken, record what you promised and add proof when it is delivered.",
+
+  "admin.home_events":
+    "Only AlexBoyo World or IGE events, and events of retainer-paying clients, go here. They are the only events visitors see without signing in. Each card disappears automatically once the event date passes.",
+
+  "deliverables.matrix":
+    "Every asset promised in the signed agreement, who delivers it and by when. A line can only be marked Delivered with proof attached, and the fulfilment report is what the renewal conversation is built on.",
+
+  "roi.roo":
+    "Each sponsorship is measured against the objectives you set, weighted by how much of the spend each one carries. Weights lock when you confirm them so the scorecard can't be rewritten later. The ROI Score is a single number for comparison; the objective scorecard is the real evidence.",
+
   // ── Dashboard and platform ─────────────────────────────────────────────────
   "dash.profile_completion":
     "What is still outstanding on your profile and which feature each remaining item unlocks.",

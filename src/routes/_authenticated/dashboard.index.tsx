@@ -9,7 +9,8 @@ import { OrganiserEventsPage } from "@/components/dashboards/organiser-pages";
 import { ReferralDashboard } from "@/components/dashboards/referral-dashboard";
 import { MediaPartnerDashboard } from "@/components/dashboards/media-dashboard";
 import { AdminDashboard } from "@/components/dashboards/admin-dashboard";
-import { EmergingRoleDashboard } from "@/components/dashboards/emerging-role-dashboard";
+import { CreativeDashboard } from "@/components/productions/production-admin-and-discovery";
+import { ProDashboard } from "@/components/dashboards/pro-dashboard";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
   head: () => ({ meta: [{ title: "Dashboard - IGE" }] }),
@@ -25,10 +26,8 @@ function DashboardIndex() {
   if (roles.includes("sponsor")) return <SponsorOverviewPage />;
   if (roles.includes("referral_partner")) return <ReferralDashboard section="overview" />;
   if (roles.includes("media_partner")) return <MediaPartnerDashboard section="overview" />;
-  // Their full workspaces are Version 1.1 Section C; until then these land on
-  // a real dashboard rather than the "no role assigned" fallback.
-  if (roles.includes("partnerships_pro")) return <EmergingRoleDashboard role="partnerships_pro" />;
-  if (roles.includes("creative_hub")) return <EmergingRoleDashboard role="creative_hub" />;
+  if (roles.includes("partnerships_pro")) return <ProDashboard />;
+  if (roles.includes("creative_hub")) return <CreativeDashboard />;
   return <FallbackDashboard />;
 }
 

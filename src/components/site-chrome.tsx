@@ -7,6 +7,16 @@ export { SiteFooter };
 
 export const SITE_BRAND_NAME = "Inside Global Events";
 
+const NAV: { to: string; label: string; hash?: string }[] = [
+  { to: "/", hash: "how", label: "How It Works" },
+  { to: "/marketplace", label: "Marketplace" },
+  { to: "/organisers", label: "For Organisers" },
+  { to: "/sponsors", label: "For Sponsors" },
+  { to: "/partners", label: "For Professionals" },
+  { to: "/services", label: "IGE Services" },
+  { to: "/knowledge-base", label: "Intelligence" },
+];
+
 export function SiteHeader({ showAuthLinks = true }: { showAuthLinks?: boolean }) {
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
@@ -19,10 +29,19 @@ export function SiteHeader({ showAuthLinks = true }: { showAuthLinks?: boolean }
         </Link>
 
         <div className="flex items-center gap-3">
-          <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
-            <Link to="/marketplace" className="transition-colors hover:text-foreground">Marketplace</Link>
-            <Link to="/about" className="transition-colors hover:text-foreground">About</Link>
-            <Link to="/how-it-works" className="transition-colors hover:text-foreground">How it works</Link>
+          {/* §1.1: How It Works, Marketplace, the audience pages, IGE Services,
+              Intelligence. No Pricing — IGE is free to use until May 2027. */}
+          <nav className="hidden items-center gap-5 text-sm font-medium text-muted-foreground lg:flex">
+            {NAV.map((n) => (
+              <Link
+                key={n.label}
+                to={n.to}
+                hash={n.hash}
+                className="transition-colors hover:text-foreground"
+              >
+                {n.label}
+              </Link>
+            ))}
           </nav>
           <ThemeToggle />
           {showAuthLinks ? (
@@ -37,7 +56,7 @@ export function SiteHeader({ showAuthLinks = true }: { showAuthLinks?: boolean }
                 to="/signup"
                 className="inline-flex items-center justify-center rounded-md bg-brand-gradient px-4 py-2 text-sm font-semibold text-white shadow-soft transition-transform hover:-translate-y-0.5"
               >
-                Sign up
+                Join IGE
               </Link>
             </>
           ) : null}

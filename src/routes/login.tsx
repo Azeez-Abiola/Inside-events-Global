@@ -11,6 +11,23 @@ import { recordAdminLogin } from "@/lib/admin-team.functions";
 import { claimPendingInvites } from "@/lib/workspace.functions";
 import { startGoogleSignIn } from "@/lib/google-auth";
 import { markSignedIn, rememberedEmail, wasRemembered } from "@/lib/session-policy";
+import { Turnstile, TURNSTILE_SITE_KEY } from "@/components/auth/turnstile";
+
+type GuardResult = { allowed?: boolean; captchaRequired?: boolean; lockedUntil?: string };
+
+/** Five failures in 15 minutes: short lock, then CAPTCHA (TAB 12 §12.4). */
+async function signInGuard(body: { email: string; event: "check" | "failed" | "succeeded"; captchaToken?: string | null }, accessToken?: string): Promise<GuardResult> {
+  try {
+    const res = await fetch("/api/public/sign-in-guard", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
+      body: JSON.stringify({ ...body, captchaToken: body.captchaToken ?? undefined }),
+    });
+    return (await res.json()) as GuardResult;
+  } catch {
+    return { allowed: true };
+  }
+}
 
 const search = z.object({
   redirect: z.string().optional(),
@@ -46,6 +63,10 @@ function LoginPage() {
   const [rememberMe, setRememberMe] = useState(() => wasRemembered());
   const [submitting, setSubmitting] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [captchaRequired, setCaptchaRequired] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaKey, setCaptchaKey] = useState(0);
+  const [lockedUntil, setLockedUntil] = useState<Date | null>(null);
   const demoPrefill = !!(emailParam && passwordParam);
 
   useEffect(() => {
@@ -56,9 +77,28 @@ function LoginPage() {
   async function handlePassword(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const guard = await signInGuard({ email, event: "check", captchaToken });
+    setCaptchaRequired(!!guard.captchaRequired);
+    if (guard.allowed === false) {
+      setSubmitting(false);
+      if (guard.lockedUntil) {
+        setLockedUntil(new Date(guard.lockedUntil));
+        toast.error("Too many attempts. Wait a couple of minutes, or reset your password.");
+      } else {
+        toast.error(TURNSTILE_SITE_KEY ? "Complete the check below, then sign in." : "Too many attempts. Try again shortly.");
+      }
+      return;
+    }
+    setLockedUntil(null);
+    const { data: signedIn, error } = await supabase.auth.signInWithPassword({ email, password });
     setSubmitting(false);
+    if (captchaToken) {
+      // A CAPTCHA token is single use.
+      setCaptchaToken(null);
+      setCaptchaKey((k) => k + 1);
+    }
     if (error) {
+      if (!isEmailNotConfirmedError(error.message)) void signInGuard({ email, event: "failed" });
       if (isEmailNotConfirmedError(error.message)) {
         toast.error(
           "Confirm your email first — enter the verification code from your inbox on the signup page.",
@@ -68,6 +108,7 @@ function LoginPage() {
       }
       return;
     }
+    if (signedIn.session) void signInGuard({ email, event: "succeeded" }, signedIn.session.access_token);
     markSignedIn({ rememberMe, email });
     toast.success("Welcome back");
     void recordLogin().catch(() => {});
@@ -159,9 +200,16 @@ function LoginPage() {
             Forgot password?
           </Link>
         </div>
+        {lockedUntil && lockedUntil > new Date() && (
+          <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-foreground">
+            Too many sign-in attempts. Try again after {lockedUntil.toLocaleTimeString()}, or{" "}
+            <Link to="/forgot-password" className="font-semibold text-primary">reset your password</Link>.
+          </p>
+        )}
+        {captchaRequired && TURNSTILE_SITE_KEY && <Turnstile key={captchaKey} onToken={setCaptchaToken} />}
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || (captchaRequired && !!TURNSTILE_SITE_KEY && !captchaToken)}
           className="inline-flex w-full items-center justify-center rounded-md bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition-transform hover:-translate-y-0.5 disabled:opacity-60"
         >
           {submitting ? "Signing in…" : "Sign in"}

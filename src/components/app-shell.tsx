@@ -18,6 +18,9 @@ import { navTourTarget } from "@/lib/dashboard-tours";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { AdminMfaGate } from "@/components/auth/admin-mfa-gate";
+import { LiveChat } from "@/components/support/live-chat";
+import { isPlatformAdmin } from "@/lib/admin-permissions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -79,17 +82,26 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Voom: logo row */}
       <div className="flex h-[72px] items-center gap-3 px-6">
         <BrandLogo />
-        <span className="font-display text-[15px] font-bold text-foreground">Inside Global Events</span>
+        {/* v6.3: the wordmark in the home page's Purple → Emerald gradient. */}
+        <span className="bg-brand-gradient bg-clip-text font-display text-[15px] font-bold text-transparent">
+          Inside Global Events
+        </span>
       </div>
 
       {/* Voom: flat nav + left accent bar on active item */}
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">
         {nav.map((n) => {
-          const active = isNavActive(loc.pathname, n.to);
+          const tab = (loc.search as Record<string, unknown>)?.tab;
+          const active = n.search
+            ? loc.pathname === n.to && tab === n.search.tab
+            : isNavActive(loc.pathname, n.to) &&
+              // A tabbed sibling (e.g. CRM tabs) owns the highlight when present.
+              !nav.some((o) => o.search && o.to === n.to && o.search.tab === tab);
           return (
             <Link
-              key={n.to}
+              key={`${n.to}${n.search ? `?${n.search.tab}` : ""}`}
               to={n.to}
+              search={n.search}
               data-tour={navTourTarget(n.to)}
               className={cn(
                 "relative flex items-center gap-3 rounded-lg py-2.5 pl-5 pr-3 text-[13px] font-medium transition-colors",
@@ -197,7 +209,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           </header>
 
-          <main data-tour="main-content" className="flex-1 bg-dashboard-canvas px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+          <main data-tour="main-content" className="flex-1 bg-dashboard-canvas px-4 py-6 sm:px-6 lg:px-8">
+            <AdminMfaGate isAdmin={isPlatformAdmin(roles)}>{children}</AdminMfaGate>
+          </main>
+          {!isPlatformAdmin(roles) && <LiveChat />}
         </div>
       </div>
 

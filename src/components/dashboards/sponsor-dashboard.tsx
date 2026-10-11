@@ -100,10 +100,10 @@ export function SponsorDashboard() {
                           {ev?.organiser_id && (
                             <Link
                               to="/messages"
-                              search={{ to: ev.organiser_id, event_id: ev.id }}
+                              search={{ kind: "request", subject: `Introduction to the organiser of ${ev.name ?? "this event"}` }}
                               className="text-xs text-primary font-bold hover:underline"
                             >
-                              Message organiser →
+                              Ask IGE to introduce us →
                             </Link>
                           )}
                         </td>

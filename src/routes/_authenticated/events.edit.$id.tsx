@@ -39,6 +39,7 @@ import {
 import { eventTypeDescription, isLegacyEventType } from "@/lib/event-types";
 import { InfoTip } from "@/components/info-tip";
 import { EventVisibilityFields } from "@/components/events/event-visibility-fields";
+import { ShareLinkPanel } from "@/components/events/share-link-panel";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/events/edit/$id")({
@@ -441,6 +442,11 @@ function StepBasics({ form, update }: any) {
           <InfoTip tip="field.event_visibility" />
         </h3>
         <EventVisibilityFields form={form} update={update} />
+        {form.visibility === "private" && form.id && (
+          <div className="mt-5">
+            <ShareLinkPanel eventId={form.id} />
+          </div>
+        )}
       </div>
     </>
   );

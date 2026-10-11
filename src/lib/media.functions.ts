@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { notifyAdmins } from "@/lib/admin-notify";
 
 const RequestInput = z.object({
   event_id: z.string().uuid(),
@@ -45,26 +46,14 @@ export const submitMediaRequest = createServerFn({ method: "POST" })
       throw new Error(error.message);
     }
 
-    // Notify admins (best effort — must not fail the request).
-    try {
-      const { data: admins } = await supabaseAdmin
-        .from("user_roles")
-        .select("user_id")
-        .in("role", ["abw_admin", "super_admin"]);
-      if (admins?.length) {
-        await supabaseAdmin.from("notifications").insert(
-          admins.map((a) => ({
-            user_id: a.user_id,
-            type: "media_request",
-            title: "New media coverage request",
-            body: `A media partner requested ${data.request_type.replace(/_/g, " ")}.`,
-            data: { event_id: data.event_id },
-          })),
-        );
-      }
-    } catch (notifyErr) {
-      console.error("[submitMediaRequest] admin notify failed", notifyErr);
-    }
+    // Admin is told, and it lands in the Admin Inbox (TAB 6 §6.10). Best
+    // effort — must not fail the request.
+    await notifyAdmins({
+      type: "media_request",
+      title: "New media coverage request",
+      body: `A media partner flagged an event they want to cover (${data.request_type.replace(/_/g, " ")}).${data.message ? ` "${data.message}"` : ""} Approving it queues an introduction in the Match queue.`,
+      data: { user_id: userId, event_id: data.event_id },
+    }).catch((notifyErr) => console.error("[submitMediaRequest] admin notify failed", notifyErr));
 
     return { ok: true };
   });
@@ -186,5 +175,56 @@ export const adminUpdateMediaRequestStatus = createServerFn({ method: "POST" })
       .update({ status: data.status } as never)
       .eq("id", data.id);
     if (error) throw new Error(error.message);
-    return { ok: true };
+
+    // §5.4 / TAB 19: approving coverage means IGE introduces the media partner
+    // to the organiser. That introduction is a match like any other, so it is
+    // queued for Admin to offer meeting times and release.
+    let matchQueued = false;
+    if (data.status === "approved") {
+      matchQueued = await queueCoverageIntroduction(data.id).catch(() => false);
+    }
+    return { ok: true, matchQueued };
   });
+
+async function queueCoverageIntroduction(requestId: string): Promise<boolean> {
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any -- newer tables */
+  const db = supabaseAdmin as any;
+  const { data: req } = await db.from("media_requests").select("*").eq("id", requestId).maybeSingle();
+  if (!req?.event_id) return false;
+  const { data: ev } = await db
+    .from("events")
+    .select("id, name, organiser_id, event_type, city, start_date")
+    .eq("id", req.event_id)
+    .maybeSingle();
+  if (!ev) return false;
+  const { data: app } = await db
+    .from("onboarding_applications")
+    .select("sections")
+    .eq("user_id", req.media_partner_id)
+    .maybeSingle();
+  const media = (app?.sections?.b?.media_types ?? []) as string[];
+  const when = ev.start_date
+    ? new Date(ev.start_date).toLocaleDateString("en-GB", { month: "long", year: "numeric" })
+    : null;
+  const { error } = await db.from("match_scores").upsert(
+    {
+      pairing_type: "media_event",
+      subject_kind: "event",
+      subject_id: ev.id,
+      subject_user_id: ev.organiser_id,
+      subject_role: "organiser",
+      candidate_user_id: req.media_partner_id,
+      candidate_role: "media_partner",
+      base_score: 100,
+      secondary_score: 100,
+      composite_score: 100,
+      queue_status: "pending",
+      why_user_text: "Coverage requested for this event and approved by IGE",
+      user_summary_for_subject: `A media partner${media.length ? ` (${media.slice(0, 2).join(", ")})` : ""} who wants to cover your event`,
+      user_summary_for_candidate: `${ev.name} — ${ev.event_type ?? "event"}${ev.city ? ` in ${ev.city}` : ""}${when ? `, ${when}` : ""}`,
+    },
+    { onConflict: "pairing_type,subject_id,candidate_user_id" },
+  );
+  return !error;
+}
+

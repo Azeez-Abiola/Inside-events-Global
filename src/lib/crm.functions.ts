@@ -505,3 +505,134 @@ export const importContacts = createServerFn({ method: "POST" })
 
     return { imported, duplicates, failed };
   });
+
+// ─── Outreach tracker and commission tracker (§4.4.2) ────────────────────────
+
+export interface CrmCommission {
+  id: string;
+  deal_id: string | null;
+  contact_id: string | null;
+  expected_amount: number | null;
+  earned_amount: number | null;
+  currency: string;
+  status: "unpaid" | "paid";
+  paid_at: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+/**
+ * The workspace's outreach log and commission ledger in one read — the
+ * Outreach Tracker and Commission Tracker tabs, and the Partnerships Pro home.
+ */
+export const getCrmActivity = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ days: z.number().int().min(1).max(730).default(90) }).parse(d ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    const { workspaceId, role } = await activeWorkspace(context.userId);
+    const since = new Date(Date.now() - data.days * 86_400_000).toISOString();
+    const [outreach, meetings, commissions] = await Promise.all([
+      cdb()
+        .from("crm_outreach")
+        .select("*")
+        .eq("workspace_id", workspaceId)
+        // Old touches still matter while their follow-up is open.
+        .or(`occurred_at.gte.${since},next_follow_up.not.is.null`)
+        .order("occurred_at", { ascending: false })
+        .limit(1000),
+      cdb()
+        .from("crm_meetings")
+        .select("*")
+        .eq("workspace_id", workspaceId)
+        .gte("held_at", since)
+        .order("held_at", { ascending: false })
+        .limit(500),
+      cdb()
+        .from("crm_commissions")
+        .select("*")
+        .eq("workspace_id", workspaceId)
+        .order("created_at", { ascending: false }),
+    ]);
+    return {
+      myRole: role,
+      outreach: (outreach.data ?? []) as CrmOutreach[],
+      meetings: (meetings.data ?? []) as CrmMeeting[],
+      commissions: ((commissions.data ?? []) as CrmCommission[]).map((c) => ({
+        ...c,
+        expected_amount: c.expected_amount != null ? Number(c.expected_amount) : null,
+        earned_amount: c.earned_amount != null ? Number(c.earned_amount) : null,
+      })),
+    };
+  });
+
+/** Clears a follow-up once it is done, without deleting the touch itself. */
+export const completeFollowUp = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { workspaceId, role } = await activeWorkspace(context.userId);
+    assertCan(role, "workspace.edit", "complete follow-ups");
+    await cdb()
+      .from("crm_outreach")
+      .update({ next_follow_up: null })
+      .eq("id", data.id)
+      .eq("workspace_id", workspaceId);
+    return { ok: true as const };
+  });
+
+export const upsertCommission = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        id: z.string().uuid().optional(),
+        deal_id: z.string().uuid().nullish(),
+        contact_id: z.string().uuid().nullish(),
+        expected_amount: z.number().nonnegative().nullish(),
+        earned_amount: z.number().nonnegative().nullish(),
+        currency: z.string().trim().min(3).max(10),
+        status: z.enum(["unpaid", "paid"]),
+        notes: z.string().trim().max(2000).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { workspaceId, role } = await activeWorkspace(context.userId);
+    assertCan(role, "workspace.edit", "record commission");
+    const now = new Date().toISOString();
+    const row = {
+      workspace_id: workspaceId,
+      deal_id: data.deal_id ?? null,
+      contact_id: data.contact_id ?? null,
+      expected_amount: data.expected_amount ?? null,
+      earned_amount: data.earned_amount ?? null,
+      currency: data.currency,
+      status: data.status,
+      paid_at: data.status === "paid" ? now : null,
+      notes: data.notes || null,
+      updated_at: now,
+    };
+    const { error } = data.id
+      ? await cdb()
+          .from("crm_commissions")
+          .update(row)
+          .eq("id", data.id)
+          .eq("workspace_id", workspaceId)
+      : await cdb()
+          .from("crm_commissions")
+          .insert({ ...row, created_by: context.userId });
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const deleteCommission = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { workspaceId, role } = await activeWorkspace(context.userId);
+    assertCan(role, "workspace.edit", "delete commission");
+    await cdb().from("crm_commissions").delete().eq("id", data.id).eq("workspace_id", workspaceId);
+    return { ok: true as const };
+  });

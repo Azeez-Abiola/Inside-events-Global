@@ -381,10 +381,10 @@ function PipelineEventTable({
                     {f.sponsor_user_id && (
                       <Link
                         to="/messages"
-                        search={{ to: f.sponsor_user_id, event_id: ev.id }}
+                        search={{ kind: "request", subject: `Introduction to a sponsor for ${ev.name ?? "my event"}` }}
                         className="text-xs font-semibold text-primary hover:underline"
                       >
-                        Message →
+                        Ask IGE to introduce us →
                       </Link>
                     )}
                   </td>

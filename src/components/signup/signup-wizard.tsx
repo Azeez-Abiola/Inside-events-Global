@@ -11,6 +11,7 @@ import { saveOnboardingSection } from "@/lib/onboarding.functions";
 import { AuthShell } from "@/components/auth-shell";
 import { SignupProfileStep } from "@/components/signup/profile-step";
 import { SignupOtpStep } from "@/components/signup/signup-otp-step";
+import { RetainerRequest, RoleQuiz } from "@/components/signup/role-quiz";
 import { useAuth } from "@/lib/auth-context";
 import {
   SIGNUP_ROLES,
@@ -24,6 +25,8 @@ import {
   getSignupRoleMeta,
   isSignupRole,
   stashSignupAccountDraft,
+  stashReturnTo,
+  takeReturnTo,
 } from "@/lib/signup-roles";
 
 const STEPS: { key: SignupStep; label: string }[] = [
@@ -33,13 +36,30 @@ const STEPS: { key: SignupStep; label: string }[] = [
   { key: "profile", label: "Profile" },
 ];
 
-export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
+export function SignupWizard({
+  initialStep,
+  presetRole,
+  returnTo,
+}: {
+  initialStep?: SignupStep;
+  presetRole?: string;
+  returnTo?: string;
+}) {
   const navigate = useNavigate();
   const { user, roles, loading, refreshRoles } = useAuth();
   const ensureRole = useServerFn(ensureSignupRole);
   const saveOnboarding = useServerFn(saveOnboardingSection);
   const [step, setStep] = useState<SignupStep>(initialStep ?? "role");
-  const [role, setRole] = useState<SignupRole>("sponsor");
+  const [role, setRole] = useState<SignupRole>(
+    presetRole && isSignupRole(presetRole) ? presetRole : "sponsor",
+  );
+
+  // A marketplace button or share link sent them here with a role in mind and
+  // a page to come back to. Remember both across the verify round-trip.
+  useEffect(() => {
+    if (presetRole && isSignupRole(presetRole)) stashSignupRole(presetRole);
+    stashReturnTo(returnTo);
+  }, [presetRole, returnTo]);
   /** Which user id the bootstrap below has already run for. */
   const bootstrappedFor = useRef<string | null>(null);
   const [bootstrapping, setBootstrapping] = useState(true);
@@ -150,7 +170,9 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
         // check as "not complete" and let onboarding sort it out.
         const complete = await hasRoleProfile(user.id, primaryRole).catch(() => false);
         if (complete) {
-          navigate({ to: "/dashboard", replace: true });
+          const back = takeReturnTo();
+          if (back) navigate({ href: back, replace: true });
+          else navigate({ to: "/dashboard", replace: true });
           return;
         }
         try {
@@ -366,6 +388,7 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
               );
             })}
           </div>
+          <RoleQuiz onPick={setRole} />
           <button
             type="button"
             onClick={handleRoleContinue}
@@ -373,6 +396,7 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
           >
             Continue
           </button>
+          <RetainerRequest />
         </>
       )}
 

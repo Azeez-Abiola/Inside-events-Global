@@ -12,8 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
 export const MARKETPLACE_PUBLIC = import.meta.env.VITE_MARKETPLACE_PUBLIC === "true";
 
 /** Sends visitors to the role picker, which is where the spec wants them. */
-export async function ensureMarketplaceAccess() {
+export async function ensureMarketplaceAccess(location?: { href: string }) {
   if (MARKETPLACE_PUBLIC) return;
   const { data } = await supabase.auth.getSession();
-  if (!data.session) throw redirect({ to: "/signup" });
+  // "After sign up or sign in they land on the page they were trying to reach."
+  if (!data.session) throw redirect({ to: "/signup", search: { next: location?.href } });
 }

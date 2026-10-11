@@ -8,6 +8,7 @@ import { DashboardPanel } from "@/components/dashboards/dashboard-shell";
 import { Button } from "@/components/ui/button";
 import { InfoTip } from "@/components/info-tip";
 import {
+  getCrmActivity,
   getCrmWorkspace,
   moveDealToStage,
   upsertContact,
@@ -20,6 +21,7 @@ import { can, type WorkspaceRole } from "@/lib/workspace-permissions";
 import { PipelineBoard } from "@/components/crm/pipeline-board";
 import { ContactTable } from "@/components/crm/contact-table";
 import { ContactDrawer } from "@/components/crm/contact-drawer";
+import { CommissionPanel, OutreachPanel } from "@/components/crm/activity-panels";
 
 /**
  * Contacts and CRM (TAB 4 §4.4.2).
@@ -29,24 +31,35 @@ import { ContactDrawer } from "@/components/crm/contact-drawer";
  * the same screen with the write affordances removed rather than a different
  * one, so nobody has to wonder what they are missing.
  */
-type Tab = "pipeline" | "contacts" | "companies";
+export type CrmTab = "pipeline" | "contacts" | "companies" | "outreach" | "commission";
+type Tab = CrmTab;
 
-export function CrmPage() {
+export function CrmPage({ initialTab }: { initialTab?: CrmTab } = {}) {
   const qc = useQueryClient();
   const fetchCrm = useServerFn(getCrmWorkspace);
   const moveDeal = useServerFn(moveDealToStage);
 
-  const [tab, setTab] = useState<Tab>("pipeline");
+  const [tab, setTab] = useState<Tab>(initialTab ?? "pipeline");
   const [search, setSearch] = useState("");
   const [openContact, setOpenContact] = useState<CrmContact | null>(null);
   const [newContactOpen, setNewContactOpen] = useState(false);
 
+  const fetchActivity = useServerFn(getCrmActivity);
   const { data, isLoading } = useQuery({
     queryKey: ["crm-workspace"],
     queryFn: () => fetchCrm(),
   });
+  // Outreach and commission are only read when their tab is open.
+  const { data: activity } = useQuery({
+    queryKey: ["crm-activity"],
+    queryFn: () => fetchActivity({ data: { days: 180 } }),
+    enabled: tab === "outreach" || tab === "commission",
+  });
 
-  const refresh = () => qc.invalidateQueries({ queryKey: ["crm-workspace"] });
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["crm-workspace"] });
+    qc.invalidateQueries({ queryKey: ["crm-activity"] });
+  };
 
   const move = useMutation({
     mutationFn: (v: { deal_id: string; stage_id: string }) => moveDeal({ data: v }),
@@ -94,6 +107,8 @@ export function CrmPage() {
     { id: "pipeline", label: "Pipeline", count: deals.length },
     { id: "contacts", label: "Contacts", count: data?.contacts.length ?? 0 },
     { id: "companies", label: "Companies", count: data?.companies.length ?? 0 },
+    { id: "outreach", label: "Outreach", count: activity?.outreach.length ?? 0 },
+    { id: "commission", label: "Commission", count: activity?.commissions.length ?? 0 },
   ];
 
   return (
@@ -214,6 +229,25 @@ export function CrmPage() {
             </ul>
           )}
         </DashboardPanel>
+      )}
+
+      {tab === "outreach" && (
+        <OutreachPanel
+          outreach={activity?.outreach ?? []}
+          contactById={contactById}
+          editable={editable}
+          onChanged={refresh}
+        />
+      )}
+
+      {tab === "commission" && (
+        <CommissionPanel
+          commissions={activity?.commissions ?? []}
+          deals={deals}
+          contactById={contactById}
+          editable={editable}
+          onChanged={refresh}
+        />
       )}
 
       {(openContact || newContactOpen) && (

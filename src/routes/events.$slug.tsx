@@ -23,7 +23,7 @@ const FORM_INPUT =
 import { ensureMarketplaceAccess } from "@/lib/marketplace-visibility";
 
 export const Route = createFileRoute("/events/$slug")({
-  beforeLoad: () => ensureMarketplaceAccess(),
+  beforeLoad: ({ location }) => ensureMarketplaceAccess(location),
   validateSearch: searchSchema,
   head: ({ params }) => ({
     meta: [{ title: `${params.slug} · IGE` }],

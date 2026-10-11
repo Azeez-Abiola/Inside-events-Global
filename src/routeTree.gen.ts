@@ -22,9 +22,11 @@ import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as OrganisersRouteImport } from './routes/organisers'
 import { Route as PartnersRouteImport } from './routes/partners'
+import { Route as PastEventsRouteImport } from './routes/past-events'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as ServicesRouteImport } from './routes/services'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SponsorsRouteImport } from './routes/sponsors'
@@ -50,6 +52,7 @@ import { Route as OnboardingProfileRouteImport } from './routes/onboarding.profi
 import { Route as OnboardingRoleRouteImport } from './routes/onboarding.role'
 import { Route as OnboardingWizardRouteImport } from './routes/onboarding.wizard'
 import { Route as RCodeRouteImport } from './routes/r.$code'
+import { Route as ShareTokenRouteImport } from './routes/share.$token'
 import { Route as AuthenticatedAdminRevenueRouteImport } from './routes/_authenticated/admin.revenue'
 import { Route as AuthenticatedAdminSubmissionsRouteImport } from './routes/_authenticated/admin.submissions'
 import { Route as AuthenticatedAdminVettingRouteImport } from './routes/_authenticated/admin.vetting'
@@ -61,21 +64,36 @@ import { Route as AuthenticatedDashboardBudgetRouteImport } from './routes/_auth
 import { Route as AuthenticatedDashboardCalendarRouteImport } from './routes/_authenticated/dashboard.calendar'
 import { Route as AuthenticatedDashboardCommissionsRouteImport } from './routes/_authenticated/dashboard.commissions'
 import { Route as AuthenticatedDashboardCommitmentsRouteImport } from './routes/_authenticated/dashboard.commitments'
+import { Route as AuthenticatedDashboardComplianceRouteImport } from './routes/_authenticated/dashboard.compliance'
 import { Route as AuthenticatedDashboardControlsRouteImport } from './routes/_authenticated/dashboard.controls'
 import { Route as AuthenticatedDashboardCrmRouteImport } from './routes/_authenticated/dashboard.crm'
 import { Route as AuthenticatedDashboardDealsRouteImport } from './routes/_authenticated/dashboard.deals'
+import { Route as AuthenticatedDashboardDeliverablesRouteImport } from './routes/_authenticated/dashboard.deliverables'
 import { Route as AuthenticatedDashboardDiscoverRouteImport } from './routes/_authenticated/dashboard.discover'
+import { Route as AuthenticatedDashboardDiscoverProductionsRouteImport } from './routes/_authenticated/dashboard.discover-productions'
 import { Route as AuthenticatedDashboardDocumentsRouteImport } from './routes/_authenticated/dashboard.documents'
 import { Route as AuthenticatedDashboardExploreRouteImport } from './routes/_authenticated/dashboard.explore'
+import { Route as AuthenticatedDashboardFundraisingRouteImport } from './routes/_authenticated/dashboard.fundraising'
+import { Route as AuthenticatedDashboardHelpGapsRouteImport } from './routes/_authenticated/dashboard.help-gaps'
+import { Route as AuthenticatedDashboardHomeEventsRouteImport } from './routes/_authenticated/dashboard.home-events'
+import { Route as AuthenticatedDashboardInboxRouteImport } from './routes/_authenticated/dashboard.inbox'
 import { Route as AuthenticatedDashboardMarketplaceRouteImport } from './routes/_authenticated/dashboard.marketplace'
+import { Route as AuthenticatedDashboardMatchQueueRouteImport } from './routes/_authenticated/dashboard.match-queue'
+import { Route as AuthenticatedDashboardMatchesRouteImport } from './routes/_authenticated/dashboard.matches'
 import { Route as AuthenticatedDashboardMediaRequestsRouteImport } from './routes/_authenticated/dashboard.media-requests'
 import { Route as AuthenticatedDashboardNewsletterRouteImport } from './routes/_authenticated/dashboard.newsletter'
 import { Route as AuthenticatedDashboardOnboardingVettingRouteImport } from './routes/_authenticated/dashboard.onboarding-vetting'
 import { Route as AuthenticatedDashboardPartnersRouteImport } from './routes/_authenticated/dashboard.partners'
+import { Route as AuthenticatedDashboardPaymentsRouteImport } from './routes/_authenticated/dashboard.payments'
 import { Route as AuthenticatedDashboardPipelineRouteImport } from './routes/_authenticated/dashboard.pipeline'
+import { Route as AuthenticatedDashboardProductionQueueRouteImport } from './routes/_authenticated/dashboard.production-queue'
+import { Route as AuthenticatedDashboardProductionsRouteImport } from './routes/_authenticated/dashboard.productions'
+import { Route as AuthenticatedDashboardReadinessRouteImport } from './routes/_authenticated/dashboard.readiness'
 import { Route as AuthenticatedDashboardReferralsRouteImport } from './routes/_authenticated/dashboard.referrals'
+import { Route as AuthenticatedDashboardReportsRouteImport } from './routes/_authenticated/dashboard.reports'
 import { Route as AuthenticatedDashboardRequestsRouteImport } from './routes/_authenticated/dashboard.requests'
 import { Route as AuthenticatedDashboardRevenueRouteImport } from './routes/_authenticated/dashboard.revenue'
+import { Route as AuthenticatedDashboardRoiRouteImport } from './routes/_authenticated/dashboard.roi'
 import { Route as AuthenticatedDashboardSavedRouteImport } from './routes/_authenticated/dashboard.saved'
 import { Route as AuthenticatedDashboardSubmissionsRouteImport } from './routes/_authenticated/dashboard.submissions'
 import { Route as AuthenticatedDashboardTeamRouteImport } from './routes/_authenticated/dashboard.team'
@@ -85,9 +103,13 @@ import { Route as AuthenticatedDashboardWaitlistRouteImport } from './routes/_au
 import { Route as AuthenticatedEventsIndexRouteImport } from './routes/_authenticated/events.index'
 import { Route as ApiAuthSendEmailHookRouteImport } from './routes/api/auth/send-email-hook'
 import { Route as ApiCalendarTokenRouteImport } from './routes/api/calendar/$token'
+import { Route as ApiCronDailyRouteImport } from './routes/api/cron/daily'
 import { Route as ApiPublicContactRouteImport } from './routes/api/public/contact'
+import { Route as ApiPublicSignInGuardRouteImport } from './routes/api/public/sign-in-guard'
 import { Route as ApiPublicWaitlistNotifyRouteImport } from './routes/api/public/waitlist-notify'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as AuthenticatedDashboardUserRecordUserIdRouteImport } from './routes/_authenticated/dashboard.user-record.$userId'
+import { Route as AuthenticatedDashboardViewAsUserIdRouteImport } from './routes/_authenticated/dashboard.view-as.$userId'
 import { Route as AuthenticatedEventsEditIdRouteImport } from './routes/_authenticated/events.edit.$id'
 import { Route as ApiPublicWebhooksPaystackRouteImport } from './routes/api/public/webhooks/paystack'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
@@ -161,6 +183,11 @@ const PartnersRoute = PartnersRouteImport.update({
   path: '/partners',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PastEventsRoute = PastEventsRouteImport.update({
+  id: '/past-events',
+  path: '/past-events',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
@@ -174,6 +201,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ServicesRoute = ServicesRouteImport.update({
+  id: '/services',
+  path: '/services',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -301,6 +333,11 @@ const RCodeRoute = RCodeRouteImport.update({
   path: '/r/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShareTokenRoute = ShareTokenRouteImport.update({
+  id: '/share/$token',
+  path: '/share/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminRevenueRoute =
   AuthenticatedAdminRevenueRouteImport.update({
     id: '/admin/revenue',
@@ -367,6 +404,12 @@ const AuthenticatedDashboardCommitmentsRoute =
     path: '/commitments',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardComplianceRoute =
+  AuthenticatedDashboardComplianceRouteImport.update({
+    id: '/compliance',
+    path: '/compliance',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedDashboardControlsRoute =
   AuthenticatedDashboardControlsRouteImport.update({
     id: '/controls',
@@ -385,10 +428,22 @@ const AuthenticatedDashboardDealsRoute =
     path: '/deals',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardDeliverablesRoute =
+  AuthenticatedDashboardDeliverablesRouteImport.update({
+    id: '/deliverables',
+    path: '/deliverables',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedDashboardDiscoverRoute =
   AuthenticatedDashboardDiscoverRouteImport.update({
     id: '/discover',
     path: '/discover',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardDiscoverProductionsRoute =
+  AuthenticatedDashboardDiscoverProductionsRouteImport.update({
+    id: '/discover-productions',
+    path: '/discover-productions',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
 const AuthenticatedDashboardDocumentsRoute =
@@ -403,10 +458,46 @@ const AuthenticatedDashboardExploreRoute =
     path: '/explore',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardFundraisingRoute =
+  AuthenticatedDashboardFundraisingRouteImport.update({
+    id: '/fundraising',
+    path: '/fundraising',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardHelpGapsRoute =
+  AuthenticatedDashboardHelpGapsRouteImport.update({
+    id: '/help-gaps',
+    path: '/help-gaps',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardHomeEventsRoute =
+  AuthenticatedDashboardHomeEventsRouteImport.update({
+    id: '/home-events',
+    path: '/home-events',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardInboxRoute =
+  AuthenticatedDashboardInboxRouteImport.update({
+    id: '/inbox',
+    path: '/inbox',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedDashboardMarketplaceRoute =
   AuthenticatedDashboardMarketplaceRouteImport.update({
     id: '/marketplace',
     path: '/marketplace',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardMatchQueueRoute =
+  AuthenticatedDashboardMatchQueueRouteImport.update({
+    id: '/match-queue',
+    path: '/match-queue',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardMatchesRoute =
+  AuthenticatedDashboardMatchesRouteImport.update({
+    id: '/matches',
+    path: '/matches',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
 const AuthenticatedDashboardMediaRequestsRoute =
@@ -433,16 +524,46 @@ const AuthenticatedDashboardPartnersRoute =
     path: '/partners',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardPaymentsRoute =
+  AuthenticatedDashboardPaymentsRouteImport.update({
+    id: '/payments',
+    path: '/payments',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedDashboardPipelineRoute =
   AuthenticatedDashboardPipelineRouteImport.update({
     id: '/pipeline',
     path: '/pipeline',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardProductionQueueRoute =
+  AuthenticatedDashboardProductionQueueRouteImport.update({
+    id: '/production-queue',
+    path: '/production-queue',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardProductionsRoute =
+  AuthenticatedDashboardProductionsRouteImport.update({
+    id: '/productions',
+    path: '/productions',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardReadinessRoute =
+  AuthenticatedDashboardReadinessRouteImport.update({
+    id: '/readiness',
+    path: '/readiness',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedDashboardReferralsRoute =
   AuthenticatedDashboardReferralsRouteImport.update({
     id: '/referrals',
     path: '/referrals',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardReportsRoute =
+  AuthenticatedDashboardReportsRouteImport.update({
+    id: '/reports',
+    path: '/reports',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
 const AuthenticatedDashboardRequestsRoute =
@@ -455,6 +576,12 @@ const AuthenticatedDashboardRevenueRoute =
   AuthenticatedDashboardRevenueRouteImport.update({
     id: '/revenue',
     path: '/revenue',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardRoiRoute =
+  AuthenticatedDashboardRoiRouteImport.update({
+    id: '/roi',
+    path: '/roi',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
 const AuthenticatedDashboardSavedRoute =
@@ -509,9 +636,19 @@ const ApiCalendarTokenRoute = ApiCalendarTokenRouteImport.update({
   path: '/api/calendar/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCronDailyRoute = ApiCronDailyRouteImport.update({
+  id: '/api/cron/daily',
+  path: '/api/cron/daily',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicContactRoute = ApiPublicContactRouteImport.update({
   id: '/api/public/contact',
   path: '/api/public/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSignInGuardRoute = ApiPublicSignInGuardRouteImport.update({
+  id: '/api/public/sign-in-guard',
+  path: '/api/public/sign-in-guard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicWaitlistNotifyRoute = ApiPublicWaitlistNotifyRouteImport.update({
@@ -524,6 +661,18 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedDashboardUserRecordUserIdRoute =
+  AuthenticatedDashboardUserRecordUserIdRouteImport.update({
+    id: '/user-record/$userId',
+    path: '/user-record/$userId',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardViewAsUserIdRoute =
+  AuthenticatedDashboardViewAsUserIdRouteImport.update({
+    id: '/view-as/$userId',
+    path: '/view-as/$userId',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedEventsEditIdRoute =
   AuthenticatedEventsEditIdRouteImport.update({
     id: '/edit/$id',
@@ -583,9 +732,11 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRouteWithChildren
   '/organisers': typeof OrganisersRoute
   '/partners': typeof PartnersRoute
+  '/past-events': typeof PastEventsRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/services': typeof ServicesRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sponsors': typeof SponsorsRoute
@@ -611,6 +762,7 @@ export interface FileRoutesByFullPath {
   '/onboarding/role': typeof OnboardingRoleRoute
   '/onboarding/wizard': typeof OnboardingWizardRoute
   '/r/$code': typeof RCodeRoute
+  '/share/$token': typeof ShareTokenRoute
   '/admin/revenue': typeof AuthenticatedAdminRevenueRoute
   '/admin/submissions': typeof AuthenticatedAdminSubmissionsRoute
   '/admin/vetting': typeof AuthenticatedAdminVettingRoute
@@ -621,21 +773,36 @@ export interface FileRoutesByFullPath {
   '/dashboard/calendar': typeof AuthenticatedDashboardCalendarRoute
   '/dashboard/commissions': typeof AuthenticatedDashboardCommissionsRoute
   '/dashboard/commitments': typeof AuthenticatedDashboardCommitmentsRoute
+  '/dashboard/compliance': typeof AuthenticatedDashboardComplianceRoute
   '/dashboard/controls': typeof AuthenticatedDashboardControlsRoute
   '/dashboard/crm': typeof AuthenticatedDashboardCrmRoute
   '/dashboard/deals': typeof AuthenticatedDashboardDealsRoute
+  '/dashboard/deliverables': typeof AuthenticatedDashboardDeliverablesRoute
   '/dashboard/discover': typeof AuthenticatedDashboardDiscoverRoute
+  '/dashboard/discover-productions': typeof AuthenticatedDashboardDiscoverProductionsRoute
   '/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/dashboard/explore': typeof AuthenticatedDashboardExploreRoute
+  '/dashboard/fundraising': typeof AuthenticatedDashboardFundraisingRoute
+  '/dashboard/help-gaps': typeof AuthenticatedDashboardHelpGapsRoute
+  '/dashboard/home-events': typeof AuthenticatedDashboardHomeEventsRoute
+  '/dashboard/inbox': typeof AuthenticatedDashboardInboxRoute
   '/dashboard/marketplace': typeof AuthenticatedDashboardMarketplaceRoute
+  '/dashboard/match-queue': typeof AuthenticatedDashboardMatchQueueRoute
+  '/dashboard/matches': typeof AuthenticatedDashboardMatchesRoute
   '/dashboard/media-requests': typeof AuthenticatedDashboardMediaRequestsRoute
   '/dashboard/newsletter': typeof AuthenticatedDashboardNewsletterRoute
   '/dashboard/onboarding-vetting': typeof AuthenticatedDashboardOnboardingVettingRoute
   '/dashboard/partners': typeof AuthenticatedDashboardPartnersRoute
+  '/dashboard/payments': typeof AuthenticatedDashboardPaymentsRoute
   '/dashboard/pipeline': typeof AuthenticatedDashboardPipelineRoute
+  '/dashboard/production-queue': typeof AuthenticatedDashboardProductionQueueRoute
+  '/dashboard/productions': typeof AuthenticatedDashboardProductionsRoute
+  '/dashboard/readiness': typeof AuthenticatedDashboardReadinessRoute
   '/dashboard/referrals': typeof AuthenticatedDashboardReferralsRoute
+  '/dashboard/reports': typeof AuthenticatedDashboardReportsRoute
   '/dashboard/requests': typeof AuthenticatedDashboardRequestsRoute
   '/dashboard/revenue': typeof AuthenticatedDashboardRevenueRoute
+  '/dashboard/roi': typeof AuthenticatedDashboardRoiRoute
   '/dashboard/saved': typeof AuthenticatedDashboardSavedRoute
   '/dashboard/submissions': typeof AuthenticatedDashboardSubmissionsRoute
   '/dashboard/team': typeof AuthenticatedDashboardTeamRoute
@@ -644,11 +811,15 @@ export interface FileRoutesByFullPath {
   '/dashboard/waitlist': typeof AuthenticatedDashboardWaitlistRoute
   '/api/auth/send-email-hook': typeof ApiAuthSendEmailHookRoute
   '/api/calendar/$token': typeof ApiCalendarTokenRoute
+  '/api/cron/daily': typeof ApiCronDailyRoute
   '/api/public/contact': typeof ApiPublicContactRoute
+  '/api/public/sign-in-guard': typeof ApiPublicSignInGuardRoute
   '/api/public/waitlist-notify': typeof ApiPublicWaitlistNotifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/events/': typeof AuthenticatedEventsIndexRoute
+  '/dashboard/user-record/$userId': typeof AuthenticatedDashboardUserRecordUserIdRoute
+  '/dashboard/view-as/$userId': typeof AuthenticatedDashboardViewAsUserIdRoute
   '/events/edit/$id': typeof AuthenticatedEventsEditIdRoute
   '/api/public/webhooks/paystack': typeof ApiPublicWebhooksPaystackRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
@@ -671,9 +842,11 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRouteWithChildren
   '/organisers': typeof OrganisersRoute
   '/partners': typeof PartnersRoute
+  '/past-events': typeof PastEventsRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/services': typeof ServicesRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sponsors': typeof SponsorsRoute
@@ -697,6 +870,7 @@ export interface FileRoutesByTo {
   '/onboarding/role': typeof OnboardingRoleRoute
   '/onboarding/wizard': typeof OnboardingWizardRoute
   '/r/$code': typeof RCodeRoute
+  '/share/$token': typeof ShareTokenRoute
   '/admin/revenue': typeof AuthenticatedAdminRevenueRoute
   '/admin/submissions': typeof AuthenticatedAdminSubmissionsRoute
   '/admin/vetting': typeof AuthenticatedAdminVettingRoute
@@ -707,21 +881,36 @@ export interface FileRoutesByTo {
   '/dashboard/calendar': typeof AuthenticatedDashboardCalendarRoute
   '/dashboard/commissions': typeof AuthenticatedDashboardCommissionsRoute
   '/dashboard/commitments': typeof AuthenticatedDashboardCommitmentsRoute
+  '/dashboard/compliance': typeof AuthenticatedDashboardComplianceRoute
   '/dashboard/controls': typeof AuthenticatedDashboardControlsRoute
   '/dashboard/crm': typeof AuthenticatedDashboardCrmRoute
   '/dashboard/deals': typeof AuthenticatedDashboardDealsRoute
+  '/dashboard/deliverables': typeof AuthenticatedDashboardDeliverablesRoute
   '/dashboard/discover': typeof AuthenticatedDashboardDiscoverRoute
+  '/dashboard/discover-productions': typeof AuthenticatedDashboardDiscoverProductionsRoute
   '/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/dashboard/explore': typeof AuthenticatedDashboardExploreRoute
+  '/dashboard/fundraising': typeof AuthenticatedDashboardFundraisingRoute
+  '/dashboard/help-gaps': typeof AuthenticatedDashboardHelpGapsRoute
+  '/dashboard/home-events': typeof AuthenticatedDashboardHomeEventsRoute
+  '/dashboard/inbox': typeof AuthenticatedDashboardInboxRoute
   '/dashboard/marketplace': typeof AuthenticatedDashboardMarketplaceRoute
+  '/dashboard/match-queue': typeof AuthenticatedDashboardMatchQueueRoute
+  '/dashboard/matches': typeof AuthenticatedDashboardMatchesRoute
   '/dashboard/media-requests': typeof AuthenticatedDashboardMediaRequestsRoute
   '/dashboard/newsletter': typeof AuthenticatedDashboardNewsletterRoute
   '/dashboard/onboarding-vetting': typeof AuthenticatedDashboardOnboardingVettingRoute
   '/dashboard/partners': typeof AuthenticatedDashboardPartnersRoute
+  '/dashboard/payments': typeof AuthenticatedDashboardPaymentsRoute
   '/dashboard/pipeline': typeof AuthenticatedDashboardPipelineRoute
+  '/dashboard/production-queue': typeof AuthenticatedDashboardProductionQueueRoute
+  '/dashboard/productions': typeof AuthenticatedDashboardProductionsRoute
+  '/dashboard/readiness': typeof AuthenticatedDashboardReadinessRoute
   '/dashboard/referrals': typeof AuthenticatedDashboardReferralsRoute
+  '/dashboard/reports': typeof AuthenticatedDashboardReportsRoute
   '/dashboard/requests': typeof AuthenticatedDashboardRequestsRoute
   '/dashboard/revenue': typeof AuthenticatedDashboardRevenueRoute
+  '/dashboard/roi': typeof AuthenticatedDashboardRoiRoute
   '/dashboard/saved': typeof AuthenticatedDashboardSavedRoute
   '/dashboard/submissions': typeof AuthenticatedDashboardSubmissionsRoute
   '/dashboard/team': typeof AuthenticatedDashboardTeamRoute
@@ -730,11 +919,15 @@ export interface FileRoutesByTo {
   '/dashboard/waitlist': typeof AuthenticatedDashboardWaitlistRoute
   '/api/auth/send-email-hook': typeof ApiAuthSendEmailHookRoute
   '/api/calendar/$token': typeof ApiCalendarTokenRoute
+  '/api/cron/daily': typeof ApiCronDailyRoute
   '/api/public/contact': typeof ApiPublicContactRoute
+  '/api/public/sign-in-guard': typeof ApiPublicSignInGuardRoute
   '/api/public/waitlist-notify': typeof ApiPublicWaitlistNotifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
   '/events': typeof AuthenticatedEventsIndexRoute
+  '/dashboard/user-record/$userId': typeof AuthenticatedDashboardUserRecordUserIdRoute
+  '/dashboard/view-as/$userId': typeof AuthenticatedDashboardViewAsUserIdRoute
   '/events/edit/$id': typeof AuthenticatedEventsEditIdRoute
   '/api/public/webhooks/paystack': typeof ApiPublicWebhooksPaystackRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
@@ -759,9 +952,11 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRouteWithChildren
   '/organisers': typeof OrganisersRoute
   '/partners': typeof PartnersRoute
+  '/past-events': typeof PastEventsRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/services': typeof ServicesRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sponsors': typeof SponsorsRoute
@@ -787,6 +982,7 @@ export interface FileRoutesById {
   '/onboarding/role': typeof OnboardingRoleRoute
   '/onboarding/wizard': typeof OnboardingWizardRoute
   '/r/$code': typeof RCodeRoute
+  '/share/$token': typeof ShareTokenRoute
   '/_authenticated/admin/revenue': typeof AuthenticatedAdminRevenueRoute
   '/_authenticated/admin/submissions': typeof AuthenticatedAdminSubmissionsRoute
   '/_authenticated/admin/vetting': typeof AuthenticatedAdminVettingRoute
@@ -797,21 +993,36 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/calendar': typeof AuthenticatedDashboardCalendarRoute
   '/_authenticated/dashboard/commissions': typeof AuthenticatedDashboardCommissionsRoute
   '/_authenticated/dashboard/commitments': typeof AuthenticatedDashboardCommitmentsRoute
+  '/_authenticated/dashboard/compliance': typeof AuthenticatedDashboardComplianceRoute
   '/_authenticated/dashboard/controls': typeof AuthenticatedDashboardControlsRoute
   '/_authenticated/dashboard/crm': typeof AuthenticatedDashboardCrmRoute
   '/_authenticated/dashboard/deals': typeof AuthenticatedDashboardDealsRoute
+  '/_authenticated/dashboard/deliverables': typeof AuthenticatedDashboardDeliverablesRoute
   '/_authenticated/dashboard/discover': typeof AuthenticatedDashboardDiscoverRoute
+  '/_authenticated/dashboard/discover-productions': typeof AuthenticatedDashboardDiscoverProductionsRoute
   '/_authenticated/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/_authenticated/dashboard/explore': typeof AuthenticatedDashboardExploreRoute
+  '/_authenticated/dashboard/fundraising': typeof AuthenticatedDashboardFundraisingRoute
+  '/_authenticated/dashboard/help-gaps': typeof AuthenticatedDashboardHelpGapsRoute
+  '/_authenticated/dashboard/home-events': typeof AuthenticatedDashboardHomeEventsRoute
+  '/_authenticated/dashboard/inbox': typeof AuthenticatedDashboardInboxRoute
   '/_authenticated/dashboard/marketplace': typeof AuthenticatedDashboardMarketplaceRoute
+  '/_authenticated/dashboard/match-queue': typeof AuthenticatedDashboardMatchQueueRoute
+  '/_authenticated/dashboard/matches': typeof AuthenticatedDashboardMatchesRoute
   '/_authenticated/dashboard/media-requests': typeof AuthenticatedDashboardMediaRequestsRoute
   '/_authenticated/dashboard/newsletter': typeof AuthenticatedDashboardNewsletterRoute
   '/_authenticated/dashboard/onboarding-vetting': typeof AuthenticatedDashboardOnboardingVettingRoute
   '/_authenticated/dashboard/partners': typeof AuthenticatedDashboardPartnersRoute
+  '/_authenticated/dashboard/payments': typeof AuthenticatedDashboardPaymentsRoute
   '/_authenticated/dashboard/pipeline': typeof AuthenticatedDashboardPipelineRoute
+  '/_authenticated/dashboard/production-queue': typeof AuthenticatedDashboardProductionQueueRoute
+  '/_authenticated/dashboard/productions': typeof AuthenticatedDashboardProductionsRoute
+  '/_authenticated/dashboard/readiness': typeof AuthenticatedDashboardReadinessRoute
   '/_authenticated/dashboard/referrals': typeof AuthenticatedDashboardReferralsRoute
+  '/_authenticated/dashboard/reports': typeof AuthenticatedDashboardReportsRoute
   '/_authenticated/dashboard/requests': typeof AuthenticatedDashboardRequestsRoute
   '/_authenticated/dashboard/revenue': typeof AuthenticatedDashboardRevenueRoute
+  '/_authenticated/dashboard/roi': typeof AuthenticatedDashboardRoiRoute
   '/_authenticated/dashboard/saved': typeof AuthenticatedDashboardSavedRoute
   '/_authenticated/dashboard/submissions': typeof AuthenticatedDashboardSubmissionsRoute
   '/_authenticated/dashboard/team': typeof AuthenticatedDashboardTeamRoute
@@ -820,11 +1031,15 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/waitlist': typeof AuthenticatedDashboardWaitlistRoute
   '/api/auth/send-email-hook': typeof ApiAuthSendEmailHookRoute
   '/api/calendar/$token': typeof ApiCalendarTokenRoute
+  '/api/cron/daily': typeof ApiCronDailyRoute
   '/api/public/contact': typeof ApiPublicContactRoute
+  '/api/public/sign-in-guard': typeof ApiPublicSignInGuardRoute
   '/api/public/waitlist-notify': typeof ApiPublicWaitlistNotifyRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/_authenticated/events/': typeof AuthenticatedEventsIndexRoute
+  '/_authenticated/dashboard/user-record/$userId': typeof AuthenticatedDashboardUserRecordUserIdRoute
+  '/_authenticated/dashboard/view-as/$userId': typeof AuthenticatedDashboardViewAsUserIdRoute
   '/_authenticated/events/edit/$id': typeof AuthenticatedEventsEditIdRoute
   '/api/public/webhooks/paystack': typeof ApiPublicWebhooksPaystackRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
@@ -849,9 +1064,11 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/organisers'
     | '/partners'
+    | '/past-events'
     | '/pricing'
     | '/privacy'
     | '/reset-password'
+    | '/services'
     | '/signup'
     | '/sitemap.xml'
     | '/sponsors'
@@ -877,6 +1094,7 @@ export interface FileRouteTypes {
     | '/onboarding/role'
     | '/onboarding/wizard'
     | '/r/$code'
+    | '/share/$token'
     | '/admin/revenue'
     | '/admin/submissions'
     | '/admin/vetting'
@@ -887,21 +1105,36 @@ export interface FileRouteTypes {
     | '/dashboard/calendar'
     | '/dashboard/commissions'
     | '/dashboard/commitments'
+    | '/dashboard/compliance'
     | '/dashboard/controls'
     | '/dashboard/crm'
     | '/dashboard/deals'
+    | '/dashboard/deliverables'
     | '/dashboard/discover'
+    | '/dashboard/discover-productions'
     | '/dashboard/documents'
     | '/dashboard/explore'
+    | '/dashboard/fundraising'
+    | '/dashboard/help-gaps'
+    | '/dashboard/home-events'
+    | '/dashboard/inbox'
     | '/dashboard/marketplace'
+    | '/dashboard/match-queue'
+    | '/dashboard/matches'
     | '/dashboard/media-requests'
     | '/dashboard/newsletter'
     | '/dashboard/onboarding-vetting'
     | '/dashboard/partners'
+    | '/dashboard/payments'
     | '/dashboard/pipeline'
+    | '/dashboard/production-queue'
+    | '/dashboard/productions'
+    | '/dashboard/readiness'
     | '/dashboard/referrals'
+    | '/dashboard/reports'
     | '/dashboard/requests'
     | '/dashboard/revenue'
+    | '/dashboard/roi'
     | '/dashboard/saved'
     | '/dashboard/submissions'
     | '/dashboard/team'
@@ -910,11 +1143,15 @@ export interface FileRouteTypes {
     | '/dashboard/waitlist'
     | '/api/auth/send-email-hook'
     | '/api/calendar/$token'
+    | '/api/cron/daily'
     | '/api/public/contact'
+    | '/api/public/sign-in-guard'
     | '/api/public/waitlist-notify'
     | '/lovable/email/suppression'
     | '/dashboard/'
     | '/events/'
+    | '/dashboard/user-record/$userId'
+    | '/dashboard/view-as/$userId'
     | '/events/edit/$id'
     | '/api/public/webhooks/paystack'
     | '/api/public/webhooks/stripe'
@@ -937,9 +1174,11 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/organisers'
     | '/partners'
+    | '/past-events'
     | '/pricing'
     | '/privacy'
     | '/reset-password'
+    | '/services'
     | '/signup'
     | '/sitemap.xml'
     | '/sponsors'
@@ -963,6 +1202,7 @@ export interface FileRouteTypes {
     | '/onboarding/role'
     | '/onboarding/wizard'
     | '/r/$code'
+    | '/share/$token'
     | '/admin/revenue'
     | '/admin/submissions'
     | '/admin/vetting'
@@ -973,21 +1213,36 @@ export interface FileRouteTypes {
     | '/dashboard/calendar'
     | '/dashboard/commissions'
     | '/dashboard/commitments'
+    | '/dashboard/compliance'
     | '/dashboard/controls'
     | '/dashboard/crm'
     | '/dashboard/deals'
+    | '/dashboard/deliverables'
     | '/dashboard/discover'
+    | '/dashboard/discover-productions'
     | '/dashboard/documents'
     | '/dashboard/explore'
+    | '/dashboard/fundraising'
+    | '/dashboard/help-gaps'
+    | '/dashboard/home-events'
+    | '/dashboard/inbox'
     | '/dashboard/marketplace'
+    | '/dashboard/match-queue'
+    | '/dashboard/matches'
     | '/dashboard/media-requests'
     | '/dashboard/newsletter'
     | '/dashboard/onboarding-vetting'
     | '/dashboard/partners'
+    | '/dashboard/payments'
     | '/dashboard/pipeline'
+    | '/dashboard/production-queue'
+    | '/dashboard/productions'
+    | '/dashboard/readiness'
     | '/dashboard/referrals'
+    | '/dashboard/reports'
     | '/dashboard/requests'
     | '/dashboard/revenue'
+    | '/dashboard/roi'
     | '/dashboard/saved'
     | '/dashboard/submissions'
     | '/dashboard/team'
@@ -996,11 +1251,15 @@ export interface FileRouteTypes {
     | '/dashboard/waitlist'
     | '/api/auth/send-email-hook'
     | '/api/calendar/$token'
+    | '/api/cron/daily'
     | '/api/public/contact'
+    | '/api/public/sign-in-guard'
     | '/api/public/waitlist-notify'
     | '/lovable/email/suppression'
     | '/dashboard'
     | '/events'
+    | '/dashboard/user-record/$userId'
+    | '/dashboard/view-as/$userId'
     | '/events/edit/$id'
     | '/api/public/webhooks/paystack'
     | '/api/public/webhooks/stripe'
@@ -1024,9 +1283,11 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/organisers'
     | '/partners'
+    | '/past-events'
     | '/pricing'
     | '/privacy'
     | '/reset-password'
+    | '/services'
     | '/signup'
     | '/sitemap.xml'
     | '/sponsors'
@@ -1052,6 +1313,7 @@ export interface FileRouteTypes {
     | '/onboarding/role'
     | '/onboarding/wizard'
     | '/r/$code'
+    | '/share/$token'
     | '/_authenticated/admin/revenue'
     | '/_authenticated/admin/submissions'
     | '/_authenticated/admin/vetting'
@@ -1062,21 +1324,36 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/calendar'
     | '/_authenticated/dashboard/commissions'
     | '/_authenticated/dashboard/commitments'
+    | '/_authenticated/dashboard/compliance'
     | '/_authenticated/dashboard/controls'
     | '/_authenticated/dashboard/crm'
     | '/_authenticated/dashboard/deals'
+    | '/_authenticated/dashboard/deliverables'
     | '/_authenticated/dashboard/discover'
+    | '/_authenticated/dashboard/discover-productions'
     | '/_authenticated/dashboard/documents'
     | '/_authenticated/dashboard/explore'
+    | '/_authenticated/dashboard/fundraising'
+    | '/_authenticated/dashboard/help-gaps'
+    | '/_authenticated/dashboard/home-events'
+    | '/_authenticated/dashboard/inbox'
     | '/_authenticated/dashboard/marketplace'
+    | '/_authenticated/dashboard/match-queue'
+    | '/_authenticated/dashboard/matches'
     | '/_authenticated/dashboard/media-requests'
     | '/_authenticated/dashboard/newsletter'
     | '/_authenticated/dashboard/onboarding-vetting'
     | '/_authenticated/dashboard/partners'
+    | '/_authenticated/dashboard/payments'
     | '/_authenticated/dashboard/pipeline'
+    | '/_authenticated/dashboard/production-queue'
+    | '/_authenticated/dashboard/productions'
+    | '/_authenticated/dashboard/readiness'
     | '/_authenticated/dashboard/referrals'
+    | '/_authenticated/dashboard/reports'
     | '/_authenticated/dashboard/requests'
     | '/_authenticated/dashboard/revenue'
+    | '/_authenticated/dashboard/roi'
     | '/_authenticated/dashboard/saved'
     | '/_authenticated/dashboard/submissions'
     | '/_authenticated/dashboard/team'
@@ -1085,11 +1362,15 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/waitlist'
     | '/api/auth/send-email-hook'
     | '/api/calendar/$token'
+    | '/api/cron/daily'
     | '/api/public/contact'
+    | '/api/public/sign-in-guard'
     | '/api/public/waitlist-notify'
     | '/lovable/email/suppression'
     | '/_authenticated/dashboard/'
     | '/_authenticated/events/'
+    | '/_authenticated/dashboard/user-record/$userId'
+    | '/_authenticated/dashboard/view-as/$userId'
     | '/_authenticated/events/edit/$id'
     | '/api/public/webhooks/paystack'
     | '/api/public/webhooks/stripe'
@@ -1114,9 +1395,11 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRouteWithChildren
   OrganisersRoute: typeof OrganisersRoute
   PartnersRoute: typeof PartnersRoute
+  PastEventsRoute: typeof PastEventsRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ServicesRoute: typeof ServicesRoute
   SignupRoute: typeof SignupRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SponsorsRoute: typeof SponsorsRoute
@@ -1129,9 +1412,12 @@ export interface RootRouteChildren {
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   EventsSlugRoute: typeof EventsSlugRoute
   RCodeRoute: typeof RCodeRoute
+  ShareTokenRoute: typeof ShareTokenRoute
   ApiAuthSendEmailHookRoute: typeof ApiAuthSendEmailHookRoute
   ApiCalendarTokenRoute: typeof ApiCalendarTokenRoute
+  ApiCronDailyRoute: typeof ApiCronDailyRoute
   ApiPublicContactRoute: typeof ApiPublicContactRoute
+  ApiPublicSignInGuardRoute: typeof ApiPublicSignInGuardRoute
   ApiPublicWaitlistNotifyRoute: typeof ApiPublicWaitlistNotifyRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicWebhooksPaystackRoute: typeof ApiPublicWebhooksPaystackRoute
@@ -1236,6 +1522,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PartnersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/past-events': {
+      id: '/past-events'
+      path: '/past-events'
+      fullPath: '/past-events'
+      preLoaderRoute: typeof PastEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pricing': {
       id: '/pricing'
       path: '/pricing'
@@ -1255,6 +1548,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/services': {
+      id: '/services'
+      path: '/services'
+      fullPath: '/services'
+      preLoaderRoute: typeof ServicesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -1432,6 +1732,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/share/$token': {
+      id: '/share/$token'
+      path: '/share/$token'
+      fullPath: '/share/$token'
+      preLoaderRoute: typeof ShareTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/revenue': {
       id: '/_authenticated/admin/revenue'
       path: '/admin/revenue'
@@ -1509,6 +1816,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardCommitmentsRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/compliance': {
+      id: '/_authenticated/dashboard/compliance'
+      path: '/compliance'
+      fullPath: '/dashboard/compliance'
+      preLoaderRoute: typeof AuthenticatedDashboardComplianceRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/dashboard/controls': {
       id: '/_authenticated/dashboard/controls'
       path: '/controls'
@@ -1530,11 +1844,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardDealsRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/deliverables': {
+      id: '/_authenticated/dashboard/deliverables'
+      path: '/deliverables'
+      fullPath: '/dashboard/deliverables'
+      preLoaderRoute: typeof AuthenticatedDashboardDeliverablesRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/dashboard/discover': {
       id: '/_authenticated/dashboard/discover'
       path: '/discover'
       fullPath: '/dashboard/discover'
       preLoaderRoute: typeof AuthenticatedDashboardDiscoverRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/discover-productions': {
+      id: '/_authenticated/dashboard/discover-productions'
+      path: '/discover-productions'
+      fullPath: '/dashboard/discover-productions'
+      preLoaderRoute: typeof AuthenticatedDashboardDiscoverProductionsRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
     '/_authenticated/dashboard/documents': {
@@ -1551,11 +1879,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardExploreRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/fundraising': {
+      id: '/_authenticated/dashboard/fundraising'
+      path: '/fundraising'
+      fullPath: '/dashboard/fundraising'
+      preLoaderRoute: typeof AuthenticatedDashboardFundraisingRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/help-gaps': {
+      id: '/_authenticated/dashboard/help-gaps'
+      path: '/help-gaps'
+      fullPath: '/dashboard/help-gaps'
+      preLoaderRoute: typeof AuthenticatedDashboardHelpGapsRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/home-events': {
+      id: '/_authenticated/dashboard/home-events'
+      path: '/home-events'
+      fullPath: '/dashboard/home-events'
+      preLoaderRoute: typeof AuthenticatedDashboardHomeEventsRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/inbox': {
+      id: '/_authenticated/dashboard/inbox'
+      path: '/inbox'
+      fullPath: '/dashboard/inbox'
+      preLoaderRoute: typeof AuthenticatedDashboardInboxRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/dashboard/marketplace': {
       id: '/_authenticated/dashboard/marketplace'
       path: '/marketplace'
       fullPath: '/dashboard/marketplace'
       preLoaderRoute: typeof AuthenticatedDashboardMarketplaceRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/match-queue': {
+      id: '/_authenticated/dashboard/match-queue'
+      path: '/match-queue'
+      fullPath: '/dashboard/match-queue'
+      preLoaderRoute: typeof AuthenticatedDashboardMatchQueueRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/matches': {
+      id: '/_authenticated/dashboard/matches'
+      path: '/matches'
+      fullPath: '/dashboard/matches'
+      preLoaderRoute: typeof AuthenticatedDashboardMatchesRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
     '/_authenticated/dashboard/media-requests': {
@@ -1586,6 +1956,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardPartnersRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/payments': {
+      id: '/_authenticated/dashboard/payments'
+      path: '/payments'
+      fullPath: '/dashboard/payments'
+      preLoaderRoute: typeof AuthenticatedDashboardPaymentsRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/dashboard/pipeline': {
       id: '/_authenticated/dashboard/pipeline'
       path: '/pipeline'
@@ -1593,11 +1970,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardPipelineRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/production-queue': {
+      id: '/_authenticated/dashboard/production-queue'
+      path: '/production-queue'
+      fullPath: '/dashboard/production-queue'
+      preLoaderRoute: typeof AuthenticatedDashboardProductionQueueRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/productions': {
+      id: '/_authenticated/dashboard/productions'
+      path: '/productions'
+      fullPath: '/dashboard/productions'
+      preLoaderRoute: typeof AuthenticatedDashboardProductionsRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/readiness': {
+      id: '/_authenticated/dashboard/readiness'
+      path: '/readiness'
+      fullPath: '/dashboard/readiness'
+      preLoaderRoute: typeof AuthenticatedDashboardReadinessRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/dashboard/referrals': {
       id: '/_authenticated/dashboard/referrals'
       path: '/referrals'
       fullPath: '/dashboard/referrals'
       preLoaderRoute: typeof AuthenticatedDashboardReferralsRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/reports': {
+      id: '/_authenticated/dashboard/reports'
+      path: '/reports'
+      fullPath: '/dashboard/reports'
+      preLoaderRoute: typeof AuthenticatedDashboardReportsRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
     '/_authenticated/dashboard/requests': {
@@ -1612,6 +2017,13 @@ declare module '@tanstack/react-router' {
       path: '/revenue'
       fullPath: '/dashboard/revenue'
       preLoaderRoute: typeof AuthenticatedDashboardRevenueRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/roi': {
+      id: '/_authenticated/dashboard/roi'
+      path: '/roi'
+      fullPath: '/dashboard/roi'
+      preLoaderRoute: typeof AuthenticatedDashboardRoiRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
     '/_authenticated/dashboard/saved': {
@@ -1677,11 +2089,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCalendarTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/cron/daily': {
+      id: '/api/cron/daily'
+      path: '/api/cron/daily'
+      fullPath: '/api/cron/daily'
+      preLoaderRoute: typeof ApiCronDailyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/contact': {
       id: '/api/public/contact'
       path: '/api/public/contact'
       fullPath: '/api/public/contact'
       preLoaderRoute: typeof ApiPublicContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/sign-in-guard': {
+      id: '/api/public/sign-in-guard'
+      path: '/api/public/sign-in-guard'
+      fullPath: '/api/public/sign-in-guard'
+      preLoaderRoute: typeof ApiPublicSignInGuardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/waitlist-notify': {
@@ -1697,6 +2123,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/lovable/email/suppression'
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/dashboard/user-record/$userId': {
+      id: '/_authenticated/dashboard/user-record/$userId'
+      path: '/user-record/$userId'
+      fullPath: '/dashboard/user-record/$userId'
+      preLoaderRoute: typeof AuthenticatedDashboardUserRecordUserIdRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/view-as/$userId': {
+      id: '/_authenticated/dashboard/view-as/$userId'
+      path: '/view-as/$userId'
+      fullPath: '/dashboard/view-as/$userId'
+      preLoaderRoute: typeof AuthenticatedDashboardViewAsUserIdRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
     }
     '/_authenticated/events/edit/$id': {
       id: '/_authenticated/events/edit/$id'
@@ -1765,21 +2205,36 @@ interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardCalendarRoute: typeof AuthenticatedDashboardCalendarRoute
   AuthenticatedDashboardCommissionsRoute: typeof AuthenticatedDashboardCommissionsRoute
   AuthenticatedDashboardCommitmentsRoute: typeof AuthenticatedDashboardCommitmentsRoute
+  AuthenticatedDashboardComplianceRoute: typeof AuthenticatedDashboardComplianceRoute
   AuthenticatedDashboardControlsRoute: typeof AuthenticatedDashboardControlsRoute
   AuthenticatedDashboardCrmRoute: typeof AuthenticatedDashboardCrmRoute
   AuthenticatedDashboardDealsRoute: typeof AuthenticatedDashboardDealsRoute
+  AuthenticatedDashboardDeliverablesRoute: typeof AuthenticatedDashboardDeliverablesRoute
   AuthenticatedDashboardDiscoverRoute: typeof AuthenticatedDashboardDiscoverRoute
+  AuthenticatedDashboardDiscoverProductionsRoute: typeof AuthenticatedDashboardDiscoverProductionsRoute
   AuthenticatedDashboardDocumentsRoute: typeof AuthenticatedDashboardDocumentsRoute
   AuthenticatedDashboardExploreRoute: typeof AuthenticatedDashboardExploreRoute
+  AuthenticatedDashboardFundraisingRoute: typeof AuthenticatedDashboardFundraisingRoute
+  AuthenticatedDashboardHelpGapsRoute: typeof AuthenticatedDashboardHelpGapsRoute
+  AuthenticatedDashboardHomeEventsRoute: typeof AuthenticatedDashboardHomeEventsRoute
+  AuthenticatedDashboardInboxRoute: typeof AuthenticatedDashboardInboxRoute
   AuthenticatedDashboardMarketplaceRoute: typeof AuthenticatedDashboardMarketplaceRoute
+  AuthenticatedDashboardMatchQueueRoute: typeof AuthenticatedDashboardMatchQueueRoute
+  AuthenticatedDashboardMatchesRoute: typeof AuthenticatedDashboardMatchesRoute
   AuthenticatedDashboardMediaRequestsRoute: typeof AuthenticatedDashboardMediaRequestsRoute
   AuthenticatedDashboardNewsletterRoute: typeof AuthenticatedDashboardNewsletterRoute
   AuthenticatedDashboardOnboardingVettingRoute: typeof AuthenticatedDashboardOnboardingVettingRoute
   AuthenticatedDashboardPartnersRoute: typeof AuthenticatedDashboardPartnersRoute
+  AuthenticatedDashboardPaymentsRoute: typeof AuthenticatedDashboardPaymentsRoute
   AuthenticatedDashboardPipelineRoute: typeof AuthenticatedDashboardPipelineRoute
+  AuthenticatedDashboardProductionQueueRoute: typeof AuthenticatedDashboardProductionQueueRoute
+  AuthenticatedDashboardProductionsRoute: typeof AuthenticatedDashboardProductionsRoute
+  AuthenticatedDashboardReadinessRoute: typeof AuthenticatedDashboardReadinessRoute
   AuthenticatedDashboardReferralsRoute: typeof AuthenticatedDashboardReferralsRoute
+  AuthenticatedDashboardReportsRoute: typeof AuthenticatedDashboardReportsRoute
   AuthenticatedDashboardRequestsRoute: typeof AuthenticatedDashboardRequestsRoute
   AuthenticatedDashboardRevenueRoute: typeof AuthenticatedDashboardRevenueRoute
+  AuthenticatedDashboardRoiRoute: typeof AuthenticatedDashboardRoiRoute
   AuthenticatedDashboardSavedRoute: typeof AuthenticatedDashboardSavedRoute
   AuthenticatedDashboardSubmissionsRoute: typeof AuthenticatedDashboardSubmissionsRoute
   AuthenticatedDashboardTeamRoute: typeof AuthenticatedDashboardTeamRoute
@@ -1787,6 +2242,8 @@ interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardVettingRoute: typeof AuthenticatedDashboardVettingRoute
   AuthenticatedDashboardWaitlistRoute: typeof AuthenticatedDashboardWaitlistRoute
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
+  AuthenticatedDashboardUserRecordUserIdRoute: typeof AuthenticatedDashboardUserRecordUserIdRoute
+  AuthenticatedDashboardViewAsUserIdRoute: typeof AuthenticatedDashboardViewAsUserIdRoute
 }
 
 const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
@@ -1801,14 +2258,29 @@ const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
       AuthenticatedDashboardCommissionsRoute,
     AuthenticatedDashboardCommitmentsRoute:
       AuthenticatedDashboardCommitmentsRoute,
+    AuthenticatedDashboardComplianceRoute:
+      AuthenticatedDashboardComplianceRoute,
     AuthenticatedDashboardControlsRoute: AuthenticatedDashboardControlsRoute,
     AuthenticatedDashboardCrmRoute: AuthenticatedDashboardCrmRoute,
     AuthenticatedDashboardDealsRoute: AuthenticatedDashboardDealsRoute,
+    AuthenticatedDashboardDeliverablesRoute:
+      AuthenticatedDashboardDeliverablesRoute,
     AuthenticatedDashboardDiscoverRoute: AuthenticatedDashboardDiscoverRoute,
+    AuthenticatedDashboardDiscoverProductionsRoute:
+      AuthenticatedDashboardDiscoverProductionsRoute,
     AuthenticatedDashboardDocumentsRoute: AuthenticatedDashboardDocumentsRoute,
     AuthenticatedDashboardExploreRoute: AuthenticatedDashboardExploreRoute,
+    AuthenticatedDashboardFundraisingRoute:
+      AuthenticatedDashboardFundraisingRoute,
+    AuthenticatedDashboardHelpGapsRoute: AuthenticatedDashboardHelpGapsRoute,
+    AuthenticatedDashboardHomeEventsRoute:
+      AuthenticatedDashboardHomeEventsRoute,
+    AuthenticatedDashboardInboxRoute: AuthenticatedDashboardInboxRoute,
     AuthenticatedDashboardMarketplaceRoute:
       AuthenticatedDashboardMarketplaceRoute,
+    AuthenticatedDashboardMatchQueueRoute:
+      AuthenticatedDashboardMatchQueueRoute,
+    AuthenticatedDashboardMatchesRoute: AuthenticatedDashboardMatchesRoute,
     AuthenticatedDashboardMediaRequestsRoute:
       AuthenticatedDashboardMediaRequestsRoute,
     AuthenticatedDashboardNewsletterRoute:
@@ -1816,10 +2288,18 @@ const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
     AuthenticatedDashboardOnboardingVettingRoute:
       AuthenticatedDashboardOnboardingVettingRoute,
     AuthenticatedDashboardPartnersRoute: AuthenticatedDashboardPartnersRoute,
+    AuthenticatedDashboardPaymentsRoute: AuthenticatedDashboardPaymentsRoute,
     AuthenticatedDashboardPipelineRoute: AuthenticatedDashboardPipelineRoute,
+    AuthenticatedDashboardProductionQueueRoute:
+      AuthenticatedDashboardProductionQueueRoute,
+    AuthenticatedDashboardProductionsRoute:
+      AuthenticatedDashboardProductionsRoute,
+    AuthenticatedDashboardReadinessRoute: AuthenticatedDashboardReadinessRoute,
     AuthenticatedDashboardReferralsRoute: AuthenticatedDashboardReferralsRoute,
+    AuthenticatedDashboardReportsRoute: AuthenticatedDashboardReportsRoute,
     AuthenticatedDashboardRequestsRoute: AuthenticatedDashboardRequestsRoute,
     AuthenticatedDashboardRevenueRoute: AuthenticatedDashboardRevenueRoute,
+    AuthenticatedDashboardRoiRoute: AuthenticatedDashboardRoiRoute,
     AuthenticatedDashboardSavedRoute: AuthenticatedDashboardSavedRoute,
     AuthenticatedDashboardSubmissionsRoute:
       AuthenticatedDashboardSubmissionsRoute,
@@ -1828,6 +2308,10 @@ const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
     AuthenticatedDashboardVettingRoute: AuthenticatedDashboardVettingRoute,
     AuthenticatedDashboardWaitlistRoute: AuthenticatedDashboardWaitlistRoute,
     AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
+    AuthenticatedDashboardUserRecordUserIdRoute:
+      AuthenticatedDashboardUserRecordUserIdRoute,
+    AuthenticatedDashboardViewAsUserIdRoute:
+      AuthenticatedDashboardViewAsUserIdRoute,
   }
 
 const AuthenticatedDashboardRouteWithChildren =
@@ -1914,9 +2398,11 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRouteWithChildren,
   OrganisersRoute: OrganisersRoute,
   PartnersRoute: PartnersRoute,
+  PastEventsRoute: PastEventsRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ServicesRoute: ServicesRoute,
   SignupRoute: SignupRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SponsorsRoute: SponsorsRoute,
@@ -1929,9 +2415,12 @@ const rootRouteChildren: RootRouteChildren = {
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   EventsSlugRoute: EventsSlugRoute,
   RCodeRoute: RCodeRoute,
+  ShareTokenRoute: ShareTokenRoute,
   ApiAuthSendEmailHookRoute: ApiAuthSendEmailHookRoute,
   ApiCalendarTokenRoute: ApiCalendarTokenRoute,
+  ApiCronDailyRoute: ApiCronDailyRoute,
   ApiPublicContactRoute: ApiPublicContactRoute,
+  ApiPublicSignInGuardRoute: ApiPublicSignInGuardRoute,
   ApiPublicWaitlistNotifyRoute: ApiPublicWaitlistNotifyRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicWebhooksPaystackRoute: ApiPublicWebhooksPaystackRoute,

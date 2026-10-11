@@ -96,6 +96,10 @@ export function TeamActivity() {
                 <th className="px-5 py-3 text-right font-semibold">Listings created</th>
                 <th className="px-5 py-3 text-right font-semibold">Deals opened</th>
                 <th className="px-5 py-3 text-right font-semibold">Pipeline moves</th>
+                <th className="px-5 py-3 text-right font-semibold">Outreach</th>
+                <th className="px-5 py-3 text-right font-semibold">Meetings</th>
+                <th className="px-5 py-3 text-right font-semibold">Activations</th>
+                <th className="px-5 py-3 text-right font-semibold">Tasks</th>
                 <th className="px-5 py-3 font-semibold">Last active</th>
               </tr>
             </thead>
@@ -109,6 +113,10 @@ export function TeamActivity() {
                   <td className="px-5 py-3 text-right tabular-nums">{r.listings_created}</td>
                   <td className="px-5 py-3 text-right tabular-nums">{r.deals_opened}</td>
                   <td className="px-5 py-3 text-right tabular-nums">{r.pipeline_moves}</td>
+                  <td className="px-5 py-3 text-right tabular-nums">{r.outreach_logged}</td>
+                  <td className="px-5 py-3 text-right tabular-nums">{r.meetings_held}</td>
+                  <td className="px-5 py-3 text-right tabular-nums">{r.activations_delivered}</td>
+                  <td className="px-5 py-3 text-right tabular-nums">{r.tasks_completed}</td>
                   <td className="px-5 py-3 text-xs text-muted-foreground">
                     {r.last_active_at ? new Date(r.last_active_at).toLocaleDateString() : "—"}
                   </td>

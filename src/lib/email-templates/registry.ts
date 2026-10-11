@@ -34,6 +34,7 @@ import { template as commitmentReceived } from './commitment-received'
 import { template as accountPendingApproval } from './account-pending-approval'
 import { template as accountApproved } from './account-approved'
 import { template as accountDeclined } from './account-declined'
+import { template as igeNotice } from './ige-notice'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'contact-confirmation': contactConfirmation,
@@ -51,6 +52,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'complaint-internal': complaintInternal,
   'complaint-reply': complaintReply,
   'new-message': newMessage,
+  'ige-notice': igeNotice,
   'vetting-status': vettingStatus,
   'payment-link': paymentLink,
   'deal-status': dealStatus,

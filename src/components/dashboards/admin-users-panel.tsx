@@ -17,6 +17,8 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
 import { TextArea } from "@/components/signup/profile-fields";
+import { Link } from "@tanstack/react-router";
+import { DualControlPanel } from "@/components/admin/user-governance";
 
 type PlatformUser = {
   id: string;
@@ -171,6 +173,19 @@ function UserDetailSheet({
               </section>
             )}
 
+            {user && (
+              <div className="flex flex-wrap gap-2 border-t border-border pt-4">
+                <Button asChild size="sm" variant="outline">
+                  <Link to="/dashboard/view-as/$userId" params={{ userId: user.id }}>View as User</Link>
+                </Button>
+                {canManage && !user.roles.includes("super_admin") && (
+                  <Button asChild size="sm" variant="outline">
+                    <Link to="/dashboard/user-record/$userId" params={{ userId: user.id }}>Edit record / upload files</Link>
+                  </Button>
+                )}
+              </div>
+            )}
+
             {canManage && user && !user.roles.includes("super_admin") && (
               <div className="space-y-3 border-t border-border pt-4">
                 {!user.is_active && !user.is_suspended && (
@@ -253,8 +268,15 @@ export function AdminUsersPanel() {
   const mut = useMutation({
     mutationFn: (v: { user_id: string; suspended: boolean; reason?: string }) =>
       suspend({ data: v }),
-    onSuccess: (_res, vars) => {
-      toast.success(vars.suspended ? "Account deactivated" : "Account reactivated");
+    onSuccess: (res, vars) => {
+      toast.success(
+        res.pending
+          ? "Sent for a second Super Admin's sign-off. The account stays active until then."
+          : vars.suspended
+            ? "Account deactivated"
+            : "Account reactivated",
+      );
+      qc.invalidateQueries({ queryKey: ["dual-control"] });
       qc.invalidateQueries({ queryKey: ["admin-users"] });
       setSuspendTarget(null);
     },
@@ -285,6 +307,7 @@ export function AdminUsersPanel() {
 
   return (
     <div className="space-y-6">
+      <DualControlPanel />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total users</div>
