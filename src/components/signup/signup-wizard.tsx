@@ -12,6 +12,7 @@ import { AuthShell } from "@/components/auth-shell";
 import { SignupProfileStep } from "@/components/signup/profile-step";
 import { SignupOtpStep } from "@/components/signup/signup-otp-step";
 import { useAuth } from "@/lib/auth-context";
+import { markSignedIn, wasRemembered } from "@/lib/session-policy";
 import {
   SIGNUP_ROLES,
   type SignupRole,
@@ -241,6 +242,7 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
       return;
     }
     if (data.session?.user && isEmailConfirmed(data.session.user)) {
+      markSignedIn({ rememberMe: wasRemembered(), email });
       try {
         await startOnboarding(role);
         toast.success("Account created — now complete onboarding");
@@ -268,6 +270,11 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
     const { data: sessionData } = await supabase.auth.getSession();
     const verifiedUser = sessionData.session?.user ?? (await supabase.auth.getUser()).data.user;
     if (!verifiedUser) throw new Error("Session missing after verification");
+    // A new session needs a fresh sign-in stamp. Without it, a stamp or
+    // heartbeat left in this browser by an earlier session makes the session
+    // guard judge this one expired and sign the person straight back out,
+    // bouncing them from onboarding to a /signup stuck on "Loading…".
+    markSignedIn({ rememberMe: wasRemembered(), email: verifiedUser.email ?? email });
 
     await startOnboarding(role);
     toast.success("Email verified — now complete onboarding");
