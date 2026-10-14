@@ -48,6 +48,11 @@ export const Route = createFileRoute("/onboarding/wizard")({
   // completion bar and every feature lock link back in (§3.2A).
   validateSearch: z.object({ section: z.string().max(4).optional() }),
   head: () => ({ meta: [{ title: "Onboarding — IGE" }] }),
+  // The session lives in the browser, so the server render has no token to
+  // send: run the loader client-side only. Without this, every full page load
+  // of the wizard (refresh, typed URL, plain link) failed the auth check on
+  // the server and bounced a signed-in person to /signup.
+  ssr: false,
   loader: async () => {
     try {
       const result = (await loadWizardState({ data: undefined as never })) as {
