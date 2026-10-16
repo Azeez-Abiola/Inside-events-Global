@@ -14,6 +14,7 @@ import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
 import { CreativeTypePicker } from "@/components/onboarding/sections/creative-hub-sections";
 import { saveOnboardingSection } from "@/lib/onboarding.functions";
 import { getSectionsForRole, type OnboardingRole } from "@/lib/onboarding-constants";
+import { isSignupRole } from "@/lib/signup-roles";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function odb(): any {
@@ -25,11 +26,34 @@ const loadWizardState = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
     const userId = (context as any).userId as string;
-    const { data } = await odb()
+    let { data } = await odb()
       .from("onboarding_applications")
       .select("role, sections, current_section, status, reviewer_notes")
       .eq("user_id", userId)
       .maybeSingle();
+    // A role chosen at signup but no application yet (Google sign-up, or a
+    // save that never landed): start the application for that role instead of
+    // asking for the role again. Only ever creates — an existing application,
+    // and the progress in it, is never touched here.
+    if (!data) {
+      const { data: roleRows } = await odb().from("user_roles").select("role").eq("user_id", userId);
+      const role = ((roleRows ?? []) as { role: string }[]).map((r) => r.role).find((r) => isSignupRole(r));
+      if (role) {
+        const { data: created } = await odb()
+          .from("onboarding_applications")
+          .insert({
+            user_id: userId,
+            role,
+            sections: { __role: { role } },
+            section_status: {},
+            current_section: 0,
+            status: "draft",
+          })
+          .select("role, sections, current_section, status, reviewer_notes")
+          .maybeSingle();
+        data = created;
+      }
+    }
     // Cast to a JSON-serializable type so ServerFn is happy
     const app = data
       ? {
