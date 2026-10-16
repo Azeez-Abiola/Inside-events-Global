@@ -61,11 +61,59 @@ const loadWizardState = createServerFn({ method: "POST" })
           current_section: (data as { current_section: number }).current_section,
           status: (data as { status: string }).status,
           reviewer_notes: (data as { reviewer_notes: Record<string, string> }).reviewer_notes ?? {},
-          sections: (data as { sections: Record<string, Record<string, string>> }).sections ?? {},
+          sections: await withSignupDefaults(
+            userId,
+            (data as { role: string }).role,
+            (data as { sections: Record<string, Record<string, string>> }).sections ?? {},
+          ),
         }
       : null;
     return { app };
   });
+
+/** Where each role's Section A keeps the organisation name from signup. */
+const ORG_FIELD: Record<string, string> = {
+  organiser: "org_name",
+  sponsor: "brand_name",
+  media_partner: "outlet_name",
+  referral_partner: "company_name",
+  partnerships_pro: "company_name",
+};
+
+/**
+ * Section A asks for the name, email, phone and organisation the signup form
+ * already collected. Pre-fill them from the account (signUp stores them in the
+ * user metadata) so nobody types them twice. Anything already saved in
+ * Section A wins; this only fills fields that are still empty.
+ */
+async function withSignupDefaults(
+  userId: string,
+  role: string,
+  sections: Record<string, Record<string, string>>,
+): Promise<Record<string, Record<string, string>>> {
+  try {
+    const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
+    const u = data.user;
+    if (!u) return sections;
+    const meta = (u.user_metadata ?? {}) as Record<string, unknown>;
+    const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+    const defaults: Record<string, string> = {
+      full_name: str(meta.full_name) || str(meta.name),
+      email: u.email ?? "",
+      phone: str(meta.phone),
+    };
+    const orgKey = ORG_FIELD[role];
+    if (orgKey) defaults[orgKey] = str(meta.company_name);
+    const saved = sections.a ?? {};
+    const a: Record<string, string> = { ...saved };
+    for (const [k, v] of Object.entries(defaults)) {
+      if (v && !str(saved[k])) a[k] = v;
+    }
+    return { ...sections, a };
+  } catch {
+    return sections;
+  }
+}
 
 export const Route = createFileRoute("/onboarding/wizard")({
   // `?section=h` opens that section directly, which is how the profile
