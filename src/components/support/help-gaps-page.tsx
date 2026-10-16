@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { WorkspacePage } from "@/components/dashboards/workspace-page";
 import { DashboardPanel } from "@/components/dashboards/dashboard-shell";
 import { getHelpContentGaps } from "@/lib/help-feedback.functions";
+import { PaginatedTable } from "@/components/paginated-table";
 
 /** Help Center content-gap report for Support (TAB 17 §17.3). */
 export function HelpGapsPage() {
@@ -38,7 +39,7 @@ export function HelpGapsPage() {
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           <DashboardPanel title="Answers, least helpful first">
-            <table className="w-full text-sm">
+            <PaginatedTable className="w-full text-sm">
               <thead className="text-left text-xs text-muted-foreground">
                 <tr>
                   <th className="pb-2">Question</th>
@@ -62,7 +63,7 @@ export function HelpGapsPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </PaginatedTable>
           </DashboardPanel>
           <DashboardPanel
             title="Questions with no answer"

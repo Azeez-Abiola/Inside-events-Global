@@ -30,6 +30,7 @@ import {
   type DeliverableItem,
   type MatrixDeal,
 } from "@/lib/deliverables.functions";
+import { PaginatedTable } from "@/components/paginated-table";
 
 const STATUS_STYLE: Record<string, string> = {
   promised: "bg-muted text-muted-foreground",
@@ -412,7 +413,7 @@ export function DeliverablesPage() {
                 </ul>
               )}
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <PaginatedTable className="w-full text-sm">
                   <thead className="border-b border-border text-left text-xs text-muted-foreground">
                     <tr>
                       <th className="px-4 py-2 font-medium">Asset</th>
@@ -438,7 +439,7 @@ export function DeliverablesPage() {
                       </tr>
                     )}
                   </tbody>
-                </table>
+                </PaginatedTable>
               </div>
               <AddItem deal={deal} onChanged={refresh} />
             </DashboardPanel>

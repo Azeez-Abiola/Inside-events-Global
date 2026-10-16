@@ -10,6 +10,7 @@ import { InfoTip } from "@/components/info-tip";
 import { downloadCsv } from "@/lib/csv-export";
 import { downloadXlsx } from "@/lib/xlsx-export";
 import { getReport, type ReportResult, type ReportType } from "@/lib/reports.functions";
+import { PaginatedTable } from "@/components/paginated-table";
 
 const REPORTS: { id: ReportType; label: string; blurb: string; periodic: boolean }[] = [
   {
@@ -271,7 +272,7 @@ export function ReportsPage() {
                   <p className="text-xs text-muted-foreground">Nothing recorded for this period.</p>
                 ) : (
                   <div className="overflow-x-auto rounded-lg border border-border">
-                    <table className="w-full text-xs">
+                    <PaginatedTable className="w-full text-xs">
                       <thead className="bg-muted/40 text-left text-muted-foreground">
                         <tr>
                           {t.headers.map((h) => (
@@ -295,7 +296,7 @@ export function ReportsPage() {
                           </tr>
                         ))}
                       </tbody>
-                    </table>
+                    </PaginatedTable>
                     {t.rows.length > 50 && (
                       <p className="border-t border-border px-3 py-2 text-[11px] text-muted-foreground">
                         Showing 50 of {t.rows.length}. The download has every row.

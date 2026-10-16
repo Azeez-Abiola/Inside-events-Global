@@ -16,6 +16,7 @@ import {
   type PaymentDetails,
 } from "@/lib/account-settings.functions";
 import { NOTIFICATION_CATEGORIES } from "@/lib/notification-prefs";
+import { PaginatedTable } from "@/components/paginated-table";
 
 const input = "w-full rounded-md border border-input bg-background px-3 py-2 text-sm";
 
@@ -207,7 +208,7 @@ export function PaymentDetailsTab() {
         <h3 className="font-semibold">Platform payment history</h3>
         {data.history.length ? (
           <div className="mt-3 overflow-x-auto">
-            <table className="w-full text-sm">
+            <PaginatedTable className="w-full text-sm">
               <thead className="text-left text-xs text-muted-foreground">
                 <tr>
                   <th className="py-2">Event</th>
@@ -239,7 +240,7 @@ export function PaymentDetailsTab() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </PaginatedTable>
           </div>
         ) : (
           <p className="mt-2 text-sm text-muted-foreground">No platform-processed payments yet.</p>
@@ -281,7 +282,7 @@ function AlertPreferences() {
           Alert settings are waiting on a platform update.
         </p>
       )}
-      <table className="mt-4 w-full text-sm">
+      <PaginatedTable className="mt-4 w-full text-sm">
         <thead className="text-left text-xs text-muted-foreground">
           <tr>
             <th className="pb-2 font-medium">Alert</th>
@@ -320,7 +321,7 @@ function AlertPreferences() {
             );
           })}
         </tbody>
-      </table>
+      </PaginatedTable>
     </div>
   );
 }

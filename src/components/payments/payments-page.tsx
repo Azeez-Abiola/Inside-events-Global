@@ -22,6 +22,7 @@ import {
   type Vendor,
 } from "@/lib/vendors.functions";
 import { can, type WorkspaceRole } from "@/lib/workspace-permissions";
+import { PaginatedTable } from "@/components/paginated-table";
 
 type Tab = "payments" | "vendors" | "budget";
 
@@ -377,7 +378,7 @@ export function PaymentsPage() {
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <PaginatedTable className="w-full text-sm">
                 <thead className="border-b border-border text-left text-xs text-muted-foreground">
                   <tr>
                     <th className="px-5 py-2.5 font-medium">Payment</th>
@@ -454,7 +455,7 @@ export function PaymentsPage() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </PaginatedTable>
             </div>
           )}
         </DashboardPanel>
@@ -559,7 +560,7 @@ export function PaymentsPage() {
           bodyClassName="p-0"
         >
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <PaginatedTable className="w-full text-sm">
               <thead className="border-b border-border text-left text-xs text-muted-foreground">
                 <tr>
                   <th className="px-5 py-2.5 font-medium">Event</th>
@@ -644,7 +645,7 @@ export function PaymentsPage() {
                   </tr>
                 )}
               </tbody>
-            </table>
+            </PaginatedTable>
           </div>
         </DashboardPanel>
       )}

@@ -17,6 +17,7 @@ import {
   type CrmDeal,
   type CrmOutreach,
 } from "@/lib/crm.functions";
+import { PaginatedTable } from "@/components/paginated-table";
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -129,7 +130,7 @@ export function OutreachPanel({
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <PaginatedTable className="w-full text-sm">
               <thead className="border-b border-border text-left text-xs text-muted-foreground">
                 <tr>
                   <th className="px-5 py-2 font-medium">Date</th>
@@ -152,7 +153,7 @@ export function OutreachPanel({
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </PaginatedTable>
           </div>
         )}
       </DashboardPanel>

@@ -47,6 +47,7 @@ const DEAL_STATUSES = [
 ];
 
 import { AdminOnboardingVettingPanel } from "@/components/dashboards/admin-onboarding-vetting-panel";
+import { PaginatedTable } from "@/components/paginated-table";
 
 export function AdminDashboard({ section = "overview" }: { section?: "overview" | "vetting" | "submissions" | "waitlist" | "revenue" | "controls" | "analytics" | "partners" | "media-requests" | "users" | "onboarding" }) {
   const { fmtUsd, displayCurrency, labelSuffix } = useDisplayCurrency();
@@ -462,7 +463,7 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
               </h3>
               <p className="mt-1 text-xs text-muted-foreground">Per event-type category. Standard/premium = referral partner share; platform = IGE take.</p>
               <div className="mt-4 rounded-xl border border-border bg-card overflow-hidden overflow-x-auto">
-                <table className="w-full text-sm min-w-[640px]">
+                <PaginatedTable className="w-full text-sm min-w-[640px]">
                   <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide border-b border-border text-muted-foreground">
                     <tr><th className="px-4 py-3">Category</th><th className="px-4 py-3">Standard %</th><th className="px-4 py-3">Premium %</th><th className="px-4 py-3">Platform %</th><th className="px-4 py-3"></th></tr>
                   </thead>
@@ -474,7 +475,7 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                       <tr><td colSpan={5} className="px-4 py-8 text-center text-muted-foreground text-sm">No commission config rows.</td></tr>
                     )}
                   </tbody>
-                </table>
+                </PaginatedTable>
               </div>
             </section>
 
@@ -563,7 +564,7 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                   <h3 className="font-display font-semibold text-base text-foreground">Pending inquiries ({(revenueData?.inquiries ?? []).length})</h3>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm min-w-[700px]">
+                  <PaginatedTable className="w-full text-sm min-w-[700px]">
                     <thead className="bg-amber-100/40 text-left text-xs uppercase tracking-wide border-b border-amber-200/60 text-amber-800">
                       <tr>
                         <th className="px-4 py-3">Event</th><th className="px-4 py-3">Company</th><th className="px-4 py-3">Budget</th><th className="px-4 py-3">Referral</th><th className="px-4 py-3">Action</th>
@@ -611,7 +612,7 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                         );
                       })}
                     </tbody>
-                  </table>
+                  </PaginatedTable>
                 </div>
               </div>
             )}
@@ -624,7 +625,7 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                   <p className="text-xs text-muted-foreground mt-0.5">Bespoke sponsorship briefs — separate from standard commitment forms.</p>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm min-w-[800px]">
+                  <PaginatedTable className="w-full text-sm min-w-[800px]">
                     <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide border-b border-border text-muted-foreground">
                       <tr>
                         <th className="px-4 py-3">Event</th>
@@ -665,7 +666,7 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                         );
                       })}
                     </tbody>
-                  </table>
+                  </PaginatedTable>
                 </div>
               </div>
             )}
@@ -712,7 +713,7 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                 }
               />
               <div className="overflow-x-auto">
-                <table className="w-full text-sm min-w-[920px]">
+                <PaginatedTable className="w-full text-sm min-w-[920px]">
                   <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide border-b border-border text-muted-foreground">
                     <tr>
                       <th className="px-4 py-3">Event</th><th className="px-4 py-3">Value</th><th className="px-4 py-3">{displayCurrency}</th><th className="px-4 py-3">IGE</th><th className="px-4 py-3">Partner</th><th className="px-4 py-3">Assigned</th><th className="px-4 py-3">Stage</th><th className="px-4 py-3">Contract</th><th className="px-4 py-3">Payment</th><th className="px-4 py-3">Payout</th>
@@ -846,7 +847,7 @@ export function AdminDashboard({ section = "overview" }: { section?: "overview" 
                       <tr><td colSpan={10} className="px-4 py-10 text-center text-muted-foreground">No deals match your filters.</td></tr>
                     ) : null}
                   </tbody>
-                </table>
+                </PaginatedTable>
               </div>
             </div>
           </div>

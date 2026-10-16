@@ -72,6 +72,7 @@ import {
 } from "@/components/ui/sheet";
 import { FundingGapHero } from "@/components/fundraising/funding-gap-hero";
 import { MatchNotificationsPanel } from "@/components/matches/match-notifications-panel";
+import { PaginatedTable } from "@/components/paginated-table";
 
 const EVENT_TABS: { id: EventStatusGroup; label: string }[] = [
   { id: "all", label: "All events" },
@@ -1052,7 +1053,7 @@ function PipelineEventTable({
         </span>
       </div>
       <div className="overflow-x-auto -mx-5 px-5">
-        <table className="w-full min-w-[800px] text-sm">
+        <PaginatedTable className="w-full min-w-[800px] text-sm">
           <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
             <tr>
               <th className="px-3 py-3">Company</th>
@@ -1137,7 +1138,7 @@ function PipelineEventTable({
               </tr>
             )}
           </tbody>
-        </table>
+        </PaginatedTable>
       </div>
     </DashboardPanel>
   );
