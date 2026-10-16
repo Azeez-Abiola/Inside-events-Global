@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
+import { GateSpinner } from "@/components/gate-spinner";
 import { useAuth } from "@/lib/auth-context";
 
 /**
@@ -24,8 +24,9 @@ export function PendingApprovalGate({ children }: { children: React.ReactNode })
   if (!blocked) return <>{children}</>;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-    </div>
+    <GateSpinner
+      className="bg-background"
+      waitingOn={{ gate: "pending-approval", redirectingTo: "/onboarding/pending", isPendingApproval }}
+    />
   );
 }

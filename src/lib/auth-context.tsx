@@ -204,7 +204,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       if (data.session) {
         const { error: userError, data: userData } = await supabase.auth.getUser();
-        if (userError?.message?.toLowerCase().includes("refresh") || userError?.status === 401) {
+        // A session for an account that has since been deleted is signature
+        // valid but useless: Supabase answers 403 "User from sub claim in JWT
+        // does not exist". Treat it like an expired one rather than carrying a
+        // dead session into the app, where nothing it asks for ever loads.
+        const deadAccount =
+          userError?.status === 403 ||
+          (userError as { code?: string } | null)?.code === "user_not_found" ||
+          /does not exist/i.test(userError?.message ?? "");
+        if (userError?.message?.toLowerCase().includes("refresh") || userError?.status === 401 || deadAccount) {
           await supabase.auth.signOut({ scope: "local" });
           setSession(null);
           setRoles([]);

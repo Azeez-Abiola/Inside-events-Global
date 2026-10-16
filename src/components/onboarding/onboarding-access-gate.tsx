@@ -16,7 +16,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2 } from "lucide-react";
+import { GateSpinner } from "@/components/gate-spinner";
 import { useAuth } from "@/lib/auth-context";
 import { getOnboardingGateState } from "@/lib/onboarding.functions";
 
@@ -45,9 +45,9 @@ export function OnboardingAccessGate({ children }: { children: React.ReactNode }
   if (isStaff) return <>{children}</>;
   if (loading || !rolesReady || isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-dashboard-canvas">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <GateSpinner
+        waitingOn={{ gate: "onboarding", authLoading: loading, rolesReady, roles, onboardingStatusLoading: isLoading }}
+      />
     );
   }
   return <>{children}</>;
