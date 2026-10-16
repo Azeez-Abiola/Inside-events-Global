@@ -56,3 +56,42 @@ export const ensureSignupRole = createServerFn({ method: "POST" })
 
     return { ok: true, role: data.role };
   });
+
+/**
+ * Recover an account's role when the app finds none. Signup records the
+ * chosen role on the account (user metadata) and in the onboarding
+ * application as well as in user_roles, so a missing user_roles row — or a
+ * client read that came back empty — should never strand someone on the
+ * role picker. Returns the role, or null when none is recorded anywhere.
+ */
+export const recoverMyRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+    const { data: rows } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    const existing = (rows ?? [])
+      .map((r) => r.role as string)
+      .find((r) => SignupRoleSchema.safeParse(r).success);
+    if (existing) return { role: existing };
+
+    const { data: auth } = await supabaseAdmin.auth.admin.getUserById(userId);
+    const metaRole = (auth.user?.user_metadata as Record<string, unknown> | undefined)?.role;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- onboarding_applications postdates the generated types.
+    const { data: app } = await (supabaseAdmin as any)
+      .from("onboarding_applications")
+      .select("role")
+      .eq("user_id", userId)
+      .maybeSingle();
+    const candidate = [metaRole, app?.role].find((r) => SignupRoleSchema.safeParse(r).success) as
+      string | undefined;
+    if (!candidate) return { role: null };
+
+    const { error } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: userId, role: candidate } as never);
+    if (error && !error.message.toLowerCase().includes("duplicate")) throw new Error(error.message);
+    return { role: candidate };
+  });
