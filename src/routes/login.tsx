@@ -29,6 +29,12 @@ async function signInGuard(body: { email: string; event: "check" | "failed" | "s
   }
 }
 
+/**
+ * Google sign-in is hidden until the Google Cloud OAuth client is connected.
+ * Set VITE_GOOGLE_SIGN_IN=true in Vercel to bring the button back.
+ */
+const GOOGLE_SIGN_IN_ENABLED = import.meta.env.VITE_GOOGLE_SIGN_IN === "true";
+
 const search = z.object({
   redirect: z.string().optional(),
   email: z.string().max(200).optional(),
@@ -215,8 +221,12 @@ function LoginPage() {
           {submitting ? "Signing in…" : "Sign in"}
         </button>
       </form>
-      <Divider />
-      <GoogleButton onClick={() => void handleGoogle()} loading={googleLoading} />
+      {GOOGLE_SIGN_IN_ENABLED && (
+        <>
+          <Divider />
+          <GoogleButton onClick={() => void handleGoogle()} loading={googleLoading} />
+        </>
+      )}
       <p className="mt-3 text-center text-[11px] leading-relaxed text-muted-foreground">
         For security, every session ends 24 hours after you sign in, whether or not Remember me is
         ticked.
