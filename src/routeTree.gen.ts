@@ -19,7 +19,6 @@ import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as KnowledgeBaseRouteImport } from './routes/knowledge-base'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
-import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as OrganisersRouteImport } from './routes/organisers'
 import { Route as PartnersRouteImport } from './routes/partners'
 import { Route as PricingRouteImport } from './routes/pricing'
@@ -44,6 +43,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as EventsSlugRouteImport } from './routes/events.$slug'
+import { Route as OnboardingIndexRouteImport } from './routes/onboarding.index'
 import { Route as OnboardingAdminAccessRouteImport } from './routes/onboarding.admin-access'
 import { Route as OnboardingPendingRouteImport } from './routes/onboarding.pending'
 import { Route as OnboardingProfileRouteImport } from './routes/onboarding.profile'
@@ -144,11 +144,6 @@ const LoginRoute = LoginRouteImport.update({
 const MarketplaceRoute = MarketplaceRouteImport.update({
   id: '/marketplace',
   path: '/marketplace',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingRoute = OnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrganisersRoute = OrganisersRouteImport.update({
@@ -271,30 +266,35 @@ const EventsSlugRoute = EventsSlugRouteImport.update({
   path: '/events/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingIndexRoute = OnboardingIndexRouteImport.update({
+  id: '/onboarding/',
+  path: '/onboarding/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingAdminAccessRoute = OnboardingAdminAccessRouteImport.update({
-  id: '/admin-access',
-  path: '/admin-access',
-  getParentRoute: () => OnboardingRoute,
+  id: '/onboarding/admin-access',
+  path: '/onboarding/admin-access',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingPendingRoute = OnboardingPendingRouteImport.update({
-  id: '/pending',
-  path: '/pending',
-  getParentRoute: () => OnboardingRoute,
+  id: '/onboarding/pending',
+  path: '/onboarding/pending',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingProfileRoute = OnboardingProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => OnboardingRoute,
+  id: '/onboarding/profile',
+  path: '/onboarding/profile',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoleRoute = OnboardingRoleRouteImport.update({
-  id: '/role',
-  path: '/role',
-  getParentRoute: () => OnboardingRoute,
+  id: '/onboarding/role',
+  path: '/onboarding/role',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingWizardRoute = OnboardingWizardRouteImport.update({
-  id: '/wizard',
-  path: '/wizard',
-  getParentRoute: () => OnboardingRoute,
+  id: '/onboarding/wizard',
+  path: '/onboarding/wizard',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const RCodeRoute = RCodeRouteImport.update({
   id: '/r/$code',
@@ -580,7 +580,6 @@ export interface FileRoutesByFullPath {
   '/knowledge-base': typeof KnowledgeBaseRoute
   '/login': typeof LoginRoute
   '/marketplace': typeof MarketplaceRoute
-  '/onboarding': typeof OnboardingRouteWithChildren
   '/organisers': typeof OrganisersRoute
   '/partners': typeof PartnersRoute
   '/pricing': typeof PricingRoute
@@ -611,6 +610,7 @@ export interface FileRoutesByFullPath {
   '/onboarding/role': typeof OnboardingRoleRoute
   '/onboarding/wizard': typeof OnboardingWizardRoute
   '/r/$code': typeof RCodeRoute
+  '/onboarding/': typeof OnboardingIndexRoute
   '/admin/revenue': typeof AuthenticatedAdminRevenueRoute
   '/admin/submissions': typeof AuthenticatedAdminSubmissionsRoute
   '/admin/vetting': typeof AuthenticatedAdminVettingRoute
@@ -668,7 +668,6 @@ export interface FileRoutesByTo {
   '/knowledge-base': typeof KnowledgeBaseRoute
   '/login': typeof LoginRoute
   '/marketplace': typeof MarketplaceRoute
-  '/onboarding': typeof OnboardingRouteWithChildren
   '/organisers': typeof OrganisersRoute
   '/partners': typeof PartnersRoute
   '/pricing': typeof PricingRoute
@@ -697,6 +696,7 @@ export interface FileRoutesByTo {
   '/onboarding/role': typeof OnboardingRoleRoute
   '/onboarding/wizard': typeof OnboardingWizardRoute
   '/r/$code': typeof RCodeRoute
+  '/onboarding': typeof OnboardingIndexRoute
   '/admin/revenue': typeof AuthenticatedAdminRevenueRoute
   '/admin/submissions': typeof AuthenticatedAdminSubmissionsRoute
   '/admin/vetting': typeof AuthenticatedAdminVettingRoute
@@ -756,7 +756,6 @@ export interface FileRoutesById {
   '/knowledge-base': typeof KnowledgeBaseRoute
   '/login': typeof LoginRoute
   '/marketplace': typeof MarketplaceRoute
-  '/onboarding': typeof OnboardingRouteWithChildren
   '/organisers': typeof OrganisersRoute
   '/partners': typeof PartnersRoute
   '/pricing': typeof PricingRoute
@@ -787,6 +786,7 @@ export interface FileRoutesById {
   '/onboarding/role': typeof OnboardingRoleRoute
   '/onboarding/wizard': typeof OnboardingWizardRoute
   '/r/$code': typeof RCodeRoute
+  '/onboarding/': typeof OnboardingIndexRoute
   '/_authenticated/admin/revenue': typeof AuthenticatedAdminRevenueRoute
   '/_authenticated/admin/submissions': typeof AuthenticatedAdminSubmissionsRoute
   '/_authenticated/admin/vetting': typeof AuthenticatedAdminVettingRoute
@@ -846,7 +846,6 @@ export interface FileRouteTypes {
     | '/knowledge-base'
     | '/login'
     | '/marketplace'
-    | '/onboarding'
     | '/organisers'
     | '/partners'
     | '/pricing'
@@ -877,6 +876,7 @@ export interface FileRouteTypes {
     | '/onboarding/role'
     | '/onboarding/wizard'
     | '/r/$code'
+    | '/onboarding/'
     | '/admin/revenue'
     | '/admin/submissions'
     | '/admin/vetting'
@@ -934,7 +934,6 @@ export interface FileRouteTypes {
     | '/knowledge-base'
     | '/login'
     | '/marketplace'
-    | '/onboarding'
     | '/organisers'
     | '/partners'
     | '/pricing'
@@ -963,6 +962,7 @@ export interface FileRouteTypes {
     | '/onboarding/role'
     | '/onboarding/wizard'
     | '/r/$code'
+    | '/onboarding'
     | '/admin/revenue'
     | '/admin/submissions'
     | '/admin/vetting'
@@ -1021,7 +1021,6 @@ export interface FileRouteTypes {
     | '/knowledge-base'
     | '/login'
     | '/marketplace'
-    | '/onboarding'
     | '/organisers'
     | '/partners'
     | '/pricing'
@@ -1052,6 +1051,7 @@ export interface FileRouteTypes {
     | '/onboarding/role'
     | '/onboarding/wizard'
     | '/r/$code'
+    | '/onboarding/'
     | '/_authenticated/admin/revenue'
     | '/_authenticated/admin/submissions'
     | '/_authenticated/admin/vetting'
@@ -1111,7 +1111,6 @@ export interface RootRouteChildren {
   KnowledgeBaseRoute: typeof KnowledgeBaseRoute
   LoginRoute: typeof LoginRoute
   MarketplaceRoute: typeof MarketplaceRoute
-  OnboardingRoute: typeof OnboardingRouteWithChildren
   OrganisersRoute: typeof OrganisersRoute
   PartnersRoute: typeof PartnersRoute
   PricingRoute: typeof PricingRoute
@@ -1128,7 +1127,13 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   EventsSlugRoute: typeof EventsSlugRoute
+  OnboardingAdminAccessRoute: typeof OnboardingAdminAccessRoute
+  OnboardingPendingRoute: typeof OnboardingPendingRoute
+  OnboardingProfileRoute: typeof OnboardingProfileRoute
+  OnboardingRoleRoute: typeof OnboardingRoleRoute
+  OnboardingWizardRoute: typeof OnboardingWizardRoute
   RCodeRoute: typeof RCodeRoute
+  OnboardingIndexRoute: typeof OnboardingIndexRoute
   ApiAuthSendEmailHookRoute: typeof ApiAuthSendEmailHookRoute
   ApiCalendarTokenRoute: typeof ApiCalendarTokenRoute
   ApiPublicContactRoute: typeof ApiPublicContactRoute
@@ -1213,13 +1218,6 @@ declare module '@tanstack/react-router' {
       path: '/marketplace'
       fullPath: '/marketplace'
       preLoaderRoute: typeof MarketplaceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding': {
-      id: '/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/organisers': {
@@ -1390,40 +1388,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboarding/': {
+      id: '/onboarding/'
+      path: '/onboarding'
+      fullPath: '/onboarding/'
+      preLoaderRoute: typeof OnboardingIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding/admin-access': {
       id: '/onboarding/admin-access'
-      path: '/admin-access'
+      path: '/onboarding/admin-access'
       fullPath: '/onboarding/admin-access'
       preLoaderRoute: typeof OnboardingAdminAccessRouteImport
-      parentRoute: typeof OnboardingRoute
+      parentRoute: typeof rootRouteImport
     }
     '/onboarding/pending': {
       id: '/onboarding/pending'
-      path: '/pending'
+      path: '/onboarding/pending'
       fullPath: '/onboarding/pending'
       preLoaderRoute: typeof OnboardingPendingRouteImport
-      parentRoute: typeof OnboardingRoute
+      parentRoute: typeof rootRouteImport
     }
     '/onboarding/profile': {
       id: '/onboarding/profile'
-      path: '/profile'
+      path: '/onboarding/profile'
       fullPath: '/onboarding/profile'
       preLoaderRoute: typeof OnboardingProfileRouteImport
-      parentRoute: typeof OnboardingRoute
+      parentRoute: typeof rootRouteImport
     }
     '/onboarding/role': {
       id: '/onboarding/role'
-      path: '/role'
+      path: '/onboarding/role'
       fullPath: '/onboarding/role'
       preLoaderRoute: typeof OnboardingRoleRouteImport
-      parentRoute: typeof OnboardingRoute
+      parentRoute: typeof rootRouteImport
     }
     '/onboarding/wizard': {
       id: '/onboarding/wizard'
-      path: '/wizard'
+      path: '/onboarding/wizard'
       fullPath: '/onboarding/wizard'
       preLoaderRoute: typeof OnboardingWizardRouteImport
-      parentRoute: typeof OnboardingRoute
+      parentRoute: typeof rootRouteImport
     }
     '/r/$code': {
       id: '/r/$code'
@@ -1880,26 +1885,6 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
-interface OnboardingRouteChildren {
-  OnboardingAdminAccessRoute: typeof OnboardingAdminAccessRoute
-  OnboardingPendingRoute: typeof OnboardingPendingRoute
-  OnboardingProfileRoute: typeof OnboardingProfileRoute
-  OnboardingRoleRoute: typeof OnboardingRoleRoute
-  OnboardingWizardRoute: typeof OnboardingWizardRoute
-}
-
-const OnboardingRouteChildren: OnboardingRouteChildren = {
-  OnboardingAdminAccessRoute: OnboardingAdminAccessRoute,
-  OnboardingPendingRoute: OnboardingPendingRoute,
-  OnboardingProfileRoute: OnboardingProfileRoute,
-  OnboardingRoleRoute: OnboardingRoleRoute,
-  OnboardingWizardRoute: OnboardingWizardRoute,
-}
-
-const OnboardingRouteWithChildren = OnboardingRoute._addFileChildren(
-  OnboardingRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
@@ -1911,7 +1896,6 @@ const rootRouteChildren: RootRouteChildren = {
   KnowledgeBaseRoute: KnowledgeBaseRoute,
   LoginRoute: LoginRoute,
   MarketplaceRoute: MarketplaceRoute,
-  OnboardingRoute: OnboardingRouteWithChildren,
   OrganisersRoute: OrganisersRoute,
   PartnersRoute: PartnersRoute,
   PricingRoute: PricingRoute,
@@ -1928,7 +1912,13 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   EventsSlugRoute: EventsSlugRoute,
+  OnboardingAdminAccessRoute: OnboardingAdminAccessRoute,
+  OnboardingPendingRoute: OnboardingPendingRoute,
+  OnboardingProfileRoute: OnboardingProfileRoute,
+  OnboardingRoleRoute: OnboardingRoleRoute,
+  OnboardingWizardRoute: OnboardingWizardRoute,
   RCodeRoute: RCodeRoute,
+  OnboardingIndexRoute: OnboardingIndexRoute,
   ApiAuthSendEmailHookRoute: ApiAuthSendEmailHookRoute,
   ApiCalendarTokenRoute: ApiCalendarTokenRoute,
   ApiPublicContactRoute: ApiPublicContactRoute,
