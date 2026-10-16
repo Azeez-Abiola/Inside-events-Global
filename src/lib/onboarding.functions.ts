@@ -297,14 +297,48 @@ export const getOnboardingGateState = createServerFn({ method: "POST" })
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
     const userId = (context as any).userId as string;
 
-    const { data: app } = await odb()
+    let { data: app } = await odb()
       .from("onboarding_applications")
       .select("role, section_status, status")
       .eq("user_id", userId)
       .maybeSingle();
 
-    // No application at all: a legacy account, or someone who has not picked
-    // a role yet. Neither is ours to block here.
+    // An account with a role but no application signed up before the
+    // onboarding wizard existed (or its first save never landed). Onboarding
+    // is expected of every account, so start the application for its role:
+    // it then counts as unfinished and the dashboard setup panel prompts them.
+    // Only ever creates — an existing application is never touched.
+    if (!app?.role) {
+      const { data: roleRows } = await odb().from("user_roles").select("role").eq("user_id", userId);
+      const role = ((roleRows ?? []) as { role: string }[]).map((r) => r.role).find((r) => isSignupRole(r));
+      if (role) {
+        const { data: created } = await odb()
+          .from("onboarding_applications")
+          .insert({
+            user_id: userId,
+            role,
+            sections: { __role: { role } },
+            section_status: {},
+            current_section: 0,
+            status: "draft",
+          })
+          .select("role, section_status, status")
+          .maybeSingle();
+        // Lost a race with another tab's insert: read the row that won.
+        app =
+          created ??
+          (
+            await odb()
+              .from("onboarding_applications")
+              .select("role, section_status, status")
+              .eq("user_id", userId)
+              .maybeSingle()
+          ).data;
+      }
+    }
+
+    // Still nothing: someone who has not picked a role yet (the dashboard's
+    // role recovery handles them). Not ours to block here.
     if (!app?.role) {
       return { hasApplication: false, progress: null, outstanding: [] as string[] };
     }
