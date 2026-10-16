@@ -5,6 +5,7 @@ import type {
   ActivationMilestone,
   ActivationTeamMember,
 } from "@/lib/activations.functions";
+import { PaginatedTable } from "@/components/paginated-table";
 
 /**
  * Board, Timeline, Calendar and Table views of activations (Module 4A).
@@ -272,7 +273,7 @@ export function ActivationBoard({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+      <PaginatedTable className="w-full text-sm">
         <thead className="border-b border-border/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
           <tr>
             <th className="px-5 py-3 font-semibold">Activation</th>
@@ -314,7 +315,7 @@ export function ActivationBoard({
             );
           })}
         </tbody>
-      </table>
+      </PaginatedTable>
     </div>
   );
 }

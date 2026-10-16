@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DashboardPageSkeleton } from "@/components/dashboards/dashboard-skeletons";
+import { PaginatedTable } from "@/components/paginated-table";
 
 export function DashboardHeader({
   title,
@@ -130,13 +131,18 @@ export function DashboardPanel({
 export function DashboardTable({
   children,
   className,
+  pageSize,
 }: {
   children: ReactNode;
   className?: string;
+  /** Rows per page; every dashboard table is paginated (default 10). */
+  pageSize?: number;
 }) {
   return (
     <div className={cn("overflow-x-auto", className)}>
-      <table className="w-full min-w-[640px] text-sm">{children}</table>
+      <PaginatedTable className="w-full min-w-[640px] text-sm" pageSize={pageSize}>
+        {children}
+      </PaginatedTable>
     </div>
   );
 }

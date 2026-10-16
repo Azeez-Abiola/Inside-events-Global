@@ -115,9 +115,13 @@ export function DashboardTourProvider({ children }: { children: ReactNode }) {
     void finishTour();
   }, [finishTour]);
 
-  // Auto-start for new / invited users on first dashboard visit
+  // Auto-start once, on a new account's first visit to the dashboard home.
+  // Afterwards the tour only runs from the "See tour" button.
   useEffect(() => {
     if (!user || !tourRole || autoStarted.current) return;
+    // Wait for the saved status. Deciding before it loads read "not loaded"
+    // as "never seen" and popped the tour up on every sign-in.
+    if (!tourStatus) return;
     if (completed[tourRole]) return;
     const onDashboardHome =
       loc.pathname === "/dashboard" || loc.pathname === "/dashboard/";
@@ -125,7 +129,16 @@ export function DashboardTourProvider({ children }: { children: ReactNode }) {
 
     autoStarted.current = true;
     beginTour();
-  }, [user, tourRole, completed, loc.pathname, beginTour]);
+    // Record it as seen as soon as it is shown, so closing the tab mid-tour
+    // does not bring it back on the next sign-in.
+    void markComplete({ data: { tour_role: tourRole } })
+      .then(() =>
+        qc.setQueryData(["dashboard-tour-status", user.id], {
+          completed: { ...completed, [tourRole]: true },
+        }),
+      )
+      .catch(() => {});
+  }, [user, tourRole, tourStatus, completed, loc.pathname, beginTour, markComplete, qc]);
 
   const value = useMemo(
     () => ({
