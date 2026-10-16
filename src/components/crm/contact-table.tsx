@@ -1,5 +1,6 @@
 import { DashboardPanel } from "@/components/dashboards/dashboard-shell";
 import type { CrmCompany, CrmContact } from "@/lib/crm.functions";
+import { PaginatedTable } from "@/components/paginated-table";
 
 /** The contacts list (TAB 4 §4.4.2). Rows open the drawer. */
 export function ContactTable({
@@ -19,7 +20,7 @@ export function ContactTable({
         <p className="px-5 py-12 text-center text-sm text-muted-foreground">{emptyHint}</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <PaginatedTable className="w-full text-sm">
             <thead className="border-b border-border/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="px-5 py-3 font-semibold">Name</th>
@@ -65,7 +66,7 @@ export function ContactTable({
                 </tr>
               ))}
             </tbody>
-          </table>
+          </PaginatedTable>
         </div>
       )}
     </DashboardPanel>

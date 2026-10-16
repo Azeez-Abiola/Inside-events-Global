@@ -12,6 +12,7 @@ import { SponsorBudgetPanel } from "@/components/dashboards/sponsor-budget-panel
 import { SponsorPipelinePanel } from "@/components/dashboards/sponsor-pipeline-panel";
 import { getSponsorDashboard } from "@/lib/deals.functions";
 import { fmtMoney } from "@/lib/currency";
+import { PaginatedTable } from "@/components/paginated-table";
 
 export function SponsorDashboard() {
   const [activeTab, setActiveTab] = useState<"commitments" | "pipeline" | "saved" | "fresh" | "budget" | "analytics">("commitments");
@@ -65,7 +66,7 @@ export function SponsorDashboard() {
         ) : activeTab === "commitments" ? (
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[600px]">
+              <PaginatedTable className="w-full text-sm min-w-[600px]">
                 <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
                   <tr>
                     <th className="px-5 py-3">Event</th>
@@ -119,7 +120,7 @@ export function SponsorDashboard() {
                     </tr>
                   )}
                 </tbody>
-              </table>
+              </PaginatedTable>
             </div>
           </div>
         ) : activeTab === "saved" ? (

@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Clock, Loader2 } from "lucide-react";
 import { getMyWorkspaces, getTeamActivity } from "@/lib/workspace.functions";
 import { ROLE_LABELS, type WorkspaceRole } from "@/lib/workspace-permissions";
+import { PaginatedTable } from "@/components/paginated-table";
 
 /**
  * Team Activity (TAB 4 §4.3) — the Manager role's reason to exist.
@@ -88,7 +89,7 @@ export function TeamActivity() {
         </p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <PaginatedTable className="w-full text-sm">
             <thead className="border-b border-border/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="px-5 py-3 font-semibold">Person</th>
@@ -123,7 +124,7 @@ export function TeamActivity() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </PaginatedTable>
         </div>
       )}
 

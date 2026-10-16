@@ -2,6 +2,7 @@ import { useState } from "react";
 import { GripVertical } from "lucide-react";
 import { DashboardPanel } from "@/components/dashboards/dashboard-shell";
 import type { CrmCompany, CrmContact, CrmDeal, CrmStage } from "@/lib/crm.functions";
+import { PaginatedTable } from "@/components/paginated-table";
 
 /**
  * Pipeline tracker — kanban and table views of deals through editable stages
@@ -187,7 +188,7 @@ export function PipelineBoard({
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <PaginatedTable className="w-full text-sm">
             <thead className="border-b border-border/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="px-5 py-3 font-semibold">Deal</th>
@@ -234,7 +235,7 @@ export function PipelineBoard({
                 </tr>
               ))}
             </tbody>
-          </table>
+          </PaginatedTable>
         </div>
       )}
     </DashboardPanel>

@@ -19,6 +19,7 @@ import { ReferralAnalyticsPanel } from "@/components/dashboards/dashboard-analyt
 import { getReferralDashboard, generateReferralLink } from "@/lib/referrals.functions";
 import { listMarketplaceEvents } from "@/lib/marketplace.functions";
 import { fmtMoney } from "@/lib/currency";
+import { PaginatedTable } from "@/components/paginated-table";
 
 type ReferralSection = "overview" | "links" | "deals" | "analytics" | "commissions";
 
@@ -400,7 +401,7 @@ export function ReferralDashboard({ section = "links" }: { section?: ReferralSec
               {isLoading ? (
                 <DashboardTableSkeleton rows={6} cols={5} />
               ) : (
-              <table className="w-full text-sm min-w-[700px]">
+              <PaginatedTable className="w-full text-sm min-w-[700px]">
                 <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
                   <tr>
                     <th className="px-5 py-3">Event</th>
@@ -444,7 +445,7 @@ export function ReferralDashboard({ section = "links" }: { section?: ReferralSec
                     </tr>
                   )}
                 </tbody>
-              </table>
+              </PaginatedTable>
               )}
             </div>
           </div>
@@ -476,7 +477,7 @@ export function ReferralDashboard({ section = "links" }: { section?: ReferralSec
             {isLoading ? (
               <DashboardTableSkeleton rows={6} cols={5} />
             ) : (
-            <table className="w-full text-sm min-w-[700px]">
+            <PaginatedTable className="w-full text-sm min-w-[700px]">
               <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
                 <tr>
                   <th className="px-5 py-3">Event</th>
@@ -529,7 +530,7 @@ export function ReferralDashboard({ section = "links" }: { section?: ReferralSec
                   </tr>
                 )}
               </tbody>
-            </table>
+            </PaginatedTable>
             )}
           </div>
         </div>
@@ -547,7 +548,7 @@ export function ReferralDashboard({ section = "links" }: { section?: ReferralSec
             {isLoading ? (
               <DashboardTableSkeleton rows={6} cols={5} />
             ) : (
-            <table className="w-full text-sm min-w-[700px]">
+            <PaginatedTable className="w-full text-sm min-w-[700px]">
               <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
                 <tr>
                   <th className="px-5 py-3">Event</th>
@@ -591,7 +592,7 @@ export function ReferralDashboard({ section = "links" }: { section?: ReferralSec
                   </tr>
                 )}
               </tbody>
-            </table>
+            </PaginatedTable>
             )}
           </div>
         </div>

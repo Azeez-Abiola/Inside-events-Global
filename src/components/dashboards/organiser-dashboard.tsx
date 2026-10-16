@@ -27,6 +27,7 @@ import {
   filterEventsByGroup,
   groupEventsByStatus,
 } from "@/lib/event-dashboard";
+import { PaginatedTable } from "@/components/paginated-table";
 
 const EVENT_TABS: { id: EventStatusGroup; label: string }[] = [
   { id: "all", label: "All events" },
@@ -324,7 +325,7 @@ function PipelineEventTable({
         <span className="inline-flex items-center gap-1"><MessageSquare className="h-3 w-3" /> {ev.inquiry_count ?? 0} inquiries</span>
       </div>
       <div className="overflow-x-auto -mx-5 px-5">
-        <table className="w-full min-w-[700px] text-sm">
+        <PaginatedTable className="w-full min-w-[700px] text-sm">
           <thead className="bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
             <tr>
               <th className="px-3 py-3">Company</th>
@@ -399,7 +400,7 @@ function PipelineEventTable({
               </tr>
             )}
           </tbody>
-        </table>
+        </PaginatedTable>
       </div>
     </DashboardPanel>
   );

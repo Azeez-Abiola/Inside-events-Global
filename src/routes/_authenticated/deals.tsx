@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/app-shell";
 import { getSponsorDashboard } from "@/lib/deals.functions";
 import { fmtMoney } from "@/lib/currency";
+import { PaginatedTable } from "@/components/paginated-table";
 
 export const Route = createFileRoute("/_authenticated/deals")({
   head: () => ({ meta: [{ title: "My deals - IGE" }] }),
@@ -22,7 +23,7 @@ function SponsorDeals() {
       <section className="mt-10">
         <h2 className="font-display text-xl font-semibold">My commitments</h2>
         <div className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
-          <table className="w-full text-sm">
+          <PaginatedTable className="w-full text-sm">
             <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
               <tr><th className="px-4 py-3">Event</th><th className="px-4 py-3">Budget</th><th className="px-4 py-3">Submitted</th><th className="px-4 py-3"></th></tr>
             </thead>
@@ -47,7 +48,7 @@ function SponsorDeals() {
               })}
               {!isLoading && !data?.forms?.length && <tr><td colSpan={4} className="px-4 py-10 text-center text-muted-foreground">No commitments yet. <Link to="/marketplace" className="text-primary hover:underline">Browse marketplace</Link></td></tr>}
             </tbody>
-          </table>
+          </PaginatedTable>
         </div>
       </section>
 
