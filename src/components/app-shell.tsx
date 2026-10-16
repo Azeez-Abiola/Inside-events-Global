@@ -18,6 +18,7 @@ import { navTourTarget } from "@/lib/dashboard-tours";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { SetupPanel } from "@/components/onboarding/setup-panel";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -197,7 +198,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           </header>
 
-          <main data-tour="main-content" className="flex-1 bg-dashboard-canvas px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+          <main data-tour="main-content" className="flex-1 bg-dashboard-canvas px-4 py-6 sm:px-6 lg:px-8">
+            {/* Dashboard-first onboarding: unfinished accounts complete setup here. */}
+            {!roles.includes("abw_admin") && !roles.includes("super_admin") && loc.pathname.replace(/\/$/, "") === "/dashboard" && <SetupPanel />}
+            {children}
+          </main>
         </div>
       </div>
 

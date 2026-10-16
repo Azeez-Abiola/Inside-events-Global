@@ -92,9 +92,9 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
       },
     });
     clearSignupRole();
-    // The role was picked on the first signup screen and is saved above, so go
-    // straight into the wizard rather than asking for it a second time.
-    navigate({ to: "/onboarding/wizard", replace: true });
+    // The role was picked on the first signup screen and is saved above. Land
+    // on the dashboard: its setup panel collects the onboarding sections.
+    navigate({ to: "/dashboard", replace: true });
   }
 
   useEffect(() => {
@@ -192,7 +192,7 @@ export function SignupWizard({ initialStep }: { initialStep?: SignupStep }) {
   }
 
   async function handleSignupComplete() {
-    navigate({ to: "/onboarding/wizard" });
+    navigate({ to: "/dashboard" });
   }
 
   async function handlePassword(e: React.FormEvent) {

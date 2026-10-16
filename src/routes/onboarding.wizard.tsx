@@ -4,116 +4,13 @@
  */
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
-import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { useState } from "react";
 import { useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
 import { CreativeTypePicker } from "@/components/onboarding/sections/creative-hub-sections";
-import { saveOnboardingSection } from "@/lib/onboarding.functions";
+import { loadMyWizardState, saveOnboardingSection } from "@/lib/onboarding.functions";
 import { getSectionsForRole, type OnboardingRole } from "@/lib/onboarding-constants";
-import { isSignupRole } from "@/lib/signup-roles";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function odb(): any {
-  return supabaseAdmin as any;
-}
-
-const loadWizardState = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-    const userId = (context as any).userId as string;
-    let { data } = await odb()
-      .from("onboarding_applications")
-      .select("role, sections, current_section, status, reviewer_notes")
-      .eq("user_id", userId)
-      .maybeSingle();
-    // A role chosen at signup but no application yet (Google sign-up, or a
-    // save that never landed): start the application for that role instead of
-    // asking for the role again. Only ever creates — an existing application,
-    // and the progress in it, is never touched here.
-    if (!data) {
-      const { data: roleRows } = await odb().from("user_roles").select("role").eq("user_id", userId);
-      const role = ((roleRows ?? []) as { role: string }[]).map((r) => r.role).find((r) => isSignupRole(r));
-      if (role) {
-        const { data: created } = await odb()
-          .from("onboarding_applications")
-          .insert({
-            user_id: userId,
-            role,
-            sections: { __role: { role } },
-            section_status: {},
-            current_section: 0,
-            status: "draft",
-          })
-          .select("role, sections, current_section, status, reviewer_notes")
-          .maybeSingle();
-        data = created;
-      }
-    }
-    // Cast to a JSON-serializable type so ServerFn is happy
-    const app = data
-      ? {
-          role: (data as { role: string }).role,
-          current_section: (data as { current_section: number }).current_section,
-          status: (data as { status: string }).status,
-          reviewer_notes: (data as { reviewer_notes: Record<string, string> }).reviewer_notes ?? {},
-          sections: await withSignupDefaults(
-            userId,
-            (data as { role: string }).role,
-            (data as { sections: Record<string, Record<string, string>> }).sections ?? {},
-          ),
-        }
-      : null;
-    return { app };
-  });
-
-/** Where each role's Section A keeps the organisation name from signup. */
-const ORG_FIELD: Record<string, string> = {
-  organiser: "org_name",
-  sponsor: "brand_name",
-  media_partner: "outlet_name",
-  referral_partner: "company_name",
-  partnerships_pro: "company_name",
-};
-
-/**
- * Section A asks for the name, email, phone and organisation the signup form
- * already collected. Pre-fill them from the account (signUp stores them in the
- * user metadata) so nobody types them twice. Anything already saved in
- * Section A wins; this only fills fields that are still empty.
- */
-async function withSignupDefaults(
-  userId: string,
-  role: string,
-  sections: Record<string, Record<string, string>>,
-): Promise<Record<string, Record<string, string>>> {
-  try {
-    const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
-    const u = data.user;
-    if (!u) return sections;
-    const meta = (u.user_metadata ?? {}) as Record<string, unknown>;
-    const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
-    const defaults: Record<string, string> = {
-      full_name: str(meta.full_name) || str(meta.name),
-      email: u.email ?? "",
-      phone: str(meta.phone),
-    };
-    const orgKey = ORG_FIELD[role];
-    if (orgKey) defaults[orgKey] = str(meta.company_name);
-    const saved = sections.a ?? {};
-    const a: Record<string, string> = { ...saved };
-    for (const [k, v] of Object.entries(defaults)) {
-      if (v && !str(saved[k])) a[k] = v;
-    }
-    return { ...sections, a };
-  } catch {
-    return sections;
-  }
-}
 
 export const Route = createFileRoute("/onboarding/wizard")({
   // `?section=h` opens that section directly, which is how the profile
@@ -127,7 +24,7 @@ export const Route = createFileRoute("/onboarding/wizard")({
   ssr: false,
   loader: async () => {
     try {
-      const result = (await loadWizardState({ data: undefined as never })) as {
+      const result = (await loadMyWizardState({ data: undefined as never })) as {
         app: {
           role: string;
           sections: Record<string, unknown>;
