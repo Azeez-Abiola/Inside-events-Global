@@ -1,11 +1,11 @@
 import { createFileRoute, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isEmailConfirmed } from "@/lib/auth-email";
 import { useAuth } from "@/lib/auth-context";
 import { SuspendedAccountGate } from "@/components/suspended-account-gate";
 import { PendingApprovalGate } from "@/components/pending-approval-gate";
+import { GateSpinner } from "@/components/gate-spinner";
 import { OnboardingAccessGate } from "@/components/onboarding/onboarding-access-gate";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -47,9 +47,7 @@ function AuthenticatedLayout() {
 
   if (!import.meta.env.DEV && loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-dashboard-canvas">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <GateSpinner waitingOn={{ gate: "session", loading }} />
     );
   }
 
