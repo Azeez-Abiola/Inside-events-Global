@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AdminMfaGate } from "@/components/auth/admin-mfa-gate";
 import { LiveChat } from "@/components/support/live-chat";
+import { SetupPanel } from "@/components/onboarding/setup-panel";
 import { isPlatformAdmin } from "@/lib/admin-permissions";
 import {
   AlertDialog,
@@ -210,6 +211,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           </header>
 
           <main data-tour="main-content" className="flex-1 bg-dashboard-canvas px-4 py-6 sm:px-6 lg:px-8">
+            {/* Dashboard-first onboarding: unfinished accounts complete setup here. */}
+            {!isPlatformAdmin(roles) && loc.pathname.replace(/\/$/, "") === "/dashboard" && <SetupPanel />}
             <AdminMfaGate isAdmin={isPlatformAdmin(roles)}>{children}</AdminMfaGate>
           </main>
           {!isPlatformAdmin(roles) && <LiveChat />}

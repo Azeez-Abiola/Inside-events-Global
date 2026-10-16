@@ -112,7 +112,7 @@ function AuthCallbackPage() {
       if (redirect) navigate({ to: redirect, replace: true });
       // The role came from the signup screen; the wizard starts the
       // application for it, so there is no need to ask again.
-      else if (landedRole) navigate({ to: "/onboarding/wizard", replace: true });
+      else if (landedRole) navigate({ to: "/dashboard", replace: true });
       else navigate({ to: "/dashboard", replace: true });
     })();
 

@@ -14,8 +14,6 @@
  * Accounts with no application at all (legacy, or mid-role-selection) are left
  * alone rather than redirected into a wizard that may have nothing to show.
  */
-import { useEffect } from "react";
-import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2 } from "lucide-react";
@@ -24,11 +22,11 @@ import { getOnboardingGateState } from "@/lib/onboarding.functions";
 
 export function OnboardingAccessGate({ children }: { children: React.ReactNode }) {
   const { roles, loading, rolesReady } = useAuth();
-  const navigate = useNavigate();
   const getState = useServerFn(getOnboardingGateState);
   const isStaff = roles.includes("abw_admin") || roles.includes("super_admin");
 
-  const { data, isLoading } = useQuery({
+  // Also warms the cache the dashboard setup panel reads.
+  const { isLoading } = useQuery({
     queryKey: ["onboarding-gate-state"],
     queryFn: () => getState(),
     // Roles arrive after the session does. Asking before they land treats an
@@ -40,13 +38,9 @@ export function OnboardingAccessGate({ children }: { children: React.ReactNode }
     retry: false,
   });
 
-  const blocked = data?.hasApplication === true && data.progress === "compulsory_incomplete";
-
-  useEffect(() => {
-    if (loading || !rolesReady || isStaff || isLoading) return;
-    if (!blocked) return;
-    void navigate({ to: "/onboarding/wizard", replace: true });
-  }, [blocked, isStaff, isLoading, loading, rolesReady, navigate]);
+  // Dashboard-first onboarding: an account with compulsory sections still to do
+  // is no longer sent to the full-screen wizard. It sees its dashboard, and the
+  // setup panel on the dashboard home collects the missing sections.
 
   if (isStaff) return <>{children}</>;
   if (loading || !rolesReady || isLoading) {
@@ -56,7 +50,5 @@ export function OnboardingAccessGate({ children }: { children: React.ReactNode }
       </div>
     );
   }
-  if (blocked) return null;
-
   return <>{children}</>;
 }

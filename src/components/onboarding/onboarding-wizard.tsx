@@ -67,6 +67,15 @@ interface OnboardingWizardProps {
   resumeAt?: number;
   /** Reviewer notes when status === 'changes_requested'. Keyed by section letter. */
   reviewerNotes?: Record<string, string>;
+  /**
+   * Compact layout for the dashboard setup panel: no full-screen shell, rail
+   * or footer, and finishing stays on the page instead of navigating.
+   */
+  embedded?: boolean;
+  /** Called after every successful save (embedded mode refreshes progress). */
+  onSaved?: () => void;
+  /** Called when the last section is done (embedded mode only). */
+  onFinished?: () => void;
 }
 
 // ─── MatchingBadge ────────────────────────────────────────────────────────────
@@ -234,6 +243,9 @@ export function OnboardingWizard({
   savedSections = {},
   resumeAt = 0,
   reviewerNotes = {},
+  embedded = false,
+  onSaved,
+  onFinished,
 }: OnboardingWizardProps) {
   const navigate = useNavigate();
   const fetchConfig = useServerFn(getOnboardingSectionConfig);
@@ -315,6 +327,12 @@ export function OnboardingWizard({
     },
     onSuccess: (_res, vars) => {
       setError(null);
+      onSaved?.();
+      if (vars.isSubmit && embedded) {
+        toast.success("You're all set — welcome to IGE.");
+        onFinished?.();
+        return;
+      }
       if (vars.isSubmit) {
         // §3.2: the last compulsory section's button says "Go to my
         // dashboard", and it has to actually go there. It used to land on
@@ -327,7 +345,7 @@ export function OnboardingWizard({
         return;
       }
       setCurrentIdx((prev) => prev + 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      if (!embedded) window.scrollTo({ top: 0, behavior: "smooth" });
     },
     onError: (e: Error) => {
       setError(e.message);
@@ -461,6 +479,78 @@ export function OnboardingWizard({
       );
     }
     return <div className="text-muted-foreground text-sm">Role not yet supported.</div>;
+  }
+
+  const banners = (
+    <>
+      {sectionNote && (
+        <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3.5">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+          <div>
+            <p className="text-xs font-bold text-amber-900">Reviewer note for this section</p>
+            <p className="mt-0.5 text-sm text-amber-800">{sectionNote}</p>
+          </div>
+        </div>
+      )}
+      {error && (
+        <div className="mb-6 flex items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3.5">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+          <p className="text-sm text-destructive">{error}</p>
+        </div>
+      )}
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div>
+        <ol className="mb-6 flex gap-2 overflow-x-auto pb-1" aria-label="Setup sections">
+          {sections.map((sec, i) => {
+            const done = i < currentIdx;
+            const active = i === currentIdx;
+            return (
+              <li
+                key={sec.key}
+                className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${
+                  active
+                    ? "border-primary bg-brand-soft text-primary-deep"
+                    : done
+                      ? "border-secondary/40 text-secondary-deep"
+                      : "border-border text-muted-foreground"
+                }`}
+              >
+                {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Circle className="h-3.5 w-3.5" />}
+                {sec.key.toUpperCase()} · {sec.title}
+                {sec.compulsory === false && <span className="opacity-70">(optional)</span>}
+              </li>
+            );
+          })}
+        </ol>
+        <SectionHeader
+          section={currentSection}
+          currentIdx={currentIdx}
+          totalSections={sections.length}
+          roleLabel={roleInfo.label}
+        />
+        {banners}
+        {renderSection()}
+        {currentIdx > 0 && (
+          <div className="mt-6">
+            <button
+              type="button"
+              onClick={() => {
+                setError(null);
+                setCurrentIdx((prev) => Math.max(0, prev - 1));
+              }}
+              disabled={saveAndAdvance.isPending}
+              className="flex items-center gap-1.5 rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted disabled:opacity-50"
+            >
+              <ChevronLeft className="h-4 w-4" /> Back
+            </button>
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (
