@@ -80,7 +80,11 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Voom: logo row */}
       <div className="flex h-[72px] items-center gap-3 px-6">
         <BrandLogo />
-        <span className="font-display text-[15px] font-bold text-foreground">Inside Global Events</span>
+        {/* The wordmark in the brand's Purple → Emerald gradient (brighter stops on
+            the dark sidebar so it stays readable). */}
+        <span className="bg-brand-gradient bg-clip-text font-display text-[15px] font-bold text-transparent dark:bg-[linear-gradient(90deg,#c9a8ff_0%,#62d4b8_55%,#3ddc97_100%)]">
+          Inside Global Events
+        </span>
       </div>
 
       {/* Voom: flat nav + left accent bar on active item */}

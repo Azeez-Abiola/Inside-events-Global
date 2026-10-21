@@ -67,10 +67,14 @@ export function AuthShell({
         <div className="relative hidden overflow-hidden p-12 text-white lg:flex lg:flex-col">
           <AuthSlideshow />
 
-          <Link to="/" className="relative z-10 flex items-center gap-3" aria-label="Inside Global Events 2026 — Home">
+          <Link to="/" className="relative z-10 flex items-center gap-3" aria-label="Inside Global Events — Home">
             <BrandLogo size="lg" className="rounded-md bg-white/95 p-1 mix-blend-normal dark:mix-blend-normal" aria-hidden="true" />
-            <div className="uppercase tracking-[0.18em] opacity-90 text-lg font-sans font-extrabold">
-              Inside Global Events 2026
+            {/* The panel is already a purple → green wash over photos, so the
+                gradient wordmark sits on a white pill, like the logo beside it. */}
+            <div className="rounded-md bg-white/95 px-3 py-1.5 shadow-sm">
+              <span className="bg-brand-gradient bg-clip-text text-lg font-extrabold uppercase tracking-[0.18em] text-transparent">
+                Inside Global Events
+              </span>
             </div>
           </Link>
 
@@ -79,7 +83,7 @@ export function AuthShell({
               “The first marketplace where B2B sponsorships is vetted.”
             </blockquote>
             <div className="mt-6 text-sm opacity-90">
-              Inside Global Events 2026
+              Inside Global Events
             </div>
           </div>
         </div>

@@ -32,13 +32,13 @@ import { FEATURED_EVENT_IMAGES } from "@/lib/featured-event-images";
 export const Route = createFileRoute("/welcome")({
   head: () => ({
     meta: [
-      { title: "Welcome to IGE · Inside Global Events 2026" },
+      { title: "Welcome to IGE · Inside Global Events" },
       {
         name: "description",
         content:
           "Create your IGE account. Role-specific onboarding for organisers, sponsors, referral partners, and media partners across the Africa–Europe corridor.",
       },
-      { property: "og:title", content: "Welcome to Inside Global Events 2026" },
+      { property: "og:title", content: "Welcome to Inside Global Events" },
       {
         property: "og:description",
         content:
@@ -128,7 +128,7 @@ function WelcomePage() {
               data-delay="2"
               className="mt-6 max-w-3xl text-lg leading-relaxed text-muted-foreground"
             >
-              I.G.E (Inside Global Events 2026) is a vertically integrated event
+              I.G.E (Inside Global Events) is a vertically integrated event
               intelligence and sponsorship marketplace built for the Africa to
               Europe corridor, connecting event organisers, brand sponsors, and
               a distributed network of partnerships professionals.
@@ -270,10 +270,10 @@ function WelcomePage() {
           <div data-reveal className="flex flex-wrap items-end justify-between gap-6">
             <div className="max-w-2xl">
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary-deep">
-                Upcoming events
+                Past events
               </div>
               <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">
-                Featured event of the month.
+                Events we've featured.
               </h2>
             </div>
             <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
@@ -282,13 +282,16 @@ function WelcomePage() {
             </span>
           </div>
 
-          {/* Featured event — Itsekiri Global Homecoming 2026, themed to the deck */}
+          {/* Past featured event — Itsekiri Global Homecoming (17–21 Aug 2026) */}
           <article
             data-reveal
             data-delay="1"
-            className="mt-10 overflow-hidden rounded-3xl shadow-brand"
+            className="relative mt-10 overflow-hidden rounded-3xl shadow-brand"
             style={{ backgroundColor: "#5C1410", color: "#FBEFE2" }}
           >
+            <span className="absolute left-4 top-4 z-10 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white">
+              Past event
+            </span>
             {/* Cover image */}
             <div className="relative aspect-[21/9] min-h-[220px] w-full overflow-hidden bg-[#3a0d0a]">
               <img
@@ -414,13 +417,16 @@ function WelcomePage() {
             </div>
           </article>
 
-          {/* Featured event — Project X ... Almost Famous */}
+          {/* Past featured event — Project X ... Almost Famous (July 2026) */}
           <article
             data-reveal
             data-delay="2"
-            className="mt-10 overflow-hidden rounded-3xl shadow-brand"
+            className="relative mt-10 overflow-hidden rounded-3xl shadow-brand"
             style={{ backgroundColor: "#2a0b5a", color: "#FFF7E6" }}
           >
+            <span className="absolute left-4 top-4 z-10 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white">
+              Past event
+            </span>
             <FeaturedEventCover
               src={FEATURED_EVENT_IMAGES.projectXAlmostFamous}
               alt="Project X ... Almost Famous — A Play by The MECT Company"

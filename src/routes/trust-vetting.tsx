@@ -32,7 +32,7 @@ function TrustVettingPage() {
         <Link to="/" className="text-sm text-primary hover:underline">← Home</Link>
         <h1 className="mt-6 font-display text-4xl font-bold tracking-tight md:text-5xl">Trust &amp; Vetting</h1>
         <p className="mt-4 text-lg text-muted-foreground">
-          Every organiser, sponsor, and referral partner on Inside Global Events 2026 is vetted before they
+          Every organiser, sponsor, and referral partner on Inside Global Events is vetted before they
           can transact. Vetting is what makes the marketplace work.
         </p>
 
