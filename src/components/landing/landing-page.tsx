@@ -277,29 +277,12 @@ const fmtDate = (d: string | null) =>
     ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
     : "Date TBA";
 
-const LANDING_EVENTS_QUERY = { sort: "soonest", per_page: 12 } as never;
-
-/**
- * Route loader for the landing page. Fetching on the server sends the events
- * with the page HTML; a browser round trip to the server function took long
- * enough that visitors saw an empty section. Client-side navigations skip it
- * and let the section fetch on its own.
- */
-export function loadLandingEvents() {
-  return import.meta.env.SSR
-    ? listMarketplaceEvents({ data: LANDING_EVENTS_QUERY })
-    : Promise.resolve(undefined);
-}
-
-type LandingEventsResult = Awaited<ReturnType<typeof listMarketplaceEvents>>;
-
-function Events({ initial }: { initial?: LandingEventsResult }) {
+function Events() {
   const list = useServerFn(listMarketplaceEvents);
   const [type, setType] = useState<string>("all");
   const { data } = useQuery({
     queryKey: ["landing-events"],
-    queryFn: () => list({ data: LANDING_EVENTS_QUERY }),
-    initialData: initial,
+    queryFn: () => list({ data: { sort: "soonest", per_page: 12 } as never }),
     staleTime: 5 * 60_000,
   });
   const events = ((data?.events ?? []) as LandingEvent[]).filter(
@@ -678,12 +661,12 @@ function Footer() {
   );
 }
 
-export function LandingPage({ initialEvents }: { initialEvents?: LandingEventsResult }) {
+export function LandingPage() {
   return (
     <div className="min-h-screen bg-white font-sans text-[#1a1325]">
       <Hero />
       <Audiences />
-      <Events initial={initialEvents} />
+      <Events />
       <Bento />
       <Corridor />
       <Footer />
