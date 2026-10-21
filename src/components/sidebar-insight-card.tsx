@@ -62,7 +62,7 @@ export function SidebarInsightCard({ roles }: { roles: string[] }) {
   const { title, description, cta, to } = getSidebarCta(roles);
 
   return (
-    <div className="rounded-2xl border border-primary/20 bg-card p-4 shadow-card dark:border-primary/35 dark:bg-card">
+    <div className="rounded-2xl border border-primary/20 bg-card p-4 shadow-card dark:border-white/10 dark:bg-card">
       <p className="text-xs font-semibold text-foreground">{title}</p>
       <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{description}</p>
       <Link

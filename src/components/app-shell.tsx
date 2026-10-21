@@ -76,7 +76,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   const sidebar = (
-    <aside className="flex h-full w-[248px] shrink-0 flex-col border-r border-border/40 bg-brand-soft dark:bg-sidebar">
+    <aside className="flex h-full w-[248px] shrink-0 flex-col border-r border-border/40 bg-brand-soft dark:bg-sidebar dark:bg-none">
       {/* Voom: logo row */}
       <div className="flex h-[72px] items-center gap-3 px-6">
         <BrandLogo />
@@ -98,15 +98,17 @@ export function AppShell({ children }: { children: ReactNode }) {
               data-tour={navTourTarget(n.to)}
               className={cn(
                 "relative flex items-center gap-3 rounded-lg py-2.5 pl-5 pr-3 text-[13px] font-medium transition-colors",
+                // Dark mode: the selected item is white text on a soft white pill
+                // (bencho.dev-style) rather than purple on near-black.
                 active
-                  ? "font-semibold text-primary"
-                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                  ? "font-semibold text-primary dark:bg-white/[0.08] dark:text-white"
+                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground dark:hover:bg-white/[0.05]",
               )}
             >
               {active && (
-                <span className="absolute left-0 top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-r-full bg-primary" />
+                <span className="absolute left-0 top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-r-full bg-primary dark:hidden" />
               )}
-              <n.icon className={cn("h-[18px] w-[18px] shrink-0", active ? "text-primary" : "text-muted-foreground")} />
+              <n.icon className={cn("h-[18px] w-[18px] shrink-0", active ? "text-primary dark:text-white" : "text-muted-foreground")} />
               {n.label}
             </Link>
           );
