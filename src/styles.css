@@ -56,8 +56,10 @@
   --color-brand-lilac: var(--brand-lilac);
   /* TAB 13 §13.1 — Playfair Display headings, Lato body, JetBrains Mono for
      step counters and data tags. */
-  --font-display: "Playfair Display", ui-serif, Georgia, serif;
-  --font-sans: "Lato", ui-sans-serif, system-ui, sans-serif;
+  /* Inter throughout (as on bencho.dev): headings use a heavier weight and
+     tighter tracking rather than a separate decorative face. */
+  --font-display: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
@@ -216,7 +218,8 @@
 
   h1, h2, h3, h4, h5 {
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
+    font-weight: 600;
+    letter-spacing: -0.025em;
   }
 }
 
@@ -277,6 +280,7 @@
   }
   .font-display {
     font-family: var(--font-display);
+    letter-spacing: -0.025em;
   }
 }
 
