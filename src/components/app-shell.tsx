@@ -84,7 +84,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex h-[72px] items-center gap-3 px-6">
         <BrandLogo />
         {/* v6.3: the wordmark in the home page's Purple → Emerald gradient. */}
-        <span className="bg-brand-gradient bg-clip-text font-display text-[15px] font-bold text-transparent">
+        <span className="bg-brand-gradient bg-clip-text font-display text-[15px] font-bold text-transparent dark:bg-[linear-gradient(90deg,#c9a8ff_0%,#62d4b8_55%,#3ddc97_100%)]">
           Inside Global Events
         </span>
       </div>

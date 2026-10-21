@@ -37,7 +37,23 @@ const STATUS_TABS = [
   { id: "pending", label: "Pending approval" },
   { id: "active", label: "Active" },
   { id: "suspended", label: "Deactivated" },
+  { id: "signed_in", label: "Signed in (last 24h)" },
 ] as const;
+
+/** Sessions end 24 hours after sign-in, so this is who may be signed in now. */
+const SESSION_WINDOW_MS = 24 * 60 * 60 * 1000;
+function signedInRecently(u: { last_login_at: string | null }) {
+  return !!u.last_login_at && Date.now() - new Date(u.last_login_at).getTime() < SESSION_WINDOW_MS;
+}
+
+function lastSignIn(iso: string | null) {
+  if (!iso) return "Never";
+  const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins} min ago`;
+  if (mins < 24 * 60) return `${Math.round(mins / 60)} h ago`;
+  return new Date(iso).toLocaleDateString();
+}
 
 type StatusFilter = (typeof STATUS_TABS)[number]["id"];
 
@@ -290,6 +306,7 @@ export function AdminUsersPanel() {
     pending: users.filter((u) => !u.is_active && !u.is_suspended).length,
     active: users.filter((u) => u.is_active && !u.is_suspended).length,
     suspended: users.filter((u) => u.is_suspended).length,
+    signed_in: users.filter(signedInRecently).length,
   }), [users]);
 
   const filtered = useTableFilters({
@@ -301,6 +318,7 @@ export function AdminUsersPanel() {
       if (filter === "pending") return !u.is_active && !u.is_suspended;
       if (filter === "active") return u.is_active && !u.is_suspended;
       if (filter === "suspended") return u.is_suspended;
+      if (filter === "signed_in") return signedInRecently(u);
       return true;
     },
   });
@@ -357,6 +375,7 @@ export function AdminUsersPanel() {
                 <th className="px-4 py-3">User</th>
                 <th className="px-4 py-3">Roles</th>
                 <th className="px-4 py-3">Joined</th>
+                <th className="px-4 py-3">Last sign-in</th>
                 <th className="px-4 py-3">Status</th>
                 {canSuspend && <th className="px-4 py-3">Action</th>}
               </tr>
@@ -380,6 +399,12 @@ export function AdminUsersPanel() {
                     </div>
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{new Date(u.created_at).toLocaleDateString()}</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                    {signedInRecently(u) && (
+                      <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-secondary align-middle" aria-label="Signed in recently" />
+                    )}
+                    {lastSignIn(u.last_login_at)}
+                  </td>
                   <td className="px-4 py-3">
                     {u.is_suspended ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive">
@@ -420,7 +445,7 @@ export function AdminUsersPanel() {
               ))}
               {!filtered.length && (
                 <tr>
-                  <td colSpan={canSuspend ? 5 : 4} className="px-4 py-10 text-center text-muted-foreground">No users match your filters.</td>
+                  <td colSpan={canSuspend ? 6 : 5} className="px-4 py-10 text-center text-muted-foreground">No users match your filters.</td>
                 </tr>
               )}
             </tbody>

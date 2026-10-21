@@ -18,7 +18,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "Inside Global Events 2026"
+const SITE_NAME = "Inside Global Events"
 const ROOT_DOMAIN = "www.insideglobalevents.com"
 
 const SAMPLE_PROJECT_URL = "https://www.insideglobalevents.com"

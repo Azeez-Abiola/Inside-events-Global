@@ -69,7 +69,7 @@ function AboutPage() {
               <span className="text-brand-gradient">global events economy.</span>
             </h1>
             <p data-reveal data-delay="2" className="mt-6 max-w-3xl text-lg leading-relaxed text-zinc-200">
-              I.G.E (Inside Global Events 2026) is a vertically integrated event
+              I.G.E (Inside Global Events) is a vertically integrated event
               intelligence and sponsorship marketplace platform built for the
               Africa to Europe corridor and the global events economy. It is not
               another event listing directory. It is end-to-end commercial
