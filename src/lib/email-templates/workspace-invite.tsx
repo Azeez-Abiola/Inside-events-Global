@@ -107,7 +107,7 @@ export const template = {
   },
 } satisfies TemplateEntry;
 
-const main = { backgroundColor: "#f4f0fa", fontFamily: "Lato, Arial, sans-serif" };
+const main = { backgroundColor: "#f4f0fa", fontFamily: "Inter, Arial, sans-serif" };
 const container = { margin: "0 auto", padding: "24px 16px", maxWidth: "560px" };
 const hero = {
   background: "linear-gradient(135deg, #6b3fa0 0%, #2e8171 55%, #0e8a62 100%)",
