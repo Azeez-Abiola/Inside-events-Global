@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, Lock, ShieldCheck } from "lucide-react";
 import { getOnboardingGateState } from "@/lib/onboarding.functions";
+import { useAuth } from "@/lib/auth-context";
 import { VERIFICATION_LOCKED_FEATURES } from "@/lib/onboarding-constants";
 
 /**
@@ -16,14 +17,19 @@ import { VERIFICATION_LOCKED_FEATURES } from "@/lib/onboarding-constants";
  * complete, and a permanent empty bar is worse than no bar.
  */
 export function ProfileCompletionBar() {
+  const { roles } = useAuth();
+  const isStaff = roles.includes("abw_admin") || roles.includes("super_admin");
   const fetchState = useServerFn(getOnboardingGateState);
   const { data } = useQuery({
     queryKey: ["onboarding-gate-state"],
     queryFn: () => fetchState(),
     staleTime: 60_000,
     retry: false,
+    enabled: !isStaff,
   });
 
+  // Admins never have a profile to complete.
+  if (isStaff) return null;
   if (!data?.hasApplication) return null;
   if (data.progress === "fully_complete") return null;
 
