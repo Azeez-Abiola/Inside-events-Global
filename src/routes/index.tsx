@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { HomePage } from "@/components/home/home-page";
+// The redesigned landing page (EvenTum layout, IGE palette) replaced the
+// spec-ordered HomePage; its admin-managed sections can be ported in later.
+import { LandingPage } from "@/components/landing/landing-page";
 import ogImage from "@/assets/og-image.jpg";
 
 /**
@@ -35,5 +37,5 @@ export const Route = createFileRoute("/")({
     links: [{ rel: "canonical", href: "https://www.insideglobalevents.com/" }],
   }),
 
-  component: HomePage,
+  component: LandingPage,
 });

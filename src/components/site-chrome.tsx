@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import { BrandLogo } from "@/components/brand-logo";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { SiteFooter } from "@/components/site-footer";
 
 export { SiteFooter };
@@ -43,7 +42,7 @@ export function SiteHeader({ showAuthLinks = true }: { showAuthLinks?: boolean }
               </Link>
             ))}
           </nav>
-          <ThemeToggle />
+          
           {showAuthLinks ? (
             <>
               <Link
