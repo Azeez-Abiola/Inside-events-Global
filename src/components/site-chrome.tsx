@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import { BrandLogo } from "@/components/brand-logo";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { SiteFooter } from "@/components/site-footer";
 
 export { SiteFooter };
@@ -24,7 +23,7 @@ export function SiteHeader({ showAuthLinks = true }: { showAuthLinks?: boolean }
             <Link to="/about" className="transition-colors hover:text-foreground">About</Link>
             <Link to="/how-it-works" className="transition-colors hover:text-foreground">How it works</Link>
           </nav>
-          <ThemeToggle />
+          
           {showAuthLinks ? (
             <>
               <Link

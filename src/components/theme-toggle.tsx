@@ -3,6 +3,8 @@ import { Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getPreferredDark, initThemeFromStorage, setTheme } from "@/lib/theme";
 
+/** Dashboard only: public pages and sign-in always render light. */
+
 export function ThemeToggle({ className }: { className?: string }) {
   const [dark, setDark] = useState(false);
 

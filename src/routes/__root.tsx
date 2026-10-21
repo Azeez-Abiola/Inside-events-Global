@@ -16,7 +16,9 @@ import { DevRoleSwitcher } from "@/components/dev-role-switcher";
 import { SessionGuard } from "@/components/session-guard";
 import { Toaster } from "@/components/ui/sonner";
 import { DisplayCurrencyProvider } from "@/lib/display-currency-context";
-import { THEME_INIT_SCRIPT } from "@/lib/theme";
+import { THEME_INIT_SCRIPT, syncThemeForPath } from "@/lib/theme";
+import { useEffect } from "react";
+import { useLocation } from "@tanstack/react-router";
 
 function NotFoundComponent() {
   return (
@@ -178,6 +180,13 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** Dark mode is dashboard-only: re-check it whenever the route changes. */
+function ThemeSync() {
+  const { pathname } = useLocation();
+  useEffect(() => syncThemeForPath(pathname), [pathname]);
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
@@ -185,6 +194,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <SessionGuard />
+        <ThemeSync />
         <DisplayCurrencyProvider>
           <WaitlistGate>
             <Outlet />
