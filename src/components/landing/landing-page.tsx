@@ -10,23 +10,34 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { toast } from "sonner";
 import {
   ArrowRight,
   ArrowUpRight,
   BadgeCheck,
   Calendar,
+  CalendarDays,
+  Clapperboard,
   Handshake,
-  Megaphone,
   MapPin,
-  Search,
-  Sparkles,
-  Tent,
-  TrendingUp,
+  Mic2,
+  Music2,
+  PartyPopper,
+  Presentation,
+  Store,
+  Ticket,
+  Users,
+  type LucideIcon,
 } from "lucide-react";
-import { BrandLogo } from "@/components/brand-logo";
+import { SiteFooter } from "@/components/site-footer";
+import { useScrollReveal } from "@/hooks/use-scroll-reveal";
+import {
+  ArchBackdrop,
+  Firework,
+  PentagonIcon,
+  PublicNav,
+  pill,
+} from "@/components/landing/public-chrome";
 import { listMarketplaceEvents } from "@/lib/marketplace.functions";
-import { subscribeNewsletter } from "@/lib/newsletter.functions";
 import { trackEvent } from "@/lib/analytics";
 import { stashSignupRole, type SignupRole } from "@/lib/signup-roles";
 
@@ -40,60 +51,6 @@ const PHOTOS = {
     "/events/bellboy-providing-coffee-cup-guest-sitting-lounge-area-hotel-offering-excellent-luxury-services-with-drink-from-bar-woman-tourist-receiving-beverage-lobby-handheld-shot.jpg",
   team: "/events/dentistry-students-team-doing-research-with-plastic-human-jaw-model.jpg",
 };
-
-const pill =
-  "inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-semibold transition-transform hover:-translate-y-0.5";
-
-// ─── Nav ─────────────────────────────────────────────────────────────────────
-
-function Nav() {
-  return (
-    <header className="relative z-20 mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-      <Link to="/" className="flex items-center gap-2.5">
-        <BrandLogo size="sm" />
-        <span className="text-[15px] font-semibold tracking-tight text-[#1a1325]">
-          Inside Global Events
-        </span>
-      </Link>
-      <nav className="hidden items-center gap-9 text-sm text-[#5b5468] md:flex">
-        <Link to="/marketplace" className="hover:text-[#1a1325]">
-          Events
-        </Link>
-        <Link to="/how-it-works" className="hover:text-[#1a1325]">
-          How it works
-        </Link>
-        <Link to="/about" className="hover:text-[#1a1325]">
-          About
-        </Link>
-        <Link to="/contact" className="hover:text-[#1a1325]">
-          Contact us
-        </Link>
-      </nav>
-      <div className="flex items-center gap-3">
-        <Link
-          to="/marketplace"
-          aria-label="Search events"
-          className="hidden h-9 w-9 items-center justify-center rounded-full text-[#5b5468] hover:bg-black/5 sm:inline-flex"
-        >
-          <Search className="h-4 w-4" />
-        </Link>
-        <Link
-          to="/login"
-          className="hidden text-sm font-medium text-[#1a1325] hover:text-[#6b3fa0] sm:inline"
-        >
-          Sign in
-        </Link>
-        <Link
-          to="/signup"
-          onClick={() => trackEvent("signup_cta_click", { source: "landing_nav" })}
-          className={`${pill} border border-[#1a1325]/15 bg-white px-4 py-2 text-[#1a1325] shadow-sm`}
-        >
-          Get started <ArrowUpRight className="h-3.5 w-3.5" />
-        </Link>
-      </div>
-    </header>
-  );
-}
 
 // ─── Hero ────────────────────────────────────────────────────────────────────
 
@@ -118,9 +75,9 @@ function HeroCard({
         className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-      <div className="absolute bottom-5 left-5 text-white">
-        <p className="text-lg font-medium leading-tight">{kicker}</p>
-        <p className="text-lg font-semibold leading-tight underline decoration-[#3ddc97] decoration-2 underline-offset-4">
+      <div className="absolute bottom-3 left-3 text-white md:bottom-5 md:left-5">
+        <p className="text-xs font-medium leading-tight sm:text-sm md:text-lg">{kicker}</p>
+        <p className="text-xs font-semibold leading-tight sm:text-sm md:text-lg underline decoration-[#3ddc97] decoration-2 underline-offset-4">
           {title}
         </p>
       </div>
@@ -130,29 +87,40 @@ function HeroCard({
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden">
-      {/* Soft brand wash and sparkles, as in the concept's confetti header. */}
-      <div
+    <section className="relative overflow-hidden bg-[#f7f6fa] pb-16">
+      <ArchBackdrop />
+      <Firework className="left-[10%] top-56 hidden h-32 w-20 text-[#6b3fa0]/25 md:block" />
+      <Firework className="right-[11%] top-48 hidden h-28 w-16 text-[#0e8a62]/30 md:block" />
+      <Music2
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[560px] bg-[radial-gradient(60%_60%_at_50%_0%,rgba(107,63,160,0.14),transparent_70%)]"
+        className="absolute bottom-24 left-[16%] hidden h-6 w-6 -rotate-12 text-[#6b3fa0]/30 md:block"
       />
-      <Sparkles aria-hidden className="absolute left-[12%] top-40 h-6 w-6 text-[#6b3fa0]/25" />
-      <Sparkles aria-hidden className="absolute right-[14%] top-28 h-8 w-8 text-[#0e8a62]/25" />
-      <Nav />
-      <div className="relative z-10 mx-auto max-w-3xl px-6 pt-10 text-center">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-[#6b3fa0]/15 bg-white/80 px-3.5 py-1 text-xs font-medium text-[#6b3fa0] shadow-sm">
-          <BadgeCheck className="h-3.5 w-3.5" /> The vetted B2B sponsorship marketplace
-        </span>
-        <h1 className="mt-5 text-4xl font-semibold tracking-tight text-[#1a1325] md:text-[56px] md:leading-[1.08]">
+      <PartyPopper
+        aria-hidden
+        className="absolute bottom-40 right-[8%] hidden h-7 w-7 text-[#0e8a62]/35 md:block"
+      />
+      <PublicNav />
+      <div className="relative z-10 mx-auto max-w-3xl px-6 pt-16 text-center">
+        <h1
+          data-reveal
+          data-delay="1"
+          className="mt-5 text-4xl font-semibold tracking-tight text-[#1a1325] md:text-[56px] md:leading-[1.08]"
+        >
           Event sponsorship
           <br />
           at your fingertips
         </h1>
-        <p className="mx-auto mt-5 max-w-xl text-[15px] leading-relaxed text-[#5b5468]">
+        <p
+          data-reveal
+          data-delay="2"
+          className="mx-auto mt-5 max-w-xl text-[15px] leading-relaxed text-[#5b5468]"
+        >
           IGE connects event organisers, brand sponsors and partnership professionals across the
           Africa–Europe corridor, with vetted events, matched sponsors and tracked deals.
         </p>
         <Link
+          data-reveal
+          data-delay="3"
           to="/signup"
           onClick={() => trackEvent("signup_cta_click", { source: "landing_hero" })}
           className={`${pill} mt-8 bg-[#6b3fa0] text-white shadow-[0_12px_30px_-10px_rgba(107,63,160,0.7)]`}
@@ -161,7 +129,11 @@ function Hero() {
         </Link>
       </div>
 
-      <div className="relative z-10 mx-auto mt-14 grid max-w-5xl grid-cols-3 items-start gap-4 px-6 md:gap-6">
+      <div
+        data-reveal
+        data-delay="4"
+        className="relative z-10 mx-auto mt-14 grid max-w-5xl grid-cols-3 items-start gap-4 px-6 md:gap-6"
+      >
         <HeroCard
           src={PHOTOS.party}
           kicker="Cultural"
@@ -189,67 +161,120 @@ function Hero() {
 
 const AUDIENCES: {
   role: SignupRole;
+  cta: string;
   title: string;
   body: string;
-  icon: typeof Tent;
+  icon: LucideIcon;
   bg: string;
+  ink: string;
+  pattern: "squares" | "ovals" | "dots" | "rings";
 }[] = [
   {
     role: "organiser",
+    cta: "Join as an organiser",
     title: "Event organisers",
     body: "List once and reach sponsors that actually fit your audience.",
-    icon: Tent,
+    icon: CalendarDays,
     bg: "bg-[#6b3fa0]",
+    ink: "text-[#6b3fa0]",
+    pattern: "squares",
   },
   {
     role: "sponsor",
+    cta: "Join as a sponsor",
     title: "Brand sponsors",
     body: "Discover vetted events your buyers attend and commit with clean data.",
-    icon: TrendingUp,
+    icon: Ticket,
     bg: "bg-[#2e8171]",
+    ink: "text-[#2e8171]",
+    pattern: "ovals",
   },
   {
     role: "referral_partner",
+    cta: "Join as a referral partner",
     title: "Referral partners",
     body: "Turn your network into commission with tracked, transparent payouts.",
     icon: Handshake,
     bg: "bg-[#0e8a62]",
+    ink: "text-[#0e8a62]",
+    pattern: "dots",
   },
   {
     role: "media_partner",
+    cta: "Join as a media partner",
     title: "Media partners",
     body: "Coverage, interviews and documentary collaborations with vetted events.",
-    icon: Megaphone,
+    icon: Clapperboard,
     bg: "bg-[#4a2c73]",
+    ink: "text-[#4a2c73]",
+    pattern: "rings",
   },
 ];
+
+/** The corner decoration on each category card, one per card as in the concept. */
+function CardPattern({ kind }: { kind: (typeof AUDIENCES)[number]["pattern"] }) {
+  if (kind === "squares")
+    return (
+      <div aria-hidden className="absolute -right-6 -top-6 h-32 w-32">
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="absolute rounded-2xl border-2 border-white/15"
+            style={{ inset: `${i * 14}px` }}
+          />
+        ))}
+      </div>
+    );
+  if (kind === "ovals")
+    return (
+      <div aria-hidden className="absolute -top-4 right-0 flex gap-1">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="h-36 w-12 rounded-full bg-white/10" />
+        ))}
+      </div>
+    );
+  if (kind === "dots")
+    return (
+      <div
+        aria-hidden
+        className="absolute right-3 top-3 h-28 w-24 bg-[radial-gradient(rgba(255,255,255,0.3)_3.5px,transparent_4px)] [background-size:16px_16px]"
+      />
+    );
+  return (
+    <div
+      aria-hidden
+      className="absolute -right-10 -top-10 h-36 w-36 rounded-full border-[14px] border-white/10"
+    >
+      <div className="absolute inset-4 rounded-full border-[10px] border-white/10" />
+    </div>
+  );
+}
 
 function Audiences() {
   return (
     <section className="mx-auto max-w-6xl px-6 py-24">
-      <h2 className="mx-auto max-w-xl text-center text-3xl font-semibold tracking-tight text-[#1a1325] md:text-4xl">
+      <h2
+        data-reveal
+        className="mx-auto max-w-xl text-center text-3xl font-semibold tracking-tight text-[#1a1325] md:text-4xl"
+      >
         Built for every side of the sponsorship economy
       </h2>
-      <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {AUDIENCES.map((a) => (
+      <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {AUDIENCES.map((a, i) => (
           <Link
             key={a.role}
+            data-reveal
+            data-delay={String(i + 1)}
             to="/signup"
             onClick={() => stashSignupRole(a.role)}
             className={`group relative overflow-hidden rounded-[24px] p-6 text-white transition-transform hover:-translate-y-1 ${a.bg}`}
           >
-            {/* Dotted corner texture, as on the concept's category cards. */}
-            <div
-              aria-hidden
-              className="absolute -right-4 -top-4 h-28 w-28 bg-[radial-gradient(rgba(255,255,255,0.35)_1.2px,transparent_1.2px)] [background-size:10px_10px]"
-            />
-            <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[#1a1325] shadow-sm">
-              <a.icon className="h-6 w-6" />
-            </div>
-            <h3 className="relative mt-8 text-lg font-semibold">{a.title}</h3>
+            <CardPattern kind={a.pattern} />
+            <PentagonIcon icon={a.icon} iconClassName={a.ink} />
+            <h3 className="relative mt-6 text-lg font-semibold">{a.title}</h3>
             <p className="relative mt-1.5 text-sm leading-relaxed text-white/80">{a.body}</p>
             <span className="relative mt-5 inline-flex items-center gap-1 text-sm font-semibold">
-              Join as {a.title.split(" ")[0].toLowerCase()}{" "}
+              {a.cta}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </span>
           </Link>
@@ -271,6 +296,18 @@ type LandingEvent = {
   country: string | null;
   banner_image_url: string | null;
 };
+
+/** An event-type icon for the badge on each event card. */
+function eventTypeIcon(type: string | null): LucideIcon {
+  const t = (type ?? "").toLowerCase();
+  if (/summit|conference|forum/.test(t)) return Presentation;
+  if (/expo|fair|trade/.test(t)) return Store;
+  if (/network|mixer|meetup/.test(t)) return Users;
+  if (/festival|homecoming|cultur|party/.test(t)) return PartyPopper;
+  if (/music|concert/.test(t)) return Music2;
+  if (/talk|panel|podcast|media/.test(t)) return Mic2;
+  return Ticket;
+}
 
 const fmtDate = (d: string | null) =>
   d
@@ -311,7 +348,10 @@ function Events({ initial }: { initial?: LandingEventsResult }) {
   return (
     <section className="bg-[#faf8fd] py-24">
       <div className="mx-auto max-w-6xl px-6">
-        <h2 className="mx-auto max-w-lg text-center text-3xl font-semibold tracking-tight text-[#1a1325] md:text-4xl">
+        <h2
+          data-reveal
+          className="mx-auto max-w-lg text-center text-3xl font-semibold tracking-tight text-[#1a1325] md:text-4xl"
+        >
           Vetted events around the corner
         </h2>
         {types.length > 1 && (
@@ -331,13 +371,20 @@ function Events({ initial }: { initial?: LandingEventsResult }) {
           </div>
         )}
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {shown.map((e) => (
+          {shown.map((e, i) => (
             <Link
               key={e.id}
+              data-reveal
+              data-delay={String(i + 1)}
               to="/signup"
               className="group overflow-hidden rounded-[24px] bg-white shadow-[0_12px_40px_-20px_rgba(26,19,37,0.25)] transition-transform hover:-translate-y-1"
             >
-              <div className="aspect-[4/3] overflow-hidden bg-[#efe8f8]">
+              <div className="relative aspect-[4/3] overflow-hidden bg-[#efe8f8]">
+                <PentagonIcon
+                  icon={eventTypeIcon(e.event_type)}
+                  className="absolute left-3 top-3 z-10 h-11 w-11 shadow-sm"
+                  iconClassName="mt-1 h-5 w-5 text-[#6b3fa0]"
+                />
                 {e.banner_image_url ? (
                   <img
                     src={e.banner_image_url}
@@ -370,6 +417,8 @@ function Events({ initial }: { initial?: LandingEventsResult }) {
           <Link
             to="/signup"
             onClick={() => trackEvent("signup_cta_click", { source: "landing_events" })}
+            data-reveal
+            data-delay="4"
             className="group relative flex min-h-[280px] flex-col justify-between overflow-hidden rounded-[24px] bg-[#6b3fa0] p-6 text-white transition-transform hover:-translate-y-1"
           >
             <div
@@ -409,10 +458,13 @@ const STEPS = [
 function Bento() {
   return (
     <section className="mx-auto max-w-6xl px-6 py-24">
-      <h2 className="max-w-md text-3xl font-semibold tracking-tight text-[#1a1325] md:text-4xl">
+      <h2
+        data-reveal
+        className="max-w-md text-3xl font-semibold tracking-tight text-[#1a1325] md:text-4xl"
+      >
         Sponsorship, beyond expectations
       </h2>
-      <div className="mt-10 grid gap-5 lg:grid-cols-4">
+      <div data-reveal data-delay="1" className="mt-10 grid gap-5 lg:grid-cols-4">
         <div className="relative overflow-hidden rounded-[24px] bg-[#e9e1f6] p-7 lg:col-span-2 lg:row-span-1">
           <p className="text-lg font-semibold text-[#1a1325]">How IGE works</p>
           <ol className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -498,11 +550,14 @@ function Corridor() {
   return (
     <section className="bg-[#faf8fd] py-24">
       <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 lg:grid-cols-2">
-        <div>
+        <div data-reveal>
           <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#e3f4ed] text-[#0e8a62]">
             <MapPin className="h-5 w-5" />
           </span>
-          <h2 className="mt-5 text-3xl font-semibold tracking-tight text-[#1a1325] md:text-4xl">
+          <h2
+            data-reveal
+            className="mt-5 text-3xl font-semibold tracking-tight text-[#1a1325] md:text-4xl"
+          >
             Built for the Africa–Europe corridor
           </h2>
           <p className="mt-4 max-w-md text-[15px] leading-relaxed text-[#5b5468]">
@@ -513,7 +568,7 @@ function Corridor() {
             Explore events <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>
-        <div className="relative">
+        <div data-reveal data-delay="2" className="relative">
           <div className="overflow-hidden rounded-[28px] shadow-[0_24px_60px_-24px_rgba(26,19,37,0.45)]">
             <img src={PHOTOS.summit} alt="" className="aspect-[4/3] w-full object-cover" />
           </div>
@@ -533,7 +588,10 @@ function Corridor() {
 
       <div className="mx-auto mt-28 max-w-6xl px-6">
         <div className="flex flex-wrap items-end justify-between gap-6">
-          <h2 className="max-w-sm text-3xl font-semibold tracking-tight text-[#1a1325] md:text-4xl">
+          <h2
+            data-reveal
+            className="max-w-sm text-3xl font-semibold tracking-tight text-[#1a1325] md:text-4xl"
+          >
             Where our events happen
           </h2>
           <p className="max-w-xs text-sm leading-relaxed text-[#5b5468]">
@@ -541,9 +599,11 @@ function Corridor() {
           </p>
         </div>
         <div className="mt-10 grid gap-4 sm:grid-cols-2">
-          {CITIES.map((c) => (
+          {CITIES.map((c, i) => (
             <Link
               key={c.city}
+              data-reveal
+              data-delay={String(i + 1)}
               to="/marketplace"
               className={`group flex items-center justify-between rounded-[22px] p-5 transition-transform hover:-translate-y-0.5 ${c.tint}`}
             >
@@ -565,128 +625,16 @@ function Corridor() {
   );
 }
 
-// ─── Footer ──────────────────────────────────────────────────────────────────
-
-function Footer() {
-  const subscribe = useServerFn(subscribeNewsletter);
-  const [email, setEmail] = useState("");
-  const [busy, setBusy] = useState(false);
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = email.trim();
-    if (!trimmed) return;
-    setBusy(true);
-    try {
-      await subscribe({ data: { email: trimmed, source: "homepage" } });
-      toast.success("You're subscribed — watch your inbox for IGE updates.");
-      setEmail("");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not subscribe. Try again.");
-    } finally {
-      setBusy(false);
-    }
-  };
-  const col = "text-sm text-white/60 transition-colors hover:text-white";
-  return (
-    <footer className="bg-[#14101b] text-white">
-      <div className="mx-auto grid max-w-6xl gap-12 px-6 py-20 md:grid-cols-[1.4fr_1fr_1fr]">
-        <div>
-          <p className="text-2xl font-semibold tracking-tight">Stay sponsorship-ready</p>
-          <p className="mt-2 max-w-xs text-sm text-white/60">
-            New vetted events and sponsorship insights, monthly.
-          </p>
-          <form
-            onSubmit={submit}
-            className="mt-6 flex max-w-sm items-center gap-2 border-b border-white/15 pb-2"
-          >
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Your email"
-              aria-label="Your email"
-              className="flex-1 bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
-            />
-            <button
-              type="submit"
-              disabled={busy}
-              aria-label="Subscribe"
-              className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#6b3fa0] text-white disabled:opacity-60"
-            >
-              <ArrowUpRight className="h-4 w-4" />
-            </button>
-          </form>
-        </div>
-        <div className="flex flex-col gap-3">
-          <Link to="/" className={col}>
-            Home
-          </Link>
-          <Link to="/about" className={col}>
-            About us
-          </Link>
-          <Link to="/marketplace" className={col}>
-            Events
-          </Link>
-          <Link to="/contact" className={col}>
-            Contact us
-          </Link>
-        </div>
-        <div className="flex flex-col gap-3">
-          <a
-            href="https://www.instagram.com/insideglobalevents"
-            target="_blank"
-            rel="noreferrer"
-            className={col}
-          >
-            Instagram
-          </a>
-          <a
-            href="https://www.linkedin.com/company/inside-global-events"
-            target="_blank"
-            rel="noreferrer"
-            className={col}
-          >
-            LinkedIn
-          </a>
-          <Link to="/faq" className={col}>
-            FAQ
-          </Link>
-          <Link to="/privacy" className={col}>
-            Privacy
-          </Link>
-          <Link to="/terms" className={col}>
-            Terms
-          </Link>
-        </div>
-      </div>
-      <div className="border-t border-white/10">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-6">
-          <span className="flex items-center gap-2.5">
-            {/* The logo is dark ink, so it sits on a white tile on the dark footer. */}
-            <span className="rounded-md bg-white p-1">
-              <BrandLogo size="sm" />
-            </span>
-            <span className="text-sm font-semibold">Inside Global Events</span>
-          </span>
-          <span className="text-xs text-white/50">
-            © {new Date().getFullYear()} Inside Global Events. All rights reserved.
-          </span>
-        </div>
-      </div>
-    </footer>
-  );
-}
-
 export function LandingPage({ initialEvents }: { initialEvents?: LandingEventsResult }) {
+  const revealRef = useScrollReveal() as React.RefObject<HTMLDivElement>;
   return (
-    <div className="min-h-screen bg-white font-sans text-[#1a1325]">
+    <div ref={revealRef} className="min-h-screen bg-white font-sans text-[#1a1325]">
       <Hero />
       <Audiences />
       <Events initial={initialEvents} />
       <Bento />
       <Corridor />
-      <Footer />
+      <SiteFooter />
     </div>
   );
 }

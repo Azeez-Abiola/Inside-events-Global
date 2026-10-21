@@ -14,6 +14,8 @@ const ROLE_ORDER: AppRole[] = [
   "sponsor",
   "referral_partner",
   "media_partner",
+  "partnerships_pro",
+  "creative_hub",
   "abw_admin",
   "super_admin",
 ];
@@ -24,6 +26,8 @@ const ROLE_HOME: Record<AppRole, string> = {
   sponsor: "/dashboard",
   referral_partner: "/dashboard",
   media_partner: "/dashboard",
+  partnerships_pro: "/dashboard",
+  creative_hub: "/dashboard",
   abw_admin: "/dashboard",
   super_admin: "/dashboard",
 };

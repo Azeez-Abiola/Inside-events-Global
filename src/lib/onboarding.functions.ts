@@ -8,6 +8,7 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { isSignupRole } from "@/lib/signup-roles";
+import { pickActiveRole } from "@/lib/active-role";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -30,6 +31,34 @@ const SITE_URL = process.env.VITE_SITE_URL || "https://www.insideglobalevents.co
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function odb(): any {
   return supabaseAdmin as any;
+}
+
+const SignupRoleEnum = z.enum([
+  "organiser",
+  "sponsor",
+  "referral_partner",
+  "media_partner",
+  "partnerships_pro",
+  "creative_hub",
+]);
+
+/** Optional `{ role }` input: which of the account's roles to act on. */
+const RoleInput = z.object({ role: SignupRoleEnum.optional() });
+const parseRoleInput = (d: unknown) => RoleInput.parse(d ?? {});
+
+/**
+ * Multi-role accounts keep one onboarding application per role. Resolves
+ * which role a call is about: the requested one if the account holds it,
+ * otherwise the account's active dashboard role, otherwise its first role.
+ * Null when the account holds no signup role at all.
+ */
+async function resolveRole(userId: string, requested?: string | null) {
+  const [{ data: roleRows }, { data: prof }] = await Promise.all([
+    odb().from("user_roles").select("role").eq("user_id", userId),
+    odb().from("profiles").select("active_role").eq("id", userId).maybeSingle(),
+  ]);
+  const held = ((roleRows ?? []) as { role: string }[]).map((r) => r.role);
+  return pickActiveRole(held, requested ?? (prof?.active_role as string | null));
 }
 
 // ─── Row type for onboarding_applications ─────────────────────────────────────
@@ -73,10 +102,17 @@ export const saveOnboardingSection = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { userId } = context;
 
+    // Multi-role accounts keep one application per role: only for roles the
+    // account actually holds (signup and "Add a role" assign the role first).
+    if (data.role !== "ige_admin" && (await resolveRole(userId, data.role)) !== data.role) {
+      throw new Error("Add this role to your account before setting it up.");
+    }
+
     const { data: existing } = (await odb()
       .from("onboarding_applications")
       .select("id, sections, section_status, status")
       .eq("user_id", userId)
+      .eq("role", data.role)
       .maybeSingle()) as { data: OARow | null };
 
     const currentSections = existing?.sections ?? {};
@@ -110,9 +146,9 @@ export const saveOnboardingSection = createServerFn({ method: "POST" })
           sections: newSections,
           section_status: newStatus,
           current_section: data.currentSection,
-          role: data.role,
         })
-        .eq("user_id", userId)) as { error: { message: string } | null };
+        .eq("user_id", userId)
+        .eq("role", data.role)) as { error: { message: string } | null };
       if (error) throw new Error(error.message);
     }
 
@@ -174,6 +210,7 @@ async function syncOnboardingStatus(
 // ─── Submit application ────────────────────────────────────────────────────────
 
 const SubmitInput = z.object({
+  role: SignupRoleEnum.optional(),
   dataConsentAccepted: z.boolean(),
   termsConsentAccepted: z.boolean(),
   clientIp: z.string().optional(),
@@ -189,11 +226,14 @@ export const submitOnboardingApplication = createServerFn({ method: "POST" })
     if (!data.termsConsentAccepted) throw new Error("Terms & Privacy consent is required.");
 
     const now = new Date().toISOString();
+    const role = await resolveRole(userId, data.role);
+    if (!role) throw new Error("No application found — please complete the wizard first.");
 
     const { data: app } = (await odb()
       .from("onboarding_applications")
       .select("id, sections, status, role")
       .eq("user_id", userId)
+      .eq("role", role)
       .maybeSingle()) as { data: OARow | null };
 
     if (!app) throw new Error("No application found — please complete the wizard first.");
@@ -220,7 +260,7 @@ export const submitOnboardingApplication = createServerFn({ method: "POST" })
         terms_consent_at: now,
         terms_consent_ip: data.clientIp ?? "unknown",
       })
-      .eq("user_id", userId)) as { error: { message: string } | null };
+      .eq("id", app.id)) as { error: { message: string } | null };
     if (updateErr) throw new Error(updateErr.message);
 
     // Deliberately NOT setting is_active = false. That is what used to happen
@@ -239,7 +279,7 @@ export const submitOnboardingApplication = createServerFn({ method: "POST" })
         await sendTransactionalEmailServer({
           templateName: "welcome",
           recipientEmail: profile.email,
-          idempotencyKey: `onboarding-complete-${userId}`,
+          idempotencyKey: `onboarding-complete-${userId}-${app.role}`,
           templateData: {
             name: profile.display_name ?? undefined,
             role: app.role,
@@ -293,7 +333,8 @@ export interface OutstandingSection {
  */
 export const getOnboardingGateState = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator(parseRoleInput)
+  .handler(async ({ data: input, context }) => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
     const userId = (context as any).userId as string;
 
@@ -309,20 +350,25 @@ export const getOnboardingGateState = createServerFn({ method: "POST" })
       return { hasApplication: false, progress: null, outstanding: [] as string[] };
     }
 
-    let { data: app } = await odb()
-      .from("onboarding_applications")
-      .select("role, section_status, status")
-      .eq("user_id", userId)
-      .maybeSingle();
+    // The gate is per role: a multi-role account finishes each role's
+    // sections when it uses that role's dashboard.
+    const activeRole = await resolveRole(userId, input.role);
+    let { data: app } = activeRole
+      ? await odb()
+          .from("onboarding_applications")
+          .select("role, section_status, status")
+          .eq("user_id", userId)
+          .eq("role", activeRole)
+          .maybeSingle()
+      : { data: null };
 
-    // An account with a role but no application signed up before the
-    // onboarding wizard existed (or its first save never landed). Onboarding
-    // is expected of every account, so start the application for its role:
+    // An account with a role but no application for it signed up before the
+    // onboarding wizard existed, added the role later, or its first save never
+    // landed. Onboarding is expected of every role, so start the application:
     // it then counts as unfinished and the dashboard setup panel prompts them.
     // Only ever creates — an existing application is never touched.
     if (!app?.role) {
-      const { data: roleRows } = await odb().from("user_roles").select("role").eq("user_id", userId);
-      const role = ((roleRows ?? []) as { role: string }[]).map((r) => r.role).find((r) => isSignupRole(r));
+      const role = activeRole;
       if (role) {
         const { data: created } = await odb()
           .from("onboarding_applications")
@@ -344,6 +390,7 @@ export const getOnboardingGateState = createServerFn({ method: "POST" })
               .from("onboarding_applications")
               .select("role, section_status, status")
               .eq("user_id", userId)
+              .eq("role", role)
               .maybeSingle()
           ).data;
       }
@@ -396,13 +443,17 @@ export const getOnboardingGateState = createServerFn({ method: "POST" })
 
 export const getMyOnboardingApplication = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator(parseRoleInput)
+  .handler(async ({ data: input, context }) => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
     const userId = (context as any).userId as string;
+    const role = await resolveRole(userId, input.role);
+    if (!role) return { application: null as OARow | null };
     const res = await odb()
       .from("onboarding_applications")
       .select("*")
       .eq("user_id", userId)
+      .eq("role", role)
       .maybeSingle();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     return { application: (res.data ?? null) as OARow | null };
@@ -517,18 +568,22 @@ export const listOnboardingApplications = createServerFn({ method: "POST" })
 
 export const getOnboardingApplicationDetail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { user_id: string }) => z.object({ user_id: z.string().uuid() }).parse(d))
+  .inputValidator((d: { user_id: string; role?: string }) =>
+    z.object({ user_id: z.string().uuid(), role: SignupRoleEnum.optional() }).parse(d),
+  )
   .handler(async ({ data, context }) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
     const userId = (context as any).userId as string;
     await requirePlatformAdmin(userId);
 
-    const { data: app } = (await odb()
-      .from("onboarding_applications")
-      .select("*")
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-      .eq("user_id", (data as any).user_id)
-      .single()) as { data: OARow | null };
+    // A multi-role account has one application per role; without a role,
+    // show the oldest (the role they signed up with).
+    let appQuery = odb().from("onboarding_applications").select("*").eq("user_id", data.user_id);
+    if (data.role) appQuery = appQuery.eq("role", data.role);
+    const { data: app } = (await appQuery
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle()) as { data: OARow | null };
 
     if (!app) throw new Error("Application not found.");
 
@@ -546,6 +601,7 @@ export const getOnboardingApplicationDetail = createServerFn({ method: "POST" })
 
 const ReviewInput = z.object({
   user_id: z.string().uuid(),
+  role: SignupRoleEnum.optional(),
   action: z.enum(["approve", "reject", "request_changes"]),
   notes: z.record(z.string()).optional(),
   rejection_note: z.string().max(2000).optional(),
@@ -558,10 +614,14 @@ export const reviewOnboardingApplication = createServerFn({ method: "POST" })
     const { userId } = context;
     await requirePlatformAdmin(userId);
 
-    const { data: app } = (await odb()
+    let appQuery = odb()
       .from("onboarding_applications")
-      .select("role, status, user_id")
-      .eq("user_id", data.user_id)
+      .select("id, role, status, user_id")
+      .eq("user_id", data.user_id);
+    if (data.role) appQuery = appQuery.eq("role", data.role);
+    const { data: app } = (await appQuery
+      .order("created_at", { ascending: true })
+      .limit(1)
       .maybeSingle()) as { data: OARow | null };
 
     if (!app) throw new Error("Application not found.");
@@ -585,7 +645,7 @@ export const reviewOnboardingApplication = createServerFn({ method: "POST" })
         reviewer_notes: data.notes ?? {},
         reviewed_at: now,
       })
-      .eq("user_id", data.user_id);
+      .eq("id", app.id);
 
     const { data: profile } = await supabaseAdmin
       .from("profiles")
@@ -684,15 +744,19 @@ export const reviewOnboardingApplication = createServerFn({ method: "POST" })
 
 export const markApplicationUnderReview = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ user_id: z.string().uuid() }).parse(d))
+  .inputValidator((d) =>
+    z.object({ user_id: z.string().uuid(), role: SignupRoleEnum.optional() }).parse(d),
+  )
   .handler(async ({ data, context }) => {
     const { userId } = context;
     await requirePlatformAdmin(userId);
-    await odb()
+    let q = odb()
       .from("onboarding_applications")
       .update({ status: "under_review" })
       .eq("user_id", data.user_id)
       .eq("status", "submitted");
+    if (data.role) q = q.eq("role", data.role);
+    await q;
     return { ok: true };
   });
 
@@ -703,21 +767,24 @@ export const markApplicationUnderReview = createServerFn({ method: "POST" })
  */
 export const loadMyWizardState = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator(parseRoleInput)
+  .handler(async ({ data: input, context }) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
     const userId = (context as any).userId as string;
-    let { data } = await odb()
-      .from("onboarding_applications")
-      .select("role, sections, current_section, status, reviewer_notes")
-      .eq("user_id", userId)
-      .maybeSingle();
-    // A role chosen at signup but no application yet (Google sign-up, or a
-    // save that never landed): start the application for that role instead of
+    const role = await resolveRole(userId, input.role);
+    let { data } = role
+      ? await odb()
+          .from("onboarding_applications")
+          .select("role, sections, current_section, status, reviewer_notes")
+          .eq("user_id", userId)
+          .eq("role", role)
+          .maybeSingle()
+      : { data: null };
+    // A role chosen at signup or added later, but no application for it yet
+    // (Google sign-up, or a save that never landed): start one instead of
     // asking for the role again. Only ever creates — an existing application,
     // and the progress in it, is never touched here.
     if (!data) {
-      const { data: roleRows } = await odb().from("user_roles").select("role").eq("user_id", userId);
-      const role = ((roleRows ?? []) as { role: string }[]).map((r) => r.role).find((r) => isSignupRole(r));
       if (role) {
         const { data: created } = await odb()
           .from("onboarding_applications")
@@ -784,6 +851,24 @@ async function withSignupDefaults(
     };
     const orgKey = ORG_FIELD[role];
     if (orgKey) defaults[orgKey] = str(meta.company_name);
+
+    // A role added later: reuse what the account's other roles already
+    // answered in Section A, so the basics are never typed twice.
+    const { data: others } = await odb()
+      .from("onboarding_applications")
+      .select("role, sections")
+      .eq("user_id", userId)
+      .neq("role", role);
+    for (const o of (others ?? []) as { role: string; sections: Record<string, Record<string, unknown>> }[]) {
+      const oa = o.sections?.a ?? {};
+      for (const k of ["full_name", "email", "phone"]) {
+        if (!defaults[k] && str(oa[k])) defaults[k] = str(oa[k]);
+      }
+      const otherOrg = ORG_FIELD[o.role];
+      if (orgKey && !defaults[orgKey] && otherOrg && str(oa[otherOrg])) {
+        defaults[orgKey] = str(oa[otherOrg]);
+      }
+    }
     const saved = sections.a ?? {};
     const a: Record<string, string> = { ...saved };
     for (const [k, v] of Object.entries(defaults)) {

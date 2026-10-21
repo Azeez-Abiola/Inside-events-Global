@@ -7,6 +7,7 @@ import { ReferralDashboard } from "@/components/dashboards/referral-dashboard";
 import { MediaPartnerDashboard } from "@/components/dashboards/media-dashboard";
 import { AdminDashboard } from "@/components/dashboards/admin-dashboard";
 import { useAuth } from "@/lib/auth-context";
+import { useDashboardRoles } from "@/hooks/use-active-role";
 
 export const Route = createFileRoute("/_authenticated/dashboard/analytics")({
   head: () => ({ meta: [{ title: "Analytics - IGE" }] }),
@@ -14,7 +15,9 @@ export const Route = createFileRoute("/_authenticated/dashboard/analytics")({
 });
 
 function AnalyticsRoute() {
-  const { roles, loading, rolesReady } = useAuth();
+  const { loading, rolesReady } = useAuth();
+  // Multi-role accounts: branch on the active role, not every role held.
+  const roles = useDashboardRoles();
 
   if (loading || !rolesReady) {
     return (

@@ -6,6 +6,7 @@ import { recoverMyRole } from "@/lib/signup.functions";
 import { Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/lib/auth-context";
+import { useDashboardRoles } from "@/hooks/use-active-role";
 import { DashboardPageSkeleton } from "@/components/dashboards/dashboard-skeletons";
 import { SponsorOverviewPage } from "@/components/dashboards/sponsor-pages";
 import { OrganiserEventsPage } from "@/components/dashboards/organiser-pages";
@@ -21,7 +22,9 @@ export const Route = createFileRoute("/_authenticated/dashboard/")({
 });
 
 function DashboardIndex() {
-  const { roles, loading, rolesReady } = useAuth();
+  const { loading, rolesReady } = useAuth();
+  // Multi-role accounts: branch on the active role, not every role held.
+  const roles = useDashboardRoles();
   if (loading || !rolesReady) return <DashboardLoading />;
   if (roles.includes("abw_admin") || roles.includes("super_admin"))
     return <AdminDashboard section="overview" />;

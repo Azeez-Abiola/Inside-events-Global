@@ -1,10 +1,21 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { LogOut, Bell, Loader2, Menu, Search, Compass } from "lucide-react";
+import {
+  LogOut,
+  Bell,
+  Loader2,
+  Menu,
+  Search,
+  Compass,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from "lucide-react";
 import { toast } from "sonner";
-import { BrandLogo } from "@/components/brand-logo";
+import { BrandLogo, BrandWordmark } from "@/components/brand-logo";
 import { useAuth } from "@/lib/auth-context";
+import { useDashboardRoles } from "@/hooks/use-active-role";
+import { RoleSwitcher } from "@/components/role-switcher";
 import { supabase } from "@/integrations/supabase/client";
 import { getWorkspaceNav } from "@/lib/workspace-nav";
 import { roleLabel } from "@/lib/dashboard-meta";
@@ -32,6 +43,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+const SIDEBAR_COLLAPSED_KEY = "ige:sidebar-collapsed";
 
 function isNavActive(pathname: string, to: string) {
   if (to === "/marketplace") return pathname === "/marketplace" || pathname.startsWith("/marketplace/");
@@ -61,10 +74,32 @@ function HeaderTourButton() {
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, roles, signOut } = useAuth();
   const loc = useLocation();
-  const nav = getWorkspaceNav(roles);
+  // Multi-role accounts see one role's menu at a time (the active role).
+  const dashboardRoles = useDashboardRoles();
+  const nav = getWorkspaceNav(dashboardRoles as typeof roles);
   const [signOutOpen, setSignOutOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  // Desktop only: the sidebar can fold down to an icon rail. Remembered per
+  // browser; the mobile drawer always opens full width.
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    try {
+      setCollapsed(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1");
+    } catch {
+      // Storage blocked: start expanded.
+    }
+  }, []);
+  function toggleCollapsed() {
+    setCollapsed((c) => {
+      try {
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, c ? "0" : "1");
+      } catch {
+        // Storage blocked: the toggle still works for this visit.
+      }
+      return !c;
+    });
+  }
 
   useEffect(() => setMobileOpen(false), [loc.pathname]);
 
@@ -78,19 +113,26 @@ export function AppShell({ children }: { children: ReactNode }) {
     }
   }
 
-  const sidebar = (
-    <aside className="flex h-full w-[248px] shrink-0 flex-col border-r border-border/40 bg-brand-soft dark:bg-sidebar dark:bg-none">
+  const renderSidebar = (rail: boolean) => (
+    <aside
+      className={cn(
+        "flex h-full shrink-0 flex-col border-r border-border/50 bg-[#f9f8f6] transition-[width] duration-200 dark:bg-sidebar",
+        rail ? "w-[76px]" : "w-[248px]",
+      )}
+    >
       {/* Voom: logo row */}
-      <div className="flex h-[72px] items-center gap-3 px-6">
-        <BrandLogo />
+      <div className={cn("flex h-[72px] items-center gap-3", rail ? "justify-center" : "px-6")}>
         {/* v6.3: the wordmark in the home page's Purple → Emerald gradient. */}
-        <span className="bg-brand-gradient bg-clip-text font-display text-[15px] font-bold text-transparent dark:bg-[linear-gradient(90deg,#c9a8ff_0%,#62d4b8_55%,#3ddc97_100%)]">
-          Inside Global Events
-        </span>
+        {rail ? <BrandLogo /> : <BrandWordmark size="md" />}
+      </div>
+
+      {/* Multi-role accounts: which role's dashboard this is, and a switch. */}
+      <div className={cn("pb-3", rail ? "px-2.5" : "px-4")}>
+        <RoleSwitcher rail={rail} />
       </div>
 
       {/* Voom: flat nav + left accent bar on active item */}
-      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">
+      <nav className={cn("flex-1 space-y-0.5 overflow-y-auto", rail ? "px-2.5" : "px-3")}>
         {nav.map((n) => {
           const tab = (loc.search as Record<string, unknown>)?.tab;
           const active = n.search
@@ -104,8 +146,11 @@ export function AppShell({ children }: { children: ReactNode }) {
               to={n.to}
               search={n.search}
               data-tour={navTourTarget(n.to)}
+              title={rail ? n.label : undefined}
+              aria-label={rail ? n.label : undefined}
               className={cn(
-                "relative flex items-center gap-3 rounded-lg py-2.5 pl-5 pr-3 text-[13px] font-medium transition-colors",
+                "relative flex items-center gap-3 rounded-lg py-2.5 text-[13px] font-medium transition-colors",
+                rail ? "justify-center px-0" : "pl-5 pr-3",
                 // Dark mode: the selected item is white text on a soft white pill
                 // (bencho.dev-style) rather than purple on near-black.
                 active
@@ -117,21 +162,26 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <span className="absolute left-0 top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-r-full bg-primary dark:hidden" />
               )}
               <n.icon className={cn("h-[18px] w-[18px] shrink-0", active ? "text-primary dark:text-white" : "text-muted-foreground")} />
-              {n.label}
+              {!rail && n.label}
             </Link>
           );
         })}
       </nav>
 
       {/* Voom: marketplace CTA card + sign out */}
-      <div className="space-y-2 p-4">
-        <SidebarInsightCard roles={roles} />
+      <div className={cn("space-y-2", rail ? "p-2.5" : "p-4")}>
+        {!rail && <SidebarInsightCard roles={roles} />}
         <button
           onClick={() => setSignOutOpen(true)}
-          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+          title={rail ? "Sign out" : undefined}
+          aria-label={rail ? "Sign out" : undefined}
+          className={cn(
+            "flex w-full items-center gap-2.5 rounded-lg py-2.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground",
+            rail ? "justify-center" : "px-3",
+          )}
         >
           <LogOut className="h-4 w-4" />
-          Sign out
+          {!rail && "Sign out"}
         </button>
       </div>
     </aside>
@@ -161,12 +211,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       {mobileOpen && (
         <div className="fixed inset-0 z-40 flex md:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
-          <div className="relative z-50 h-full shadow-2xl">{sidebar}</div>
+          <div className="relative z-50 h-full shadow-2xl">{renderSidebar(false)}</div>
         </div>
       )}
 
       <div className="flex min-h-screen">
-        <div className="hidden md:block sticky top-0 h-screen">{sidebar}</div>
+        <div className="hidden md:block sticky top-0 h-screen">{renderSidebar(collapsed)}</div>
 
         <div className="flex min-w-0 flex-1 flex-col">
           {/* Voom: white top bar — centered search, utilities right */}
@@ -178,6 +228,20 @@ export function AppShell({ children }: { children: ReactNode }) {
               aria-label="Open menu"
             >
               <Menu className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/60 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:inline-flex"
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-expanded={!collapsed}
+              title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {collapsed ? (
+                <PanelLeftOpen className="h-4 w-4" />
+              ) : (
+                <PanelLeftClose className="h-4 w-4" />
+              )}
             </button>
 
             <div className="mx-auto flex w-full max-w-lg flex-1 items-center">
@@ -214,7 +278,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           <main data-tour="main-content" className="flex-1 bg-dashboard-canvas px-4 py-6 sm:px-6 lg:px-8">
             {/* Dashboard-first onboarding: unfinished accounts complete setup here. */}
-            {!isPlatformAdmin(roles) && loc.pathname.replace(/\/$/, "") === "/dashboard" && <SetupPanel />}
+            {!isPlatformAdmin(roles) && loc.pathname.replace(/\/$/, "") === "/dashboard" && <SetupPanel key={dashboardRoles.join(",")} />}
             <AdminMfaGate isAdmin={isPlatformAdmin(roles)}>{children}</AdminMfaGate>
           </main>
           {!isPlatformAdmin(roles) && <LiveChat />}

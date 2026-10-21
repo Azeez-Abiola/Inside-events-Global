@@ -10,6 +10,8 @@ export type AppRole =
   | "sponsor"
   | "referral_partner"
   | "media_partner"
+  | "partnerships_pro"
+  | "creative_hub"
   | "abw_admin"
   | "super_admin";
 
@@ -65,6 +67,8 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   sponsor: "Sponsor",
   referral_partner: "Referral Partner",
   media_partner: "Media Partner",
+  partnerships_pro: "Partnerships Pro",
+  creative_hub: "Creative Hub",
   abw_admin: "ABW Admin",
   super_admin: "Super Admin",
 };

@@ -4,6 +4,7 @@ import { DashboardPageSkeleton } from "@/components/dashboards/dashboard-skeleto
 import { SponsorSavedPage } from "@/components/dashboards/sponsor-pages";
 import { MediaPartnerDashboard } from "@/components/dashboards/media-dashboard";
 import { useAuth } from "@/lib/auth-context";
+import { useDashboardRoles } from "@/hooks/use-active-role";
 
 export const Route = createFileRoute("/_authenticated/dashboard/saved")({
   head: () => ({ meta: [{ title: "Saved events - IGE" }] }),
@@ -11,7 +12,9 @@ export const Route = createFileRoute("/_authenticated/dashboard/saved")({
 });
 
 function SavedRoute() {
-  const { roles, loading, rolesReady } = useAuth();
+  const { loading, rolesReady } = useAuth();
+  // Multi-role accounts: branch on the active role, not every role held.
+  const roles = useDashboardRoles();
 
   if (loading || !rolesReady) {
     return (

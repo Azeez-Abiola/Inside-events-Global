@@ -8,7 +8,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { ChevronRight, Loader2, LockKeyhole } from "lucide-react";
-import { BrandLogo } from "@/components/brand-logo";
+import { BrandWordmark } from "@/components/brand-logo";
 import { useAuth } from "@/lib/auth-context";
 import { ensureSignupRole } from "@/lib/signup.functions";
 import { saveOnboardingSection } from "@/lib/onboarding.functions";
@@ -112,7 +112,9 @@ export function RoleSelectionScreen() {
         navigate({ to: "/onboarding/admin-access" });
         return;
       }
-      await ensureRole({ data: { role } });
+      // Adds the role (alongside any the account already has) and opens its
+      // dashboard; the wizard below then collects that role's sections.
+      await ensureRole({ data: { role, makeActive: true } });
       await saveFn({
         data: {
           role,
@@ -143,7 +145,7 @@ export function RoleSelectionScreen() {
       {/* Header */}
       <header className="border-b border-border bg-card px-6 py-4">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <BrandLogo size="sm" />
+          <BrandWordmark textClassName="hidden sm:inline" />
           <span className="font-mono text-xs text-muted-foreground">
             Step 3 of 8 — Role selection
           </span>
@@ -156,7 +158,7 @@ export function RoleSelectionScreen() {
             What best describes you?
           </h1>
           <p className="mt-3 text-base text-muted-foreground">
-            Choose one role — this determines your onboarding wizard and dashboard.
+            Choose a role to add. Each role has its own dashboard and setup, and you can switch between them from the sidebar.
           </p>
         </div>
 

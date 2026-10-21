@@ -110,9 +110,34 @@ export function readSignupRole(): SignupRole | null {
   return null;
 }
 
+const EXTRA_ROLES_KEY = "ige:signup-extra-roles";
+
+/**
+ * Multi-role signup: the roles picked besides the primary one. Kept across the
+ * email-verification round trip, like the primary role.
+ */
+export function stashSignupExtraRoles(roles: SignupRole[]) {
+  try {
+    if (roles.length) sessionStorage.setItem(EXTRA_ROLES_KEY, JSON.stringify(roles));
+    else sessionStorage.removeItem(EXTRA_ROLES_KEY);
+  } catch {
+    // sessionStorage blocked: the extra roles can still be added from the dashboard.
+  }
+}
+
+export function readSignupExtraRoles(): SignupRole[] {
+  try {
+    const parsed = JSON.parse(sessionStorage.getItem(EXTRA_ROLES_KEY) ?? "[]") as unknown;
+    return Array.isArray(parsed) ? parsed.filter((r): r is SignupRole => isSignupRole(r)) : [];
+  } catch {
+    return [];
+  }
+}
+
 export function clearSignupRole() {
   try {
     sessionStorage.removeItem(ROLE_STORAGE_KEY);
+    sessionStorage.removeItem(EXTRA_ROLES_KEY);
     sessionStorage.removeItem("ige:pending-role");
   } catch {
     /* ignore */
@@ -204,22 +229,16 @@ export async function hasRoleProfile(userId: string, role: SignupRole): Promise<
 
   // `onboarding_applications` is not in the generated Supabase types yet;
   // same cast convention as odb()/adb() on the server side.
-  const { data: application } = await (
-    supabase as unknown as {
-      from: (t: string) => {
-        select: (c: string) => {
-          eq: (
-            c: string,
-            v: string,
-          ) => { maybeSingle: () => Promise<{ data: { status?: string } | null }> };
-        };
-      };
-    }
+  // One application per role on multi-role accounts.
+  const { data: application } = (await (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    supabase as any
   )
     .from("onboarding_applications")
     .select("status")
     .eq("user_id", userId)
-    .maybeSingle();
+    .eq("role", role)
+    .maybeSingle()) as { data: { status?: string } | null };
   const status = application?.status;
   if (status && ["submitted", "under_review", "approved"].includes(status)) return true;
 

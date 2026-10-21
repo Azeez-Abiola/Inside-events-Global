@@ -8,6 +8,8 @@ type AppRole =
   | "sponsor"
   | "referral_partner"
   | "media_partner"
+  | "partnerships_pro"
+  | "creative_hub"
   | "abw_admin"
   | "super_admin";
 

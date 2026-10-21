@@ -2,7 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Check, Eye, EyeOff, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isEmailConfirmed } from "@/lib/auth-email";
 import { clearStaleSession } from "@/lib/stale-session";
@@ -28,6 +28,8 @@ import {
   stashSignupAccountDraft,
   stashReturnTo,
   takeReturnTo,
+  readSignupExtraRoles,
+  stashSignupExtraRoles,
 } from "@/lib/signup-roles";
 
 const STEPS: { key: SignupStep; label: string }[] = [
@@ -54,6 +56,45 @@ export function SignupWizard({
   const [role, setRole] = useState<SignupRole>(
     presetRole && isSignupRole(presetRole) ? presetRole : "sponsor",
   );
+  // Multi-role signup: `role` is the primary pick (the first dashboard they
+  // land on); these are the other roles ticked alongside it.
+  const [extraRoles, setExtraRoles] = useState<SignupRole[]>([]);
+  // The pre-ticked default is only a placeholder: the first tap replaces it
+  // rather than adding to it, so nobody becomes a Sponsor by accident.
+  const [rolePicked, setRolePicked] = useState(Boolean(presetRole && isSignupRole(presetRole)));
+
+  /** Tick or untick a role card. At least one role always stays picked. */
+  function toggleRole(key: SignupRole) {
+    if (!rolePicked) {
+      setRolePicked(true);
+      setRole(key);
+      setExtraRoles([]);
+      return;
+    }
+    if (key === role) {
+      if (extraRoles.length) {
+        setRole(extraRoles[0]);
+        setExtraRoles(extraRoles.slice(1));
+      }
+      return;
+    }
+    setExtraRoles((xs) => (xs.includes(key) ? xs.filter((k) => k !== key) : [...xs, key]));
+  }
+
+  /** The quiz suggests a primary role; keep any other ticks. */
+  function pickPrimary(key: SignupRole) {
+    if (!rolePicked) {
+      setRolePicked(true);
+      setRole(key);
+      setExtraRoles([]);
+      return;
+    }
+    setExtraRoles((xs) => {
+      const rest = xs.filter((k) => k !== key);
+      return key !== role ? [role, ...rest].filter((k) => k !== key) : rest;
+    });
+    setRole(key);
+  }
 
   // A marketplace button or share link sent them here with a role in mind and
   // a page to come back to. Remember both across the verify round-trip.
@@ -84,7 +125,10 @@ export function SignupWizard({
   }
 
   async function assignRole(selected: SignupRole) {
-    await ensureRole({ data: { role: selected } });
+    const extras = (extraRoles.length ? extraRoles : readSignupExtraRoles()).filter(
+      (r) => r !== selected,
+    );
+    await ensureRole({ data: { role: selected, extraRoles: extras, makeActive: true } });
     await refreshRoles();
   }
 
@@ -131,7 +175,11 @@ export function SignupWizard({
     (async () => {
       if (!user) {
         const stored = readSignupRole();
-        if (stored) setRole(stored);
+        if (stored) {
+          setRole(stored);
+          setRolePicked(true);
+        }
+        setExtraRoles(readSignupExtraRoles().filter((r) => r !== stored));
         if (initialStep === "profile" || initialStep === "verify") goToStep("account");
         else if (initialStep && initialStep !== "role") setStep(initialStep);
         setBootstrapping(false);
@@ -201,6 +249,7 @@ export function SignupWizard({
 
   async function handleRoleContinue() {
     stashSignupRole(role);
+    stashSignupExtraRoles(extraRoles);
     if (user && isEmailConfirmed(user)) {
       try {
         await startOnboarding(role);
@@ -253,6 +302,7 @@ export function SignupWizard({
       options: {
         data: {
           role,
+          roles: [role, ...extraRoles],
           full_name: fullName.trim(),
           phone,
           account_type: accountType,
@@ -356,14 +406,19 @@ export function SignupWizard({
 
       {step === "role" && (
         <>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Pick every role that fits. You get a dashboard for each and can switch between them,
+            or add more later.
+          </p>
           <div className="grid gap-2.5">
             {SIGNUP_ROLES.map((r) => {
-              const isSel = role === r.key;
+              const isPrimary = role === r.key;
+              const isSel = isPrimary || extraRoles.includes(r.key);
               return (
                 <button
                   type="button"
                   key={r.key}
-                  onClick={() => setRole(r.key)}
+                  onClick={() => toggleRole(r.key)}
                   aria-pressed={isSel}
                   className={`flex items-start gap-3 rounded-xl border p-3.5 text-left transition-colors ${
                     isSel ? "border-primary bg-brand-soft" : "border-border bg-card hover:bg-muted"
@@ -377,27 +432,36 @@ export function SignupWizard({
                     <r.icon className="h-4 w-4" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold text-foreground">{r.title}</span>
+                    <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                      {r.title}
+                      {isPrimary && extraRoles.length > 0 && (
+                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                          Opens first
+                        </span>
+                      )}
+                    </span>
                     {/* The one-liner is always visible; TAB 2 §2.2's full
                         description is a tap away, so the grid stays scannable
                         instead of six paragraphs deep. */}
                     <span className="block text-xs text-muted-foreground">{r.tagline}</span>
-                    {isSel && (
+                    {isPrimary && (
                       <span className="mt-2 block border-t border-primary/20 pt-2 text-xs leading-relaxed text-primary-deep">
                         {r.desc}
                       </span>
                     )}
                   </span>
                   <span
-                    className={`mt-0.5 h-4 w-4 shrink-0 self-start rounded-full border ${
-                      isSel ? "border-primary bg-primary" : "border-border"
+                    className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center self-start rounded border ${
+                      isSel ? "border-primary bg-primary text-white" : "border-border"
                     }`}
-                  />
+                  >
+                    {isSel && <Check className="h-3 w-3" strokeWidth={3} />}
+                  </span>
                 </button>
               );
             })}
           </div>
-          <RoleQuiz onPick={setRole} />
+          <RoleQuiz onPick={pickPrimary} />
           <button
             type="button"
             onClick={handleRoleContinue}

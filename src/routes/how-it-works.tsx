@@ -1,6 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight } from "lucide-react";
-import { SiteHeader, SiteFooter } from "@/components/site-chrome";
+import {
+  ArrowUpRight,
+  BadgeCheck,
+  CalendarDays,
+  Check,
+  Handshake,
+  ShieldCheck,
+  type LucideIcon,
+} from "lucide-react";
+import { SiteFooter } from "@/components/site-chrome";
+import { useScrollReveal } from "@/hooks/use-scroll-reveal";
+import { CtaBand, PageHero, PentagonIcon, pill } from "@/components/landing/public-chrome";
 
 export const Route = createFileRoute("/how-it-works")({
   head: () => ({
@@ -17,7 +27,10 @@ export const Route = createFileRoute("/how-it-works")({
           "how event sponsorship works, sponsorship process, sponsorship deal flow, sponsorship contract, sponsorship activation, sponsorship payment",
       },
       { property: "og:title", content: "How Event Sponsorship Works on IGE" },
-      { property: "og:description", content: "From signup to signed sponsorship in days, not quarters." },
+      {
+        property: "og:description",
+        content: "From signup to signed sponsorship in days, not quarters.",
+      },
       { property: "og:url", content: "https://www.insideglobalevents.com/how-it-works" },
     ],
     links: [{ rel: "canonical", href: "https://www.insideglobalevents.com/how-it-works" }],
@@ -25,74 +38,157 @@ export const Route = createFileRoute("/how-it-works")({
   component: HowItWorksPage,
 });
 
-function HowItWorksPage() {
-  const steps = [
-    {
-      n: "01",
-      title: "Sign up & verify",
-      desc:
-        "Pick your side: organiser, sponsor, or referral partner. Sign up with email, complete your profile, and start browsing vetted opportunities.",
-    },
-    {
-      n: "02",
-      title: "List, browse, or refer",
-      desc:
-        "Organisers publish events through a guided 9-step flow. Sponsors discover and shortlist. Partners generate trackable referral links.",
-    },
-    {
-      n: "03",
-      title: "Get vetted",
-      desc:
-        "Every event passes IGE manual vetting before going live. No ghost listings, no fake attendance numbers, no surprises.",
-    },
-    {
-      n: "04",
-      title: "Connect & commit",
-      desc:
-        "Verified sponsors message organisers directly. Commit through structured forms, pay securely, and partners get paid commission on close.",
-    },
-  ];
-  return (
-    <div className="min-h-screen bg-background text-foreground">
-      <SiteHeader />
-      <main className="mx-auto max-w-6xl px-6 py-20 md:py-28">
-        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary-deep">
-          How it works
-        </div>
-        <h1 className="mt-3 font-display text-4xl font-bold tracking-tight md:text-6xl">
-          From signup to signed sponsorship, <span className="text-brand-gradient">in days, not quarters.</span>
-        </h1>
+const STEPS: {
+  n: string;
+  title: string;
+  desc: string;
+  icon: LucideIcon;
+  bg: string;
+  ink: string;
+}[] = [
+  {
+    n: "01",
+    title: "Sign up & verify",
+    desc: "Pick your side: organiser, sponsor, referral or media partner. Sign up with email, finish your profile from your dashboard, and start browsing vetted opportunities.",
+    icon: BadgeCheck,
+    bg: "bg-[#6b3fa0]",
+    ink: "text-[#6b3fa0]",
+  },
+  {
+    n: "02",
+    title: "List, browse or refer",
+    desc: "Organisers publish events through a guided flow. Sponsors discover and shortlist. Partners share trackable referral links.",
+    icon: CalendarDays,
+    bg: "bg-[#2e8171]",
+    ink: "text-[#2e8171]",
+  },
+  {
+    n: "03",
+    title: "Get vetted",
+    desc: "Every event passes IGE's manual vetting before it goes live. No ghost listings, no inflated attendance, no surprises.",
+    icon: ShieldCheck,
+    bg: "bg-[#0e8a62]",
+    ink: "text-[#0e8a62]",
+  },
+  {
+    n: "04",
+    title: "Match & close",
+    desc: "IGE introduces the right sponsors to the right events, structures the deal, and tracks it to payment, with partners paid commission on close.",
+    icon: Handshake,
+    bg: "bg-[#4a2c73]",
+    ink: "text-[#4a2c73]",
+  },
+];
 
-        <ol className="mt-14 grid gap-6 md:grid-cols-2">
-          {steps.map((s) => (
-            <li key={s.n} className="rounded-2xl border border-border bg-card p-7">
-              <div className="font-display text-sm font-bold text-brand-gradient">
+const SIDES = [
+  {
+    title: "For organisers",
+    points: [
+      "One listing, matched sponsors",
+      "Clear sponsorship tiers",
+      "Deals tracked end to end",
+    ],
+    to: "/organisers",
+  },
+  {
+    title: "For sponsors",
+    points: ["Vetted events only", "Audience and seniority data", "Structured agreements"],
+    to: "/sponsors",
+  },
+  {
+    title: "For partners",
+    points: ["Trackable referral links", "Transparent commission", "Paid on close"],
+    to: "/partners",
+  },
+] as const;
+
+function HowItWorksPage() {
+  const revealRef = useScrollReveal() as React.RefObject<HTMLDivElement>;
+  return (
+    <div ref={revealRef} className="min-h-screen bg-white font-sans text-[#1a1325]">
+      <PageHero
+        eyebrow="How it works"
+        title={
+          <>
+            From signup to signed sponsorship,{" "}
+            <span className="bg-brand-gradient bg-clip-text text-transparent">
+              in days, not quarters
+            </span>
+          </>
+        }
+        subtitle="IGE runs the whole sponsorship journey: vetting, matching, agreements, payment and tracking, so organisers and sponsors spend their time on the event, not the chase."
+      >
+        <Link
+          to="/signup"
+          className={`${pill} mt-8 bg-[#6b3fa0] text-white shadow-[0_12px_30px_-10px_rgba(107,63,160,0.7)]`}
+        >
+          Create your account <ArrowUpRight className="h-4 w-4" />
+        </Link>
+      </PageHero>
+
+      <section className="mx-auto max-w-6xl px-6 py-24">
+        <h2
+          data-reveal
+          className="mx-auto max-w-xl text-center text-3xl font-semibold tracking-tight md:text-4xl"
+        >
+          Four steps to a closed deal
+        </h2>
+        <ol className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {STEPS.map((s, i) => (
+            <li
+              key={s.n}
+              data-reveal
+              data-delay={String(i + 1)}
+              className={`relative overflow-hidden rounded-[24px] p-6 text-white ${s.bg}`}
+            >
+              <span
+                aria-hidden
+                className="absolute -right-1 top-1 text-[96px] font-semibold leading-none text-white/10"
+              >
                 {s.n}
-              </div>
-              <h2 className="mt-3 font-display text-xl font-bold">{s.title}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {s.desc}
-              </p>
+              </span>
+              <PentagonIcon icon={s.icon} iconClassName={s.ink} />
+              <h3 className="relative mt-6 text-lg font-semibold">{s.title}</h3>
+              <p className="relative mt-1.5 text-sm leading-relaxed text-white/80">{s.desc}</p>
             </li>
           ))}
         </ol>
+      </section>
 
-        <div className="mt-12 flex flex-wrap gap-3">
-          <Link
-            to="/signup"
-            className="inline-flex items-center gap-2 rounded-md bg-brand-gradient px-6 py-3.5 text-sm font-semibold text-white shadow-brand transition-transform hover:-translate-y-0.5"
-          >
-            Create your account
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-          <Link
-            to="/marketplace"
-            className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-6 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
-          >
-            Browse events
-          </Link>
+      <section className="bg-[#faf8fd] py-24">
+        <div className="mx-auto max-w-6xl px-6">
+          <h2 data-reveal className="max-w-md text-3xl font-semibold tracking-tight md:text-4xl">
+            What each side gets
+          </h2>
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {SIDES.map((side, i) => (
+              <Link
+                key={side.to}
+                data-reveal
+                data-delay={String(i + 1)}
+                to={side.to}
+                className="group rounded-[24px] bg-white p-7 shadow-[0_12px_40px_-20px_rgba(26,19,37,0.25)] transition-transform hover:-translate-y-1"
+              >
+                <div className="flex items-start justify-between">
+                  <p className="text-lg font-semibold">{side.title}</p>
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#efe8f8] text-[#6b3fa0] transition-transform group-hover:rotate-45">
+                    <ArrowUpRight className="h-4 w-4" />
+                  </span>
+                </div>
+                <ul className="mt-5 space-y-2.5">
+                  {side.points.map((p) => (
+                    <li key={p} className="flex items-center gap-2 text-sm text-[#5b5468]">
+                      <Check className="h-4 w-4 text-[#0e8a62]" /> {p}
+                    </li>
+                  ))}
+                </ul>
+              </Link>
+            ))}
+          </div>
         </div>
-      </main>
+      </section>
+
+      <CtaBand />
       <SiteFooter />
     </div>
   );

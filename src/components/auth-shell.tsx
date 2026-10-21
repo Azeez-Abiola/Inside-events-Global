@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
-import { BrandLogo } from "@/components/brand-logo";
+import { BrandWordmark } from "@/components/brand-logo";
 
 // Slideshow images (served from /public/events). Itsekiri banner intentionally excluded.
 const SLIDES = [
@@ -60,7 +60,9 @@ function DashboardPreview() {
     <div className="relative rounded-2xl bg-white p-4 text-[#1a1325] shadow-2xl">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold">Dashboard</p>
-        <span className="rounded-full bg-[#efe8f8] px-2 py-0.5 text-[10px] font-medium text-[#6b3fa0]">This quarter</span>
+        <span className="rounded-full bg-[#efe8f8] px-2 py-0.5 text-[10px] font-medium text-[#6b3fa0]">
+          This quarter
+        </span>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2.5">
         <div className="rounded-xl border border-black/5 p-3">
@@ -116,68 +118,61 @@ export function AuthShell({
   footer?: ReactNode;
 }) {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#f1eff8] p-3 sm:p-6 lg:p-10">
-      {/* Faint grid and a soft brand glow behind the card. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(107,63,160,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(107,63,160,0.06)_1px,transparent_1px)] [background-size:64px_64px]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-[radial-gradient(70%_80%_at_50%_100%,rgba(14,138,98,0.14),transparent_70%)]"
-      />
+    <div className="grid min-h-screen bg-white lg:grid-cols-[1fr_1.05fr]">
+      {/* Left: form */}
+      <div className="flex flex-col px-6 py-8 sm:px-12 sm:py-10">
+        <div className="flex items-center justify-between">
+          <Link to="/" aria-label="Inside Global Events — Home">
+            <BrandWordmark />
+          </Link>
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-[#5b5468] transition-colors hover:bg-black/5 hover:text-[#1a1325]"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Back to home</span>
+          </Link>
+        </div>
 
-      <div className="relative mx-auto max-w-[1240px] rounded-[36px] bg-white/60 p-2 shadow-[0_30px_80px_-40px_rgba(26,19,37,0.35)] ring-1 ring-black/5 backdrop-blur">
-        <div className="grid min-h-[min(820px,calc(100vh-5rem))] overflow-hidden rounded-[30px] bg-white lg:grid-cols-[1fr_1.05fr]">
-          {/* Left: form */}
-          <div className="flex flex-col px-6 py-8 sm:px-12 sm:py-10">
-            <div className="flex items-center justify-between">
-              <Link to="/" aria-label="Inside Global Events — Home" className="flex items-center gap-2.5">
-                <BrandLogo size="sm" />
-                <span className="text-sm font-semibold tracking-tight text-[#1a1325]">Inside Global Events</span>
-              </Link>
-              <Link
-                to="/"
-                className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-[#5b5468] transition-colors hover:bg-black/5 hover:text-[#1a1325]"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                <span className="hidden sm:inline">Back to home</span>
-              </Link>
-            </div>
+        <div className="auth-form mx-auto my-auto w-full max-w-md py-10">
+          <h1 className="text-3xl font-semibold tracking-tight text-[#1a1325] sm:text-[34px]">
+            {title}
+          </h1>
+          {subtitle ? <p className="mt-2 text-[15px] text-[#5b5468]">{subtitle}</p> : null}
+          <div className="mt-8">{children}</div>
+          {footer ? <div className="mt-8 text-sm text-[#5b5468]">{footer}</div> : null}
+        </div>
 
-            <div className="auth-form mx-auto my-auto w-full max-w-md py-10">
-              <h1 className="text-3xl font-semibold tracking-tight text-[#1a1325] sm:text-[34px]">{title}</h1>
-              {subtitle ? <p className="mt-2 text-[15px] text-[#5b5468]">{subtitle}</p> : null}
-              <div className="mt-8">{children}</div>
-              {footer ? <div className="mt-8 text-sm text-[#5b5468]">{footer}</div> : null}
-            </div>
+        <p className="text-center text-xs text-[#8a8496]">
+          © {new Date().getFullYear()} Inside Global Events. All rights reserved.
+        </p>
+      </div>
 
-            <p className="text-center text-xs text-[#8a8496]">
-              © {new Date().getFullYear()} Inside Global Events. All rights reserved.
-            </p>
-          </div>
-
-          {/* Right: brand panel */}
-          <div className="relative m-2 hidden flex-col overflow-hidden rounded-[26px] bg-[#6b3fa0] p-12 text-white lg:flex">
-            <div aria-hidden className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#8b5fc4] opacity-40 blur-3xl" />
-            <div aria-hidden className="absolute -bottom-28 -left-16 h-80 w-80 rounded-full bg-[#0e8a62] opacity-40 blur-3xl" />
-            <div className="relative">
-              <h2 className="max-w-md text-[34px] font-semibold leading-tight tracking-tight">
-                The vetted way to fund and fill your events
-              </h2>
-              <p className="mt-3 max-w-sm text-[15px] text-white/75">
-                Vetted events, matched sponsors and tracked deals across the Africa–Europe corridor.
-              </p>
-            </div>
-            <div className="relative mx-auto mt-10 w-full max-w-md">
-              <DashboardPreview />
-            </div>
-            <div className="relative mt-auto flex flex-wrap items-center justify-between gap-x-6 gap-y-2 pt-12 text-sm font-semibold text-white/55">
-              {["Lagos", "Nairobi", "Accra", "Warri", "London"].map((c) => (
-                <span key={c}>{c}</span>
-              ))}
-            </div>
-          </div>
+      {/* Right: brand panel */}
+      <div className="relative m-3 hidden flex-col overflow-hidden rounded-[28px] bg-[#6b3fa0] p-12 text-white lg:sticky lg:top-3 lg:flex lg:h-[calc(100vh-1.5rem)]">
+        <div
+          aria-hidden
+          className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#8b5fc4] opacity-40 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="absolute -bottom-28 -left-16 h-80 w-80 rounded-full bg-[#0e8a62] opacity-40 blur-3xl"
+        />
+        <div className="relative">
+          <h2 className="max-w-md text-[34px] font-semibold leading-tight tracking-tight">
+            The vetted way to fund and fill your events
+          </h2>
+          <p className="mt-3 max-w-sm text-[15px] text-white/75">
+            Vetted events, matched sponsors and tracked deals across the Africa–Europe corridor.
+          </p>
+        </div>
+        <div className="relative mx-auto mt-10 w-full max-w-md">
+          <DashboardPreview />
+        </div>
+        <div className="relative mt-auto flex flex-wrap items-center justify-between gap-x-6 gap-y-2 pt-12 text-sm font-semibold text-white/55">
+          {["Lagos", "Nairobi", "Accra", "Warri", "London"].map((c) => (
+            <span key={c}>{c}</span>
+          ))}
         </div>
       </div>
     </div>

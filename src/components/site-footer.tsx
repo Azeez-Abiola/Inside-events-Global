@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Instagram, Linkedin } from "lucide-react";
+import { ArrowUpRight, Instagram, Linkedin } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { BrandLogo } from "@/components/brand-logo";
+import { BrandWordmark } from "@/components/brand-logo";
 import { subscribeNewsletter } from "@/lib/newsletter.functions";
 
 const HI_EMAIL = "hi@insideglobalevents.com";
@@ -25,7 +23,7 @@ const COLUMNS: { title: string; links: FooterLink[] }[] = [
   {
     title: "Platform",
     links: [
-      { to: "/", hash: "how", label: "How It Works" },
+      { to: "/how-it-works", label: "How It Works" },
       { to: "/marketplace", label: "Marketplace (sign in required)" },
       { to: "/past-events", label: "Past Events" },
       { to: "/organisers", label: "For Organisers" },
@@ -90,79 +88,76 @@ export function SiteFooter() {
     }
   }
 
+  const link = "text-sm text-white/60 transition-colors hover:text-white";
   return (
-    <footer className="border-t border-border/60 bg-background">
-      <div className="mx-auto max-w-7xl px-6 py-14">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          {COLUMNS.map((col) => (
-            <div key={col.title}>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-foreground">
-                {col.title}
-              </p>
-              <ul className="mt-4 space-y-2.5">
-                {col.links.map((l) => (
-                  <li key={l.label}>
-                    {l.to ? (
-                      <Link
-                        to={l.to}
-                        hash={l.hash}
-                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        {l.label}
-                      </Link>
-                    ) : (
-                      <a
-                        href={l.href}
-                        {...(l.href && !l.href.startsWith("mailto:")
-                          ? { target: "_blank", rel: "noreferrer" }
-                          : {})}
-                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        {l.label}
-                      </a>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-12 flex flex-col gap-4 rounded-2xl border border-border bg-muted/30 p-6 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="font-semibold text-foreground">Newsletter</p>
-            <p className="text-sm text-muted-foreground">
-              Upcoming events, intelligence reports and what we are building.
-            </p>
-          </div>
-          <form onSubmit={handleSubscribe} className="flex w-full gap-2 md:w-auto">
-            <Input
+    <footer className="bg-[#14101b] text-white">
+      <div className="mx-auto grid max-w-6xl gap-12 px-6 py-20 lg:grid-cols-[1.5fr_repeat(4,1fr)]">
+        <div>
+          <p className="text-2xl font-semibold tracking-tight">Stay sponsorship-ready</p>
+          <p className="mt-2 max-w-xs text-sm text-white/60">
+            Upcoming events, intelligence reports and what we are building.
+          </p>
+          <form
+            onSubmit={handleSubscribe}
+            className="mt-6 flex max-w-sm items-center gap-2 border-b border-white/15 pb-2"
+          >
+            <input
               type="email"
               name="email"
-              placeholder="you@company.com"
+              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="h-10 rounded-lg border-border bg-background md:w-72"
+              placeholder="Your email"
+              aria-label="Your email"
               autoComplete="email"
-              required
+              className="flex-1 bg-transparent text-sm text-white placeholder:text-white/40 focus:outline-none"
             />
-            <Button
+            <button
               type="submit"
               disabled={submitting}
-              className="h-10 rounded-lg bg-brand-gradient font-semibold text-white"
+              aria-label="Subscribe"
+              className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#6b3fa0] text-white transition-colors hover:bg-[#7d4fb5] disabled:opacity-60"
             >
-              {submitting ? "Subscribing…" : "Subscribe"}
-            </Button>
+              <ArrowUpRight className="h-4 w-4" />
+            </button>
           </form>
         </div>
+        {COLUMNS.map((col) => (
+          <div key={col.title}>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/40">
+              {col.title}
+            </p>
+            <ul className="mt-4 space-y-2.5">
+              {col.links.map((l) => (
+                <li key={l.label}>
+                  {l.to ? (
+                    <Link to={l.to} hash={l.hash} className={link}>
+                      {l.label}
+                    </Link>
+                  ) : (
+                    <a
+                      href={l.href}
+                      {...(l.href && !l.href.startsWith("mailto:")
+                        ? { target: "_blank", rel: "noreferrer" }
+                        : {})}
+                      className={link}
+                    >
+                      {l.label}
+                    </a>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
 
-      <div className="border-t border-border/60">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <BrandLogo size="sm" />
-            <p className="text-xs text-muted-foreground">
-              Copyright 2026 Inside Global Events, an AlexBoyo World company.
+      <div className="border-t border-white/10">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <BrandWordmark onDark />
+            <p className="text-xs text-white/50">
+              © {new Date().getFullYear()} Inside Global Events, an AlexBoyo World company.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -171,7 +166,7 @@ export function SiteFooter() {
               target="_blank"
               rel="noreferrer"
               aria-label="Inside Global Events on LinkedIn"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-white/60 transition-colors hover:border-white/40 hover:text-white"
             >
               <Linkedin className="h-4 w-4" />
             </a>
@@ -180,7 +175,7 @@ export function SiteFooter() {
               target="_blank"
               rel="noreferrer"
               aria-label="Inside Global Events on Instagram"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-white/60 transition-colors hover:border-white/40 hover:text-white"
             >
               <Instagram className="h-4 w-4" />
             </a>

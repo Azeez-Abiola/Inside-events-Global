@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { pickActiveRole } from "@/lib/active-role";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { sendWelcomeEmailForUser } from "@/lib/email/welcome";
@@ -140,6 +141,7 @@ export const sendWelcomeEmail = createServerFn({ method: "POST" })
     const { data: authUser } = await supabase.auth.getUser();
     const role =
       data?.role ||
+      pickActiveRole((roles ?? []).map((r) => r.role as string)) ||
       roles?.[0]?.role ||
       (authUser.user?.user_metadata?.role as string | undefined);
     if (!role) return { ok: false };
@@ -210,7 +212,12 @@ async function syncProfileCompleteness(userId: string) {
       supabaseAdmin.from("referral_partner_profiles").select("*").eq("user_id", userId).maybeSingle(),
       supabaseAdmin.from("media_partner_profiles" as never).select("*").eq("user_id", userId).maybeSingle(),
     ]);
-  const role = roles?.[0]?.role ?? "sponsor";
+  // Multi-role accounts: score the role whose dashboard is in use.
+  const held = (roles ?? []).map((r) => r.role as string);
+  const role =
+    pickActiveRole(held, (profile as { active_role?: string | null } | null)?.active_role) ??
+    roles?.[0]?.role ??
+    "sponsor";
   const roleData =
     role === "organiser" ? org : role === "sponsor" ? sp : role === "referral_partner" ? ref : role === "media_partner" ? media : null;
   const score = computeProfileComplete(role, profile ?? undefined, (roleData ?? undefined) as Record<string, unknown>);

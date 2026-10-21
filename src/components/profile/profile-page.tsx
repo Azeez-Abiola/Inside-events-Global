@@ -11,6 +11,7 @@ import { getMyWorkspaces } from "@/lib/workspace.functions";
 import { can } from "@/lib/workspace-permissions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { useActiveRole } from "@/hooks/use-active-role";
 import { useDashboardTour } from "@/lib/dashboard-tour-context";
 import {
   getMyProfileSummary,
@@ -51,6 +52,7 @@ const OUTLET_TYPES = [
 
 export function ProfilePage({ initialTab = "general" }: { initialTab?: Tab }) {
   const { user, roles, signOut } = useAuth();
+  const { activeRole } = useActiveRole();
   const { startTour, tourRole } = useDashboardTour();
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -83,7 +85,8 @@ export function ProfilePage({ initialTab = "general" }: { initialTab?: Tab }) {
   const avatarUrl = typeof profile?.avatar_url === "string" ? profile.avatar_url : null;
   const initials = displayName.slice(0, 2).toUpperCase();
 
-  const primaryRole = roles[0] ?? "member";
+  // Multi-role accounts: the profile form follows the dashboard in use.
+  const primaryRole = activeRole ?? roles[0] ?? "member";
   const profileComplete = typeof data?.profileComplete === "number" ? data.profileComplete : 0;
   const completeHint = data?.completenessHint ?? completenessHint(primaryRole, profileComplete);
 

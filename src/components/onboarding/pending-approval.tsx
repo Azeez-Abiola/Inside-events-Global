@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, Clock, Sparkles, AlertCircle, RefreshCw } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { BrandLogo } from "@/components/brand-logo";
+import { BrandWordmark } from "@/components/brand-logo";
 import { getMyOnboardingApplication } from "@/lib/onboarding.functions";
 import { ROLE_DISPLAY, getSectionsForRole, type OnboardingStatus } from "@/lib/onboarding-constants";
 
@@ -222,7 +222,7 @@ export function PendingApprovalScreen() {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card px-6 py-4">
         <div className="mx-auto flex max-w-xl items-center justify-between">
-          <BrandLogo size="sm" />
+          <BrandWordmark />
           <Link to="/signup" className="text-xs text-muted-foreground hover:text-foreground hover:underline">
             Sign in
           </Link>

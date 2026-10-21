@@ -21,7 +21,8 @@ import {
   ChevronRight,
   AlertCircle,
 } from "lucide-react";
-import { BrandLogo } from "@/components/brand-logo";
+import { BrandWordmark } from "@/components/brand-logo";
+import type { SignupRole } from "@/lib/signup-roles";
 import { InfoTip } from "@/components/info-tip";
 import {
   getSectionsForRole,
@@ -107,7 +108,7 @@ function ProgressRail({
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-muted/30 lg:flex">
       <div className="flex items-center gap-3 border-b border-border px-6 py-5">
-        <BrandLogo size="sm" />
+        <BrandWordmark textClassName="text-sm" />
       </div>
 
       <div className="px-6 py-4">
@@ -318,6 +319,7 @@ export function OnboardingWizard({
         }
         await submitFn({
           data: {
+            role: role as SignupRole,
             dataConsentAccepted: true,
             termsConsentAccepted: true,
             clientIp: typeof window !== "undefined" ? "" : "server",
@@ -566,7 +568,7 @@ export function OnboardingWizard({
         {/* Mobile progress header */}
         <div className="border-b border-border bg-card px-4 py-3 lg:hidden">
           <div className="flex items-center justify-between gap-2">
-            <BrandLogo size="sm" />
+            <BrandWordmark textClassName="hidden text-sm sm:inline" />
             <span className="font-mono text-xs text-muted-foreground">
               {roleInfo.icon} {roleInfo.label} · {currentIdx + 1}/{sections.length}
             </span>

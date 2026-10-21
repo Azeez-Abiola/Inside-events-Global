@@ -21,6 +21,7 @@ import {
   markApplicationUnderReview,
 } from "@/lib/onboarding.functions";
 import { ROLE_DISPLAY, getSectionsForRole, type OnboardingStatus } from "@/lib/onboarding-constants";
+import type { SignupRole } from "@/lib/signup-roles";
 import { DashboardDataToolbar, DashboardFilterSelect } from "@/components/dashboards/dashboard-data-toolbar";
 import { DashboardPanel, DashboardTable, DashboardTableHead } from "@/components/dashboards/dashboard-shell";
 import { DashboardTableSkeleton } from "@/components/dashboards/dashboard-skeletons";
@@ -80,11 +81,12 @@ function SectionFieldDisplay({ data }: { data: Record<string, unknown> }) {
 
 interface DetailPanelProps {
   userId: string;
+  appRole?: SignupRole;
   onClose: () => void;
   onReviewed: () => void;
 }
 
-function ApplicationDetailPanel({ userId, onClose, onReviewed }: DetailPanelProps) {
+function ApplicationDetailPanel({ userId, appRole, onClose, onReviewed }: DetailPanelProps) {
   const getFn = useServerFn(getOnboardingApplicationDetail);
   const reviewFn = useServerFn(reviewOnboardingApplication);
   const markFn = useServerFn(markApplicationUnderReview);
@@ -101,8 +103,8 @@ function ApplicationDetailPanel({ userId, onClose, onReviewed }: DetailPanelProp
   };
 
   const { data, isLoading } = useQuery({
-    queryKey: ["onboarding-detail", userId],
-    queryFn: () => getFn({ data: { user_id: userId } }) as Promise<DetailResult>,
+    queryKey: ["onboarding-detail", userId, appRole],
+    queryFn: () => getFn({ data: { user_id: userId, role: appRole } }) as Promise<DetailResult>,
   });
 
   const app = data?.application;
@@ -113,7 +115,7 @@ function ApplicationDetailPanel({ userId, onClose, onReviewed }: DetailPanelProp
   const role = app?.role ? ROLE_DISPLAY[app.role as keyof typeof ROLE_DISPLAY] : null;
 
   const markUnderReview = useMutation({
-    mutationFn: () => markFn({ data: { user_id: userId } }),
+    mutationFn: () => markFn({ data: { user_id: userId, role: appRole } }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["onboarding-detail", userId] }),
   });
 
@@ -122,6 +124,7 @@ function ApplicationDetailPanel({ userId, onClose, onReviewed }: DetailPanelProp
       reviewFn({
         data: {
           user_id:        userId,
+          role:           appRole,
           action:         vars.action,
           notes:          vars.action === "request_changes" ? sectionNotes : undefined,
           rejection_note: vars.action === "reject" ? rejectionNote : undefined,
@@ -459,7 +462,8 @@ export function AdminOnboardingVettingPanel() {
 
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<string>("submitted");
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  // A multi-role account has one application per role, so a row is (user, role).
+  const [selected, setSelected] = useState<{ userId: string; role: string } | null>(null);
 
   type OAApp = {
     id: string; user_id: string; role: string; status: string;
@@ -495,14 +499,15 @@ export function AdminOnboardingVettingPanel() {
     };
   }, [apps]);
 
-  if (selectedUserId) {
+  if (selected) {
     return (
       <div className="h-full overflow-hidden rounded-xl border border-border bg-background">
         <ApplicationDetailPanel
-          userId={selectedUserId}
-          onClose={() => setSelectedUserId(null)}
+          userId={selected.userId}
+          appRole={selected.role as SignupRole}
+          onClose={() => setSelected(null)}
           onReviewed={() => {
-            setSelectedUserId(null);
+            setSelected(null);
             refetch();
           }}
         />
@@ -596,7 +601,9 @@ export function AdminOnboardingVettingPanel() {
                     <td className="px-4 py-3 text-right">
                       <button
                         type="button"
-                        onClick={() => setSelectedUserId(app.user_id as string)}
+                        onClick={() =>
+                          setSelected({ userId: app.user_id as string, role: app.role as string })
+                        }
                         className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
                       >
                         <Eye className="h-3.5 w-3.5" /> Review
