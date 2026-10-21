@@ -297,6 +297,18 @@ export const getOnboardingGateState = createServerFn({ method: "POST" })
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
     const userId = (context as any).userId as string;
 
+    // Admins have no onboarding to do, even when the account also carries a
+    // user role (an admin who is also an organiser, say): never prompt them
+    // and never start an application for them.
+    const { data: staffRows } = await odb()
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .in("role", ["abw_admin", "super_admin"]);
+    if ((staffRows ?? []).length) {
+      return { hasApplication: false, progress: null, outstanding: [] as string[] };
+    }
+
     let { data: app } = await odb()
       .from("onboarding_applications")
       .select("role, section_status, status")
