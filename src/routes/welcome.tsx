@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LandingPage } from "@/components/landing/landing-page";
+import { LandingPage, loadLandingEvents } from "@/components/landing/landing-page";
 
 export const Route = createFileRoute("/welcome")({
   head: () => ({
@@ -18,5 +18,10 @@ export const Route = createFileRoute("/welcome")({
       },
     ],
   }),
-  component: LandingPage,
+  loader: () => loadLandingEvents(),
+  component: WelcomePage,
 });
+
+function WelcomePage() {
+  return <LandingPage initialEvents={Route.useLoaderData()} />;
+}
