@@ -158,13 +158,18 @@ export const listMarketplaceEvents = createServerFn({ method: "POST" })
         new Set((events ?? []).map((e) => e.organiser_id).filter(Boolean)),
       ) as string[];
       let organiserCompleteMap: Record<string, number> = {};
+      // Only affects ordering, so a failure here must not empty the listing.
       if (organiserIds.length) {
-        const { data: orgProfiles } = await supabaseAdmin
-          .from("profiles")
-          .select("id, profile_complete")
-          .in("id", organiserIds);
-        for (const p of orgProfiles ?? [])
-          organiserCompleteMap[p.id] = Number(p.profile_complete ?? 0);
+        try {
+          const { data: orgProfiles } = await supabaseAdmin
+            .from("profiles")
+            .select("id, profile_complete")
+            .in("id", organiserIds);
+          for (const p of orgProfiles ?? [])
+            organiserCompleteMap[p.id] = Number(p.profile_complete ?? 0);
+        } catch (e) {
+          console.error("[listMarketplaceEvents] organiser ranking", e);
+        }
       }
 
       let mapped = (events ?? []).map((e) => ({ ...e, starting: priceMap[e.id] ?? null }));

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 // The redesigned landing page (EvenTum layout, IGE palette) replaced the
 // spec-ordered HomePage; its admin-managed sections can be ported in later.
-import { LandingPage } from "@/components/landing/landing-page";
+import { LandingPage, loadLandingEvents } from "@/components/landing/landing-page";
 import ogImage from "@/assets/og-image.jpg";
 
 /**
@@ -37,5 +37,10 @@ export const Route = createFileRoute("/")({
     links: [{ rel: "canonical", href: "https://www.insideglobalevents.com/" }],
   }),
 
-  component: LandingPage,
+  loader: () => loadLandingEvents(),
+  component: HomeRoute,
 });
+
+function HomeRoute() {
+  return <LandingPage initialEvents={Route.useLoaderData()} />;
+}
