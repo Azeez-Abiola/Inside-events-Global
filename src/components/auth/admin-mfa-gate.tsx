@@ -10,7 +10,8 @@ type Stage =
   | { kind: "verify"; factorId: string }
   | { kind: "error"; message: string };
 
-const REQUIRED = import.meta.env.VITE_ADMIN_MFA_REQUIRED !== "false";
+// Off for now; set VITE_ADMIN_MFA_REQUIRED=true to turn it back on.
+const REQUIRED = import.meta.env.VITE_ADMIN_MFA_REQUIRED === "true";
 
 /**
  * Admin sign-in requires two-factor authentication (TAB 12 §12.4). Admins
