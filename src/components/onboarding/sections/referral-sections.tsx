@@ -173,7 +173,7 @@ function SectionA({
           label="Phone number (WhatsApp preferred)"
           value={form.phone}
           onChange={set("phone")}
-          placeholder="+234..."
+          placeholder="+ country code and number"
           required
         />
       </div>

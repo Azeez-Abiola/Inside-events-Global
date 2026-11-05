@@ -13,6 +13,7 @@ import { SignupProfileStep } from "@/components/signup/profile-step";
 import { SignupOtpStep } from "@/components/signup/signup-otp-step";
 import { RetainerRequest, RoleQuiz } from "@/components/signup/role-quiz";
 import { useAuth } from "@/lib/auth-context";
+import { guessPhoneCountry, PHONE_COUNTRIES, toInternationalPhone } from "@/lib/phone-countries";
 import { markSignedIn, wasRemembered } from "@/lib/session-policy";
 import {
   SIGNUP_ROLES,
@@ -109,6 +110,10 @@ export function SignupWizard({
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phoneLocal, setPhoneLocal] = useState("");
+  // Any country, not just Nigeria: defaults to the visitor's own country when
+  // their timezone says which one it is.
+  const [phoneCountry, setPhoneCountry] = useState("NG");
+  useEffect(() => setPhoneCountry(guessPhoneCountry()), []);
   const [accountType, setAccountType] = useState<"individual" | "organisation">("individual");
   const [companyName, setCompanyName] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -288,7 +293,11 @@ export function SignupWizard({
       toast.error("Use at least 8 characters for your password.");
       return;
     }
-    const phone = `+234${phoneLocal.replace(/\D/g, "").replace(/^0+/, "")}`;
+    const phone = toInternationalPhone(phoneCountry, phoneLocal);
+    if (phone.replace(/\D/g, "").length < 8) {
+      toast.error("Enter a valid phone number.");
+      return;
+    }
     stashSignupAccountDraft({
       fullName: fullName.trim(),
       phone,
@@ -518,14 +527,24 @@ export function SignupWizard({
                     Phone *
                   </label>
                   <div className="flex gap-2">
-                    <span className="inline-flex h-10 items-center rounded-md border border-input bg-muted px-3 text-sm font-medium text-muted-foreground">
-                      +234
-                    </span>
+                    <select
+                      aria-label="Country code"
+                      value={phoneCountry}
+                      onChange={(e) => setPhoneCountry(e.target.value)}
+                      className="h-10 w-[7.5rem] shrink-0 rounded-md border border-input bg-background px-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      {PHONE_COUNTRIES.map((c) => (
+                        <option key={c.iso} value={c.iso}>
+                          {c.iso} {c.dial}
+                        </option>
+                      ))}
+                    </select>
                     <input
                       type="tel"
-                      inputMode="numeric"
+                      inputMode="tel"
+                      autoComplete="tel-national"
                       required
-                      placeholder="801 234 5678"
+                      placeholder={phoneCountry === "NG" ? "801 234 5678" : "Phone number"}
                       value={phoneLocal}
                       onChange={(e) => setPhoneLocal(e.target.value)}
                       className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"

@@ -66,7 +66,7 @@ export function AgencyDetailsFields({
             label="Agency contact phone"
             value={value.agency_contact_phone}
             onChange={(v: string) => onChange({ agency_contact_phone: v })}
-            placeholder="+234…"
+            placeholder="+ country code and number"
           />
         </div>
       )}
