@@ -36,7 +36,7 @@ import {
   PAYMENT_TERMS,
   CURRENCIES,
 } from "@/lib/event-taxonomy";
-import { eventTypeDescription, isLegacyEventType } from "@/lib/event-types";
+import { eventTypeDescription, isCustomEventType, OTHER_EVENT_TYPE } from "@/lib/event-types";
 import { InfoTip } from "@/components/info-tip";
 import { EventVisibilityFields } from "@/components/events/event-visibility-fields";
 import { ShareLinkPanel } from "@/components/events/share-link-panel";
@@ -372,27 +372,10 @@ function StepBasics({ form, update }: any) {
         onChange={(v: string) => update({ name: v })}
       />
       <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <SelectField
-            label="Event type"
-            value={form.event_type ?? ""}
-            onChange={(v) => update({ event_type: v })}
-            // A listing saved before the v6.4 taxonomy keeps its old value in
-            // the list until the owner picks a new one, rather than silently
-            // resetting to blank.
-            options={
-              isLegacyEventType(form.event_type)
-                ? [form.event_type as string, ...EVENT_TYPES]
-                : EVENT_TYPES
-            }
-          />
-          {form.event_type && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              {eventTypeDescription(form.event_type) ??
-                "This type predates the current taxonomy — pick the closest match from the list."}
-            </p>
-          )}
-        </div>
+        <EventTypeSelect
+          value={(form.event_type as string | undefined) ?? ""}
+          onChange={(v) => update({ event_type: v })}
+        />
         <SelectField
           label="Format"
           value={form.format ?? ""}
@@ -972,5 +955,48 @@ function StepReview({ form, update, tierCount, onSubmit, submitting, editable }:
         Submit for IGE vetting
       </button>
     </>
+  );
+}
+
+/**
+ * Event type: the IGE list plus "Other", which opens a text box. The typed
+ * type is what gets saved, and a saved custom type (or a pre-v6.4 one)
+ * reopens here as "Other" with its text, so it never silently disappears.
+ */
+function EventTypeSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [otherOpen, setOtherOpen] = useState(isCustomEventType(value));
+  const showOther = otherOpen || isCustomEventType(value);
+  return (
+    <div>
+      <SelectField
+        label="Event type"
+        value={showOther ? OTHER_EVENT_TYPE : value}
+        onChange={(v) => {
+          if (v === OTHER_EVENT_TYPE) {
+            setOtherOpen(true);
+            if (!isCustomEventType(value)) onChange("");
+          } else {
+            setOtherOpen(false);
+            onChange(v);
+          }
+        }}
+        options={EVENT_TYPES}
+      />
+      {showOther ? (
+        <div className="mt-2">
+          <Field
+            label="Your event type"
+            value={value}
+            onChange={(v: string) => onChange(v.slice(0, 60))}
+            placeholder="e.g. Basketball league, Food festival"
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            Sponsors filter by the listed types, so pick one from the list if it fits.
+          </p>
+        </div>
+      ) : (
+        value && <p className="mt-1 text-xs text-muted-foreground">{eventTypeDescription(value)}</p>
+      )}
+    </div>
   );
 }

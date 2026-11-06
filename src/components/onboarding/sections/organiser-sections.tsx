@@ -42,6 +42,7 @@ import { AlertCircle } from "lucide-react";
 import { AgencyDetailsFields } from "@/components/onboarding/agency-details";
 import { agencyDetailsFrom, type AgencyDetailsData } from "@/lib/agency-details";
 import { InfoTip } from "@/components/info-tip";
+import { isCustomEventType, OTHER_EVENT_TYPE } from "@/lib/event-types";
 
 // ─── Data types ───────────────────────────────────────────────────────────────
 
@@ -310,24 +311,10 @@ function SectionB({
           <InfoTip tip="field.event_type" />
           <MatchingBadge />
         </div>
-        <div className="flex flex-wrap gap-1.5">
-          {EVENT_TYPES.map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setForm((f) => ({ ...f, event_type: f.event_type === t ? "" : t }))}
-              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${form.event_type === t ? "border-primary bg-brand-soft text-primary-deep" : "border-border bg-card text-muted-foreground hover:bg-muted"}`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-        {/* Appendix B: "Show the description as helper text in the dropdown." */}
-        {form.event_type && (
-          <p className="mt-2 text-xs text-muted-foreground">
-            {eventTypeDescription(form.event_type)}
-          </p>
-        )}
+        <EventTypeChips
+          value={(form.event_type as string | undefined) ?? ""}
+          onChange={(v) => setForm((f) => ({ ...f, event_type: v }))}
+        />
       </div>
       <div className="grid gap-5 sm:grid-cols-2">
         <Field
@@ -867,5 +854,61 @@ function ErrorBanner({ msg }: { msg: string }) {
       <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
       <p className="text-sm text-destructive">{msg}</p>
     </div>
+  );
+}
+
+/**
+ * Event type chips: the IGE list plus "Other", which opens a text box. The
+ * typed type is what gets saved; a saved custom type reopens under "Other".
+ */
+function EventTypeChips({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [otherOpen, setOtherOpen] = useState(isCustomEventType(value));
+  const showOther = otherOpen || isCustomEventType(value);
+  return (
+    <>
+      <div className="flex flex-wrap gap-1.5">
+        {EVENT_TYPES.map((t) => {
+          const isOther = t === OTHER_EVENT_TYPE;
+          const selected = isOther ? showOther : !showOther && value === t;
+          return (
+            <button
+              key={t}
+              type="button"
+              onClick={() => {
+                if (isOther) {
+                  setOtherOpen(!showOther);
+                  if (!isCustomEventType(value)) onChange("");
+                  else if (showOther) onChange("");
+                } else {
+                  setOtherOpen(false);
+                  onChange(value === t ? "" : t);
+                }
+              }}
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${selected ? "border-primary bg-brand-soft text-primary-deep" : "border-border bg-card text-muted-foreground hover:bg-muted"}`}
+            >
+              {t}
+            </button>
+          );
+        })}
+      </div>
+      {showOther ? (
+        <div className="mt-3 max-w-sm">
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value.slice(0, 60))}
+            placeholder="Type your event type, e.g. Basketball league"
+            aria-label="Your event type"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            Sponsors filter by the listed types, so pick one from the list if it fits.
+          </p>
+        </div>
+      ) : (
+        /* Appendix B: "Show the description as helper text in the dropdown." */
+        value && <p className="mt-2 text-xs text-muted-foreground">{eventTypeDescription(value)}</p>
+      )}
+    </>
   );
 }
