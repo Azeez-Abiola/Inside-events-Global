@@ -1,5 +1,6 @@
 /**
- * The 37 IGE event types (Dev Doc v6.4, Appendix B).
+ * The IGE event types: the 37 from Dev Doc v6.4 Appendix B, plus Sports
+ * Event, Football Tournament and "Other" (type your own).
  *
  * "Every event on IGE, published or private, is classified as one of these 37
  * types. They cover every sector, B2B, consumer, community and private, so that
@@ -201,12 +202,38 @@ export const IGE_EVENT_TYPES: readonly EventTypeDef[] = [
     description:
       "A recurring set of online seminars or talks delivered over time on a theme or learning track.",
   },
+  // Added after Appendix B at the product owner's request.
+  {
+    value: "Sports Event",
+    description:
+      "A competitive or recreational sporting event, such as a race, match day, sports festival or fitness challenge, for players and spectators.",
+  },
+  {
+    value: "Football Tournament",
+    description:
+      "A football competition with several teams, from community and school leagues to corporate cups and professional tournaments.",
+  },
+  {
+    value: "Other",
+    description: "Not on the list. Type your own event type.",
+  },
 ] as const;
+
+/**
+ * The "Other" option. Picking it opens a text box, and the typed type is
+ * what gets saved, so `event_type` can hold any text.
+ */
+export const OTHER_EVENT_TYPE = "Other";
 
 /** Flat list, for selects and validation. */
 export const EVENT_TYPE_VALUES: string[] = IGE_EVENT_TYPES.map((t) => t.value);
 
 const DESCRIPTION_BY_VALUE = new Map(IGE_EVENT_TYPES.map((t) => [t.value, t.description]));
+
+/** True for a type the organiser typed in under "Other" (or a pre-v6.4 value). */
+export function isCustomEventType(value: string | null | undefined): boolean {
+  return !!value && !DESCRIPTION_BY_VALUE.has(value);
+}
 
 /** Helper text for the dropdown. Returns undefined for legacy values not in the 37. */
 export function eventTypeDescription(value: string | null | undefined): string | undefined {
